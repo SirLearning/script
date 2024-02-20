@@ -1,9 +1,8 @@
+# create a plot of the beta distribution
 from numpy.random import beta
 import matplotlib.pyplot as plt
 
-
 plt.style.use('bmh')
-
 
 def plot_beta_hist(ax, a, b):
     ax.hist(beta(a, b, size=100), histtype="stepfilled",

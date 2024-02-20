@@ -1,3 +1,4 @@
+# Description: This script reads a file and counts the number of times a word with the highest percentage appears in the file.
 import re
 
 # Initialize a dictionary to store the sums
