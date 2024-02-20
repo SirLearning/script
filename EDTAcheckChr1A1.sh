@@ -12,5 +12,3 @@ faToTwoBit $workPath/genome.fa $workPath/genome.2bit
 twoBitInfo -nBed $workPath/genome.2bit $workPath/N.bed
 
 bedtools complement -i $workPath/N.bed -g $workPath/genome.genome | bedtools getfasta -fo $workPath/genome.temp -fi $workPath/genome.fa -bed -
-
-# embl to fasta
