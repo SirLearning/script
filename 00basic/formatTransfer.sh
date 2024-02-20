@@ -4,3 +4,4 @@ awk -F'\t' '$3 == "repeat_region" {split($9, a, ";"); for (i in a) {split(a[i], 
 # bed to fasta
 bedtools getfasta -s -fi JM44.repeat.masked.fasta -bed annotation.bed -fo teseq.fasta
 # embl to fasta
+any2fasta test.embl > RMRBSeqs.fa
