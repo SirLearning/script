@@ -1,7 +1,7 @@
 infile=$1
-
+# merge genome files (formerly split by chr)
 cat ${1}| awk 'BEGIN{FS="\t";OFS="\t"}{
-        
+
         if($1=="2"){$1="1A";$2=$2+471304005;$3=$3+471304005;print $0}
         else if($1==1){$1="1A";print $0}
         else if($1==3){$1="1B";print $0}
