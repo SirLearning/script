@@ -6,5 +6,5 @@ faToTwoBit $1 genome.2bit
 echo "1"
 twoBitInfo -nBed genome.2bit N.bed
 echo "2"
-awk '{print $1"\t0\t"$2}' $1.fai > $1.genome
+awk '{print $1 "\t" $2}' $1.fai > $1.genome
 bedtools complement -i N.bed -g $1.genome | bedtools getfasta -fo genome.temp -fi $1 -bed -
