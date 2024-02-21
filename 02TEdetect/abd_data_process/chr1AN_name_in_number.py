@@ -1,6 +1,5 @@
-with open('chr1AN.fa', 'r') as infile, open('chr1AN_modified.fa', 'w') as outfile:
-    line_number = 1
-    for line in infile:
-        line = line.replace(r':\d+-\d+', f':{line_number}')
-        line_number += 1
-        outfile.write(line)
+with open('test.fa', 'r') as input_file, open('test1.fa', 'w') as output_file:
+    for line_number, line in enumerate(input_file, start=1):
+        if line.startswith('>'):
+            line = line.replace(r':\d+-\d+', f':{line_number}')
+        output_file.write(line)
