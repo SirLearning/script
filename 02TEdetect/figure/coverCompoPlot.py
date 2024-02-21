@@ -28,7 +28,7 @@ for bar, count, percent in zip(bars1, countsCS, percentages1):
     ax.text(bar.get_width(), bar.get_y() + bar.get_height()/2, f'{percent:.1f}%', ha='left', va='center', fontsize=10)
 
 # 添加标题和标签
-ax.set_title('Category Percentages for CS_data_process and EDTA on chr1A')
+ax.set_title('Category Percentages for CS_gff_process and EDTA on chr1A')
 ax.set_xlabel('Counts')
 ax.set_ylabel('Categories')
 
