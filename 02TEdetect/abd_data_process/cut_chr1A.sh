@@ -6,4 +6,5 @@ faToTwoBit $1 genome.2bit
 echo "1"
 twoBitInfo -nBed genome.2bit N.bed
 echo "2"
-bedtools complement -i N.bed -g genome.genome | bedtools getfasta -fo genome.temp -fi $1 -bed -
+mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e "select chrom, size from hg19.chromInfo"  > hg19.genome
+bedtools complement -i N.bed -g $1.fai | bedtools getfasta -fo genome.temp -fi $1 -bed -
