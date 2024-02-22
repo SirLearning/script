@@ -22,3 +22,6 @@ seqkit stats 02result/teSeq.fasta parent.fasta vParent.fasta
 cat 01data/
 seqkit fx2tab -nliH parent.fasta -o new.txt
 python DataProcessing.py > table.txt
+
+# command count lines number
+wc -l file.txt
