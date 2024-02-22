@@ -1,5 +1,13 @@
-with open('chr1AN.fa', 'r') as input_file, open('chr1AN_modified.fa', 'w') as output_file:
-    for line_number, line in enumerate(input_file, start=1):
+import re
+import sys
+
+input_filename = sys.argv[1]
+output_filename = sys.argv[2]
+
+with open(input_filename, 'r') as input_file, open(output_filename, 'w') as output_file:
+    line_number = 1
+    for line in input_file:
         if line.startswith('>'):
-            line = line.replace(r':\d+-\d+', f':{line_number}')
+            line = re.sub(r":\w+-\d+", f':{line_number}', line)
+            line_number += 1
         output_file.write(line)
