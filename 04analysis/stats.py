@@ -28,4 +28,5 @@ chr1A_allTE_summ = grouped.agg(
     size=('width', 'sum'),
     percent=('width', lambda x: x.sum() / sum_size * 100)
 )
+pd.set_option('display.max_columns', None)
 print(chr1A_allTE_summ)
