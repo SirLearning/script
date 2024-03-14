@@ -1,4 +1,4 @@
-# count TE by compo in gff3 file of CS_gff_process TE library in 2018
+# count TE by compo in gff3 file of 01CS TE library in 2018
 # Open the GFF3 file for reading
 with open('chr1A.gff3', 'r') as gff_file:
     # Initialize a dictionary to store category counts
