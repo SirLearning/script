@@ -4,12 +4,12 @@ awk '$3~"LTR_retrotransposon"' \
 
 # 有strand信息的LTR 23.EDTA/Aly/genome.fa.mod.EDTA.TEanno.gff3
 awk -F';' '{print $1}' intact.LTR.gff3\
-  | sed 's/ID=//' | awk '$7="?"' \
+  | sed 's/ID=//' | awk '$7!="?"' \
   | awk '{print $1"\t"$4-1"\t"$5"\t"$9"\t.\t"$7}' >> intact.LTR.bed6
 
 # 无strand信息的LTR
 awk -F';' '{print $1}' intact.LTR.gff3\
-  | sed 's/ID=//' | awk '$7="?"' \
+  | sed 's/ID=//' | awk '$7=="?"' \
   | awk '{print $1"\t"$4-1"\t"$5"\t"$9"\t.\t+"}' >> intact.LTR.bed6
 
 # 根据gff提取序列 12.ref/Aly.genome.fa
