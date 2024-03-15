@@ -1,15 +1,11 @@
 # retrieve RT domain sequences
-grep "Ty1_copia" ../../31.intactLTR/Aly/intact.LTR.fa.rexdb.dom.tsv \
+# ../../31.intactLTR/Aly/intact.LTR.fa.rexdb.dom.tsv
+# ../../31.intactLTR/Aly/intact.LTR.fa.rexdb.dom.faa
+grep "Ty1_copia" $1 \
   | grep -P "\-RT\t" \
   | cut -f 1 \
-  | seqtk subseq ../../31.intactLTR/Aly/intact.LTR.fa.rexdb.dom.faa \
-  - > Aly.RT.raw.fa
-
-grep "Ty1_copia" ../../31.intactLTR/Ath/intact.LTR.fa.rexdb.dom.tsv \
-  | grep -P "\-RT\t" \
-  | cut -f 1 \
-  | seqtk subseq ../../31.intactLTR/Ath/intact.LTR.fa.rexdb.dom.faa \
-  - > Ath.RT.raw.fa
+  | seqtk subseq $2 \
+  - > dom.RT.raw.fa
 
 # simplify the ID
 awk -F':' '{print $1}' Aly.RT.raw.fa \
