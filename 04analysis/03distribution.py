@@ -1,13 +1,13 @@
 import sys
 import pandas as pd
 
-allte_name = 'data/01chr1A.anno.gff3'
-TEcode_name = 'data/TEcode'
-output_name = 'data/chr1A.anno.mc.gff3'
+# allte_name = 'data/01chr1A.anno.gff3'
+# TEcode_name = 'data/TEcode'
+# output_name = 'data/chr1A.anno.mc.gff3'
 
-# allte_name = sys.argv[1]
-# TEcode_name = sys.argv[2]
-# output_name = sys.argv[3]
+allte_name = sys.argv[1]
+TEcode_name = sys.argv[2]
+output_name = sys.argv[3]
 
 # 1. TE annotation into dataframe
 allte = pd.read_table(allte_name, sep='\t', header=None)
