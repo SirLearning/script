@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 # 提供数据
 categories = ['DTA', 'DTC', 'DTH', 'DTM', 'DTT', 'DTX', 'DHH', 'DXX', 'RLC', 'RLG', 'RLX', 'RIX', 'RSX', 'XXX', 'no_match', 'Ontology']
