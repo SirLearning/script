@@ -11,8 +11,10 @@ import seaborn as sns
 allTE_name = sys.argv[1]
 fai_name = sys.argv[2]
 output_name = sys.argv[3]
-TE_code = pd.read_table('data/TEcode', sep=',', header=None)
+TEcode_name = sys.argv[4]
+TE_code = pd.read_table(TEcode_name, sep=',', header=None)
 TE_code.columns = ['cls', 'new_cls']
+
 
 def nl_stats(fai, allte):
     # 1. TE number into dataframe
