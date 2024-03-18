@@ -2,7 +2,7 @@
 # generate windows 1. ../../12.ref/Aly.genome.fa.fai
 awk '{print $1"\t"$2}' $1 > genome.txt
 #   generate bed3 and bed6
-bedtools makewindows -g genome.txt -w 1000000 -s 1000000 > chr1A.bed3
+bedtools makewindows -g genome.txt -w 5000000 -s 5000000 > chr1A.bed3
 awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' chr1A.bed3 > chr1A.bed6
 # calculate the number of genes in each window
 #awk '$3=="gene"' ../../12.ref/Aly.genome.gtf | bedtools coverage -a chr_sw.bed6 \
