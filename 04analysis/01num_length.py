@@ -1,8 +1,6 @@
 # stats of TE number and length
 import sys
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # input file 1, 2: chr1A.fa.mod.EDTA.TEanno.gff3, 01chr1A.fa.fai
 # allTE_name = 'data/01chr1A.anno.gff3'
