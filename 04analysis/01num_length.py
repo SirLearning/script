@@ -18,20 +18,20 @@ def nl_stats(fai, allte):
     # 1. TE number into dataframe
     genome_size = pd.read_table(fai, header=None)
     genome_size.columns = ['chr', 'size', 'start', 'line', 'width']
-    chr1a_size = genome_size['size'].sum()
+    size_sum = genome_size['size'].sum()
 
     # 2. TE annotation into dataframe
     # 2.1 all TE annotation
-    chr1a_allte = pd.read_table(allte, sep='\t', header=None)
-    chr1a_allte.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
-    chr1a_allte['width'] = chr1a_allte['end'] - chr1a_allte['start'] + 1
+    allte = pd.read_table(allte, sep='\t', header=None)
+    allte.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+    allte['width'] = allte['end'] - allte['start'] + 1
     # 2.2 TE attributes
-    chr1A_attributes = chr1a_allte['attributes'].str.split(';', expand=True)
-    chr1A_attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
+    attributes = allte['attributes'].str.split(';', expand=True)
+    attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
                                 'others2', 'others3']
     # 2.3 merge all TE annotation and TE attributes
-    chr1a_allte = pd.concat([chr1a_allte, chr1A_attributes], axis=1)
-    return chr1a_allte, chr1a_size
+    allte = pd.concat([allte, attributes], axis=1)
+    return allte, size_sum
 
 
 def sum_allte(allte, size):
