@@ -8,8 +8,6 @@ twoBitInfo -nBed genome.2bit N.bed
 echo "2"
 samtools faidx $1
 # cut chr1A.fa into 1Mbp by different length of N, generate chr1ANM.fa
-python ~/script/02TEdetect/abd_data_process/cut_Nbed.py N.bed N1.bed $2
+python ~/script/02TEdetect/abd_data_process/02cut_Nbed.py N.bed N1.bed $2
 awk '{print $1 "\t" $2}' $1.fai > $1.genome
 bedtools complement -i N1.bed -g $1.genome | bedtools getfasta -fo chr1AN.fa -fi $1 -bed -
-
-
