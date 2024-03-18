@@ -14,3 +14,5 @@ RLG   1299  2363.654349  3070387  0.516811
 RLX    386   993.712435   383573  0.064563
 RSX    117   334.863248    39179  0.006595
 XXX   1245   571.899598   712015  0.119847
+
+awk '$10=="Copia_LTR_retrotransposon"' $2 | bedtools coverage -a chr_sw.bed6 -b - -counts -F 0.5 > chr_sw.Copia.density.txt
