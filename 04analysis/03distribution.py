@@ -33,7 +33,7 @@ for i in range(0, len(TE_code)):
 # # 3. merge the attributes
 # allte = allte.fillna('')
 # allte['attributes'] = allte['ID'] + ';' + allte['Name'] + ';' + 'Classification=' + allte['Classification'] + ';' + allte['Sequence_ontology'] + ';' + allte['Identity'] + ';' + allte['Method'] + ';' + allte['others1'] + ';' + allte['others2'] + ';' + allte['others3']
-allte = allte.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2', 'others3'], axis=1)
+allte = allte.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2'], axis=1)
 # print(allte['attributes'])
 
 # 4. output the gff3 file
