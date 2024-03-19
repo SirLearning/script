@@ -18,7 +18,7 @@ with open(anno_name, 'r') as anno_file, open(output_name, 'w') as output_file:
         chrom = element[0]
         start = int(element[3])
         end = int(element[4])
-        for i in range(0, len(nn) - 1):
+        for i in range(0, len(nn)):
             if chrom == 'chr1A_' + str(i + 2):
                 element[3] = str(start + int(nn['end'][i]))
                 element[4] = str(end + int(nn['end'][i]))
@@ -26,3 +26,4 @@ with open(anno_name, 'r') as anno_file, open(output_name, 'w') as output_file:
                 break
         else:
             output_file.write(line)
+print(len(nn))
