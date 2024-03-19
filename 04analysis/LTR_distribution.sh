@@ -1,4 +1,5 @@
-# fai index to extract genome size
+# process the N_cut annotation
+python ~/script/04analysis/03n_site_redirect.py N1.bed
 # generate windows 1. ../../12.ref/Aly.genome.fa.fai
 awk '{print $1"\t"$2}' $1 > genome.txt
 #   generate bed3 and bed6
