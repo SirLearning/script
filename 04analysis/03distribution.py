@@ -14,7 +14,7 @@ all_TE = pd.read_table(all_TE_name, sep='\t', header=None)
 all_TE.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
 # rearrange the attributes
 attributes = all_TE['attributes'].str.split(';', expand=True)
-attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2']
+attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2', 'others3']
 all_TE = pd.concat([all_TE, attributes], axis=1)
 
 # 2. change the classification
@@ -33,7 +33,7 @@ for i in range(0, len(TE_code)):
 # # 3. merge the attributes
 # allte = allte.fillna('')
 # allte['attributes'] = allte['ID'] + ';' + allte['Name'] + ';' + 'Classification=' + allte['Classification'] + ';' + allte['Sequence_ontology'] + ';' + allte['Identity'] + ';' + allte['Method'] + ';' + allte['others1'] + ';' + allte['others2'] + ';' + allte['others3']
-all_TE = all_TE.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2'], axis=1)
+all_TE = all_TE.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2', 'others3'], axis=1)
 # print(allte['attributes'])
 
 # 4. output the gff3 file
