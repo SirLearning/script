@@ -1,13 +1,13 @@
 import sys
 import pandas as pd
 
-fai_name = 'data/cp.chr1B.fa.fai'
-anno_name = 'data/test.gff3'
-output_name = 'data/stats.anno.gff3'
+# fai_name = 'data/cp.chr1B.fa.fai'
+# anno_name = 'data/test.gff3'
+# output_name = 'data/stats.anno.gff3'
 
-# fai_name = sys.argv[1]
-# anno_name = sys.argv[2]
-# output_name = sys.argv[3]
+fai_name = sys.argv[1]
+anno_name = sys.argv[2]
+output_name = sys.argv[3]
 
 fai = pd.read_table(fai_name, sep='\t', header=None)
 fai.columns = ['seq', 'length', 'start', 'lb', 'lw']
