@@ -16,7 +16,7 @@ def plot_te_hist(axs, file, alpha, method):
 
 def te_plot(axs, file, chrom):
     file = str(file)
-    density = pd.read_table('data/distribution/' + chrom + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
+    density = pd.read_table('data/' + chrom + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     axs.plot(density['win_start'] / 1000000, density['density'], label=file, alpha=0.8)
 

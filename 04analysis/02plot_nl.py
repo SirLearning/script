@@ -10,31 +10,37 @@ chr1ANM_summ = pd.read_table('data/chr1ANM/stats.nl.txt', sep='\s+', header=0, i
 chr1A_summ.index.name = 'Classification'
 chr1ANM_summ.index.name = 'Classification'
 
+chr1A_summ['size (Mb)'] = chr1A_summ['size'] / 1000000
+chr1ANM_summ['size (Mb)'] = chr1ANM_summ['size'] / 1000000
+
 chr1A_summ.index = chr1A_summ.index.fillna('NULL')
 chr1ANM_summ.index = chr1ANM_summ.index.fillna('NULL')
 
-mpl.rcParams['font.size'] = 15
+mpl.rcParams['font.size'] = 20
 
 # 1. plot length
-plt.figure(figsize=(10, 10))
-sns.barplot(data=chr1A_summ, x='Classification', y='size', label='chr1A')
-sns.barplot(data=chr1ANM_summ, x='Classification', y='size', label='chr1ANM', alpha=0.75)
+plt.figure(figsize=(15, 10))
+sns.barplot(data=chr1A_summ, x='Classification', y='size (Mb)', label='intact chr1A')
+sns.barplot(data=chr1ANM_summ, x='Classification', y='size (Mb)', label='N-sliced chr1A', alpha=0.75)
 plt.xticks(rotation=45)
+plt.title('Size of TEs by different methods')
 plt.legend()
 plt.show()
 
 # 2. plot proportion
-plt.figure(figsize=(10, 10))
-sns.barplot(data=chr1A_summ, x='Classification', y='percent', label='chr1A')
-sns.barplot(data=chr1ANM_summ, x='Classification', y='percent', label='chr1ANM', alpha=0.75)
+plt.figure(figsize=(15, 10))
+sns.barplot(data=chr1A_summ, x='Classification', y='percent', label='intact chr1A')
+sns.barplot(data=chr1ANM_summ, x='Classification', y='percent', label='N-sliced chr1A', alpha=0.75)
 plt.xticks(rotation=45)
+plt.title('Proportion of TEs by different methods')
 plt.legend()
 plt.show()
 
 # 3. plot number
-plt.figure(figsize=(10, 10))
-sns.barplot(data=chr1A_summ, x='Classification', y='count', label='chr1A')
-sns.barplot(data=chr1ANM_summ, x='Classification', y='count', label='chr1ANM', alpha=0.75)
+plt.figure(figsize=(15, 10))
+sns.barplot(data=chr1A_summ, x='Classification', y='count', label='intact chr1A')
+sns.barplot(data=chr1ANM_summ, x='Classification', y='count', label='N-sliced chr1A', alpha=0.75)
 plt.xticks(rotation=45)
+plt.title('Counts of TEs by different methods')
 plt.legend()
 plt.show()
