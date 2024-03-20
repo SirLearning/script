@@ -9,7 +9,7 @@ printf "1\n"
 #python ~/script/04analysis/05site_redirect_N.py N1.bed # N_cut annotation
 # generate windows
 awk '{print $1"\t"$2}' $2 > stats.genome
-bedtools makewindows -g stats.genome -w 1000000 -s 1000000 > stats.dtb.bed3
+bedtools makewindows -g stats.genome -w 200000 -s 200000 > stats.dtb.bed3
 awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
 # output file
 touch stats.dtb.gff3
