@@ -12,9 +12,6 @@ output_name = sys.argv[3]
 fai = pd.read_table(fai_name, sep='\t', header=None)
 fai.columns = ['seq', 'length', 'start', 'lb', 'lw']
 
-print(f"fai['seq'][1]: {fai['seq'][1]}")
-print(f"fai['length'][0]: {fai['length'][0]}")
-
 with open(anno_name, 'r') as anno_file, open(output_name, 'w') as output_file:
     for line in anno_file:
         element = line.split('\t')
@@ -24,6 +21,4 @@ with open(anno_name, 'r') as anno_file, open(output_name, 'w') as output_file:
         if chrom == str(fai['seq'][1]):
             element[3] = str(start + int(fai['length'][0]))
             element[4] = str(end + int(fai['length'][0]))
-            print(f"element[3]: {element[3]}")
-            print(f"element[4]: {element[4]}")
         output_file.write('\t'.join(element))
