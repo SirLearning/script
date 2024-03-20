@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.style.use('bmh')
+plt.style.use('seaborn-v0_8-deep')
 
 fthrsd = np.arange(1, 0, -0.05)
 nav = [54542, 37598, 32698, 29581, 26905, 24715, 22680, 20930, 19507, 17839,
