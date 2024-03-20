@@ -37,4 +37,6 @@ all_TE = all_TE.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method', '
 # print(allte['attributes'])
 
 # 4. output the gff3 file
+empty_cols = all_TE.columns[all_TE.isnull().all()]
+all_TE = all_TE.drop(empty_cols, axis=1)
 all_TE.to_csv(output_name, sep='\t', header=False, index=False)
