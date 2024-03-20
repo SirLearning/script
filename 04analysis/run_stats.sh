@@ -4,7 +4,7 @@ touch stats.nl.txt
 ## $1: {seq}.mod.EDTA.TEanno.gff3
 ## $2: {seq}.fai
 python ~/script/04analysis/01num_length.py $1 $2 stats.nl.txt ~/script/04analysis/data/TEcode
-
+printf "1\n"
 # step 2 distribution
 #python ~/script/04analysis/04n_site_redirect.py N1.bed # N_cut annotation
 # generate windows
