@@ -10,7 +10,7 @@ printf "1\n"
 # generate windows
 awk '{print $1"\t"$2}' $2 > stats.genome
 bedtools makewindows -g stats.genome -w 5000000 -s 5000000 > stats.dtb.bed3
-awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' chr1A.bed3 > stats.dtb.bed6
+awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
 # output file
 touch stats.dtb.gff3
 python ~/script/04analysis/03distribution.py $1 ~/script/04analysis/data/TEcode stats.dtb.gff3
