@@ -7,7 +7,7 @@ file_name = file_name.fillna('NULL')
 
 
 mpl.rcParams['font.size'] = 20
-plt.style.use('seaborn-v0_8-deep')
+plt.style.use('fast')
 
 plt.rcParams['xtick.labelsize'] = 15
 plt.rcParams['ytick.labelsize'] = 15
@@ -75,7 +75,7 @@ def difference_te_hist(axs, file, method):
 #
 #
 # fig, ax = plt.subplots()
-# ax.figure.set_size_inches(12, 8)
+# ax.figure.set_size_inches(16, 8)
 # for i in range(0, len(file_name)):
 #     te_plot(ax, file_name.iloc[i, 0], 'chr1D1', i)
 # ax.set_title("TE distribution along chr1D")
@@ -91,7 +91,7 @@ for i in range(0, len(file_name)):
 ax.set_title("TE distribution along chr1D (93-96 Mb)")
 ax.set_xlabel('chromosome (Mb)')
 ax.set_ylabel('density')
-ax.legend(fontsize=11.5, framealpha=0.5)
+ax.legend(fontsize=14, framealpha=0.5)
 plt.show()
 fig, ax = plt.subplots()
 ax.figure.set_size_inches(12, 8)
@@ -100,7 +100,7 @@ for i in range(0, len(file_name)):
 ax.set_title("TE distribution along chr1D (358-360 Mb)")
 ax.set_xlabel('chromosome (Mb)')
 ax.set_ylabel('density')
-ax.legend(fontsize=11.5, framealpha=0.5)
+ax.legend(fontsize=14, framealpha=0.5)
 plt.show()
 
 
