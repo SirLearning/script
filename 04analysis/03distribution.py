@@ -14,7 +14,7 @@ all_TE = pd.read_table(all_TE_name, sep='\t', header=None)
 all_TE.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
 # rearrange the attributes
 attributes = all_TE['attributes'].str.split(';', expand=True)
-attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2']
+attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1', 'others2', 'others3']
 all_TE = pd.concat([all_TE, attributes], axis=1)
 
 # 2. change the classification
