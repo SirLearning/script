@@ -29,7 +29,6 @@ for j in range(0, len(all_TE['Classification'])):
             if max_value < float(line[i + 1]):
                 max_value = float(line[i + 1])
                 classification = line[i]
-        else:
 
     all_TE.loc[j, 'Classification'] = classification
 all_TE['Classification'] = all_TE['Classification'].str.replace('no_match', 'XXX')
