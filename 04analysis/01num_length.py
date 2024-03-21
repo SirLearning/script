@@ -6,6 +6,7 @@ allTE_name = sys.argv[1]
 fai_name = sys.argv[2]
 output_name = sys.argv[3]
 TEcode_name = sys.argv[4]
+TE_length_name = sys.argv[4]
 
 TE_code = pd.read_table(TEcode_name, sep=',', header=None)
 TE_code.columns = ['cls', 'new_cls']
@@ -55,15 +56,18 @@ def sum_allte(te, size):
         size=('width', 'sum'),
         percent=('width', lambda x: x.sum() / size * 100)
     )
-    return te_summ
+
+    te_length = pd.concat([te['Classification'], te['width']], axis=1)
+    return te_length, te_summ
 
 
 # main
 [all_TE, sum_size] = nl_stats(allTE_name, fai_name)  # perform stats
-TE_summ = sum_allte(all_TE, sum_size)  # get sum
+[TE_length, TE_summ] = sum_allte(all_TE, sum_size)  # get sum
 # show sum
 pd.set_option('display.max_rows', None)
 with open(output_name, 'w') as f:
     f.write(TE_summ.to_string(index_names=False))
 print(TE_summ)
 print(TE_summ.index)
+TE_length.to_csv(TE_length_name, sep='\t', header=False, index=False)
