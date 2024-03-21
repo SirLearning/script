@@ -21,8 +21,8 @@ fm_width = 0
 for i in range(0, len(anno)):
     # if (fm_end - anno['start'][i]) > (fm_width + anno['width'][i]) * 0.4 and anno['Classification'][i] == fm_class:
     # if (fm_end - anno['start'][i]) > (fm_width + anno['width'][i]) * 0.4:
-    # if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == fm_class:
-    if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8:
+    if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == fm_class:
+    # if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8:
         anno.loc[i, 'overlap'] = 1
     fm_end = anno['end'][i]
     fm_class = anno['Classification'][i]
