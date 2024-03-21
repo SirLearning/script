@@ -7,5 +7,5 @@ awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
 declare -a arr=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "DTX" "DXX" "NULL" "RIJ" "RIL" "RIR" "RIX" "RLC" "RLG" "RLX" "RSX" "XXX")
 for i in "${arr[@]}"
 do
-   awk -v var="$i" '$10==var' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > "stats.${i}.dtb.txt"
+   awk -v var="$i" '$11==var' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > "stats.${i}.dtb.txt"
 done
