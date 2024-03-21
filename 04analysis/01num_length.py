@@ -26,7 +26,7 @@ def nl_stats(allte, fai):
     # 2.2 TE attributes
     attributes = allte['attributes'].str.split(';', expand=True)
     attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
-                                'others2']
+                                'others2', 'others3']
     # 2.3 merge all TE annotation and TE attributes
     allte = pd.concat([allte, attributes], axis=1)
     return allte, size_sum
