@@ -1,19 +1,29 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
-# 计算占比
+# 计算半径
 total_TE = 150013
 overlap_TE = 21364
-non_overlap_TE = total_TE - overlap_TE
+overlap_TE_same_type = 10752
 
-# 创建一个列表，包含两部分的值
-sizes = [overlap_TE, non_overlap_TE]
+radius_total = np.sqrt(total_TE / np.pi)
+radius_overlap = np.sqrt(overlap_TE / np.pi)
+radius_overlap_same_type = np.sqrt(overlap_TE_same_type / np.pi)
 
-# 创建饼图
-fig1, ax1 = plt.subplots()
-ax1.pie(sizes, labels=['Overlap TE', 'Non-overlap TE'], autopct='%1.1f%%',
-        shadow=True, startangle=90)
+# 创建图形和轴
+fig, ax = plt.subplots()
 
-# Equal aspect ratio ensures that pie is drawn as a circle.
-ax1.axis('equal')
+# 创建三个圆
+circle_total = plt.Circle((0, 0), radius_total, color='b', fill=False)
+circle_overlap = plt.Circle((0, 0), radius_overlap, color='r', fill=False)
+circle_overlap_same_type = plt.Circle((0, 0), radius_overlap_same_type, color='g', fill=False)
 
+# 将圆添加到图形中
+ax.add_patch(circle_total)
+ax.add_patch(circle_overlap)
+ax.add_patch(circle_overlap_same_type)
+
+# 设置轴的比例和限制
+ax.set_aspect('equal', adjustable='datalim')
+ax.plot()  # Causes an autoscale update.
 plt.show()
