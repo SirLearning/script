@@ -29,12 +29,26 @@ mpl.rcParams['font.size'] = 24
 plt.rcParams['xtick.labelsize'] = 20
 plt.rcParams['ytick.labelsize'] = 20
 
-# difference in different method
+# # difference in different method
+# for i in range(0, 18):
+#     fig, ax = plt.subplots()
+#     ax.figure.set_size_inches(10, 8)
+#     compare_te_hist(ax, file_name.iloc[i, 0], 'intact chr1A', 'chr1A', '#348ABD')
+#     compare_te_hist(ax, file_name.iloc[i, 0], 'N-sliced chr1A', 'chr1ANM', '#7A68A6')
+#     difference_te_hist(ax, file_name.iloc[i, 0], 'Only in intact chr1A', 'ANv', '#A60628')
+#     difference_te_hist(ax, file_name.iloc[i, 0], 'Only in N-sliced chr1A', 'NAv', '#467821')
+#     ax.set_xlabel('chromosome (Mb)')
+#     ax.set_ylabel('density')
+#     ax.set_title(file_name.iloc[i, 0] + " distribution along the chromosome")
+#     ax.legend(fontsize=14, framealpha=0.5)
+#     plt.show()
+
+# correlation between EDTA and CS
 for i in range(0, 18):
     fig, ax = plt.subplots()
     ax.figure.set_size_inches(10, 8)
-    compare_te_hist(ax, file_name.iloc[i, 0], 'intact chr1A', 'chr1A', '#348ABD')
-    compare_te_hist(ax, file_name.iloc[i, 0], 'N-sliced chr1A', 'chr1ANM', '#7A68A6')
+    compare_te_hist(ax, file_name.iloc[i, 0], 'intact chr1A', 'EDTA', '#348ABD')
+    compare_te_hist(ax, file_name.iloc[i, 0], 'N-sliced chr1A', 'CS', '#7A68A6')
     difference_te_hist(ax, file_name.iloc[i, 0], 'Only in intact chr1A', 'ANv', '#A60628')
     difference_te_hist(ax, file_name.iloc[i, 0], 'Only in N-sliced chr1A', 'NAv', '#467821')
     ax.set_xlabel('chromosome (Mb)')

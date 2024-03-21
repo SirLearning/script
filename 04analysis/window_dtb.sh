@@ -22,3 +22,4 @@ awk -F'\t' '$10=="RLG"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F
 awk -F'\t' '$10=="RLX"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.RLX.dtb.txt
 awk -F'\t' '$10=="RSX"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.RSX.dtb.txt
 awk -F'\t' '$10=="XXX"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.XXX.dtb.txt
+awk -F'\t' '$10=="NULL"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.NULL.dtb.txt
