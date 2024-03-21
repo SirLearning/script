@@ -5,10 +5,12 @@ import pandas as pd
 allTE_name = sys.argv[1]
 fai_name = sys.argv[2]
 output_name = sys.argv[3]
+TE_length_name = sys.argv[4]
 
 # allTE_name = 'data/test.ln.gff3'
 # fai_name = 'data/chr1A.fa.fai'
 # output_name = 'data/test.gff3'
+# TE_length_name =
 
 
 def nl_stats(allte, fai):
@@ -31,14 +33,15 @@ def nl_stats(allte, fai):
         size=('width', 'sum'),
         percent=('width', lambda x: x.sum() / size_sum * 100)
     )
-    return te_summ
+
+    te_length = pd.concat([allte['Classification'], allte['width']], axis=1)
+    return te_length, te_summ
 
 
 # main
-TE_summ = nl_stats(allTE_name, fai_name)  # perform stats
+[TE_length, TE_summ] = nl_stats(allTE_name, fai_name)  # perform stats
 # show sum
 pd.set_option('display.max_rows', None)
 with open(output_name, 'w') as f:
     f.write(TE_summ.to_string(index_names=False))
-print(TE_summ)
-print(TE_summ.index)
+TE_length.to_csv(TE_length_name, sep='\t', header=False, index=False)
