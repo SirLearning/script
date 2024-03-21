@@ -33,7 +33,7 @@ for j in range(0, len(all_TE['Classification'])):
 all_TE['Classification'] = all_TE['Classification'].str.replace('no_match', 'XXX')
 all_TE['Classification'] = all_TE['Classification'].str.split('_').str[0]
 # 3. merge the attributes
-all_TE = all_TE.drop(['ID', 'Name', 'Ontology_term', 'compo', 'status'], axis=1)
+all_TE = all_TE.drop(['ID', 'Name', 'Ontology_term', 'compo', 'status', 'soloLTR'], axis=1)
 # print(allte['attributes'])
 
 # 4. output the gff3 file
