@@ -16,7 +16,6 @@ anno['overlap'] = 0
 
 fm_end = 0
 fm_class = ''
-fm_width = 0
 # flexible in 80% of the width
 for i in range(0, len(anno)):
     # if (fm_end - anno['start'][i]) > (fm_width + anno['width'][i]) * 0.4 and anno['Classification'][i] == fm_class:
@@ -24,7 +23,7 @@ for i in range(0, len(anno)):
     if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == fm_class:
     # if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8:
         anno.loc[i, 'overlap'] = 1
-    fm_end = anno['end'][i]
-    fm_class = anno['Classification'][i]
-    fm_width = anno['width'][i]
+    if anno['end'][i] > fm_end:
+        fm_end = anno['end'][i]
+        fm_class = anno['Classification'][i]
 anno.to_csv(output_name, sep='\t', index=False)
