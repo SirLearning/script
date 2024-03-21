@@ -2,11 +2,11 @@ import sys
 import pandas as pd
 import re
 
-# all_TE_name = 'data/test.cs.anno.gff3'
-# output_name = 'data/test.gff3'
+all_TE_name = 'data/test.cs.anno.gff3'
+output_name = 'data/test.gff3'
 
-all_TE_name = sys.argv[1]
-output_name = sys.argv[2]
+# all_TE_name = sys.argv[1]
+# output_name = sys.argv[2]
 
 # 1. TE annotation into dataframe
 all_TE = pd.read_table(all_TE_name, sep='\t', header=None)
@@ -33,7 +33,7 @@ for j in range(0, len(all_TE['Classification'])):
 all_TE['Classification'] = all_TE['Classification'].str.replace('no_match', 'XXX')
 all_TE['Classification'] = all_TE['Classification'].str.split('_').str[0]
 # 3. merge the attributes
-all_TE = all_TE.drop(['ID', 'Name', 'Ontology_term', 'compo', 'status', 'soloLTR'], axis=1)
+all_TE = all_TE.drop(['ID', 'Name', 'Ontology_term', 'compo', 'soloLTR', 'status'], axis=1)
 # print(allte['attributes'])
 
 # 4. output the gff3 file
