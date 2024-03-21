@@ -2,11 +2,11 @@ import sys
 import pandas as pd
 import re
 
-all_TE_name = 'data/test.cs.anno.gff3'
-output_name = 'data/test.gff3'
+# all_TE_name = 'data/test.cs.anno.gff3'
+# output_name = 'data/test.gff3'
 
-# all_TE_name = sys.argv[1]
-# output_name = sys.argv[2]
+all_TE_name = sys.argv[1]
+output_name = sys.argv[2]
 
 # 1. TE annotation into dataframe
 all_TE = pd.read_table(all_TE_name, sep='\t', header=None)
