@@ -12,6 +12,8 @@ overlap.columns = ['method', 'overlap', 'same type']
 overlap['overlap'] = overlap['overlap'] / total_TE
 overlap['same type'] = overlap['same type'] / total_TE
 
+print(overlap['same type'])
+
 # plot
 plt.figure(figsize=(12, 8))
 sns.barplot(data=overlap, x='method', y='overlap', label='overlap', width=0.2)

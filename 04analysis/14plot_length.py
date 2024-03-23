@@ -35,7 +35,7 @@ fig, ax = plt.subplots()
 ax.figure.set_size_inches(24, 12)
 
 # Concatenate the dataframes
-length = pd.concat([plot_length('CS'), plot_length('EDTA')])
+length = pd.concat([plot_length('CS'), plot_length('EDTA'), plot_length('trep')])
 
 length.reset_index(drop=True, inplace=True)
 
