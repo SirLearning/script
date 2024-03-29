@@ -9,9 +9,9 @@ usage = """%(prog)s reads in a provided repeat library fasta file and removes an
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", "--input", dest="input",
-                  help="fasta file name")
+                  help="fasta file triticeae")
 p.add_argument("-o", "--output", dest="output",
-                  help="output file name")
+                  help="output file triticeae")
 
 # Parse arguments
 args = p.parse_args()

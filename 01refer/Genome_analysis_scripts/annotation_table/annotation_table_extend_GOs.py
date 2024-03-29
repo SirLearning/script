@@ -46,19 +46,19 @@ def validate_args(args):
     # Validate input file locations
     if not os.path.isfile(args.inputTable):
         print('I am unable to locate the tab-delimited annotation table file (' + args.inputTable + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     elif not os.path.isfile(args.idmappingFile):
         print('I am unable to locate the input idmapping file (' + args.idmappingFile + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     elif not os.path.isfile(args.oboFile):
         print('I am unable to locate the go-basic.obo file (' + args.oboFile + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     # Handle file overwrites
     if os.path.isfile(args.outputFileName):
-        print(args.outputFileName + ' already exists. Specify a different output file name or delete, move, or rename this file and run the program again.')
+        print(args.outputFileName + ' already exists. Specify a different output file triticeae or delete, move, or rename this file and run the program again.')
         quit()
 
 def idmap_go_parse(tableFile, idmapFile):
@@ -119,7 +119,7 @@ def main():
     p = argparse.ArgumentParser(description=usage)
     p.add_argument("-it", "-inputTable", dest="inputTable",
             required=True,
-            help="Input tab-delimited annotation table file name.")
+            help="Input tab-delimited annotation table file triticeae.")
     p.add_argument("-idmappingFile", "-im", dest="idmappingFile",
             required=True,
             help="Input idmapping_selected.tab file (this is available from the UniProtKB FTP site).")
@@ -128,7 +128,7 @@ def main():
             help="Input go-basic.obo file.")
     p.add_argument("-o", "-outputTable", dest="outputFileName",
             required=True,
-            help="Output annotation table file name.")
+            help="Output annotation table file triticeae.")
     args = p.parse_args()
     validate_args(args)
     

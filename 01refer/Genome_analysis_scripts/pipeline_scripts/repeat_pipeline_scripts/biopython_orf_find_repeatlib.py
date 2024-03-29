@@ -17,12 +17,12 @@ produces an output fasta file containing potential open reading frames (ORFs) as
 """
 # Reqs
 p = argparse.ArgumentParser(description=usage)
-#p.add_argument("input", type = str, help="Input fasta file name")
-#p.add_argument("output", type = str, help="Output fasta file name")
+#p.add_argument("input", type = str, help="Input fasta file triticeae")
+#p.add_argument("output", type = str, help="Output fasta file triticeae")
 p.add_argument("-i", "-input", dest="fileName",
-                   help="Input fasta file name")
+                   help="Input fasta file triticeae")
 p.add_argument("-o", "-output", dest="outputFileName",
-                   help="Output fasta file name")
+                   help="Output fasta file triticeae")
 # Opts
 #p.add_argument("-min", "-minimum", type=int, dest="minProLen",
 #                   help="Minimum ORF amino acid length. Default == 30.", default=30)
@@ -63,7 +63,7 @@ xRegex = re.compile(r'X+')                                              # Regex 
 if outputFileName != None:
         if sequenceType.lower() != 'both':
                 if os.path.isfile(outputFileName) and force.lower() != 'y':
-                        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete this older file, or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete this older file, or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(outputFileName) and force.lower() == 'y':
                         os.remove(outputFileName)
@@ -72,12 +72,12 @@ if outputFileName != None:
                 protOutName = outPrefix[0] + '_prot.' + outPrefix[1]
                 nuclOutName = outPrefix[0] + '_nucl.' + outPrefix[1]
                 if os.path.isfile(protOutName) and force.lower() != 'y':
-                        print('There is already a file named ' + protOutName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + protOutName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(protOutName) and force.lower() == 'y':
                         os.remove(protOutName)
                 if os.path.isfile(nuclOutName) and force.lower() != 'y':
-                        print('There is already a file named ' + nuclOutName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + nuclOutName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(nuclOutName) and force.lower() == 'y':
                         os.remove(nuclOutName)

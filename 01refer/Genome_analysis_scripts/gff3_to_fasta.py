@@ -15,11 +15,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.fasta):
                 print('I am unable to locate the genome fasta file (' + args.fasta + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gff3):
                 print('I am unable to locate the input gff3 gene annotation file (' + args.gff3 + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate behaviour arguments
         if args.geneIDs == True and args.locusSeqs == "isoforms":
@@ -44,20 +44,20 @@ def validate_args(args):
         # Handle file overwrites
         if args.seqType == 'transcript' or args.seqType == 'both':
                 if os.path.isfile(mainOutputFileName) and args.force != True:
-                        print('There is already a file named ' + mainOutputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + mainOutputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(mainOutputFileName) and args.force == True:
                         os.remove(mainOutputFileName)
         if args.seqType == 'cds' or args.seqType == 'both':
                 # Nucl
                 if os.path.isfile(nuclOutputFileName) and args.force != True:
-                        print('There is already a file named ' + nuclOutputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + nuclOutputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(nuclOutputFileName) and args.force == True:
                         os.remove(nuclOutputFileName)
                 # Prot
                 if os.path.isfile(protOutputFileName) and args.force != True:
-                        print('There is already a file named ' + protOutputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + protOutputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(protOutputFileName) and args.force == True:
                         os.remove(protOutputFileName)
@@ -113,7 +113,7 @@ def main():
     usage = """%(prog)s reads in genome fasta file and corresponding GFF3 file and retrieves
     the main and/or alternative isoform transcripts and/or nucleotide CDS and translated amino acid
     sequences for each locus. Alternatively, you can grab the CDS regions which will produce nucleotide
-    and AA files (name format == OUTPUT.nucl / OUTPUT.aa). This function will only output mRNA
+    and AA files (triticeae format == OUTPUT.nucl / OUTPUT.aa). This function will only output mRNA
     sequences from features annotated as "gene" in the GFF3.
     """
     # Required

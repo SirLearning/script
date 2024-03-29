@@ -17,7 +17,7 @@ def validate_args(args):
         # Validate Orthogroup file location
         if not os.path.isfile(args.orthogroups):
                 print('I am unable to locate the Orthogroups file (' + args.orthogroups + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isdir(args.outputFileName):
@@ -71,7 +71,7 @@ p = argparse.ArgumentParser(description=usage)
 p.add_argument("-c", "-csv", dest="orthogroups",
                help="Specify the orthogroup file")
 p.add_argument("-o", "-output", dest="outputFileName",
-               help="Output file name.")
+               help="Output file triticeae.")
 
 args = p.parse_args()
 validate_args(args)

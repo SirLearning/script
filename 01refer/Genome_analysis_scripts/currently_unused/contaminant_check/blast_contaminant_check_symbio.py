@@ -19,15 +19,15 @@ modified to have this script process data neutrally.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("--input", "-i", dest="blastFile",
-                   help="Input blast file name")
+                   help="Input blast file triticeae")
 p.add_argument("--fasta", "-f", dest="fastaFile",
-                   help="Input fasta file name")
+                   help="Input fasta file triticeae")
 p.add_argument("--outfile", "-o", dest="outfile",
-                   help="Output blast file name")
+                   help="Output blast file triticeae")
 p.add_argument("--evalue", "-e", dest="evalue", type = float,
                    help="E-value cut-off")
 p.add_argument("--force", "-fo", dest="force", choices = ['y', 'n', 'Y', 'N'],
-                   help="Optionally allow this script to overwrite existing files with the same name as your output [default = 'n']", default = 'n')
+                   help="Optionally allow this script to overwrite existing files with the same triticeae as your output [default = 'n']", default = 'n')
 args = p.parse_args()
 
 blastFile = args.blastFile
@@ -39,7 +39,7 @@ force = args.force
 # Check if we should be overwriting files
 if outfile != None:
         if os.path.isfile(outfile) and force.lower() != 'y':
-                print('There is already a file named ' + outfile + '. Either specify a new file name, delete this older file, or provide the -force argument either "Y" or "y"')
+                print('There is already a file named ' + outfile + '. Either specify a new file triticeae, delete this older file, or provide the -force argument either "Y" or "y"')
                 quit()
         elif os.path.isfile(outfile) and force.lower() == 'y':
                 os.remove(outfile)

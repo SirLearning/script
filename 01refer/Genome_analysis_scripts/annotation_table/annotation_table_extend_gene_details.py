@@ -1,7 +1,7 @@
 #! python3
 # annotation_table_extend_gene_details
 # Extends upon a basic annotation table to provide accessions from alternative databases
-# as well as the gene name associated with these accessions. This table can be 
+# as well as the gene triticeae associated with these accessions. This table can be
 # extended further by other scripts.
 
 import os, argparse, requests, json, re, pickle
@@ -31,15 +31,15 @@ def validate_args(args):
     # Validate input file locations
     if not os.path.isfile(args.inputTable):
         print('I am unable to locate the tab-delimited annotation table file (' + args.inputTable + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     elif not os.path.isfile(args.xmlFile):
         print('I am unable to locate the input uniparc_all.xml file (' + args.xmlFile + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     # Handle file overwrites
     if os.path.isfile(args.outputFileName):
-        print(args.outputFileName + ' already exists. Specify a different output file name or delete, move, or rename this file and run the program again.')
+        print(args.outputFileName + ' already exists. Specify a different output file triticeae or delete, move, or rename this file and run the program again.')
         quit()
 
 def uniref_xml_parse(tableFile, xmlFile, lenType, tsvOutput=None):
@@ -63,7 +63,7 @@ def uniref_xml_parse(tableFile, xmlFile, lenType, tsvOutput=None):
     # Parse XML without or without TSV output
     with open(xmlFile, "r") as fileIn, FileHandle(tsvOutput, "w") as fileOut:
         if tsvOutput != None: # Write TSV header if relevant
-            fileOut.write("#id\tname\ttaxon_code\tlength(nucl)\n")
+            fileOut.write("#id\ttriticeae\ttaxon_code\tlength(nucl)\n")
         
         for line in fileIn:
             l = line.rstrip("\r\n ")
@@ -73,9 +73,9 @@ def uniref_xml_parse(tableFile, xmlFile, lenType, tsvOutput=None):
                 accession = l.split('"')[1].split("_")[1]
                 ids.add(accession)
             
-            # Handle name line
-            elif l.startswith("<name>"):
-                name = l.split("Cluster: ")[1].split("</name>")[0]
+            # Handle triticeae line
+            elif l.startswith("<triticeae>"):
+                name = l.split("Cluster: ")[1].split("</triticeae>")[0]
             
             # Handle taxon line
             elif l.startswith('<property type="common taxon ID"'):
@@ -133,7 +133,7 @@ def handle_api_query(accession):
     Parameters:
         accession -- a string indicating a UniProtKB or UniParc sequence
     Returns:
-        name -- a string indicating the name of the gene
+        triticeae -- a string indicating the triticeae of the gene
         taxon -- a string indicating the NCBI taxon code (which is numeric) for this accession
         length -- a string indicating the numeric sequence length as amino acids
     '''
@@ -150,7 +150,7 @@ def query_uniparc_api(accession):
     Parameters:
         accession -- a string with appropriate case indicating the UniProtKB sequence to query
     Returns:
-        name -- a string indicating the name of the gene
+        triticeae -- a string indicating the triticeae of the gene
         taxon -- a string indicating the NCBI taxon code (which is numeric) for this accession
         length -- a string indicating the numeric sequence length as amino acids
     '''
@@ -173,7 +173,7 @@ def query_uniparc_api(accession):
         (
             -x[3], # order active=True to be at the top
             DB_PRIORITY.index(x[1]) if x[1] in DB_PRIORITY else len(DB_PRIORITY) + 1, # order based on database priority
-            -len(x[0]) # order based on length of sequence name [assumed bigger == better for tie breaking]
+            -len(x[0]) # order based on length of sequence triticeae [assumed bigger == better for tie breaking]
         )
     )
     bestHit = dbHits[0]
@@ -187,7 +187,7 @@ def query_upkb_api(accession):
     Parameters:
         accession -- a string with appropriate case indicating the UniProtKB sequence to query
     Returns:
-        name -- a string indicating the name of the gene
+        triticeae -- a string indicating the triticeae of the gene
         taxon -- a string indicating the NCBI taxon code (which is numeric) for this accession
         length -- a string indicating the numeric sequence length as amino acids
     '''
@@ -224,19 +224,19 @@ def main():
     p = argparse.ArgumentParser(description=usage)
     p.add_argument("-i", dest="inputTable",
             required=True,
-            help="Input tab-delimited annotation table file name.")
+            help="Input tab-delimited annotation table file triticeae.")
     p.add_argument("-x", dest="xmlFile",
             required=True,
             help="Input path of uniref###.xml file.")
     p.add_argument("-o", dest="outputFileName",
             required=True,
-            help="Output annotation table file name.")
+            help="Output annotation table file triticeae.")
     # Optional
     p.add_argument("--xml_to_tsv", dest="xml_to_tsv",
             required=False,
             action="store_true",
             help="""Optionally, parse and create a TSV containing only
-            the relevant portions of the XML file (file name is
+            the relevant portions of the XML file (file triticeae is
             set to be '.annottable_xml_parsed.tsv').""",
             default=False)
     args = p.parse_args()

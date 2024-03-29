@@ -14,7 +14,7 @@ awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
 # output file
 touch stats.dtb.gff3
 python ~/script/04analysis/03distribution.py $1 ~/script/04analysis/data/TEcode stats.dtb.gff3
-#awk '{$1="chr1A"}1' OFS='\t' stats.dtb.gff3 > stats.dtb.gff3 # when N1.bed is used, need to reconsider the file name
+#awk '{$1="chr1A"}1' OFS='\t' stats.dtb.gff3 > stats.dtb.gff3 # when N1.bed is used, need to reconsider the file triticeae
 # calculate the number of TE in each window
 declare -a arr=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "DTX" "DXX" "NULL" "RIJ" "RIL" "RIR" "RIX" "RLC" "RLG" "RLX" "RSX" "XXX")
 for i in "${arr[@]}"

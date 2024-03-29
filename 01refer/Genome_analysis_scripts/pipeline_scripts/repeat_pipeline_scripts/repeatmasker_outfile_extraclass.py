@@ -11,7 +11,7 @@ p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", "-input", dest="file", type=str,
                   help="Input .out file")
 p.add_argument("-o", "-output", type=str, dest="output",
-             help="Output file name")
+             help="Output file triticeae")
 p.add_argument("-f", "-force", choices=['Y', 'y', 'N', 'n'], dest="force",
              help="Optionally specify whether script should be allowed to overwrite existing files (default = 'n')", default = 'n')
 
@@ -25,7 +25,7 @@ force = args.force
 if os.path.isfile(outfile):
     if force.lower() == 'n':
         print('Output repeatmasker file already exists (' + outfile + ').')
-        print('Either change the output file name, specify \'force\' argument == \'y\', or delete the file yourself - then try again.')
+        print('Either change the output file triticeae, specify \'force\' argument == \'y\', or delete the file yourself - then try again.')
         quit()
     else:
         os.remove(outfile)
@@ -34,7 +34,7 @@ if os.path.isfile(outfile):
 if os.path.isfile(outfile + '.MITEids'):
     if force.lower() == 'n':
         print('Output MITEids file already exists (' + outfile + '.MITEids).')
-        print('Either change the output file name, specify \'force\' argument == \'y\', or delete the file yourself - then try again.')
+        print('Either change the output file triticeae, specify \'force\' argument == \'y\', or delete the file yourself - then try again.')
         quit()
     else:
         os.remove(outfile + '.MITEids')

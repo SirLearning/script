@@ -21,7 +21,7 @@ def validate_args(args):
     for entry in args.inputFastas:
         if not os.path.isfile(entry):
             print('I am unable to locate the input FASTA file (' + entry + ')')
-            print('Make sure you\'ve typed the file name or location correctly and try again.')
+            print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
             quit()
     # Handle file type processing
     if len(args.inputFastas) == 2:
@@ -84,8 +84,8 @@ def validate_args(args):
         quit()
     for outputFileName in args.outputFileNames:
         if os.path.isfile(outputFileName):
-            print('Specified file name already exists (' + outputFileName + ')')
-            print('This program won\'t overwrite an existing file; provide a new name and try again.')
+            print('Specified file triticeae already exists (' + outputFileName + ')')
+            print('This program won\'t overwrite an existing file; provide a new triticeae and try again.')
             quit()
     # Ensure argument combinations are sensible
     if args.sampleType == "longest" and seqType == "fastq" and len(args.inputFastas) == 2:
@@ -156,7 +156,7 @@ def main():
     """
     p = argparse.ArgumentParser(description=usage)
     p.add_argument("-i", "--input", dest="inputFastas", nargs="+",
-            help="""Accepts 1-2 fast(a/q) file name(s). If subsetting paired fastq files, enter both file
+            help="""Accepts 1-2 fast(a/q) file triticeae(s). If subsetting paired fastq files, enter both file
             names to ensure they use the same random seed. If using regular fasta, just one file at a time
             please. Will also accept a single fastq file.""")
     p.add_argument("-n", "--num", dest="sampleNum", type=int,

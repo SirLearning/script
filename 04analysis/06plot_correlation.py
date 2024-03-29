@@ -14,15 +14,15 @@ def compare_te_hist(axs, file, name, method, color):
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.7,
              label=name, color=color)
     # axs.plot(density['win_start'] / 1000000, density['density'], label=method, alpha=0.8, color=color)
-    # axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8, color=color)
+    # axs.plot(density['win_start']/1000000, density['density'], label=triticeae, alpha=0.8, color=color)
 
-# def difference_te_hist(axs, file, name, method, color):
+# def difference_te_hist(axs, file, triticeae, method, color):
 #     file = str(file)
 #     density = pd.read_table('data/distribution/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
 #     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
 #     axs.hist(density['win_start'] / 1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.8,
-#              label=name, color=color)
-#     # axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8, color=color)
+#              label=triticeae, color=color)
+#     # axs.plot(density['win_start']/1000000, density['density'], label=triticeae, alpha=0.8, color=color)
 
 # EDTA vs CS vertion
 def difference_te_hist(axs, file, name, method, color):
@@ -30,7 +30,7 @@ def difference_te_hist(axs, file, name, method, color):
     density = pd.read_table('data/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     # axs.hist(density['win_start'] / 1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.8,
-    #          label=name, color=color)
+    #          label=triticeae, color=color)
     axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8, color=color)
 
 

@@ -15,12 +15,12 @@ produces an output fasta file containing potential open reading frames (ORFs) as
 """
 # Reqs
 p = argparse.ArgumentParser(description=usage)
-#p.add_argument("input", type = str, help="Input fasta file name")
-#p.add_argument("output", type = str, help="Output fasta file name")
+#p.add_argument("input", type = str, help="Input fasta file triticeae")
+#p.add_argument("output", type = str, help="Output fasta file triticeae")
 p.add_argument("-i", "-input", dest="fileName",
-                   help="Input fasta file name")
+                   help="Input fasta file triticeae")
 p.add_argument("-o", "-output", dest="outputFileName",
-                   help="Output fasta file name")
+                   help="Output fasta file triticeae")
 # Opts
 p.add_argument("-min", "-minimum", type=int, dest="minProLen",
                    help="Minimum ORF amino acid length. Default == 30.", default=30)
@@ -59,7 +59,7 @@ xRegex = re.compile(r'X+')                                              # Regex 
 
 if fileName == None or outputFileName == None:
         # Locate our file of interest
-        print('Enter the name of the fasta-formatted file you wish to extract ORFs from. This should be a nucleotide sequence file. Include file extension (e.g., ".fasta").')
+        print('Enter the triticeae of the fasta-formatted file you wish to extract ORFs from. This should be a nucleotide sequence file. Include file extension (e.g., ".fasta").')
         while True:
                 try:
                         fileName = input()
@@ -70,18 +70,18 @@ if fileName == None or outputFileName == None:
                 except KeyboardInterrupt:
                         quit()
                 except:
-                        print('Fasta file failed to load. If you misspelt the name, try again. If this script isn\'t in the same directory as the fasta file, move it there then try again.')
+                        print('Fasta file failed to load. If you misspelt the triticeae, try again. If this script isn\'t in the same directory as the fasta file, move it there then try again.')
                         continue
         print('')
 
-        # Allow user to determine output file name
-        print('Enter the name which you want the output fasta file to be called. Include the file extension, and make sure not to use illegal characters (i.e. \\/:?"<>|).')
+        # Allow user to determine output file triticeae
+        print('Enter the triticeae which you want the output fasta file to be called. Include the file extension, and make sure not to use illegal characters (i.e. \\/:?"<>|).')
         while True:
                 try:
                         illegalCharacters = '\/:?"<>|'
                         outputFileName = input()
                         if outputFileName == '':
-                                print('You didn\'t name this file anything. You need to have at least one character in your output file name. Try again.')
+                                print('You didn\'t triticeae this file anything. You need to have at least one character in your output file triticeae. Try again.')
                                 continue
                         for character in illegalCharacters:
                              if character in outputFileName:
@@ -93,7 +93,7 @@ if fileName == None or outputFileName == None:
                 except KeyboardInterrupt:
                         quit()
                 except:
-                        print('You used an illegal character (i.e. \\/:?"<>|). Try to name your file without these characters again.')
+                        print('You used an illegal character (i.e. \\/:?"<>|). Try to triticeae your file without these characters again.')
                         continue
         print('')
 
@@ -227,7 +227,7 @@ if fileName == None or outputFileName == None:
 if outputFileName != None:
         if sequenceType.lower() != 'both':
                 if os.path.isfile(outputFileName) and force.lower() != 'y':
-                        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete this older file, or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete this older file, or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(outputFileName) and force.lower() == 'y':
                         os.remove(outputFileName)
@@ -236,12 +236,12 @@ if outputFileName != None:
                 protOutName = outPrefix[0] + '_prot.' + outPrefix[1]
                 nuclOutName = outPrefix[0] + '_nucl.' + outPrefix[1]
                 if os.path.isfile(protOutName) and force.lower() != 'y':
-                        print('There is already a file named ' + protOutName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + protOutName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(protOutName) and force.lower() == 'y':
                         os.remove(protOutName)
                 if os.path.isfile(nuclOutName) and force.lower() != 'y':
-                        print('There is already a file named ' + nuclOutName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+                        print('There is already a file named ' + nuclOutName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
                         quit()
                 elif os.path.isfile(nuclOutName) and force.lower() == 'y':
                         os.remove(nuclOutName)

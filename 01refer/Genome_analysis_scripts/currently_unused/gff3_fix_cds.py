@@ -24,7 +24,7 @@ def reverse_comp(seq):
 
 usage = """%(prog)s reads in genome fasta file and corresponding gff3 file in a format output by PASA and retrieves the main
 and/or alternative isoform transcripts for each locus. Alternatively, you can grab the CDS regions which will produce nucleotide
-and AA files (name format == OUTPUT.nucl / OUTPUT.aa)
+and AA files (triticeae format == OUTPUT.nucl / OUTPUT.aa)
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", "-input", dest="fasta",
@@ -46,7 +46,7 @@ force = args.force
 
 # Check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)

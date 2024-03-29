@@ -12,7 +12,7 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.input):
                 print('I am unable to locate the input FASTA file (' + args.input + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.output):
@@ -30,9 +30,9 @@ the genome that is lowercase
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", dest="input",
-                  help="fasta file name")
+                  help="fasta file triticeae")
 p.add_argument("-o", dest="output",
-                  help="output file name")
+                  help="output file triticeae")
 
 args = p.parse_args()
 validate_args(args)

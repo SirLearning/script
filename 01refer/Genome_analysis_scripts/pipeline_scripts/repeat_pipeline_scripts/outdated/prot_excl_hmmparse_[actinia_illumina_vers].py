@@ -16,7 +16,7 @@ p.add_argument("-t", "-text", dest="modelIDs",
 p.add_argument("-e", "-evalue", type=float, dest="evalue",
                    help="E-value cut-off to enforce for returning sequences with significant hits", default=1e-3)
 p.add_argument("-o", "-output", dest="outputFileName",
-                   help="Output text file name")
+                   help="Output text file triticeae")
 
 args = p.parse_args()
 

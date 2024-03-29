@@ -14,7 +14,7 @@ def validate_args(args):
     # Validate input file locations
     if not os.path.isfile(args.gff3File):
         print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     # Validate that numeric arguments make sense
     if args.start < 0:
@@ -139,7 +139,7 @@ def main():
                    help="Specify the end of the range (1-based)")
     p.add_argument("-o", "-outputFile", dest="outputFileName",
                    required=True,
-                   help="Output file name.")
+                   help="Output file triticeae.")
     
     args = p.parse_args()
     validate_args(args)

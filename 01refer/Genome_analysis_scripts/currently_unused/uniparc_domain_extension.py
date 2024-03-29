@@ -126,7 +126,7 @@ Note that the HMMER3 result should have been generated using the hmm_db_download
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-ib","-inputBlast", dest="blastTab",
-                   help="Input tab-delimited annotation file name.")
+                   help="Input tab-delimited annotation file triticeae.")
 p.add_argument("-ih", "-inputHmmer", dest="domtbloutFile",
                    help="Input domtblout HMMER3 result file.")
 p.add_argument("-id", "-idFile", dest="idFile",
@@ -136,7 +136,7 @@ p.add_argument("-e", "-evalue", dest="evalue", type=float,
 p.add_argument("-p", "-percOvl", type=float, dest="ovlCutoff",
                    help="Percentage overlap cutoff (below == trimming to prevent overlap, above = deletion of lower E-value hit, default == 25.0)", default=25.0)
 p.add_argument("-o", "-outfile", dest="outfile",
-                   help="Output BLAST-tab file name (must be different to the input blastTab file).")
+                   help="Output BLAST-tab file triticeae (must be different to the input blastTab file).")
 p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
                help="default == 'n', which means the program will not overwrite existing files. Specify 'y' to allow this behaviour at your own risk.", default='n')
 
@@ -152,7 +152,7 @@ force = args.force
 
 # Check that output won't overwrite another file
 if os.path.isfile(outfile) and force.lower() != 'y':
-        print('There is already a file named ' + outfile + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outfile + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outfile) and force.lower() == 'y':
         os.remove(outfile)

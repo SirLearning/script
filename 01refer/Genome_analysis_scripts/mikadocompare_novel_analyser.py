@@ -29,27 +29,27 @@ def validate_args(args):
         # Validate input file locations if relevant
         if not os.path.isfile(args.tmapFile):
                 print('I am unable to locate the tmap file (' + args.tmapFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if args.fastaFile != None:
                 if not os.path.isfile(args.fastaFile):
                         print('I am unable to locate the FASTA file (' + args.fastaFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         if args.refGff3 != None:
                 if not os.path.isfile(args.refGff3):
                         print('I am unable to locate the reference GFF3 file (' + args.refGff3 + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         if args.refGff3 != None:
                 if not os.path.isfile(args.refGff3):
                         print('I am unable to locate the comparison GFF3 file (' + args.compGff3 + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         if args.preComputedBLAST != None:
                 if not os.path.isfile(args.preComputedBLAST):
                         print('I am unable to locate the pre-computed BLAST file (' + args.preComputedBLAST + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         # Handle file overwrites
         if args.outputFileName != None:
@@ -350,12 +350,12 @@ def blast_nt_nr_support_check(modelList, modelFastaFile, databaseFasta, blastAlg
                 if not os.path.isfile(preComputedBLAST):
                         print('blast_nt_nr_support_check: ' + preComputedBLAST + ' was specified as preComputedBLAST but file does not exist; fix the code for this program.')
                         quit()
-        # Generate a temporary file name for writing query fasta files and results if we do not have precomputed results
+        # Generate a temporary file triticeae for writing query fasta files and results if we do not have precomputed results
         else:
                 tmpQuery = os.path.join(os.getcwd(), tmp_file_name_gen('tmpQuery', '.fasta', databaseFasta + modelFastaFile))
                 open(tmpQuery, 'w').close()
                 tmpResult = tmpQuery.replace(os.path.basename(tmpQuery), os.path.basename(tmpQuery).replace('tmpQuery', 'tmpResult')).replace('.fasta', '.tsv')         # This lets us have paired file names which are a bit more intuitive
-                # Loop through models and generate our query FASTA file                                                                                                 # Our tmp name generator uses the time of name generation so they won't be equivalent otherwise
+                # Loop through models and generate our query FASTA file                                                                                                 # Our tmp triticeae generator uses the time of triticeae generation so they won't be equivalent otherwise
                 modelRecords = SeqIO.parse(open(args.fastaFile, 'r'), 'fasta')
                 for record in modelRecords:
                         # If this is without modelList, write to file
@@ -548,7 +548,7 @@ p.add_argument("-a", "-algorithm", dest="blastAlgorithm", choices=['blastp', 'bl
 p.add_argument("-n", "-novelLoci", dest="novelLoci", action='store_true',
                help="Optionally halt program operation after finding novel loci from the tmap file; these entries will be directly printed to stdout", default=False)
 p.add_argument("-o", "-outputFile", dest="outputFileName",
-               help="Output file name.")
+               help="Output file triticeae.")
 
 args = p.parse_args()
 validate_args(args)

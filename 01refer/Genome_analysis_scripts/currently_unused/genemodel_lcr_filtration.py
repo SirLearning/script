@@ -249,7 +249,7 @@ def orf_find(records, minProLen, maxProLen, hitsToPull, altCodonStringency, noCo
         else:
                 return outputProt
 
-# Define temporary file name generator
+# Define temporary file triticeae generator
 def temp_file_name_gen(prefix):
         import os
         ongoingCount = 1
@@ -285,7 +285,7 @@ p.add_argument("-t", "-table", dest="tableFile",
 p.add_argument("-s", "-segdir", dest="segDir",
                   help="Specify the directory where seg executables are located. If this is already in your PATH, you can leave this blank.")
 p.add_argument("-o", "-output", dest="outputFile",
-               help="Output file name")
+               help="Output file triticeae")
 p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
                help="default == 'n', which means the program will not overwrite existing files. Specify 'y' to allow this behaviour at your own risk.", default='n')
 
@@ -300,7 +300,7 @@ force = args.force
 
 # Format output names and check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)

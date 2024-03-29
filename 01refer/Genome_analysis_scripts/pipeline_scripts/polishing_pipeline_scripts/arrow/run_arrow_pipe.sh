@@ -20,7 +20,7 @@ ITERATION=1
 BAMUTIL=/home/n8942188/various_programs/bamUtil/bin
 VARIOUSSCRIPTSDIR=/home/n8942188/scripts/Various_scripts
 
-## Setup: Conda environment name containg arrow installation
+## Setup: Conda environment triticeae containg arrow installation
 CONDA_ENV=pb_polish # This should be what you call with "conda activate"
 
 ## Setup: Subreads location text file

@@ -1,14 +1,14 @@
 #! python3
 # uniclust_table_extension
 # Extends upon a basic uniparc table to provide accessions from alternative databases
-# as well as the gene name associated with these accessions. This table can be 
+# as well as the gene triticeae associated with these accessions. This table can be
 # extended further with domain annotations by the uniclust_domain_extension.py script
 
 import os, argparse, re, urllib.request, pickle
 from itertools import groupby
 import xml.etree.ElementTree as ET
 
-# Define file name generator function
+# Define file triticeae generator function
 def file_name_gen(prefix):
         import os
         ongoingCount = 1
@@ -20,7 +20,7 @@ def file_name_gen(prefix):
                 else:
                         return prefix + str(ongoingCount) + '.pkl'
 
-# Make a regex for handling gene/protein name redundancy if needed
+# Make a regex for handling gene/protein triticeae redundancy if needed
 #protRegex = re.compile(r'Protein_names=(.+)(\.\s*Gene_names=|$)')
 protRegex = re.compile(r'Protein_names=(.+)(\.\s*Gene_names=|\.\s$)')
 geneRegex = re.compile(r'Gene_names=(.+)\.$')
@@ -35,11 +35,11 @@ their protein and gene names, as well as the NCBI taxonomy IDs of associated dat
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", "-inputTable", dest="inputTable",
-                   help="Input tab-delimited annotation table file name")
+                   help="Input tab-delimited annotation table file triticeae")
 p.add_argument("-o", "-outputTable", dest="outputTable",
-                   help="Output annotation table file name")
+                   help="Output annotation table file triticeae")
 p.add_argument("-p", "-pickleDict", dest="pickleDict",
-                   help="Optional: specify the file name of a pickled dictionary from another run of this program to reduce the amount of API queries")
+                   help="Optional: specify the file triticeae of a pickled dictionary from another run of this program to reduce the amount of API queries")
 p.add_argument("-s", "-skipList", dest="skipList",
                    help="Optional: specify an input text file list of UPIs to skip if they've been deleted from the UniProtKB API")
 p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
@@ -55,7 +55,7 @@ force = args.force
 
 # Check that output won't overwrite another file
 if os.path.isfile(outputTable) and force.lower() != 'y':
-        print('There is already a file named ' + outputTable + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputTable + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputTable) and force.lower() == 'y':
         os.remove(outputTable)
@@ -154,7 +154,7 @@ try:
                                                 # Format the output line
                                                 dbAccessions = ';'.join(dbAccessions)
                                                 taxIDs = ';'.join(taxIDs)
-                                                ## Handle prot name redundancy
+                                                ## Handle prot triticeae redundancy
                                                 protNames = list(protNames)
                                                 protNames.sort(key=len, reverse=True)            # Sort in reverse to order the longest gene names to the front - these are likely to be the most "informative" most of the time
                                                 compareList = []
@@ -165,7 +165,7 @@ try:
                                                                 compareList.append(tmp)
                                                                 protNamesNoRedun.append(entry)
                                                 protNames = protNamesNoRedun
-                                                ## Handle gene name redundancy
+                                                ## Handle gene triticeae redundancy
                                                 geneNames = list(geneNames)
                                                 geneNames.sort(key=len, reverse=True)
                                                 compareList = []

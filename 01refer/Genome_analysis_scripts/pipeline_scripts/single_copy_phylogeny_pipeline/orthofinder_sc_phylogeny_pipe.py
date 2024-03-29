@@ -44,7 +44,7 @@ def mafft_align_file_list(outputDir, fileList, threads, algorithm):
         def run_mafft(outputDir, fileList, startNum, endNum, thread, algorithm):
                 # Set up
                 for i in range(startNum, endNum):
-                    # Identify file to align & set output file name
+                    # Identify file to align & set output file triticeae
                     fastaFile = fileList[i]
                     fileOutName = os.path.basename(fastaFile).rsplit(".", maxsplit=1)[0] + "_align.fasta"
                     # Skip processing if resuming a run
@@ -204,9 +204,9 @@ def main():
     p.add_argument("-i", dest="inputDir",
         help="Input directory containing only OrthoFinder's single copy ortholog sequence files")
     p.add_argument("-rp", dest="raxmlThreaded",
-        help="Specify the name of the executable for running RAxML in multi-threaded mode")
+        help="Specify the triticeae of the executable for running RAxML in multi-threaded mode")
     p.add_argument("-rs", dest="raxmlStandard",
-        help="Specify the name of the executable for running RAxML in standard mode")
+        help="Specify the triticeae of the executable for running RAxML in standard mode")
     p.add_argument("-cd", dest="cafeDir",
         help="Specify the location of the CAFE base directory")
     p.add_argument("-cp", dest="cafeP",

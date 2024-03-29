@@ -16,11 +16,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.tRNAFile):
                 print('I am unable to locate the tRNAscan-SE results file (' + args.tRNAFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -61,7 +61,7 @@ p.add_argument("-g", dest="gff3File",
 p.add_argument("-t", dest="tRNAFile",
                   help="Specify tRNAscan-SE annotation results file")
 p.add_argument("-o", dest="outputFileName",
-               help="Output GFF3 file name")
+               help="Output GFF3 file triticeae")
 
 args = p.parse_args()
 validate_args(args)
@@ -106,7 +106,7 @@ with open(args.gff3File, 'r') as fileIn, open(args.outputFileName, 'w') as fileO
                                 val[2], val[3] = val[3], val[2]         # Swap so we can keep our gff3 file in order where column 4 is always > column 5, and with the - or + to note orientation
                         else:
                                 orientation = '+'
-                        # Determine the ID & name for this entry
+                        # Determine the ID & triticeae for this entry
                         valType = val[4]
                         receptacleIndex = rnaTypes.index(valType)
                         trnaID = 'tRNAscan-SE.tRNA.' + key + '.' + val[4] + '(' + val[5] + ').' + str(rnaOngoingCounts[receptacleIndex])

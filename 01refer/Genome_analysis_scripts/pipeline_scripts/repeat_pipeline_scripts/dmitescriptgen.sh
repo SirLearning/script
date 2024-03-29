@@ -7,7 +7,7 @@ case $i in
     GENDIR="${i#*=}"
     shift # past argument=value
     ;;
-    -n=*|--name=*)
+    -n=*|--tririceae=*)
     GENNAME="${i#*=}"
     shift # past argument=value
     ;;

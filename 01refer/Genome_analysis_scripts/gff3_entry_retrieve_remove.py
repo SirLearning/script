@@ -15,11 +15,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.textFile):
                 print('I am unable to locate the text file (' + args.textFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()   
         # Ensure behaviour is specified
         if args.behaviour == None:
@@ -158,7 +158,7 @@ def main():
     p.add_argument("-b", "-behaviour", dest="behaviour", choices=['main', 'feature'],
                 help="Specify program behaviour to retrieve/remove the whole gene (main) or individual features (feature) when there's a match in your ID text file.")
     p.add_argument("-o", "-outputFile", dest="outputFileName",
-                    help="Output file name.")
+                    help="Output file triticeae.")
     
     args = p.parse_args()
     validate_args(args)

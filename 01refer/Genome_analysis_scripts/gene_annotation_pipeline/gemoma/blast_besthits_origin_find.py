@@ -12,7 +12,7 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputTsvName):
                 print('I am unable to locate the input TSV file (' + args.inputTsvName + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Generate output file names
         args.outputFiles = []
@@ -20,7 +20,7 @@ def validate_args(args):
                 # Check that file exists
                 if not os.path.isfile(fileName):
                         print('I am unable to locate the origin FASTA file (' + fileName + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 # Continue to generate output file names
                 suffix = os.path.basename(fileName).rsplit(".", maxsplit=1)[0]
@@ -60,7 +60,7 @@ file which the best match came from. It will generate multiple output text files
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-t", dest="inputTsvName",
-        help="Input best hits tsv file name")
+        help="Input best hits tsv file triticeae")
 p.add_argument("-o", dest="originFiles", nargs="+",
         help="Specify the origin files")
 p.add_argument("-p", dest="prefix",

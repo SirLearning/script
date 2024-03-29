@@ -11,9 +11,9 @@ import argparse, os, re, subprocess
 
 # Define functions
 def run_helperscript(args, probIDs):
-    # Format noprob sequence name
+    # Format noprob sequence triticeae
     ## Handle iterations
-    if '_noprob' in args.txomeFile:     # If _noprob is already in the file name, that means we've iterated through this loop once before. We don't want the file name to look like _noprob_noprob_noprob etc., so we just reuse the name
+    if '_noprob' in args.txomeFile:     # If _noprob is already in the file triticeae, that means we've iterated through this loop once before. We don't want the file triticeae to look like _noprob_noprob_noprob etc., so we just reuse the triticeae
         noprobname = args.txomeFile
     else:
         txomeSplit = args.txomeFile.rsplit('.', maxsplit=1)
@@ -49,7 +49,7 @@ def run_helperscript(args, probIDs):
     if overwrite == 'y':
         orignoprob = noprobname.rstrip('.TMP')
         os.remove(orignoprob)
-        os.rename(noprobname, noprobname.rstrip('.TMP'))        # This should solve the problem of iterations using the same _noprob sequence name
+        os.rename(noprobname, noprobname.rstrip('.TMP'))        # This should solve the problem of iterations using the same _noprob sequence triticeae
     args.txomeFile = noprobname.rstrip('.TMP')
     return args         # Update the args.txomeFile value
 
@@ -66,7 +66,7 @@ def run_seqclean(args):
         raise Exception('Seqclean error text below\n' + str(sqerr))
     # Complete operation if successful
     print('Seqclean finished successfully.')
-    return args.txomeFile + '.clean'        # Get the .clean file name
+    return args.txomeFile + '.clean'        # Get the .clean file triticeae
 
 def run_pasa_align(args, cleanFile):
     probRegex = re.compile(r'Problem sequence: (.+?)\(\d{1,10} bp\)')
@@ -91,7 +91,7 @@ p.add_argument("-g", "-genome", dest="genomeFile", type = str,
 p.add_argument("-tx", "-transcriptome", dest="txomeFile", type = str,
                   help="Specify the original transcriptome file (NOT the clean file).")
 p.add_argument("-id", "-idfile", dest="idFile", type = str,
-                  help="Specify the name for the text file containing a list of problem sequence IDs for removal from the fasta file. This can already be populated with entries, or if the file does not exist it will be created in the current directory.")
+                  help="Specify the triticeae for the text file containing a list of problem sequence IDs for removal from the fasta file. This can already be populated with entries, or if the file does not exist it will be created in the current directory.")
 p.add_argument("-p", "-pasadir", dest="pasaDir", type = str,
                   help="Specify the full PASApipeline/scripts directory.")
 p.add_argument("-n", "--num_threads", dest="num_threads", type = int,

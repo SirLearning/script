@@ -16,21 +16,21 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the input gff3 gene annotation file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.genomeFile):
                 print('I am unable to locate the input genome FASTA file (' + args.genomeFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         for blastFile in args.blastTab:
                 if not os.path.isfile(blastFile):
                         print('I am unable to locate the input BLAST-tab file (' + blastFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         for fastaFile in args.fastaFile:
                 if not os.path.isfile(fastaFile):
                         print('I am unable to locate the input FASTA file (' + fastaFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         if len(args.blastTab) != len(args.fastaFile):
                 print('The number of provided BLAST-tab files must equal the number of FASTA files. These files should be paired; fix your inputs and try again (making sure there are no spaces in your file names or directories)')
@@ -39,7 +39,7 @@ def validate_args(args):
         for i in range(len(args.transAlign)):
                 if not os.path.isfile(args.transAlign[i]):
                         print('I am unable to locate the input GMAP associated file (' + args.transAlign[i] + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 with open(args.transAlign[i], 'r') as fileIn:
                         for line in fileIn:
@@ -668,17 +668,17 @@ file names must not have spaces in them.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-a", "-annotationgff3", dest="gff3File", type=str,
-               help="Input gff3 file name")
+               help="Input gff3 file triticeae")
 p.add_argument("-g", "-genomefile", dest="genomeFile", type=str,
-               help="Input genome FASTA file name")
+               help="Input genome FASTA file triticeae")
 p.add_argument("-b", "-blasttab", dest="blastTab", type=str, nargs="+",
-               help="Input BLAST-tab file name(s); for multiple files, enter these locations separated with a space")
+               help="Input BLAST-tab file triticeae(s); for multiple files, enter these locations separated with a space")
 p.add_argument("-f", "-fastafile", dest="fastaFile", type=str, nargs="+",
-               help="Input fasta file name(s) that correspond to the query files used for generating the BLAST-tab file(s) in the same order as specified for -b")
+               help="Input fasta file triticeae(s) that correspond to the query files used for generating the BLAST-tab file(s) in the same order as specified for -b")
 p.add_argument("-t", "-transAlign", dest="transAlign", type=str, nargs=2,
-               help="Input transcript alignment GFF3 file name (produced by GMAP as detailed above) in addition to its corresponding transcript FASTA file name, separated by a space")
+               help="Input transcript alignment GFF3 file triticeae (produced by GMAP as detailed above) in addition to its corresponding transcript FASTA file triticeae, separated by a space")
 p.add_argument("-o", "-output", dest="outputFileName",
-               help="Output gff3 file name")
+               help="Output gff3 file triticeae")
 
 args = p.parse_args()
 ## Hard coded for testing

@@ -15,11 +15,11 @@ of new columns to list GO terms and other functional annotations
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("--inputBlast", "-ib", dest="blastTab",
-                   help="Input BLAST-tab file name.")
+                   help="Input BLAST-tab file triticeae.")
 p.add_argument("--inputID", "-id", dest="idFile",
-                   help="Input ID list file name. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
+                   help="Input ID list file triticeae. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
 p.add_argument("--outfile", "-o", dest="outfile",
-                   help="Output BLAST-tab file name.")
+                   help="Output BLAST-tab file triticeae.")
 p.add_argument("--evalue", "-e", dest="evalue", type=float,
                    help="E-value significance cut-off (i.e., hits with E-value less significant won't be reported).")
 args = p.parse_args()

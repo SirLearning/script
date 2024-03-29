@@ -11,15 +11,15 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputBlast):
                 print('I am unable to locate the input BLAST-tab file (' + args.inputBlast + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.inputQuery):
                 print('I am unable to locate the query FASTA file (' + args.inputQuery + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.inputTarget):
                 print('I am unable to locate the target FASTA file (' + args.inputTarget + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate numerical arguments
         if args.evalueCutoff < 0:
@@ -159,15 +159,15 @@ the resultant gff3 file will be used.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-ib", "-inputBlast", dest="inputBlast",
-                   help="Input BLAST-tab format file name.")
+                   help="Input BLAST-tab format file triticeae.")
 p.add_argument("-iq", "-inputQuery", dest="inputQuery",
-                   help="Input query FASTA file name.")
+                   help="Input query FASTA file triticeae.")
 p.add_argument("-it", "-inputTarget", dest="inputTarget",
-                   help="Input target FASTA file name.")
+                   help="Input target FASTA file triticeae.")
 p.add_argument("-e", "-evalue", dest="evalueCutoff", type=float,
                    help="E-value cut-off (ignore anything with E-value greater / less significant than this value; default == 1e-10).", default=1e-10)
 p.add_argument("-o", "-outputFile", dest="outputFileName",
-                   help="Output file name prefix (format is two text files listing sequence IDs that pass/fail curation; suffix == '_PASS' / '_FAIL').")
+                   help="Output file triticeae prefix (format is two text files listing sequence IDs that pass/fail curation; suffix == '_PASS' / '_FAIL').")
 
 args = p.parse_args()
 validate_args(args)

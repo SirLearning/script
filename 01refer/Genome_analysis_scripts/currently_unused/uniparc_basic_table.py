@@ -14,11 +14,11 @@ and, using an E-value cut-off, produce an abbreviated BLAST-tab-like file with b
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-inputBlast", "-ib", dest="blastTab",
-                   help="Input BLAST-tab file name.")
+                   help="Input BLAST-tab file triticeae.")
 p.add_argument("-inputID", "-id", dest="idFile",
-                   help="Input ID list file name. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
+                   help="Input ID list file triticeae. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
 p.add_argument("-outfile", "-o", dest="outputFileName",
-                   help="Output BLAST-tab file name.")
+                   help="Output BLAST-tab file triticeae.")
 p.add_argument("-evalue", "-e", dest="evalue", type=float,
                    help="E-value significance cut-off (i.e., hits with E-value less significant won't be reported).")
 p.add_argument("-numhits", "-n", dest="numHits", type=int,
@@ -40,7 +40,7 @@ force = args.force
 
 # Check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)
