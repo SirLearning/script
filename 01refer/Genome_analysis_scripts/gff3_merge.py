@@ -21,11 +21,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.originalGff3):
                 print('I am unable to locate the original GFF3 file (' + args.originalGff3 + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.newGff3):
                 print('I am unable to locate the new GFF3 file (' + args.newGff3 + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate numerical argument
         if not 0 <= args.isoPercent <= 100.0:
@@ -574,7 +574,7 @@ p.add_argument("-ip", "-isoPercent", dest="isoPercent", type=float, default=30,
 p.add_argument("-dp", "-duplicatePercent", dest="duplicatePercent", type=float, default=60,
                help="Specify the percentage overlap of two models before they are considered duplicates (and rejected). Default == 60")
 p.add_argument("-out", "-outputFile", dest="outputFileName",
-               help="Output file name")
+               help="Output file triticeae")
 p.add_argument("-d", dest="detailedMerges", action="store_true", default=False,
                help="Optionally provide more detailed information of gene replacements i.e., which genes were replaced/rejected by another gene")
 

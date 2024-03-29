@@ -17,13 +17,13 @@ be provided and the 'goatools' package to be installed.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-inputBlast", "-ib", dest="blastTab",
-                   help="Input tab-delimited annotation file name.")
+                   help="Input tab-delimited annotation file triticeae.")
 p.add_argument("-inputID", "-id", dest="idmapFile",
                    help="Input idmapping_selected.tab file.")
 p.add_argument("-inputObo", "-io", dest="oboFile",
                    help="Input go-basic.obo file.")
 p.add_argument("-outfile", "-o", dest="outputTable",
-                   help="Output BLAST-tab file name (must be different to the input blastTab file).")
+                   help="Output BLAST-tab file triticeae (must be different to the input blastTab file).")
 p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
                help="default == 'n', which means the program will not overwrite existing files. Specify 'y' to allow this behaviour at your own risk.", default='n')
 
@@ -37,7 +37,7 @@ force = args.force
 
 # Check that output won't overwrite another file
 if os.path.isfile(outputTable) and force.lower() != 'y':
-        print('There is already a file named ' + outputTable + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputTable + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputTable) and force.lower() == 'y':
         os.remove(outputTable)

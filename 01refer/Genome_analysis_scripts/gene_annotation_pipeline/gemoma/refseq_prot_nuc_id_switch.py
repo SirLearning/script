@@ -11,11 +11,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputFileName):
                 print('I am unable to locate the input text file (' + args.inputFileName + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gff3FileName):
                 print('I am unable to locate the input gff3 file (' + args.gff3FileName + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -68,11 +68,11 @@ returning a new text file.
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", dest="inputFileName",
-        help="Input text file name")
+        help="Input text file triticeae")
 p.add_argument("-g", dest="gff3FileName",
-        help="Input gff3 file name")
+        help="Input gff3 file triticeae")
 p.add_argument("-o", dest="outputFileName",
-        help="Output text file name")
+        help="Output text file triticeae")
 p.add_argument("--warning", dest="warning", action='store_true', default=False,
                help="Specify if you want the program to warn you when an ID was not found in the gff3")
 

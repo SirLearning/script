@@ -19,16 +19,16 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputTable):
                 print('I am unable to locate the tab-delimited annotation table file (' + args.inputTable + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         elif not os.path.isfile(args.domtbloutFile):
                 print('I am unable to locate the HMMER domtblout file (' + args.domtbloutFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         elif args.idFile != None:
                 if not os.path.isfile(args.idFile):
                         print('I am unable to locate the input id pair file (' + args.idFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
         # Check that ovlCutoff is sensible & reformat it for use
         if args.ovlCutoff < 0:
@@ -45,7 +45,7 @@ def validate_args(args):
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
-                print(args.outputFileName + ' already exists. Specify a different output file name or delete, move, or rename this file and run the program again.')
+                print(args.outputFileName + ' already exists. Specify a different output file triticeae or delete, move, or rename this file and run the program again.')
                 quit()
 
 ## Domain overlap handling
@@ -356,7 +356,7 @@ Also required is an E-value cut-off for domain hit significance.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-it", "-inputTable", dest="inputTable",
-                   help="Input tab-delimited annotation table file name.")
+                   help="Input tab-delimited annotation table file triticeae.")
 p.add_argument("-ih", "-inputHmmer", dest="domtbloutFile",
                    help="Input domtblout HMMER3 result file.")
 p.add_argument("-id", "-idFile", dest="idFile",
@@ -366,7 +366,7 @@ p.add_argument("-e", "-evalue", dest="evalue", type=float,
 p.add_argument("-p", "-percOvl", type=float, dest="ovlCutoff",
                    help="Percentage overlap cutoff (below == trimming to prevent overlap, above = deletion of lower E-value hit, default == 25.0).", default=25.0)
 p.add_argument("-o", "-outputTable", dest="outputFileName",
-                   help="Output annotation table file name.")
+                   help="Output annotation table file triticeae.")
 
 args = p.parse_args()
 validate_args(args)

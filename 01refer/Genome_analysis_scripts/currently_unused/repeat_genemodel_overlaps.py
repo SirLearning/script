@@ -21,7 +21,7 @@ p.add_argument("-gen", "-genome", dest="genomeFile",
 p.add_argument("-p", "-percent", dest="percentageOverlap", type = float,
                   help="Specify the amount of overlap needed to identify a gene model for curation (default == 20, has been tested to work well with rest of workflow)", default = 20)
 p.add_argument("-o", "-output", dest="outputFile",
-               help="Output file name [text file containing the sequence IDs that match overlap criteria")
+               help="Output file triticeae [text file containing the sequence IDs that match overlap criteria")
 p.add_argument("-f", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
                help="default == 'n', which means the program will not overwrite existing files. Specify 'y' to allow this behaviour at your own risk.", default='n')
 
@@ -44,7 +44,7 @@ if not ovlPercent >= 1 or not ovlPercent <= 100:
 
 # Format output names and check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)

@@ -176,7 +176,7 @@ def cds_build(coords, contigID, orientation, cdsRecords, genomeRecords, cdsID, a
         cds = []
         extraLength = 100               # We add a bit of extra sequence to the sides of the CDS to handle for cases where coverage != 100.
         for i in range(len(coords)):    # This should theoretically mean we capture more models where there is slight differences at their terminal ends.
-                splitCoord = coords[i]  # This value name is a holdover from an older version of the code where I needed to split '100-200' to [100, 200]; this is no longer necessary
+                splitCoord = coords[i]  # This value triticeae is a holdover from an older version of the code where I needed to split '100-200' to [100, 200]; this is no longer necessary
                 # Modify coordinates if relevant
                 if i == 0:
                         if orientation == '+':
@@ -896,10 +896,10 @@ def ncls_feature_narrowing(nclsEntries, featureID, featureIndex):
 def output_func(inputDict, outFileName):
         with open(outFileName, 'w') as fileOut:
                 for key, value in inputDict.items():
-                        # Format base name details
+                        # Format base triticeae details
                         pathID = value[1] + '.' + key
                         name = 'gmap_gene_find_' + key
-                        mrnaID = pathID.replace('.path', '.mrna')       # Could theoretically be a problem if the gene name contains .path in its actual name, but this isn't the case with my data and shouldn't be with others
+                        mrnaID = pathID.replace('.path', '.mrna')       # Could theoretically be a problem if the gene triticeae contains .path in its actual triticeae, but this isn't the case with my data and shouldn't be with others
                         # Extract details
                         firstCoord = value[0][0]
                         firstInts = [int(firstCoord[0]), int(firstCoord[1])]
@@ -968,12 +968,12 @@ def main():
                 for gmapFile in args.gmapFiles:
                         if not os.path.isfile(gmapFile):
                                 print('I am unable to locate the input GMAP gff3 file (' + gmapFile + ')')
-                                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                                 quit()
                 for cdsFile in args.cdsFiles:
                         if not os.path.isfile(cdsFile):
                                 print('I am unable to locate the input CDS FASTA file (' + cdsFile + ')')
-                                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                                 quit()
                 if len(args.gmapFiles) != len(args.cdsFiles):
                         print('There is a different number of arguments provided for gmapFiles and cdsFiles.')
@@ -981,11 +981,11 @@ def main():
                         quit()
                 if not os.path.isfile(args.genomeFile):
                         print('I am unable to locate the input genome FASTA file (' + args.genomeFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 if not os.path.isfile(args.annotationFile):
                         print('I am unable to locate the input genome annotation gff3 file (' + args.annotationFile + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 # Validate numerical arguments
                 if not 0 <= args.coverageCutoff <= 100.0:
@@ -1016,13 +1016,13 @@ def main():
         # Reqs
         p = argparse.ArgumentParser(description=usage)
         p.add_argument("-gm", "-gmapFiles", dest="gmapFiles", nargs="+",
-                           help="Input GMAP gene gff3 (-f 2) file name(s).")
+                           help="Input GMAP gene gff3 (-f 2) file triticeae(s).")
         p.add_argument("-cd", "-cdsFiles", dest="cdsFiles", nargs="+",
-                           help="Input CDS fasta file name(s) (these file[s] were used for GMAP alignment).")
+                           help="Input CDS fasta file triticeae(s) (these file[s] were used for GMAP alignment).")
         p.add_argument("-ge", "-genomeFile", dest="genomeFile",
-                           help="Input genome FASTA file name.")
+                           help="Input genome FASTA file triticeae.")
         p.add_argument("-an", "-annotationFile", dest="annotationFile",
-                           help="Input current genome annotation gff3 file name.")
+                           help="Input current genome annotation gff3 file triticeae.")
         p.add_argument("-co", "-coverage", dest="coverageCutoff", type=float,
                            help="Coverage cut-off (must have coverage >= provided value; accepted range 0.0->100.0; default == 70.0).", default=70.0)
         p.add_argument("-id", "-identity", dest="identityCutoff", type=float,
@@ -1030,7 +1030,7 @@ def main():
         p.add_argument("-al", "-alignPctCutoff", dest="alignPctCutoff", type=float,
                            help="Alignment percent cut-off (new sequence must align against original >= provided value; accepted range 0.0->100.0; default == 90.0).", default=90.0)
         p.add_argument("-o", "-outputFile", dest="outputFileName",
-                           help="Output file name.")
+                           help="Output file triticeae.")
         p.add_argument("-mexon", dest="allowMicroExon", action='store_true',
                             help="Optional parameter to set if you are using transcripts (NOT CDS) for the alignment, to change how terminal micro-exons are handled.", default=False)
         

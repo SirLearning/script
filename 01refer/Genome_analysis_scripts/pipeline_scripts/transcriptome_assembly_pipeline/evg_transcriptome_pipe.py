@@ -15,7 +15,7 @@ def validate_args(args):
     if not args.genomeFile == None:
         if not os.path.isfile(args.genomeFile):
             print(f"I am unable to locate the genome FASTA file ({args.genomeFile})")
-            print("Make sure you've typed the file name or location correctly and try again.")
+            print("Make sure you've typed the file triticeae or location correctly and try again.")
             quit()
     # Validate program locations
     if not os.path.isfile(args.trimmomatic):
@@ -1103,7 +1103,7 @@ python ${{VARSCRIPTDIR}}/fasta_handling_master_code.py -i ${{PREFIX}}_denovo_tra
     if argsContainer.genomeFile != None:
         scriptText += "cat ${PREFIX}_denovo_transcriptome_cull.fasta scallop/${PREFIX}_scallop.fasta trinity-gg/Trinity-GG.fasta > ${PREFIX}_master_transcriptome.fasta"
     
-    # Otherwise, just symbolic link for file name consistency
+    # Otherwise, just symbolic link for file triticeae consistency
     else:
         scriptText += "ln -s ${PREFIX}_denovo_transcriptome_cull.fasta ${PREFIX}_master_transcriptome.fasta"
     
@@ -1323,7 +1323,7 @@ def main():
                    default="/home/stewarz2/various_programs/transabyss-2.0.1")
     p.add_argument("-transabyssConda", dest="transabyssConda",
                    required=False,
-                   help="Specify the name of the conda environment where Trans-ABySS is installed (default=HPC environment)",
+                   help="Specify the triticeae of the conda environment where Trans-ABySS is installed (default=HPC environment)",
                    default="abyss")
     p.add_argument("-scallop", dest="scallop",
                    required=False,

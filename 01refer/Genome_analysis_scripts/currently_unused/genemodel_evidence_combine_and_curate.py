@@ -24,7 +24,7 @@ p.add_argument("-ovl", "-overlap", dest="maskOverlap", type=float,
 p.add_argument("-lcr50e", "-lcr50evalue", dest="lcr50evalue", type=float,
                help="Evalue cut-off to enforce for 50<x<70 LCR sequences (default == 1e-10)", default = 1e-10)
 p.add_argument("-o", "-output", dest="outputFile",
-               help="Output file name")
+               help="Output file triticeae")
 p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
                help="default == 'n', which means the program will not overwrite existing files. Specify 'y' to allow this behaviour at your own risk.", default='n')
 
@@ -40,7 +40,7 @@ force = args.force
 
 # Format output names and check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)

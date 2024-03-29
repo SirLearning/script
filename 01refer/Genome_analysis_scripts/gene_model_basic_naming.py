@@ -12,11 +12,11 @@ new, basic names in the format "PREFIX{1-9999+}_t{iso#}" where PREFIX is specifi
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", "--input", dest="input",
-                  help="Fasta file name")
+                  help="Fasta file triticeae")
 p.add_argument("-p", "--prefix", dest="prefix",
                   help="Identifier prefix")
 p.add_argument("-o", "--output", dest="output",
-                  help="Output file name")
+                  help="Output file triticeae")
 
 # Parse arguments
 args = p.parse_args()

@@ -11,7 +11,7 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -434,7 +434,7 @@ p = argparse.ArgumentParser(description=usage)
 p.add_argument("-g", "-gff3", dest="gff3File",
                   help="Specify the gene model GFF3 file.")
 p.add_argument("-o", "-outputFile", dest="outputFileName",
-                   help="Output file name.")
+                   help="Output file triticeae.")
 
 args = p.parse_args()
 validate_args(args)

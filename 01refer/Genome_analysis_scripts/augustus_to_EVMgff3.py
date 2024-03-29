@@ -13,7 +13,7 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gtfFile):
                 print('I am unable to locate the input Augustus GTF file (' + args.gtfFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -28,7 +28,7 @@ p = argparse.ArgumentParser(description=usage)
 p.add_argument("-g", "-gtf", dest="gtfFile",
                   help="Specify augustus gtf file")
 p.add_argument("-o", "-output", dest="outputFileName",
-               help="Output file name")
+               help="Output file triticeae")
 
 args = p.parse_args()
 validate_args(args)

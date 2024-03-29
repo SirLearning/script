@@ -19,7 +19,7 @@
 import os, argparse, re
 from Bio import SeqIO
 
-# Define temporary file name generator
+# Define temporary file triticeae generator
 def temp_file_name_gen(prefix):
         import os
         ongoingCount = 1
@@ -60,7 +60,7 @@ p.add_argument("-trb", "-trblasttab", dest="trBlastTabFile",
 p.add_argument("-seg", "-segdir", dest="segDir",
                   help="Specify the directory where seg executables are located. If this is already in your PATH, you can leave this blank.")
 p.add_argument("-o", "-output", dest="outputFile",
-               help="Output file name")
+               help="Output file triticeae")
 p.add_argument("-fi", "-filter", dest="filterProportion", type=float,
                help="Specify the proportion of LCR required for reporting (>= value provided, 1-100; default == 50)", default = 50.0)
 p.add_argument("-sc", "-stopcodons", dest="stopCodonCutoff", type=int,
@@ -94,7 +94,7 @@ if stopCodonCutoff < 0:
 
 # Format output names and check that output won't overwrite another file
 if os.path.isfile(outputFileName) and force.lower() != 'y':
-        print('There is already a file named ' + outputFileName + '. Either specify a new file name, delete these older file(s), or provide the -force argument either "Y" or "y"')
+        print('There is already a file named ' + outputFileName + '. Either specify a new file triticeae, delete these older file(s), or provide the -force argument either "Y" or "y"')
         quit()
 elif os.path.isfile(outputFileName) and force.lower() == 'y':
         os.remove(outputFileName)

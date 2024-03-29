@@ -43,17 +43,17 @@ def main():
                 # Validate input file locations
                 if not os.path.isfile(args.genomeStats):
                         print('I am unable to locate the genome FASTA file (' + args.genomeStats + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 for fastaStat in args.fastaStats:
                         if not os.path.isfile(fastaStat):
                                 print('I am unable to locate the FASTA .stats file (' + fastaStat + ')')
-                                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                                 quit()
                 for buscoStat in args.buscoStats:
                         if not os.path.isfile(buscoStat):
                                 print('I am unable to locate the FASTA BUSCO short summary file (' + buscoStat + ')')
-                                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                                 quit()
                 # Ensure that fastaStats and buscoStats lengths are equivalent
                 if not len(args.fastaStats) == len(args.buscoStats):
@@ -79,13 +79,13 @@ def main():
         
         p = argparse.ArgumentParser(description=usage)
         p.add_argument("-g", "-genomeStats", dest="genomeStats",
-                       help="Input genome .stats file name.")
+                       help="Input genome .stats file triticeae.")
         p.add_argument("-f", "-fastaStats", dest="fastaStats", nargs="+",
-                       help="Input FASTA .stats file name/s; multiple arguments are accepted.")
+                       help="Input FASTA .stats file triticeae/s; multiple arguments are accepted.")
         p.add_argument("-b", "-buscoStats", dest="buscoStats", nargs="+",
-                       help="Input FASTA BUSCO short summary file name/s; multiple arguments are accepted.")
+                       help="Input FASTA BUSCO short summary file triticeae/s; multiple arguments are accepted.")
         p.add_argument("-o", "-outputFile", dest="outputFileName",
-                       help="Output file name.")
+                       help="Output file triticeae.")
         args = p.parse_args()
         validate_args(args)
         

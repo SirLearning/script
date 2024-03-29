@@ -20,11 +20,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gff2File):
                 print('I am unable to locate the RNAmmer GFF2 file (' + args.gff2File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate options argument
         validChoices = ['1', '2', '3']
@@ -421,7 +421,7 @@ p.add_argument("-gff2", dest="gff2File",
 p.add_argument("-t", dest="outputType", nargs="+",
 		  help="Specify output options separated by spaces. Choices are {1: text file, 2: GFF3 minus genes, 3: GFF3 with appended RNAmmer results}")
 p.add_argument("-o", "-output", dest="outputFileName",
-	       help="Output file name prefix (this will be before the '.txt' suffix for text file output or '.gff3' for GFF3 output)")
+	       help="Output file triticeae prefix (this will be before the '.txt' suffix for text file output or '.gff3' for GFF3 output)")
 
 args = p.parse_args()
 validate_args(args)

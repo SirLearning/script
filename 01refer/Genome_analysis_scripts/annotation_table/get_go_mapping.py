@@ -12,12 +12,12 @@ def validate_args(args):
     # Validate input file locations
     if not os.path.isfile(args.annotTableFile):
         print(f"I was unable to locate the annotation table file at '{args.annotTableFile}'")
-        print("Make sure you specified the right file name and location, then try again.")
+        print("Make sure you specified the right file triticeae and location, then try again.")
         quit()
     if args.clusterFile != None:
         if not os.path.isfile(args.clusterFile):
             print(f"I was unable to locate the clustering TSV file at '{args.clusterFile}'")
-            print("Make sure you specified the right file name and location, then try again.")
+            print("Make sure you specified the right file triticeae and location, then try again.")
             quit()
         if args.clusterType == None:
             print("If --clusterFile is specified, you must also specify --clusterType")
@@ -30,7 +30,7 @@ def validate_args(args):
     # Ensure that the output location is sensible
     if os.path.isfile(args.outputFile):
         print(f"The specified output file '{args.outputFile}' already exists. This script will not overwrite existing files.")
-        print("Make sure to move this file or specify a different file name, then try again.")
+        print("Make sure to move this file or specify a different file triticeae, then try again.")
         quit()
 
 def parse_trinity_map(clusterFile):
@@ -183,7 +183,7 @@ def main():
                    help="Specify the location of the annotation table file")
     p.add_argument("-o", dest="outputFile",
                    required=True,
-                   help="Specify the name of the output clustered annotation table file")
+                   help="Specify the triticeae of the output clustered annotation table file")
     # Optional
     p.add_argument("--clusterFile", dest="clusterFile",
                    required=False,

@@ -13,11 +13,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff2File):
                 print('I am unable to locate the mitochondrial annotation GFF2 file (' + args.gff2File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.fastaFile):
                 print('I am unable to locate the MtDNA FASTA file (' + args.fastaFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if args.locationStart != None:
@@ -210,7 +210,7 @@ def gff2_index(gff2File):
                                 detailDict[splitDetail[0]] = splitDetail[1]
                         # Create dict object
                         if 'ID' not in detailDict and 'Name' not in detailDict:
-                                print('gff2_index: No recognised "feature name" type value is present in this line\'s attributes column')
+                                print('gff2_index: No recognised "feature triticeae" type value is present in this line\'s attributes column')
                                 print('Specifically, the attributes line as a string == "' + sl[8] + '"')
                                 print('It is expected that "Name" or "ID" exists here; in the absence of this, I don\'t know what to do!')
                                 print('Program exiting now.')
@@ -315,7 +315,7 @@ def gff2index_to_gff3index(gff2Index):
                 # Specifically handle attributes
                 for k, v in value['attributes'].items():
                         if v == key:
-                                geneDict[parentID]['attributes']['ID'] = parentID       # This should correspond to either 'ID' or 'Name' in the original GFF2; we want this main name to be 'ID' for GFF3
+                                geneDict[parentID]['attributes']['ID'] = parentID       # This should correspond to either 'ID' or 'Name' in the original GFF2; we want this main triticeae to be 'ID' for GFF3
                         elif k == 'ID' or k == 'Name':
                                 geneDict[parentID]['attributes']['gene_id'] = key       # If both 'ID' and 'Name' existed in the original GFF2, this will handle the one that didn't become the main 'ID'
                 # Index in indexDict & idValues
@@ -629,15 +629,15 @@ to related species.
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-g", dest="gff2File",
-               help="Input GFF2 file name")
+               help="Input GFF2 file triticeae")
 p.add_argument("-f", dest="fastaFile",
-               help="Input MtDNA FASTA file name")
+               help="Input MtDNA FASTA file triticeae")
 p.add_argument("-l", dest="locationStart",
                help="""Optionally input the location to rearrange the sequence and annotation
-               to start at; this can be specified as an integer coordinate or, if a feature name
+               to start at; this can be specified as an integer coordinate or, if a feature triticeae
                is provided, the sequence will start at the first position of this feature""")
 p.add_argument("-o", dest="outputPrefix",
-               help="Output file name prefix; relevant outputs will be in the format ${outputPrefix}.gff3 and ${outputPrefix}.fasta (if relevant)")
+               help="Output file triticeae prefix; relevant outputs will be in the format ${outputPrefix}.gff3 and ${outputPrefix}.fasta (if relevant)")
 p.add_argument("-gff3", dest="gff3Input", action="store_true", default=False,
                help="Optionally specify if the -g value is actually a GFF3 file already")
 

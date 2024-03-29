@@ -13,15 +13,15 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputTable):
                 print('I am unable to locate the tab-delimited annotation table file (' + args.inputTable + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the input gff3 gene annotation file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gmapFile):
                 print('I am unable to locate the input GMAP transcript alignment gff3 file (' + args.gmapFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -253,13 +253,13 @@ the resultant gff3 file will be used.
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-it", "-inputTable", dest="inputTable",
-                   help="Input tab-delimited annotation table file name.")
+                   help="Input tab-delimited annotation table file triticeae.")
 p.add_argument("-an", "--annotation", dest="gff3File",
-               help="Input gff3 gene annotation file name.")
+               help="Input gff3 gene annotation file triticeae.")
 p.add_argument("-gm", "--gmap", dest="gmapFile",
-               help="Input gff3 gmap transcript alignment file name (note: this should be the full transcript including UTRs).")
+               help="Input gff3 gmap transcript alignment file triticeae (note: this should be the full transcript including UTRs).")
 p.add_argument("-o", "-outputTable", dest="outputFileName",
-                   help="Output annotation table file name.")
+                   help="Output annotation table file triticeae.")
 
 args = p.parse_args()
 validate_args(args)

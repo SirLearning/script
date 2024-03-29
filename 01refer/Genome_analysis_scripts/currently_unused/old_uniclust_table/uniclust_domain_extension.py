@@ -94,7 +94,7 @@ Note that the HMMER3 result should have been generated using the hmm_db_download
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("--inputBlast", "-ib", dest="blastTab",
-                   help="Input tab-delimited annotation file name.")
+                   help="Input tab-delimited annotation file triticeae.")
 p.add_argument("--inputHmmer", "-ih", dest="domtbloutFile",
                    help="Input domtblout HMMER3 result file.")
 p.add_argument("--idFile", "-id", dest="idFile",
@@ -102,7 +102,7 @@ p.add_argument("--idFile", "-id", dest="idFile",
 p.add_argument("--evalue", "-e", dest="evalue", type=float,
                    help="E-value significance cut-off for domain predictions.")
 p.add_argument("--outfile", "-o", dest="outfile",
-                   help="Output BLAST-tab file name (must be different to the input blastTab file).")
+                   help="Output BLAST-tab file triticeae (must be different to the input blastTab file).")
 args = p.parse_args()
 
 blastTab = args.blastTab
@@ -112,7 +112,7 @@ evalue = args.evalue
 outfile = args.outfile
 
 if blastTab == outfile:
-        print('Output file has the same name as the input. Enter a unique name and try again.')
+        print('Output file has the same triticeae as the input. Enter a unique triticeae and try again.')
         quit()
 
 # Let user know this program tends to take a while

@@ -17,11 +17,11 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputTable):
                 print('I am unable to locate the tab-delimited annotation table file (' + args.inputTable + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.fastaFile):
                 print('I am unable to locate the protein fasta file corresponding to the annotation table (' + args.fastaFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate threads argument
         if args.threads < 1:
@@ -30,30 +30,30 @@ def validate_args(args):
         # Validate accessory program arguments
         if not os.path.isfile(os.path.join(args.signalpdir, 'signalp')):
                 print('I am unable to locate the signalP execution file "signalp" within specified directory (' + args.signalpdir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if args.signalporg == None:
                 print('You need to specify an organism type for signalP. The choices are listed when calling -h on this script.')
                 quit()
         if not os.path.isfile(os.path.join(args.segdir, 'seg')):
                 print('I am unable to locate the seg execution file "seg" within specified directory (' + args.segdir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(os.path.join(args.coilsdir, 'psCoils.py')):
                 print('I am unable to locate the psCoils execution file "psCoils.py" within specified directory (' + args.coilsdir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(os.path.join(args.python2dir, 'python')):
                 print('I am unable to locate the Python 2.7 execution file "python.exe" within specified directory (' + args.python2dir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(os.path.join(args.tmhmmdir, 'tmhmm')):
                 print('I am unable to locate the tmhmm execution file "tmhmm" within specified directory (' + args.tmhmmdir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
-                print(args.outputFileName + ' already exists. Specify a different output file name or delete, move, or rename this file and run the program again.')
+                print(args.outputFileName + ' already exists. Specify a different output file triticeae or delete, move, or rename this file and run the program again.')
                 quit()
 
 def thread_file_name_gen(prefix, threadNum):
@@ -85,7 +85,7 @@ def chunk_fasta(fastaFile, threads):
                 # Flow control
                 if ongoingCount == numSeqs: # This lets us stop making new files if we have more threads than we do sequences
                         break
-                # Generate the file name
+                # Generate the file triticeae
                 chunkName = thread_file_name_gen('tmp_chunk_' + os.path.basename(fastaFile), str(i+1))
                 fileNames.append(chunkName)
                 # Write sequences to chunk file
@@ -126,8 +126,8 @@ def signalp_thread(signalpdir, organism, fastaFile, resultNames):
                         continue
                 # If nothing matches the okayLines list, we have a potentially true error
                 else:
-                        raise Exception('SignalP error occurred when processing file name ' + fastaFile + '. Error text below\n' + sigperr.decode("utf-8"))
-        # Store the result file name in a mutable object so we can retrieve it after joining
+                        raise Exception('SignalP error occurred when processing file triticeae ' + fastaFile + '. Error text below\n' + sigperr.decode("utf-8"))
+        # Store the result file triticeae in a mutable object so we can retrieve it after joining
         resultNames.append(sigpResultFile)
 
 def run_signalp(signalpdir, organism, fileNames):
@@ -164,7 +164,7 @@ def run_signalp(signalpdir, organism, fileNames):
 ## SEG
 def seg_thread(segdir, fastaFile, resultNames):
         import os, subprocess
-        # Get the full fasta file location & derive our output file name
+        # Get the full fasta file location & derive our output file triticeae
         fastaFile = os.path.abspath(fastaFile)
         segResultFile = os.path.join(os.getcwd(), thread_file_name_gen('tmp_segResults_' + os.path.basename(fastaFile), ''))
         # Format seg command and run
@@ -174,7 +174,7 @@ def seg_thread(segdir, fastaFile, resultNames):
         # Process output
         if segerr.decode("utf-8") != '':
                 raise Exception('SEG error text below\n' + segerr.decode("utf-8"))
-        # Store the result file name in a mutable object so we can retrieve it after joining
+        # Store the result file triticeae in a mutable object so we can retrieve it after joining
         resultNames.append(segResultFile)
 
 def run_seg(segdir, fileNames):
@@ -210,7 +210,7 @@ def run_seg(segdir, fileNames):
 ## COILS
 def coils_thread(coilsdir, py2dir, fastaFile, coilsResults):
         import os, subprocess
-        # Get the full fasta file location & derive our output file name
+        # Get the full fasta file location & derive our output file triticeae
         fastaFile = os.path.abspath(fastaFile)
         #coilsResultFile = os.path.join(os.getcwd(), thread_file_name_gen('tmp_coilsResults_' + os.path.basename(fastaFile), ''))
         # Format coils command & run
@@ -220,7 +220,7 @@ def coils_thread(coilsdir, py2dir, fastaFile, coilsResults):
         # Process output
         if coilserr.decode("utf-8") != '':
                 raise Exception('Coils error text below\n' + coilserr.decode("utf-8"))
-        # Store the result file name in a mutable object so we can retrieve it after joining
+        # Store the result file triticeae in a mutable object so we can retrieve it after joining
         coilsResults.append(coilsout.decode("utf-8"))
 
 def run_coils(coilsdir, py2dir, fileNames):
@@ -274,7 +274,7 @@ def tmhmm_thread(tmhmmdir, fastaFile, tmhmmResults):
         tmhmmout, tmhmmerr = runtmhmm.communicate()
         if tmhmmerr.decode("utf-8") != '':
                 raise Exception('TMHMM error text below\n' + tmhmmerr.decode("utf-8"))
-        # Store the result file name in a mutable object so we can retrieve it after joining
+        # Store the result file triticeae in a mutable object so we can retrieve it after joining
         tmhmmResults.append(tmhmmout.decode("utf-8"))
 
 def run_tmhmm(tmhmmdir, fileNames):
@@ -389,13 +389,13 @@ Uppercase X's are tolerated fine, but lowercase values will interfere with the p
 
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-it", "-inputTable", dest="inputTable",
-                  help="Input tab-delimited annotation table file name.")
+                  help="Input tab-delimited annotation table file triticeae.")
 p.add_argument("-f", "-fastaFile", dest="fastaFile",
                   help="Input fasta file containing sequences represented in the annotation table.")
 p.add_argument("-t", "-threads", dest="threads", type = int,
                   help="Number of threads to run (for multi-thread capable functions).")
 p.add_argument("-o", "-outputTable", dest="outputFileName",
-                   help="Output annotation table file name.")
+                   help="Output annotation table file triticeae.")
 # SigP args
 p.add_argument("-sigp", "-signalpdir", dest="signalpdir", type = str,
                   help="Specify the directory where signalp executables are located.")

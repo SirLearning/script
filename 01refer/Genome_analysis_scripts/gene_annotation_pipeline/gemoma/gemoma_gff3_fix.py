@@ -14,7 +14,7 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.inputFileName):
                 print('I am unable to locate the input GeMoMa gff file (' + args.inputFileName + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle file overwrites
         if os.path.isfile(args.outputFileName):
@@ -91,9 +91,9 @@ gff3 conventions to be followed.
 """
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-i", dest="inputFileName",
-        help="Input text file name")
+        help="Input text file triticeae")
 p.add_argument("-o", dest="outputFileName",
-        help="Output text file name")
+        help="Output text file triticeae")
 
 args = p.parse_args()
 validate_args(args)

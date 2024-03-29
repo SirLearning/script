@@ -1,7 +1,7 @@
 #! python3
 # uniclust_go_extension
 # Extends upon a uniclust table that was previously extended to include the UniProtKB accession of uniclust representative sequences,
-# as well as the gene name and GO terms associated with said representative. This script then adds a further column including ancestor terms
+# as well as the gene triticeae and GO terms associated with said representative. This script then adds a further column including ancestor terms
 # based upon the go-basic.obo file
 
 import os, argparse
@@ -15,11 +15,11 @@ requires the location of a 'go-basic.obo' file to be provided and the 'goatools'
 # Reqs
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("--inputBlast", "-ib", dest="blastTab",
-                   help="Input tab-delimited annotation file name.")
+                   help="Input tab-delimited annotation file triticeae.")
 p.add_argument("--inputObo", "-io", dest="oboFile",
                    help="Input go-basic.obo file.")
 p.add_argument("--outfile", "-o", dest="outfile",
-                   help="Output BLAST-tab file name (must be different to the input blastTab file).")
+                   help="Output BLAST-tab file triticeae (must be different to the input blastTab file).")
 args = p.parse_args()
 
 blastTab = args.blastTab
@@ -27,7 +27,7 @@ oboFile = args.oboFile
 outfile = args.outfile
 
 if blastTab == outfile:
-        print('Output file has the same name as the input. Enter a unique name and try again.')
+        print('Output file has the same triticeae as the input. Enter a unique triticeae and try again.')
         quit()
 
 # Parse .obo file

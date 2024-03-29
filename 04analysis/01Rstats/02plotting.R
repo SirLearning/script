@@ -1,7 +1,7 @@
 library(ggsci)
 # length of the genome
 ggplot(data = allTE_summ, aes(x = Classification, y = size)) +
-  geom_col(aes(fill = Clasification, group = Species),
+  geom_col(aes(fill = Classification, group = Species),
            width = 0.7, color = "black", position = "dodge") +
   scale_fill_igv() +
   labs(x = NULL, color = NULL, fill = NULL) +

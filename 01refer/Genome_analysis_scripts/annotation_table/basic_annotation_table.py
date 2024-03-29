@@ -11,15 +11,15 @@ def validate_args(args):
     # Validate input file locations
     if not os.path.isfile(args.blastTab):
         print('I am unable to locate the input BLAST-tab file (' + args.blastTab + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     elif not os.path.isfile(args.idFile):
         print('I am unable to locate the input ID list file (' + args.idFile + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     elif not os.path.isfile(args.idmappingFile):
         print('I am unable to locate the input idmapping file (' + args.idmappingFile + ')')
-        print('Make sure you\'ve typed the file name or location correctly and try again.')
+        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
         quit()
     # Validate that numeric arguments are sensible
     if args.evalue < 0:
@@ -30,7 +30,7 @@ def validate_args(args):
         quit()
     # Handle file overwrites
     if os.path.isfile(args.outputFileName):
-        print(args.outputFileName + ' already exists. Specify a different output file name or delete, move, or rename this file and run the program again.')
+        print(args.outputFileName + ' already exists. Specify a different output file triticeae or delete, move, or rename this file and run the program again.')
         quit()
     # Check that the database tag argument was provided
     if args.databaseTag == None:
@@ -40,7 +40,7 @@ def validate_args(args):
     if args.skipFile != None:
         if not os.path.isfile(args.skipFile):
             print('I am unable to locate the input skip IDs file (' + args.skipFile + ')')
-            print('Make sure you\'ve typed the file name or location correctly and try again.')
+            print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
             quit()
 
 def parse_skipfile(skipFile):
@@ -97,7 +97,7 @@ def blasttab_best_hits(blastTab, evalue, numHits, idmapSet, skipList):
             bestHits = []
             for val in value:
                 if float(val[10]) <= evalue and len(bestHits) < numHits:
-                    # Alter the target name if it has UniRef prefix
+                    # Alter the target triticeae if it has UniRef prefix
                     if val[1].startswith('UniRef'):
                         val[1] = val[1].split('_')[1]       # This handles normal scenarios ("UniRef100_UPI0000") as well as MMseqs2 weird ID handling ("UniRef100_UPI0000_0")
                     if val[1] not in skipList:  # NEW BEHAVIOUR: Provide ability to skip IDs that cause problems in later table generation
@@ -141,16 +141,16 @@ def main():
     p = argparse.ArgumentParser(description=usage)
     p.add_argument("-inputBlast", "-ib", dest="blastTab",
                    required=True,
-                   help="Input BLAST-tab file name.")
+                   help="Input BLAST-tab file triticeae.")
     p.add_argument("-inputID", "-id", dest="idFile",
                    required=True,
-                   help="Input ID list file name. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
+                   help="Input ID list file triticeae. This can be a simple list of all sequence IDs, or a tab-delimited list containing pairs of old\tnew IDs.")
     p.add_argument("-idmappingFile", "-im", dest="idmappingFile",
                    required=True,
                    help="Input idmapping_selected.tab file (this is available from the UniProtKB FTP site).")
     p.add_argument("-outfile", "-o", dest="outputFileName",
                    required=True,
-                   help="Output BLAST-tab file name.")
+                   help="Output BLAST-tab file triticeae.")
     p.add_argument("-evalue", "-e", dest="evalue",
                    required=True,
                    type=float,
@@ -162,7 +162,7 @@ def main():
     p.add_argument("-database", "-db", dest="databaseTag",
                    required=True,
                    choices=["UniRef100", "UniRef90", "RefSeq"],
-                   help="Specify the name of the database being queried (i.e., UniRef100, UniRef90, or RefSeq).")
+                   help="Specify the triticeae of the database being queried (i.e., UniRef100, UniRef90, or RefSeq).")
     p.add_argument("-s", "-skip", dest="skipFile",
                    required=False,
                    help="Optionally provide a list of IDs to skip when obtaining hits from the BLAST-tab results")

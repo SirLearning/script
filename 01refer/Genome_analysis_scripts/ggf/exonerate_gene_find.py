@@ -26,28 +26,28 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.genomeFile):
                 print('I am unable to locate the genome FASTA file (' + args.genomeFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.exonerateFile):
                 print('I am unable to locate the exonerate file (' + args.exonerateFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.fastaFile):
                 print('I am unable to locate the fasta file (' + args.fastaFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.gmapFile):
                 print('I am unable to locate the GMAP file (' + args.gmapFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.cdsFile):
                 print('I am unable to locate the CDS FASTA file (' + args.cdsFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Validate accessory program arguments
         if not os.path.isfile(os.path.join(args.segdir, 'seg')) and not os.path.isfile(os.path.join(args.segdir, 'seg.exe')):
                 print('I am unable to locate the seg execution file "seg" or "seg.exe" within specified directory (' + args.segdir + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if args.cygwindir == None:
                 args.cygwindir = ''
@@ -59,7 +59,7 @@ def validate_args(args):
                         quit()
                 if not os.path.isfile(os.path.join(args.signalpdir, 'signalp')):
                         print('I am unable to locate the signalp execution file "signalp" within specified directory (' + args.signalpdir + ')')
-                        print('Make sure you\'ve typed the file name or location correctly and try again.')
+                        print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                         quit()
                 if platform.system() == 'Windows':
                         program_execution_check(os.path.join(args.cygwindir, 'bash.exe --version'))
@@ -465,7 +465,7 @@ def exonerate_gff_tmpfile(exonerateFile, tmpDir):
                                 sl[2] = 'mRNA'
                                 sl[8] = 'ID=' + geneID + '.mrna1;Name=' + name + ';Sequence=' + detailDict['sequence'] + ';Parent=' + geneID + ';identity=' + detailDict['identity'] + ';similarity=' + detailDict['similarity']
                                 fileOut.write('\t'.join(sl) + '\n')
-        # Return the file name so we can clean it up later
+        # Return the file triticeae so we can clean it up later
         return tmpFileName
 
 ## GGF borrowed
@@ -937,7 +937,7 @@ def consecutive_character_coords(inputString, character, base, outType):
         return charCoords
 
 def seg_thread(segdir, fastaFile, resultNames):
-        # Get the full fasta file location & derive our output file name
+        # Get the full fasta file location & derive our output file triticeae
         fastaFile = os.path.abspath(fastaFile)
         segResultFile = os.path.join(os.getcwd(), tmp_file_name_gen('tmp_segResults_' + os.path.basename(fastaFile), '.seg', fastaFile))
         # Format seg command and run
@@ -947,7 +947,7 @@ def seg_thread(segdir, fastaFile, resultNames):
         # Process output
         if segerr.decode("utf-8") != '':
                 raise Exception('SEG error text below\n' + segerr.decode("utf-8"))
-        # Store the result file name in a mutable object so we can retrieve it after joining
+        # Store the result file triticeae in a mutable object so we can retrieve it after joining
         resultNames.append(segResultFile)
 
 def run_seg(segdir, fileNames):
@@ -1272,7 +1272,7 @@ def output_func(inputDict, exonerateIndex, gmapIndex, outFileName):
                                 print('output_func: mrnaID can\'t be found in the exonerate or gmap index! Something must be wrong with the code; requires fixing.')
                                 print('Debugging info: mrnaID == "' + str(mrnaID) + '"; program will exit now.')
                                 quit()
-                        # Format base name details
+                        # Format base triticeae details
                         geneID = geneObj['attributes']['ID']                            # We want these IDs to be unique and capable of differentiating models predicted by this program from gmap_gene_find
                         if geneID.rsplit('.', maxsplit=1)[1].startswith('path'):        # This will handle IDs that come from GMAP
                                 geneID = geneObj['contig_id'] + '.' + geneID
@@ -1382,7 +1382,7 @@ def signalp_unthreaded(signalpdir, cygwindir, organism, tmpDir, fastaFile, sigpR
                         continue
                 # If nothing matches the okayLines list, we have a potentially true error
                 else:
-                        raise Exception('SignalP error occurred when processing file name ' + fastaFile + '. Error text below\n' + sigperr.decode("utf-8"))
+                        raise Exception('SignalP error occurred when processing file triticeae ' + fastaFile + '. Error text below\n' + sigperr.decode("utf-8"))
 
 def run_signalp_sequence(signalpdir, cygwindir, organism, tmpDir, seqID, protString):
         # Determine whether seqId and protString values are the proper type
@@ -1429,7 +1429,7 @@ def run_signalp_sequence(signalpdir, cygwindir, organism, tmpDir, seqID, protStr
         return sigPredictions
 
 def signalp_copy4temp(args, outDir, signalPdir):        # Note that the values within args are irrelevant, it's just to produce a hash string which should be unique across program runs
-        # Derive our directory name and create it
+        # Derive our directory triticeae and create it
         sigpTmpDir = Path(outDir, tmp_file_name_gen('', '', ''.join(map(str, vars(args).items()))))
         os.mkdir(sigpTmpDir)
         os.mkdir(Path(sigpTmpDir, 'tmp'))
@@ -1497,7 +1497,7 @@ def make_temp_fasta(seq):
 
 ## Shortcut functions [i.e., just reducing code length]
 def auto_stopcodon_fix(origCandidateCDS, coords, orientation):
-        fixProt, fixCDS = find_longest_orf_nostopallowed(origCandidateCDS, origCandidateCDS[0:3])       # This function name is changed from that in GGF since we're allowing the absence of stop codons to be returned here
+        fixProt, fixCDS = find_longest_orf_nostopallowed(origCandidateCDS, origCandidateCDS[0:3])       # This function triticeae is changed from that in GGF since we're allowing the absence of stop codons to be returned here
         if [fixProt, fixCDS] == ['', '']:
                 return False
         startChange = origCandidateCDS.find(fixCDS)
@@ -1541,7 +1541,7 @@ absence of transcriptional support may often be fragmented, spurious, or otherwi
 
 p = argparse.ArgumentParser(description=usage)
 p.add_argument("-ge", "-genomeFile", dest="genomeFile",
-               help="Input genome FASTA file name.")
+               help="Input genome FASTA file triticeae.")
 p.add_argument("-e", "-exonerate", dest="exonerateFile", type=str,
                help="Specify the exonerate output file containing GFF predictions.")
 p.add_argument("-f", "-fasta", dest="fastaFile", type=str,
@@ -1551,7 +1551,7 @@ p.add_argument("-gm", "-gmapFile", dest="gmapFile", type=str,
 p.add_argument("-cd", "-cdsFile", dest="cdsFile", type=str,
                help="Input CDS fasta file (this file was used for GMAP alignment).")
 p.add_argument("-o", "-outputFile", dest="outputFileName", type=str,
-               help="Output file name")
+               help="Output file triticeae")
 p.add_argument("-seg", "-segdir", dest="segdir", type=str,
                help="Specify the directory where seg executables are located.")
 p.add_argument("-id", "-identity", dest="identityCutoff", type=float,

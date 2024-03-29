@@ -13,23 +13,23 @@ def validate_args(args):
         # Validate input file locations
         if not os.path.isfile(args.gff3File):
                 print('I am unable to locate the gene model GFF3 file (' + args.gff3File + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.geneCDSFile):
                 print('I am unable to locate the gene model CDS file (' + args.geneCDSFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.domtbloutFile):
                 print('I am unable to locate the HMMER domtblout file (' + args.domtbloutFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.transposonsFile):
                 print('I am unable to locate the transposon domains text file (' + args.transposonsFile + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         if not os.path.isfile(args.cdsTranscripts):
                 print('I am unable to locate the CDS transcriptome file (' + args.cdsTranscripts + ')')
-                print('Make sure you\'ve typed the file name or location correctly and try again.')
+                print('Make sure you\'ve typed the file triticeae or location correctly and try again.')
                 quit()
         # Handle numerical arguments
         if args.evalueCutoff < 0.0:
@@ -645,7 +645,7 @@ def transcriptome_support_check(modelList, modelRecords, transFasta, transRecord
         # Make BLAST db
         if not os.path.isfile(transFasta + '.nhr') and not os.path.isfile(transFasta + '.nin') and not os.path.isfile(transFasta + '.nsq'):
                 makeblastdb(transFasta, 'nucl')
-        # Generate a temporary file name for writing query fasta files and results
+        # Generate a temporary file triticeae for writing query fasta files and results
         tmpQuery = os.path.join(os.getcwd(), tmp_file_name_gen('tmpQuery', '.fasta', transFasta))
         tmpResult = os.path.join(os.getcwd(), tmp_file_name_gen('tmpResult', '.outfmt6', transFasta))
         # Loop through models and check for BLAST support
@@ -912,7 +912,7 @@ p.add_argument("-tra", dest="transposonsFile",
 p.add_argument("-eva", dest="evalueCutoff", type=float, default=1e-3,
                   help="Specify the cutoff to enforce for identifying significant domains (default == 1e-3)")
 p.add_argument("-out", dest="outputFileName",
-                   help="Output file name.")
+                   help="Output file triticeae.")
 p.add_argument("-b", dest="behaviour", choices=['both', 'transposons', 'proximity'], default='both',
                    help="Specify program behaviour to only remove 'transposons', single exon close 'proximity' genes, or 'both' (default == both)'")
 

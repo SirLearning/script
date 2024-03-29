@@ -8,10 +8,10 @@ import os, argparse
 # Define functions for later use
 def validate_args(args):
     if not os.path.isfile(args.imetricFile):
-        print("Input imetric file not found; make sure you've specified the right name and try again.")
+        print("Input imetric file not found; make sure you've specified the right triticeae and try again.")
         quit()
     if os.path.isfile(args.outputFileName):
-        print("Output file name already exists; specify a different name and try again.")
+        print("Output file triticeae already exists; specify a different triticeae and try again.")
         quit()
 
 def imetrics_peak_parse(imetrics_file):
@@ -52,7 +52,7 @@ def main():
                     help="Specify the input imetrics file")
     p.add_argument("-o", dest="outputFileName",
                     required=True,
-                    help="""Specify the output file name which will contain just the
+                    help="""Specify the output file triticeae which will contain just the
                     number of the insert size""")
 
     args = p.parse_args()
