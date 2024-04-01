@@ -18,7 +18,7 @@ TElib_summ.index = TElib_summ.index.fillna('NULL')
 mpl.rcParams['font.size'] = 24
 plt.rcParams['xtick.labelsize'] = 20
 plt.rcParams['ytick.labelsize'] = 20
-try
+
 
 # 1. plot proportion
 plt.figure(figsize=(16, 12))
