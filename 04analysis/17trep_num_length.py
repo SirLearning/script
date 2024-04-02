@@ -3,7 +3,7 @@ import sys
 import pandas as pd
 
 fai_name = 'data/tr2.fa.fai'
-output_name = 'data/stats.length.txt'
+output_name = 'data/stats.length.old.txt'
 
 
 def nl_stats(fai):
