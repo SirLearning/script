@@ -2,14 +2,18 @@
 import sys
 import pandas as pd
 
-allTE_name = sys.argv[1]
-fai_name = sys.argv[2]
-output_name = sys.argv[3]
-TEcode_name = sys.argv[4]
+# allTE_name = sys.argv[1]
+# fai_name = sys.argv[2]
+# output_name = sys.argv[3]
+# TEcode_name = sys.argv[4]
+
+allTE_name = 'data/np.gff3'
+fai_name = 'data/chr1A.fa.fai'
+output_name = 'data/stats.nl.old.txt'
+TEcode_name = 'data/TEcode'
 
 TE_code = pd.read_table(TEcode_name, sep=',', header=None)
 TE_code.columns = ['cls', 'new_cls']
-
 
 def nl_stats(allte, fai):
     # 1. TE number into dataframe
@@ -24,8 +28,10 @@ def nl_stats(allte, fai):
     allte['width'] = allte['end'] - allte['start'] + 1
     # 2.2 TE attributes
     attributes = allte['attributes'].str.split(';', expand=True)
+    # attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
+    #                             'others2', 'others3']
     attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
-                                'others2', 'others3']
+                                'others2']
     # 2.3 merge all TE annotation and TE attributes
     allte = pd.concat([allte, attributes], axis=1)
     return allte, size_sum
