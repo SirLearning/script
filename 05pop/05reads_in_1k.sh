@@ -1,9 +1,9 @@
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file1.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog1 2>&1 &
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file2001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 -- --anno 1 --step annosensitive 1 --threads 10 > alog2001 2>&1 &
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file4001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 -- --anno 1 --step annosensitive 1 --threads 10 > alog4001 2>&1 &
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file1.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog1 2>&1 &
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file2001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog2001 2>&1 &
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file4001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog4001 2>&1 &
 sleep 1200
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file6001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 -- --anno 1 --step annosensitive 1 --threads 10 > alog6001 2>&1 &
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file8001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 -- --anno 1 --step annosensitive 1 --threads 10 > alog8001 2>&1 &
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file6001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog6001 2>&1 &
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file8001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog8001 2>&1 &
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file10001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog10001 2>&1 &
 sleep 1200
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file12001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --anno 1 --step anno --sensitive 1 --threads 10 > alog12001 2>&1 &
