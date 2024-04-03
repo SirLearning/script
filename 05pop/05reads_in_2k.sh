@@ -1,6 +1,6 @@
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file1.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog1 2>&1 &
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file2001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog2001 2>&1 &
-sleep 18000
+#nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file1.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog1 2>&1 &
+#nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file2001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog2001 2>&1 &
+#sleep 18000
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file4001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog4001 2>&180&
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file6001.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog6001 2>&1 &
 sleep 18000
