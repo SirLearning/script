@@ -10,6 +10,9 @@ TEcode = 'data/TEcode'
 def main():
     depth = pd.concat([plot_depth('1A'), plot_depth('1B'), plot_depth('1D')])
     depth.reset_index(drop=True, inplace=True)
+    groupe_reads = depth.groupby(['type', 'chr'])
+    reads_pct = to_group(groupe_reads)
+    ref_pct = pd.concat([nl_stats('1A'), nl_stats('1B'), nl_stats('1D')])
 
     # 1. depth difference
     fig, ax = plt.subplots()
@@ -22,29 +25,25 @@ def main():
     plt.legend(title='Name')
     plt.show()
 
-    # 2. proportion of TEs
-    grouped = depth.groupby(['type', 'chr'])
-    proportion = grouped.agg(
-        sum_depth=('depth', 'sum'),
-    )
-    proportion['percent'] = proportion['sum_depth'] / proportion.groupby('chr')['sum_depth'].transform('sum') * 100
-    proportion.reset_index(inplace=True)
+    # 2. reads_pct of TEs
+    fig, ax = plt.subplots()
+    ax.figure.set_size_inches(18, 9)
 
-    plt.figure(figsize=(18, 9))
-    sns.barplot(x='type', y='percent', hue='chr', data=proportion, palette='Set3')
+    sns.barplot(x='type', y='percent', hue='chr', data=reads_pct, palette='Set3', ax=ax)
+    sns.barplot(x='type', y='percent', hue='chr', data=ref_pct, ax=ax, alpha=0.5, ci=None)
     plt.title('Proportion of TEs in CS chromosomes')
     plt.legend()
     plt.show()
 
     # 3. retry
-    proportion_wide = proportion.pivot(index='chr', columns='type', values='percent')
-    bottom = np.zeros(len(proportion_wide))
+    reads_wide = reads_pct.pivot(index='chr', columns='type', values='percent')
+    bottom = np.zeros(len(reads_wide))
 
     plt.figure(figsize=(14, 16))
     plt.style.use('seaborn-v0_8-deep')
-    for column in proportion_wide.columns:
-        plt.bar(proportion_wide.index, proportion_wide[column], bottom=bottom, label=column, alpha=0.8)
-        bottom += proportion_wide[column]
+    for column in reads_wide.columns:
+        plt.bar(reads_wide.index, reads_wide[column], bottom=bottom, label=column, alpha=0.8)
+        bottom += reads_wide[column]
     plt.title('Proportion of TEs in CS chromosomes')
     plt.xlabel('Chromosome')
     plt.ylabel('Proportion (%)')
@@ -64,10 +63,25 @@ def plot_depth(chr):
     # summ now: chr, type, depth, length, bases
     return summ
 
-def nl_stats(chr):
-    allte = pd.read_table("data/stats."+ chr + ".length.txt", sep='\t', header=None)
+def to_group(grouped):
+    pct = grouped.agg(
+        sum_depth=('depth', 'sum'),
+    )
+    pct['percent'] = pct['sum_depth'] / pct.groupby('chr')['sum_depth'].transform('sum') * 100
+    pct.reset_index(inplace=True)
+    return pct
 
-    return te_length, te_summ
+def nl_stats(chr):
+    te = pd.read_table("data/stats.chr"+ chr + ".length.txt", sep='\t', header=None)
+    te.columns = ['type', 'length']
+    te['length'] = te['length'].astype(int)
+    te_length = te.groupby('type').agg(
+        sum_length=('length', 'sum'),
+    )
+    te_length['percent'] = te_length['sum_length'] / te_length['sum_length'].sum() * 100
+    te_length['chr'] = chr
+    te_length.reset_index(inplace=True)
+    return te_length
 
 if __name__ == '__main__':
     main()
