@@ -1,3 +1,4 @@
+#awk '/^>/{if(NR>1){x++}if(x%2000==0){f=sprintf("file%d.fasta",x)};print > f;next}{print > f}' ../1b.2x.clean.fasta
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file0.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog0 2>&1 &
 nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome file2000.fasta --curatedlib ~/transposon/ABD/00data/00library/00curatedLib/abd.fa --overwrite 0 --sensitive 1 --threads 10 > alog2000 2>&1 &
 sleep 18000
