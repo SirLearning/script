@@ -14,7 +14,7 @@ anno = pd.read_table(anno_name, sep='\t', header=None)
 anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
 attributes = anno['attributes'].str.split(';', expand=True)
 attributes.columns = ['ID', 'Name', 'Classification', 'Sequence_ontology', 'Identity', 'Method', 'others1',
-                      'others2']
+                      'others2', 'others3']
 anno = pd.concat([anno, attributes], axis=1)
 anno['length'] = anno['end'] - anno['start'] + 1
 
