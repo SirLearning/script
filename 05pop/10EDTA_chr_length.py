@@ -24,11 +24,11 @@ TEcode = pd.read_table(tecode_name, sep=",", header=None)
 TEcode.columns = ['cls', 'new_cls']
 anno.loc[anno['Classification'] == 'Unspecified', 'Classification'] = anno['Name'].str.split('=').str[1]
 anno.loc[:, 'Classification'] = anno['Classification'].str.split('_').str[0]
-anno['lib_correct'] = False
+anno['lib_correct'] = 2
 for i in range(0, len(TEcode)):
     anno.loc[anno['Classification'] == TEcode['cls'][i], 'Classification'] = TEcode['new_cls'][i]
-    anno.loc[anno['Classification'] == TEcode['new_cls'][i], 'lib_correct'] = True
-anno.drop(anno['lib_correct'] == False, axis=0)
+    anno.loc[anno['Classification'] == TEcode['new_cls'][i], 'lib_correct'] = 4
+anno.drop(anno['lib_correct'] == 2, axis=0)
 
 te_length = pd.concat([anno['Classification'], anno['length']], axis=1)
 with open(output_name, 'w') as f:
