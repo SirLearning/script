@@ -43,7 +43,7 @@ def main():
         print(exp, count, summary[summary['chrom'] == chrom]['length'].values[0])
 
         dtb[chrom].append({
-            'depth': [round(x, 3) for x in depth],
+            'ref_depth': [round(x, 3) for x in depth],
             'dens': [round(y, 3) for y in dens],
             'mode': 'lines',
             'name': "1B" + (" (%.1f)" % float(v50))
