@@ -64,7 +64,7 @@ def chr_main(chr):
 
     # TE type
     summary['type'] = summary['chrom'].str.split('#').str[1]
-    tecode = pd.read_table("data/TEcode", sep=",", header=None)
+    tecode = pd.read_table("../data/TEcode", sep=",", header=None)
     tecode.columns = ['cls', 'new_cls']
     for i in range(0, len(tecode)):
         summary.loc[summary['type'] == tecode['cls'][i], 'type'] = tecode['new_cls'][i]

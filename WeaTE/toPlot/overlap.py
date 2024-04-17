@@ -6,7 +6,7 @@ import seaborn as sns
 # overlap in mean 80%
 total_TE = 150013
 
-overlap = pd.read_table('data/overlap.txt', sep='\s+', header=None)
+overlap = pd.read_table('../data/overlap.txt', sep='\s+', header=None)
 overlap.columns = ['method', 'overlap', 'same type']
 
 overlap['overlap'] = overlap['overlap'] / total_TE

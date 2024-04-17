@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
-file_name = pd.read_table('data/dtb_files.name', header=None)
+file_name = pd.read_table('../data/dtb_files.name', header=None)
 file_name = file_name.fillna('NULL')
 
 

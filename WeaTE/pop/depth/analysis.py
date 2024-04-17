@@ -66,7 +66,7 @@ def main():
     plt.show()
 
     # 5. reads_pct of TEs after threshold
-    threshold = pd.read_table('data/vu_reads_depth/threshold.txt', header=None)
+    threshold = pd.read_table('../data/vu_reads_depth/threshold.txt', header=None)
     threshold.columns = ['chrom', 'chr']
     th = depth
     for i in range(len(threshold)):

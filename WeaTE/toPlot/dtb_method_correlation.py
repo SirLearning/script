@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib as mpl
 
-file_name = pd.read_table('data/dtb_files.name', header=None)
+file_name = pd.read_table('../data/dtb_files.name', header=None)
 file_name = file_name.fillna('NULL')
 plt.style.use('seaborn-v0_8-deep')
 
