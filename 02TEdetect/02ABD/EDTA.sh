@@ -12,4 +12,10 @@ export LANG="en_US.UTF-8"
 # perl ~/transposon/tools/EDTA/EDTA.pl --genome $1 --curatedlib ~/transposon/ABD/00data/00library/curated_lib-db_complete_Rel-19.fasta --overwrite 1 --sensitive 1 --anno 1 --evaluate 1 --threads $2 > test.log 2>&1 &
 
 # 继续运行已经断开的程序，从上次断开的地方开始运行
-perl ~/transposon/tools/EDTA/EDTA.pl --genome $1 --curatedlib ~/transposon/ABD/00data/00library/trep-db_complete_Rel-19.fasta --overwrite 0 --sensitive 1 --anno 1 --threads $2 > test.log 2>&1 &
+perl ~/transposon/tools/EDTA/EDTA.pl \
+--genome $1 \
+--curatedlib ~/transposon/ABD/00data/00library/trep-db_complete_Rel-19.fasta \
+--overwrite 0 \
+--sensitive 1 \
+--anno 1 \
+--threads $2 > test.log 2>&1 &
