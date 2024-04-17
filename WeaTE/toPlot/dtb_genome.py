@@ -10,7 +10,7 @@ seq_df = pd.DataFrame({
 })
 
 # 假设我们有一个包含基因位置的数据框
-TE_dtb = pd.read_table('data/cut.gff3', sep='\s+', header=None)
+TE_dtb = pd.read_table('../data/cut.gff3', sep='\s+', header=None)
 TE_dtb.columns = ['chrom', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'sup_fam']
 
 # 过滤出sup_fam列为'RLG'或'RLX'的行

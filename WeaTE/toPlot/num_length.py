@@ -5,8 +5,8 @@ import matplotlib as mpl
 
 plt.style.use('fast')
 
-chr1A_summ = pd.read_table('data/chr1A/stats.nl.old.txt', sep='\s+', header=0, index_col=0)
-chr1ANM_summ = pd.read_table('data/CS/stats.nl.txt', sep='\s+', header=0, index_col=0)
+chr1A_summ = pd.read_table('../data/chr1A/stats.nl.old.txt', sep='\s+', header=0, index_col=0)
+chr1ANM_summ = pd.read_table('../data/CS/stats.nl.txt', sep='\s+', header=0, index_col=0)
 chr1A_summ.index.name = 'Classification'
 chr1ANM_summ.index.name = 'Classification'
 
