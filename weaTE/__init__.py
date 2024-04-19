@@ -3,7 +3,7 @@ weaTE is a Python package for wheat TE data extraction and analysis.
 
 subpackage1 ref: reference data
 input:
-    stats: annotated TE data
+    mod_anno: annotated TE data
     fai: reference genome index
 output:
     dtb: distribution of TE data
