@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import pandas as pd
 
+
 file_name = pd.read_table('../data/dtb_files.name', header=None)
 file_name = file_name.fillna('NULL')
 
@@ -17,7 +18,7 @@ def plot_te_hist(axs, file, alpha, method):
     file = str(file)
     density = pd.read_table('data/distribution/' + method + '.' + file + '.density.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
-    axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=1 - alpha / 36,
+    axs.hist(density['win_start']/10**6, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=1 - alpha / 36,
              label=file)
 
 
@@ -25,7 +26,7 @@ def te_plot(axs, file, chrom, i):
     file = str(file)
     density = pd.read_table('data/' + chrom + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
-    axs.plot(density['win_start'] / 1000000, density['density'], label=file, alpha=1-i/36)
+    axs.plot(density['win_start'] / 10**6, density['density'], label=file, alpha=1-i/36)
 
 
 def compare_te_hist(axs, file, method):
