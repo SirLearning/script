@@ -1,5 +1,5 @@
-
-bwa-mem2 mem -t 15 $2.known.fa ~/transposon/ABD/00data/03reads/f1.$1.fq ~/transposon/ABD/00data/03reads/r2.$1.fq | samtools view -S -b - > $1.raw.bam
+# nohup sh ~/scripts/05pop/03map_threshold.sh 2 1A &
+bwa-mem2 mem -t 15 $2.known.fa ~/transposon/ABD/00data/03reads/f1.$1.fq.gz ~/transposon/ABD/00data/03reads/r2.$1.fq.gz | samtools view -S -b - > $1.raw.bam
 
 samtools sort -n -m 4G -@ 10 -o $1.sort.bam -O bam $1.raw.bam && rm $1.raw.bam
 samtools fixmate -@ 10 -m $1.sort.bam $1.fixmate.bam && rm $1.sort.bam

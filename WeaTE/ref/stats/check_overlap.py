@@ -18,9 +18,9 @@ fm_end = 0
 fm_class = ''
 # flexible in 80% of the width
 for i in range(0, len(anno)):
-    # if (fm_end - anno['start'][i]) > (fm_width + anno['width'][i]) * 0.4 and anno['Classification'][i] == fm_class:
-    # if (fm_end - anno['start'][i]) > (fm_width + anno['width'][i]) * 0.4:
-    # if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == fm_class:
+    # if (fm_end - stats['start'][i]) > (fm_width + stats['width'][i]) * 0.4 and stats['Classification'][i] == fm_class:
+    # if (fm_end - stats['start'][i]) > (fm_width + stats['width'][i]) * 0.4:
+    # if (fm_end - stats['start'][i]) > stats['width'][i] * 0.8 and stats['Classification'][i] == fm_class:
     if (fm_end - anno['start'][i]) > anno['width'][i] * 0.8:
         anno.loc[i, 'overlap'] = 1
     if anno['end'][i] > fm_end:

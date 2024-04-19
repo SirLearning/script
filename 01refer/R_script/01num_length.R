@@ -1,8 +1,8 @@
 library(tidyverse)
 library(rtracklayer)
 
-Aly.genome_size = sum(read.table(file = "../data/chr1A.fa.fai")$V2)
-Ath.genome_size = sum(read.table(file = "../data/chr1A.fa.fai")$V2)
+Aly.genome_size = sum(read.table(file = "../../weaTE/data/chr1A.fa.fai")$V2)
+Ath.genome_size = sum(read.table(file = "../../weaTE/data/chr1A.fa.fai")$V2)
 
 Aly.allTE = import("../data/chr1A.anno.gff3") %>%
   as_tibble() %>%

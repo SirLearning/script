@@ -1,9 +1,9 @@
 import sys
 import pandas as pd
 
-# allte_name = 'data/01chr1A.anno.gff3'
+# allte_name = 'data/01chr1A.stats.gff3'
 # TEcode_name = 'data/TEcode'
-# output_name = 'data/chr1A.anno.mc.gff3'
+# output_name = 'data/chr1A.stats.mc.gff3'
 
 all_TE_name = sys.argv[1]
 TEcode_name = sys.argv[2]
