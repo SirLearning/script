@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import re
 
-# all_TE_name = 'data/test.cs.anno.gff3'
+# all_TE_name = 'data/test.dtb.stats.gff3'
 # output_name = 'data/test.gff3'
 
 all_TE_name = sys.argv[1]

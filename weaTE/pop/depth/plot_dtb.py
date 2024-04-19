@@ -7,8 +7,6 @@ import pandas as pd
 import seaborn as sns
 from scipy.signal import find_peaks_cwt
 from scipy.signal import find_peaks
-from stats_TE import intact_lib, TElib
-from num_length import plot
 
 def main():
     summary = pd.concat([chr_main('1A'), chr_main('1B'), chr_main('1D')])

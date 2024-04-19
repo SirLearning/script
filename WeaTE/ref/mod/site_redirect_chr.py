@@ -3,7 +3,7 @@ import pandas as pd
 
 # fai_name = 'data/cp.chr1B.fa.fai'
 # anno_name = 'data/test.gff3'
-# output_name = 'data/stats.anno.gff3'
+# output_name = 'data/stats.stats.gff3'
 
 fai_name = sys.argv[1]
 anno_name = sys.argv[2]

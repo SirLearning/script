@@ -2,8 +2,8 @@ import sys
 import pandas as pd
 
 # nn_name = 'data/N1.bed'
-# anno_name = 'data/04chr1ANM.anno.gff3'
-# output_name = 'data/04chr1ANM.anno.N.gff3'
+# anno_name = 'data/04chr1ANM.stats.gff3'
+# output_name = 'data/04chr1ANM.stats.N.gff3'
 
 nn_name = sys.argv[1]
 anno_name = sys.argv[2]
