@@ -3,15 +3,16 @@ import matplotlib as mpl
 import pandas as pd
 
 
-file_name = pd.read_table('../data/dtb_files.name', header=None)
-file_name = file_name.fillna('NULL')
-
-
-mpl.rcParams['font.size'] = 20
-plt.style.use('fast')
-
-plt.rcParams['xtick.labelsize'] = 15
-plt.rcParams['ytick.labelsize'] = 15
+def dtb(file_name):
+    fig, ax = plt.subplots()
+    ax.figure.set_size_inches(12, 8)
+    for i in range(0, len(file_name)):
+        te_plot(ax, file_name.iloc[i, 0], 'chr1A', i)
+    ax.set_title("chr1A")
+    ax.set_xlabel('chromosome (Mb)')
+    ax.set_ylabel('density')
+    ax.legend(fontsize=14, framealpha=0.5)
+    plt.show()
 
 
 def plot_te_hist(axs, file, alpha, method):
@@ -42,6 +43,20 @@ def difference_te_hist(axs, file, method):
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.4, label=method)
 
+
+def main():
+    file_name = pd.read_table('../data/dtb_files.name', header=None)
+    file_name = file_name.fillna('NULL')
+
+    mpl.rcParams['font.size'] = 20
+    plt.style.use('fast')
+
+    plt.rcParams['xtick.labelsize'] = 15
+    plt.rcParams['ytick.labelsize'] = 15
+
+
+if __name__ == '__main__':
+    main()
 
 # # plot all TEs in chr1A
 # fig, ax = plt.subplots()
@@ -105,24 +120,7 @@ def difference_te_hist(axs, file, method):
 # ax.legend(fontsize=14, framealpha=0.5)
 # plt.show()
 
-fig, ax = plt.subplots()
-ax.figure.set_size_inches(12, 8)
-for i in range(0, len(file_name)):
-    te_plot(ax, file_name.iloc[i, 0], 'chr1A', i)
-ax.set_title("chr1A")
-ax.set_xlabel('chromosome (Mb)')
-ax.set_ylabel('density')
-ax.legend(fontsize=14, framealpha=0.5)
-plt.show()
-fig, ax = plt.subplots()
-ax.figure.set_size_inches(12, 8)
-for i in range(0, len(file_name)):
-    te_plot(ax, file_name.iloc[i, 0], 'CS', i)
-ax.set_title("CS v1.0")
-ax.set_xlabel('chromosome (Mb)')
-ax.set_ylabel('density')
-ax.legend(fontsize=14, framealpha=0.5)
-plt.show()
+
 
 
 # fig, ax = plt.subplots()

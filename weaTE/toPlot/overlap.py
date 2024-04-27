@@ -14,6 +14,8 @@ overlap['same type'] = overlap['same type'] / total_TE
 
 print(overlap['same type'])
 
+import pdb; pdb.set_trace()
+
 # plot
 plt.figure(figsize=(12, 8))
 sns.barplot(data=overlap, x='method', y='overlap', label='overlap', width=0.2)
