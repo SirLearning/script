@@ -49,7 +49,7 @@ def length(anno_name):
     return TE_length
 
 
-def overlap(anno_name, mode):
+def self_overlap(anno_name, mode):
     if isinstance(anno_name, str):
         anno = pd.read_table(anno_name, sep='\t', header=None)
         anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes',
@@ -105,7 +105,7 @@ def main():
     TE_length.to_csv(output2, sep='\t', header=False,  index=False)
     # columns = ['Classification', 'length']
 
-    TE_overlap = overlap(anno, 4)  # get overlap
+    TE_overlap = self_overlap(anno, 4)  # get overlap
     TE_overlap.to_csv(output3, sep='\t', header=False,  index=False)
     # columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'width', 'classification', 'overlap']
 
