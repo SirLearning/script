@@ -18,6 +18,14 @@
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.36.fq cs.r2.fq.gz r2.36.fq 2286 &
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.38.fq cs.r2.fq.gz r2.38.fq 2413 &
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.40.fq cs.r2.fq.gz r2.40.fq 2540 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.04.fq cs.r2.fq.gz r2.04.fq 25 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.08.fq cs.r2.fq.gz r2.08.fq 50 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.12.fq cs.r2.fq.gz r2.12.fq 75 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.16.fq cs.r2.fq.gz r2.16.fq 100 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.24.fq cs.r2.fq.gz r2.24.fq 150 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.28.fq cs.r2.fq.gz r2.28.fq 175 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.32.fq cs.r2.fq.gz r2.32.fq 200 &
+nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.36.fq cs.r2.fq.gz r2.36.fq 225 &
 #2 127
 #4 253
 #6 380
@@ -33,3 +41,29 @@
 #26 1647
 #28 1773
 #30 1900
+
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072247/CRR072247_f1.fq.gz f1.CRR072247.fq CRR072247/CRR072247_r2.fq.gz r2.CRR072247.fq 3003 && pigz -3 f1.CRR072247.fq r2.CRR072247.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072248/CRR072248_f1.fq.gz f1.CRR072248.fq CRR072248/CRR072248_r2.fq.gz r2.CRR072248.fq 2474 && pigz -3 f1.CRR072248.fq r2.CRR072248.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072249/CRR072249_f1.fq.gz f1.CRR072249.fq CRR072249/CRR072249_r2.fq.gz r2.CRR072249.fq 2588 && pigz -3 f1.CRR072249.fq r2.CRR072249.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072250/CRR072250_f1.fq.gz f1.CRR072250.fq CRR072250/CRR072250_r2.fq.gz r2.CRR072250.fq 2927 && pigz -3 f1.CRR072250.fq r2.CRR072250.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072251/CRR072251_f1.fq.gz f1.CRR072251.fq CRR072251/CRR072251_r2.fq.gz r2.CRR072251.fq 3325 && pigz -3 f1.CRR072251.fq r2.CRR072251.fq &
+
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072337/CRR072337_f1.fq.gz f1.CRR072337.fq CRR072337/CRR072337_r2.fq.gz r2.CRR072337.fq 3305 && pigz -3 f1.CRR072337.fq r2.CRR072337.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072338/CRR072338_f1.fq.gz f1.CRR072338.fq CRR072338/CRR072338_r2.fq.gz r2.CRR072338.fq 2796 && pigz -3 f1.CRR072338.fq r2.CRR072338.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072340/CRR072340_f1.fq.gz f1.CRR072340.fq CRR072340/CRR072340_r2.fq.gz r2.CRR072340.fq 1602 && pigz -3 f1.CRR072340.fq r2.CRR072340.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072341/CRR072341_f1.fq.gz f1.CRR072341.fq CRR072341/CRR072341_r2.fq.gz r2.CRR072341.fq 2140 && pigz -3 f1.CRR072341.fq r2.CRR072341.fq &
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072347/CRR072347_f1.fq.gz f1.CRR072347.fq CRR072347/CRR072347_r2.fq.gz r2.CRR072347.fq 2300 && pigz -3 f1.CRR072347.fq r2.CRR072347.fq &
+
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072405/CRR072405_f1.fq.gz f1.CRR072405.fq CRR072405/CRR072405_r2.fq.gz r2.CRR072405.fq 2353 && pigz -3 f1.CRR072405.fq r2.CRR072405.fq &
+#java -cp ~/js/pop/src/ ssReads 1 CRR072406/CRR072406_f1.fq.gz f1.CRR072406.fq CRR072406/CRR072406_r2.fq.gz r2.CRR072406.fq 2682 && pigz -3 f1.CRR072406.fq r2.CRR072406.fq
+#java -cp ~/js/pop/src/ ssReads 1 CRR072407/CRR072407_f1.fq.gz f1.CRR072407.fq CRR072407/CRR072407_r2.fq.gz r2.CRR072407.fq 2525 && pigz -3 f1.CRR072407.fq r2.CRR072407.fq
+#java -cp ~/js/pop/src/ ssReads 1 CRR072408/CRR072408_f1.fq.gz f1.CRR072408.fq CRR072408/CRR072408_r2.fq.gz r2.CRR072408.fq 3210 && pigz -3 f1.CRR072408.fq r2.CRR072408.fq
+#java -cp ~/js/pop/src/ ssReads 1 CRR072409/CRR072409_f1.fq.gz f1.CRR072409.fq CRR072409/CRR072409_r2.fq.gz r2.CRR072409.fq 2488 && pigz -3 f1.CRR072409.fq r2.CRR072409.fq
+#
+#10000/4.252160444 = 2353
+#10000/3.723767111 = 2682
+#10000/3.957303444 = 2525
+#10000/3.113460611 = 3210
+#10000/4.016227056 = 2488
+
+#nohup java -cp ~/js/pop/src/ ssReads 1 CRR072401/CRR072401_f1.fq.gz f1.CRR072401.fq CRR072401/CRR072401_r2.fq.gz r2.CRR072401.fq 2296 && pigz -3 f1.CRR072401.fq r2.CRR072401.fq &

@@ -19,3 +19,6 @@ perl ~/transposon/tools/EDTA/EDTA.pl \
 --sensitive 1 \
 --anno 1 \
 --threads $2 > test.log 2>&1 &
+
+nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome $1 --overwrite 0 --sensitive 1 --anno 1 --threads $2 > test.log 2>&1 &
+
