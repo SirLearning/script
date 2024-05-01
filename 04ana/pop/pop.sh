@@ -1,10 +1,11 @@
 # we
-sh ~/script/04ana/pop/03map_threshold.sh CRR072247 ab.we
-mv nohup CRR072247.log
-sh ~/script/04ana/pop/03map_threshold.sh CRR072248 ab.we
-mv nohup CRR072248.log
-sh ~/script/04ana/pop/03map_threshold.sh CRR072249 ab.we
-mv nohup CRR072249.log
-sh ~/script/04ana/pop/03map_threshold.sh CRR072250 ab.we
-mv nohup CRR072250.log
-sh ~/script/04ana/pop/03map_threshold.sh CRR072251 ab.we
+sh ~/script/04ana/pop/03map_threshold.sh CRR072337 ab.we
+sh ~/script/04ana/pop/03map_threshold.sh CRR072338 ab.we
+sh ~/script/04ana/pop/03map_threshold.sh CRR072340 ab.we
+sh ~/script/04ana/pop/03map_threshold.sh CRR072341 ab.we
+sh ~/script/04ana/pop/03map_threshold.sh CRR072347 ab.we
+
+#cat *lib.fa | grep ">" | grep -v "Unknown" | grep -v "unknown" > list
+#cut -c 2- list > list.cut
+#rm list && mv list.cut list
+#seqkit grep -f list ab.durum.fa.mod.EDTA.TElib.fa > ab.durum.known.fa
