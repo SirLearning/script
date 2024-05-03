@@ -59,11 +59,10 @@ nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.36.fq cs.r2.fq.gz r2.36.fq
 #java -cp ~/js/pop/src/ ssReads 1 CRR072407/CRR072407_f1.fq.gz f1.CRR072407.fq CRR072407/CRR072407_r2.fq.gz r2.CRR072407.fq 2525 && pigz -3 f1.CRR072407.fq r2.CRR072407.fq
 #java -cp ~/js/pop/src/ ssReads 1 CRR072408/CRR072408_f1.fq.gz f1.CRR072408.fq CRR072408/CRR072408_r2.fq.gz r2.CRR072408.fq 3210 && pigz -3 f1.CRR072408.fq r2.CRR072408.fq
 #java -cp ~/js/pop/src/ ssReads 1 CRR072409/CRR072409_f1.fq.gz f1.CRR072409.fq CRR072409/CRR072409_r2.fq.gz r2.CRR072409.fq 2488 && pigz -3 f1.CRR072409.fq r2.CRR072409.fq
-#
-#10000/4.252160444 = 2353
-#10000/3.723767111 = 2682
-#10000/3.957303444 = 2525
-#10000/3.113460611 = 3210
-#10000/4.016227056 = 2488
+
 
 #nohup java -cp ~/js/pop/src/ ssReads 1 CRR072401/CRR072401_f1.fq.gz f1.CRR072401.fq CRR072401/CRR072401_r2.fq.gz r2.CRR072401.fq 2296 && pigz -3 f1.CRR072401.fq r2.CRR072401.fq &
+#java -cp ~/js/pop/src/ ssReads 1 SRR7164576/SRR7164576_1.fastq.gz f1.SRR7164576.fq SRR7164576/SRR7164576_2.fastq.gz r2.SRR7164576.fq 918 && pigz -3 f1.SRR7164576.fq r2.SRR7164576.fq
+#java -cp ~/js/pop/src/ ssReads 1 SRR7164580/SRR7164580_1.fastq.gz f1.SRR7164580.fq SRR7164580/SRR7164580_2.fastq.gz r2.SRR7164580.fq 917 && pigz -3 f1.SRR7164580.fq r2.SRR7164580.fq
+#java -cp ~/js/pop/src/ ssReads 1 SRR7164572/SRR7164572_1.fastq.gz f1.SRR7164572.fq SRR7164572/SRR7164572_2.fastq.gz r2.SRR7164572.fq 877 && pigz -3 f1.SRR7164572.fq r2.SRR7164572.fq
+#java -cp ~/js/pop/src/ ssReads 1 SRR7164606/SRR7164606_1.fastq.gz f1.SRR7164606.fq SRR7164606/SRR7164606_2.fastq.gz r2.SRR7164606.fq 897 && pigz -3 f1.SRR7164606.fq r2.SRR7164606.fq
