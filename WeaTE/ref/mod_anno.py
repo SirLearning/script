@@ -21,7 +21,7 @@ output = 'mod.n.site.gff3'
 def edta(anno_name):
     # 1. read anno
     anno = pd.read_table(anno_name, sep='\t', header=None)
-    anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+    anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'else']
     anno['width'] = anno['end'] - anno['start'] + 1
     attributes = anno['attributes'].str.split(';', expand=True)
     if len(attributes.columns) == 9:
@@ -87,6 +87,7 @@ def te_code(anno):
                     'DTT', 'XXX']
     }
     TEcode = pd.DataFrame(data)
+    anno['Classification'] = anno['Classification'].str.split('=').str[1]
     anno.loc[anno['Classification'] == 'Unspecified', 'Classification'] = anno['Name'].str.split('=').str[1]
     anno.loc[:, 'Classification'] = anno['Classification'].str.split('_').str[0]
     for i in range(0, len(TEcode)):
@@ -129,8 +130,10 @@ def n_site(nn_name, anno_name, output_name):
 
 
 def main():
-    anno = sys.argv[1]
-    output = sys.argv[2]
+    # anno = sys.argv[1]
+    # output = sys.argv[2]
+    anno = '../data/cut.gff3'
+    output = '../data/np.gff3'
     anno = edta(anno)
     # anno = cs(anno)
     anno.to_csv(output, sep='\t', header=False, index=False)
