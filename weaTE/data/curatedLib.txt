@@ -72,12 +72,14 @@ RIL:WHLN2_TA:aestivum
 RIL:WHLN3_TA:aestivum
 RLC:WIS21A_TA-LTR:aestivum
 RLC:WIS21A_TA-int:aestivum
+
 DTC:EnSpm-2_TD:durum
 DTC:EnSpm-N1_TD:durum
 DTC:EnSpm1_TD:durum
 RIL:L1_TD:durum
 DTM:MuDR1_TD:durum
 RIT:RTE-1_TD:durum
+
 RLC:ANGELA1_TM-int:mono
 RLC:ANGELA1_TM-LTR:mono
 RLC:ANGELA6_TM-int:mono
@@ -139,6 +141,7 @@ RLC:WIS2_TM-int:mono
 RLC:WIS2_TM-LTR:mono
 RLC:WIS4_TM-int:mono
 RLC:WIS4_TM-LTR:mono
+
 DTA:DTA_Chimera:triticeae
 DTC:EnSpm-3_HV:triticeae
 DTC:EnSpm-4_HV:triticeae
