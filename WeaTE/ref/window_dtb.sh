@@ -26,15 +26,15 @@ awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
 #awk -F'\t' '$10=="XXX"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.XXX.dtb.txt
 #awk -F'\t' '$10=="NULL"' $1 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > stats.NULL.dtb.txt
 
-awk -F'\t' '$10=="DHH"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DHH.dtb.txt
-awk -F'\t' '$10=="DTA"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTA.dtb.txt
-awk -F'\t' '$10=="DTC"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTC.dtb.txt
-awk -F'\t' '$10=="DTH"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTH.dtb.txt
-awk -F'\t' '$10=="DTM"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTM.dtb.txt
-awk -F'\t' '$10=="DTT"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTT.dtb.txt
-awk -F'\t' '$10=="RIJ"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIJ.dtb.txt
-awk -F'\t' '$10=="RIL"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIL.dtb.txt
-awk -F'\t' '$10=="RIR"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIR.dtb.txt
-awk -F'\t' '$10=="RLC"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLC.dtb.txt
-awk -F'\t' '$10=="RLG"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLG.dtb.tx
-awk -F'\t' '$10=="RSX"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RSX.dtb.txt
+awk -F'\t' '$11=="DHH"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DHH.dtb.txt
+awk -F'\t' '$11=="DTA"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTA.dtb.txt
+awk -F'\t' '$11=="DTC"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTC.dtb.txt
+awk -F'\t' '$11=="DTH"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTH.dtb.txt
+awk -F'\t' '$11=="DTM"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTM.dtb.txt
+awk -F'\t' '$11=="DTT"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.DTT.dtb.txt
+awk -F'\t' '$11=="RIJ"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIJ.dtb.txt
+awk -F'\t' '$11=="RIL"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIL.dtb.txt
+awk -F'\t' '$11=="RIR"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIR.dtb.txt
+awk -F'\t' '$11=="RLC"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLC.dtb.txt
+awk -F'\t' '$11=="RLG"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLG.dtb.tx
+awk -F'\t' '$11=="RSX"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RSX.dtb.txt
