@@ -44,19 +44,23 @@ def difference_te_hist(axs, file, method):
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.4, label=method)
 
 
-def genome_dtb(axs, spc, name, method):
-    density = pd.read_table('../data/' + spc + '/' + method + '/stats.' + name + '.dtb.txt', sep='\s+', header=None)
-    density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
-    axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8)
+def genome_dtb(axs, spc, name, method, i):
+    cover = pd.read_table('../data/' + spc + '/' + method + '/coverage.' + name + '.dtb.txt', sep='\s+', header=None)
+    cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
+    axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
+    # axs.hist(cover['win_start'] / 1000000, weights=cover['coverage'], bins=cover['win_num'].iloc[-1], alpha=0.4, label=name)
 
 
 def do_plot(axs, file_name, chr):
-    axs.figure.set_size_inches(16, 8)
+    axs.figure.set_size_inches(16, 7)
     for i in range(0, 12):
-        genome_dtb(axs, 'ldr', file_name[i], chr)
+        genome_dtb(axs, 'ldr', file_name[i], chr, i)
     axs.set_xlabel('chromosome (Mb)')
-    axs.set_ylabel('coverage')
-    axs.set_title("TE distribution along " + chr)
+    axs.set_ylabel('coverage (%)')
+    # axs.set_title("TE distribution along " + chr)
+    # axs.legend(fontsize=14, framealpha=0.5)
+    plt.show()
+
 
 def main():
     file_name = ['DHH', 'DTA', 'DTC', 'DTH', 'DTM', 'DTT', 'RIJ', 'RIL', 'RIR', 'RLC', 'RLG', 'RSX']

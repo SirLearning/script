@@ -36,5 +36,5 @@ awk -F'\t' '$11=="RIJ"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b -
 awk -F'\t' '$11=="RIL"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIL.dtb.txt
 awk -F'\t' '$11=="RIR"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RIR.dtb.txt
 awk -F'\t' '$11=="RLC"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLC.dtb.txt
-awk -F'\t' '$11=="RLG"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLG.dtb.tx
+awk -F'\t' '$11=="RLG"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RLG.dtb.txt
 awk -F'\t' '$11=="RSX"' mod.edta.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.RSX.dtb.txt
