@@ -6,7 +6,7 @@ touch stats.nl.txt
 python ~/script/04analysis/01num_length.py $1 $2 stats.nl.txt ~/script/04analysis/data/TEcode
 printf "1\n"
 # step 2 distribution
-#python ~/script/weaTE/site_redirect_N.py N1.bed # N_cut annotation
+#python ~/script/WeaTE/site_redirect_N.py N1.bed # N_cut annotation
 # generate windows
 awk '{print $1"\t"$2}' $2 > stats.genome
 bedtools makewindows -g stats.genome -w 5000000 -s 5000000 > stats.dtb.bed3
@@ -23,4 +23,4 @@ python ~/script/04analysis/03distribution.py $1 ~/script/04analysis/data/TEcode 
 #done
 # step 3 test N_cut
 # redirect N_cut annotation
-#python ~/script/weaTE/site_redirect_N.py N1.bed ../chr1ANM.fa.mod.EDTA.TEanno.gff3 chr1ANM.stats.gff3
+#python ~/script/WeaTE/site_redirect_N.py N1.bed ../chr1ANM.fa.mod.EDTA.TEanno.gff3 chr1ANM.stats.gff3
