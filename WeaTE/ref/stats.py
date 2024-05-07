@@ -8,7 +8,7 @@ Module to statistically measure the annotation files.
 
 """:parameter
 fai = '{seq}.fai'
-anno = 'stats.edta.gff3'
+anno = 'mod.edta.gff3'
 output1 = 'stats.summ.txt'
 output2 = 'stats.length.txt'
 output3 = 'stats.overlap.gff3'

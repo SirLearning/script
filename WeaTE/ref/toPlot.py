@@ -44,15 +44,35 @@ def difference_te_hist(axs, file, method):
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.4, label=method)
 
 
+def genome_dtb(axs, spc, name, method):
+    density = pd.read_table('../data/' + spc + '/' + method + '/stats.' + name + '.dtb.txt', sep='\s+', header=None)
+    density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
+    axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8)
+
+
+def do_plot(axs, file_name, chr):
+    axs.figure.set_size_inches(16, 8)
+    for i in range(0, 12):
+        genome_dtb(axs, 'ldr', file_name[i], chr)
+    axs.set_xlabel('chromosome (Mb)')
+    axs.set_ylabel('coverage')
+    axs.set_title("TE distribution along " + chr)
+
 def main():
-    file_name = pd.read_table('../data/dtb_files.name', header=None)
-    file_name = file_name.fillna('NULL')
+    file_name = ['DHH', 'DTA', 'DTC', 'DTH', 'DTM', 'DTT', 'RIJ', 'RIL', 'RIR', 'RLC', 'RLG', 'RSX']
+    plt.style.use('seaborn-v0_8-deep')
+    # plt.style.use('fast')
+    mpl.rcParams['font.size'] = 24
+    plt.rcParams['xtick.labelsize'] = 20
+    plt.rcParams['ytick.labelsize'] = 20
+    fig, axA = plt.subplots()
+    do_plot(axA, file_name, 'chr1A')
+    fig, axB = plt.subplots()
+    do_plot(axB, file_name, 'chr1B')
+    fig, axD = plt.subplots()
+    do_plot(axD, file_name, 'chr1D')
 
-    mpl.rcParams['font.size'] = 20
-    plt.style.use('fast')
 
-    plt.rcParams['xtick.labelsize'] = 15
-    plt.rcParams['ytick.labelsize'] = 15
 
 
 if __name__ == '__main__':

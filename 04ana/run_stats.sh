@@ -16,11 +16,11 @@ touch stats.dtb.gff3
 python ~/script/04analysis/03distribution.py $1 ~/script/04analysis/data/TEcode stats.dtb.gff3
 #awk '{$1="chr1A"}1' OFS='\t' stats.dtb.gff3 > stats.dtb.gff3 # when N1.bed is used, need to reconsider the file triticeae
 # calculate the number of TE in each window
-declare -a arr=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "DTX" "DXX" "NULL" "RIJ" "RIL" "RIR" "RIX" "RLC" "RLG" "RLX" "RSX" "XXX")
-for i in "${arr[@]}"
-do
-   awk -v var="$i" '$10==var' stats.dtb.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > "stats.${i}.dtb.txt"
-done
+#declare -a arr=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "DTX" "DXX" "NULL" "RIJ" "RIL" "RIR" "RIX" "RLC" "RLG" "RLX" "RSX" "XXX")
+#for i in "${arr[@]}"
+#do
+#   awk -v var="$i" '$10==var' stats.dtb.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -counts -F 0.5 > "stats.${i}.dtb.txt"
+#done
 # step 3 test N_cut
 # redirect N_cut annotation
 #python ~/script/weaTE/site_redirect_N.py N1.bed ../chr1ANM.fa.mod.EDTA.TEanno.gff3 chr1ANM.stats.gff3

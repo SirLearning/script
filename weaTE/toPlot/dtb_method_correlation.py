@@ -9,7 +9,7 @@ plt.style.use('seaborn-v0_8-deep')
 
 def compare_te_hist(axs, file, name, method, color):
     file = str(file)
-    density = pd.read_table('data/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
+    density = pd.read_table('../data/old/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.7,
              label=name, color=color)
@@ -27,7 +27,7 @@ def compare_te_hist(axs, file, name, method, color):
 # EDTA vs CS vertion
 def difference_te_hist(axs, file, name, method, color):
     file = str(file)
-    density = pd.read_table('data/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
+    density = pd.read_table('../data/old/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     # axs.hist(density['win_start'] / 1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.8,
     #          label=triticeae, color=color)
@@ -55,7 +55,7 @@ plt.rcParams['ytick.labelsize'] = 20
 # correlation between EDTA and CS
 for i in range(0, 18):
     fig, ax = plt.subplots()
-    ax.figure.set_size_inches(10, 8)
+    ax.figure.set_size_inches(16, 8)
     compare_te_hist(ax, file_name.iloc[i, 0], 'EDTA', 'chr1A', '#348ABD')
     compare_te_hist(ax, file_name.iloc[i, 0], 'CS v1.0', 'CS', '#7A68A6')
     difference_te_hist(ax, file_name.iloc[i, 0], 'Only in EDTA', 'vEDTA', '#A60628')
