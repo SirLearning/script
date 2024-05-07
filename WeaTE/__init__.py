@@ -1,5 +1,5 @@
 """
-weaTE is a Python package for wheat TE data extraction and analysis.
+WeaTE is a Python package for wheat TE data extraction and analysis.
 
 subpackage1 ref: reference data
 input:

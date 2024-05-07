@@ -2,7 +2,7 @@
 ## $2: {seq}.mod.EDTA.TEanno.gff3
 ## $3: window size 5000000
 touch mod.edta.gff3
-python ~/script/weaTE/ref/mod_anno.py $2 mod.edta.gff3
+python ~/script/WeaTE/ref/mod_anno.py $2 mod.edta.gff3
 awk '{print $1"\t"$2}' $1 > stats.genome
 bedtools makewindows -g stats.genome -w $3 -s $3 > stats.dtb.bed3
 awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
