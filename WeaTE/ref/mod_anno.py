@@ -21,7 +21,7 @@ output = 'mod.n.site.gff3'
 def edta(anno_name):
     # 1. read anno
     anno = pd.read_table(anno_name, sep='\t', header=None)
-    anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'else']
+    anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     anno['width'] = anno['end'] - anno['start'] + 1
     attributes = anno['attributes'].str.split(';', expand=True)
     if len(attributes.columns) == 9:
