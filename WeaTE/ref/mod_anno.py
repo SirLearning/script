@@ -130,10 +130,10 @@ def n_site(nn_name, anno_name, output_name):
 
 
 def main():
-    # anno = sys.argv[1]
-    # output = sys.argv[2]
-    anno = '../data/cut.gff3'
-    output = '../data/np.gff3'
+    anno = sys.argv[1]
+    output = sys.argv[2]
+    # anno = '../data/cut.gff3'
+    # output = '../data/np.gff3'
     anno = edta(anno)
     # anno = cs(anno)
     anno.to_csv(output, sep='\t', header=False, index=False)
