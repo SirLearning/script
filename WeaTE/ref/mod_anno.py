@@ -134,8 +134,8 @@ def main():
     output = sys.argv[2]
     # anno = '../data/cut.gff3'
     # output = '../data/np.gff3'
-    anno = edta(anno)
-    # anno = cs(anno)
+    # anno = edta(anno)
+    anno = cs(anno)
     anno.to_csv(output, sep='\t', header=False, index=False)
     # columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'width', 'classification']
 

@@ -48,6 +48,18 @@ def genome_dtb(axs, spc, name, method, i):
     cover = pd.read_table('../data/' + spc + '/' + method + '/coverage.' + name + '.dtb.txt', sep='\s+', header=None)
     cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
     axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
+    # axs.axvspan(116.0, 116.7, color='green', alpha=0.01)
+    # axs.axvspan(212.1, 215.7, color='green', alpha=0.01)
+    # axs.axvspan(217.0, 218.7, color='green', alpha=0.01)
+    if method == 'chr1A':
+        axs.axvspan(209.9, 216.2, color='green', alpha=0.01)
+    if method == 'chr1B':
+        axs.axvspan(237.7, 244.5, color='green', alpha=0.01)
+    if method == 'chr1D':
+        axs.axvspan(166.0, 174.6, color='green', alpha=0.01)
+    # axs.axvspan(234.6, 235.2, color='green', alpha=0.01)
+    # axs.axvspan(237.2, 238.3, color='green', alpha=0.01)
+    # axs.axvspan(277.9, 278.7, color='green', alpha=0.01)
     # axs.hist(cover['win_start'] / 1000000, weights=cover['coverage'], bins=cover['win_num'].iloc[-1], alpha=0.4, label=name)
 
 
@@ -75,6 +87,10 @@ def main():
     do_plot(axB, file_name, 'chr1B')
     fig, axD = plt.subplots()
     do_plot(axD, file_name, 'chr1D')
+    # fig, axR = plt.subplots()
+    # do_plot(axR, file_name, 'chr1R')
+    # fig, axH = plt.subplots()
+    # do_plot(axH, file_name, 'chr1H')
 
 
 
