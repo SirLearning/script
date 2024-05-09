@@ -45,7 +45,7 @@ def difference_te_hist(axs, file, method):
 
 
 def centromere(axs, spc, method):
-    if spc == 'cs' or spc == 'ldr':
+    if spc == 'cs_n' or spc == 'ldr':
         if method == 'chr1A':
             axs.axvspan(209.9, 216.2, color='green', alpha=0.01)
         if method == 'chr1B':
@@ -66,7 +66,7 @@ def centromere(axs, spc, method):
             axs.axvspan(208.0, 211.4, color='green', alpha=0.01)
         if method == 'chr1B':
             axs.axvspan(235.4, 237.2, color='green', alpha=0.01)
-    if spc == 'ae':
+    if spc == 'at':
         axs.axvspan(175.9, 178.5, color='green', alpha=0.01)
         axs.axvspan(179.1, 180.9, color='green', alpha=0.01)
 
@@ -82,7 +82,7 @@ def genome_dtb(axs, spc, name, method, i):
 def do_plot(axs, file_name, chr):
     axs.figure.set_size_inches(16, 7)
     for i in range(0, 12):
-        genome_dtb(axs, 'cs', file_name[i], chr, i)
+        genome_dtb(axs, 'cs_n', file_name[i], chr, i)
     axs.set_xlabel('chromosome (Mb)')
     axs.set_ylabel('coverage (%)')
     # axs.set_title("TE distribution along " + chr)
