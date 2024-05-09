@@ -6,5 +6,6 @@ touch la.bed
 samtools faidx la.fa
 python ~/script/WeaTE/pop/derived.py la.fa.fai la.bed
 bedtools intersect -f 0.8 -r -v -a la.bed -b la.fa.out.bed > la.cs.bed
+rm la.bed la.fa.out.bed
 # to r
 
