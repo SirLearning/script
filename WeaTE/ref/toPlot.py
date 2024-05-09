@@ -44,29 +44,45 @@ def difference_te_hist(axs, file, method):
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.4, label=method)
 
 
+def centromere(axs, spc, method):
+    if spc == 'cs' or spc == 'ldr':
+        if method == 'chr1A':
+            axs.axvspan(209.9, 216.2, color='green', alpha=0.01)
+        if method == 'chr1B':
+            axs.axvspan(237.7, 244.5, color='green', alpha=0.01)
+        if method == 'chr1D':
+            axs.axvspan(166.0, 174.6, color='green', alpha=0.01)
+    if spc == 'we':
+        if method == 'chr1A':
+            axs.axvspan(116.0, 116.7, color='green', alpha=0.01)
+            axs.axvspan(212.1, 215.7, color='green', alpha=0.01)
+            axs.axvspan(217.0, 218.7, color='green', alpha=0.01)
+        if method == 'chr1B':
+            axs.axvspan(234.6, 235.2, color='green', alpha=0.01)
+            axs.axvspan(237.2, 238.3, color='green', alpha=0.01)
+            axs.axvspan(277.9, 278.7, color='green', alpha=0.01)
+    if spc == 'dw':
+        if method == 'chr1A':
+            axs.axvspan(208.0, 211.4, color='green', alpha=0.01)
+        if method == 'chr1B':
+            axs.axvspan(235.4, 237.2, color='green', alpha=0.01)
+    if spc == 'ae':
+        axs.axvspan(175.9, 178.5, color='green', alpha=0.01)
+        axs.axvspan(179.1, 180.9, color='green', alpha=0.01)
+
+
 def genome_dtb(axs, spc, name, method, i):
     cover = pd.read_table('../data/' + spc + '/' + method + '/coverage.' + name + '.dtb.txt', sep='\s+', header=None)
     cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
     axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
-    # axs.axvspan(116.0, 116.7, color='green', alpha=0.01)
-    # axs.axvspan(212.1, 215.7, color='green', alpha=0.01)
-    # axs.axvspan(217.0, 218.7, color='green', alpha=0.01)
-    if method == 'chr1A':
-        axs.axvspan(209.9, 216.2, color='green', alpha=0.01)
-    if method == 'chr1B':
-        axs.axvspan(237.7, 244.5, color='green', alpha=0.01)
-    if method == 'chr1D':
-        axs.axvspan(166.0, 174.6, color='green', alpha=0.01)
-    # axs.axvspan(234.6, 235.2, color='green', alpha=0.01)
-    # axs.axvspan(237.2, 238.3, color='green', alpha=0.01)
-    # axs.axvspan(277.9, 278.7, color='green', alpha=0.01)
+    centromere(axs, spc, method)
     # axs.hist(cover['win_start'] / 1000000, weights=cover['coverage'], bins=cover['win_num'].iloc[-1], alpha=0.4, label=name)
 
 
 def do_plot(axs, file_name, chr):
     axs.figure.set_size_inches(16, 7)
     for i in range(0, 12):
-        genome_dtb(axs, 'ldr', file_name[i], chr, i)
+        genome_dtb(axs, 'cs', file_name[i], chr, i)
     axs.set_xlabel('chromosome (Mb)')
     axs.set_ylabel('coverage (%)')
     # axs.set_title("TE distribution along " + chr)
