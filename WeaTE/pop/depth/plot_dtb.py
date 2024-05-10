@@ -13,22 +13,22 @@ def main():
     summary.reset_index(drop=True, inplace=True)
     summary = summary.sort_values(by='type')
 
-    # fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
     # plt.rcParams['font.size'] = 24
-    # ax.figure.set_size_inches(18, 9)
-    #
-    # sns.boxplot(x='type', y='cv', hue='chr', data=summary, showfliers=False,
-    #             palette='Set3', linewidth=2, dodge=True, ax=ax, width=0.8)
-    # plt.axhline(1, color='r', linestyle='--')
-    # plt.title('Variation of Depth Distribution')
-    # plt.ylabel('Coefficient of Variation')
-    # plt.legend(title='Name')
-    # plt.show()
+    ax.figure.set_size_inches(18, 9)
 
-    # with open('data/vu_reads_depth/threshold.txt', 'w') as f:
-    #     for i in range(len(summary)):
-    #         if summary.loc[i, 'threshold']:
-    #             f.write(summary.loc[i, 'chrom'] + '\t' + summary.loc[i, 'chr'] + '\n')
+    sns.boxplot(x='type', y='cv', hue='chr', data=summary, showfliers=False,
+                palette='Set3', linewidth=2, dodge=True, ax=ax, width=0.8)
+    plt.axhline(1, color='r', linestyle='--')
+    plt.title('Variation of Depth Distribution')
+    plt.ylabel('Coefficient of Variation')
+    plt.legend(title='Name')
+    plt.show()
+
+    with open('data/vu_reads_depth/threshold.txt', 'w') as f:
+        for i in range(len(summary)):
+            if summary.loc[i, 'threshold']:
+                f.write(summary.loc[i, 'chrom'] + '\t' + summary.loc[i, 'chr'] + '\n')
 
 def peak(data):
     peak_idx = []
@@ -62,7 +62,7 @@ def chr_main(chr):
 
     # TE type
     summary['type'] = summary['chrom'].str.split('#').str[1]
-    tecode = pd.read_table("../data/TEcode", sep=",", header=None)
+    tecode = pd.read_table("data/TEcode", sep=",", header=None)
     tecode.columns = ['cls', 'new_cls']
     for i in range(0, len(tecode)):
         summary.loc[summary['type'] == tecode['cls'][i], 'type'] = tecode['new_cls'][i]
@@ -101,16 +101,16 @@ def dtb_form(prb, summary):
                 v50 = x
                 found = True
 
-        # std_dev = 0
-        # mean_value = 0
-        # for i in range(1, len(dens)):
-        #     mean_value = float(summary.loc[summary['chrom'] == chrom, 'mean'].iloc[0])
-        #     std_dev += dens[i] * (depth[i] - mean_value) ** 2
-        # std_dev = np.sqrt(std_dev)
-        # summary.loc[summary['chrom'] == chrom, 'cv'] = std_dev / mean_value
-        # if std_dev / mean_value > 1:
-        #     summary.loc[summary['chrom'] == chrom, 'threshold'] = True
-        # summary.loc[summary['chrom'] == chrom, 'v50'] = v50
+        std_dev = 0
+        mean_value = 0
+        for i in range(1, len(dens)):
+            mean_value = float(summary.loc[summary['chrom'] == chrom, 'mean'].iloc[0])
+            std_dev += dens[i] * (depth[i] - mean_value) ** 2
+        std_dev = np.sqrt(std_dev)
+        summary.loc[summary['chrom'] == chrom, 'cv'] = std_dev / mean_value
+        if std_dev / mean_value > 1:
+            summary.loc[summary['chrom'] == chrom, 'threshold'] = True
+        summary.loc[summary['chrom'] == chrom, 'v50'] = v50
 
         # # to output
         # dtb[chrom].append({
@@ -127,21 +127,21 @@ def dtb_form(prb, summary):
         peak_index = peak(dens_array)
         peak_index_new = find_peaks_cwt(dens_array, 5)
 
-        if times > 1000:
-            plt.figure(figsize=(14, 7))
-            plt.plot(depth, dens, label=chrom)
-            plt.scatter(depth, dens, alpha=0.5, s=30)
-            for i in peak_index:
-                plt.scatter(depth[i], dens[i], color='red', s=50)
-            for i in peak_index_new:
-                plt.scatter(depth[i], dens[i], color='orange', alpha=0.5, s=50)
-            plt.title('Probability Density Plot for ' + chrom)
-            plt.xlabel('Depth')
-            plt.ylabel('Probability')
-            plt.legend([v50])
-            plt.show()
-        if times == 1010:
-            break
+        # if times > 1000:
+        #     plt.figure(figsize=(14, 7))
+        #     plt.plot(depth, dens, label=chrom)
+        #     plt.scatter(depth, dens, alpha=0.5, s=30)
+        #     for i in peak_index:
+        #         plt.scatter(depth[i], dens[i], color='red', s=50)
+        #     for i in peak_index_new:
+        #         plt.scatter(depth[i], dens[i], color='orange', alpha=0.5, s=50)
+        #     plt.title('Probability Density Plot for ' + chrom)
+        #     plt.xlabel('Depth')
+        #     plt.ylabel('Probability')
+        #     plt.legend([v50])
+        #     plt.show()
+        # if times == 1010:
+        #     break
     return summary
 
 
