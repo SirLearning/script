@@ -30,6 +30,7 @@ def main():
             if summary.loc[i, 'threshold']:
                 f.write(summary.loc[i, 'chrom'] + '\t' + summary.loc[i, 'chr'] + '\n')
 
+
 def peak(data):
     peak_idx = []
     flag = False
@@ -50,6 +51,7 @@ def peak(data):
             peak_idx.append(i + 1)
         bias0 = bias1
     return peak_idx
+
 
 def chr_main(chr):
     summary_name = "data/vu_reads_depth/" + chr + ".mosdepth.summary.txt"
