@@ -1,0 +1,1 @@
+cat $3/$1.mosdepth.summary.txt | grep -f $3.$2 > $3.$1.sum

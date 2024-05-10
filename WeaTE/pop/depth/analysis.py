@@ -66,7 +66,7 @@ def main():
     plt.show()
 
     # 5. reads_pct of TEs after threshold
-    threshold = pd.read_table('../data/vu_reads_depth/threshold.txt', header=None)
+    threshold = pd.read_table('data/vu_reads_depth/threshold.txt', header=None)
     threshold.columns = ['chrom', 'chr']
     th = depth
     for i in range(len(threshold)):
@@ -76,7 +76,6 @@ def main():
 
     fig, ax = plt.subplots()
     ax.figure.set_size_inches(18, 9)
-
     sns.barplot(x='type', y='percent', hue='chr', data=th_reads, palette='Set3', ax=ax,
                 legend=['reads_1A', 'reads_1B', 'reads_1D'])
     sns.barplot(x='type', y='percent', hue='chr', data=ref_pct, ax=ax, alpha=0.5, legend=['ref_1A', 'ref_1B', 'ref_1D'])
