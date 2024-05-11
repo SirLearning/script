@@ -111,22 +111,30 @@ def cs_age(genome):
     age = []
     sign = []
     seq = []
+    order = []
+    region = []
     if genome == 'a':
         spc = ['durum', 'wild_emmer', 'D_lineage', 'B_lineage']
         age = ['durum(8,441_ya)', 'wild_emmer(10,041_ya)', 'D_lineage(5.69_Mya)', 'B_lineage(6.67_Mya)']
         sign = ['a-dw', 'a-we', 'a-dcs', 'a-bcs']
         seq = ['cs-dw', 'cs-we', 'cs-dcs', 'cs-bcs']
+        order = ['a-0', 'a-1', 'a-2', 'a-3']
+        region = ['ancestor-WE', 'WE-DW', 'DW-BW', 'BW-now']
     if genome == 'b':
         spc = ['durum', 'wild_emmer', 'A_lineage', 'D_lineage']
         age = ['durum(8,441_ya)', 'wild_emmer(10,041_ya)', 'A_lineage(6.67_Mya)', 'D_lineage(6.67_Mya)']
         sign = ['b-dw', 'b-we', 'b-acs', 'b-dcs']
         seq = ['cs-dw', 'cs-we', 'cs-acs', 'cs-dcs']
+        order = ['b-0', 'b-1', 'b-2', 'b-3']
+        region = ['ancestor-WE', 'WE-DW', 'DW-BW', 'BW-now']
     if genome == 'd':
         spc = ['tauchii', 'A_lineage', 'B_lineage']
         age = ['tauchii(175,987_ya)', 'A_lineage(5.69_Mya)', 'B_lineage(6.67_Mya)']
         sign = ['d-at', 'd-acs', 'd-bcs']
         seq = ['cs-at', 'cs-acs', 'cs-bcs']
-    return age, spc, sign, seq
+        order = ['d-0', 'd-1', 'd-2']
+        region = ['ancestor-AT', 'AT-BW', 'BW-now']
+    return age, spc, sign, seq, order, region
 
 
 def mod_sample(sample):
@@ -184,7 +192,7 @@ def extract_derived(genome):
 
 
 def cs_div(genome):
-    [ages, species, signals] = cs_age(genome)
+    [ages, species, signals, region1, region2] = cs_age(genome)
     sample_name = choose_sample('landrace')
     summary = pd.DataFrame()
     for i in range(len(species)):
@@ -200,6 +208,26 @@ def cs_div(genome):
             summ['species'] = species[i]
             summ['sample'] = name
             summ['age'] = ages[i]
+            summary = pd.concat([summary, summ])
+    return summary
+
+
+def cs_region(genome):
+    [ages, species, signals, seqs, orders, regions] = cs_age(genome)
+    sample_name = choose_sample('landrace')
+    summary = pd.DataFrame()
+    for i in range(len(regions)):
+        for name in sample_name:
+            sample = pd.read_table('data/cs/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
+            sample = mod_sample(sample)
+            grouped = sample.groupby('Classification')
+            summ = grouped.agg(
+                count=('Classification', 'count'),
+                size=('bases', 'sum'),
+            )
+            summ['region'] = regions[i]
+            summ['sample'] = name
             summary = pd.concat([summary, summ])
     return summary
 
@@ -241,19 +269,21 @@ def lib_boxplot():
 
 def cs_boxplot():
     # summ = cs_div('d')
-    # write_temp(summ)
+    summ = cs_region('d')
+    write_temp(summ)
     # summ = read_temp()
-    summ = read_record('cs_d')
+    # summ = read_record('cs_ra')
     summ['size'] = summ['size'] / 10**9
     fig, ax = plt.subplots()
     plt.rcParams['font.size'] = 24
     ax.figure.set_size_inches(16, 7.5)
-    sns.boxplot(x='Classification', y='size', hue='age', data=summ, showfliers=True,
+    # sns.boxplot(x='Classification', y='size', hue='age', data=summ, showfliers=True,
+    sns.boxplot(x='Classification', y='size', hue='region', data=summ, showfliers=True,
                 palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
-    plt.title('TE mutation load & Diverge time (genome D)')
+    plt.title('TE mutation load during wheat evolution (genome D)')
     # plt.xlabel('TE type')
     plt.ylabel('TE Mutation Load (Gb)')
-    plt.legend( title='BW diverge time with:', framealpha=0.5, fontsize=18, title_fontsize=22)
+    plt.legend( title='BW evolution period', framealpha=0.5, fontsize=18, title_fontsize=22)
     plt.show()
 
 
@@ -265,9 +295,8 @@ def main():
 
     # 1. run stats
     # lib_boxplot()
-    # cs_boxplot()
-    cs_cor()
-
+    cs_boxplot()
+    # cs_cor(a
 
 if __name__ == '__main__':
     main()

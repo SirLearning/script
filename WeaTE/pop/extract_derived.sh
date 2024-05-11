@@ -104,13 +104,35 @@ cat a-we.SRR7164606.sum b-we.SRR7164606.sum > ab-we.SRR7164606.sum
 
 
 # !!!! new TE !!!!
-sh ~/script/WeaTE/pop/cs.sh a 1 ol
-sh ~/script/WeaTE/pop/cs.sh a 2 ol
-sh ~/script/WeaTE/pop/cs.sh a 3 ol
+nohup sh ~/script/WeaTE/pop/cs.sh a 1 ol &
+nohup sh ~/script/WeaTE/pop/cs.sh a 2 ol &
+nohup sh ~/script/WeaTE/pop/cs.sh a 3 ol &
 
-sh ~/script/WeaTE/pop/cs.sh b 1 ol
-sh ~/script/WeaTE/pop/cs.sh b 2 ol
-sh ~/script/WeaTE/pop/cs.sh b 3 ol
+nohup sh ~/script/WeaTE/pop/cs.sh b 1 ol &
+nohup sh ~/script/WeaTE/pop/cs.sh b 2 ol &
+nohup sh ~/script/WeaTE/pop/cs.sh b 3 ol &
 
-sh ~/script/WeaTE/pop/cs.sh d 1 ol
-sh ~/script/WeaTE/pop/cs.sh d 2 ol
+nohup sh ~/script/WeaTE/pop/cs.sh d 1 ol &
+nohup sh ~/script/WeaTE/pop/cs.sh d 2 ol &
+
+nohup sh ~/script/WeaTE/pop/cs.sh a 0 ol &
+
+
+
+# !!!! WE domestication !!!!
+sh ~/script/WeaTE/pop/rm.sh we at # we-at
+sh ~/script/WeaTE/pop/rm.sh we dw # we-dw
+sh ~/script/WeaTE/pop/rm.sh dw at # dw-at
+sh ~/script/WeaTE/pop/rm.sh dw we # dw-dw
+
+cat /data1/home/dazheng/transposon/pop/03mapping/ab.we | grep -v -f we-at > we-0 # ancestor-WE
+cat we-at | grep -v -f we-dw > we-1 # WE-DW
+cat we-at | grep -f we-dw > we-2 # WE-now
+
+cat /data1/home/dazheng/transposon/pop/03mapping/ab.dw | grep -v -f dw-at > dw-0 # ancestor-DW
+cat dw-at | grep -v -f dw-dw > dw-1 # DW-WE
+cat dw-at | grep -f dw-dw > dw-2 # DW-now
+
+
+sh ~/script/WeaTE/pop/abd.sh
+
