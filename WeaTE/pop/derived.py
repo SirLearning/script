@@ -3,6 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
 import upsetplot
+from upsetplot import from_contents
 
 """
 Module to determine the derived TEs in species.
@@ -59,6 +60,7 @@ def upset_plot(spc):
     se_A = cor_to_se(cor_A)
     se_B = cor_to_se(cor_B)
     se_D = cor_to_se(cor_D)
+
     upsetplot.plot(se_A, show_counts=True, facecolor="#348ABD")
     plt.show()
     upsetplot.plot(se_B, show_counts=True, facecolor="#7A68A6")
@@ -104,10 +106,62 @@ def choose_sample(spc):
     return samples
 
 
+def cs_age(genome):
+    spc = []
+    age = []
+    sign = []
+    seq = []
+    if genome == 'a':
+        spc = ['durum', 'wild_emmer', 'D_lineage', 'B_lineage']
+        age = ['durum(8,441_ya)', 'wild_emmer(10,041_ya)', 'D_lineage(5.69_Mya)', 'B_lineage(6.67_Mya)']
+        sign = ['a-dw', 'a-we', 'a-dcs', 'a-bcs']
+        seq = ['cs-dw', 'cs-we', 'cs-dcs', 'cs-bcs']
+    if genome == 'b':
+        spc = ['durum', 'wild_emmer', 'A_lineage', 'D_lineage']
+        age = ['durum(8,441_ya)', 'wild_emmer(10,041_ya)', 'A_lineage(6.67_Mya)', 'D_lineage(6.67_Mya)']
+        sign = ['b-dw', 'b-we', 'b-acs', 'b-dcs']
+        seq = ['cs-dw', 'cs-we', 'cs-acs', 'cs-dcs']
+    if genome == 'd':
+        spc = ['tauchii', 'A_lineage', 'B_lineage']
+        age = ['tauchii(175,987_ya)', 'A_lineage(5.69_Mya)', 'B_lineage(6.67_Mya)']
+        sign = ['d-at', 'd-acs', 'd-bcs']
+        seq = ['cs-at', 'cs-acs', 'cs-bcs']
+    return age, spc, sign, seq
+
+
+def mod_sample(sample):
+    cu_code = pd.read_table('data/curatedLib.txt', sep=":", header=None)
+    cu_code.columns = ['Classification', 'TE', 'species']
+    sample['Classification'] = ''
+    for i in range(len(sample)):
+        for j in range(len(cu_code)):
+            if sample['seq'][i] == cu_code['TE'][j]:
+                sample.loc[i, 'Classification'] = cu_code.loc[j, 'Classification']
+                break
+        if sample['Classification'][i] == '':
+            sample.loc[i, 'Classification'] = sample['seq'][i].split('#')[1]
+            sample = te_code(sample)
+    return sample
+
+
+def read_temp():
+    summ = pd.read_table('data/temp', sep='\t', header=0)
+    return summ
+
+
+def read_record(sign):
+    summ = pd.read_table('data/' + sign, sep='\t', header=0)
+    return summ
+
+
+def write_temp(df):
+    df.to_csv('data/temp', sep='\t', header=True, index=True)
+
+
 def extract_derived(genome):
     species = []
     if genome == 'd':
-        species = ['tauchii', 'landrace', 'cultivar']
+        species = ['landrace', 'cultivar', 'tauchii']
     if genome == 'ab':
         species = ['landrace', 'cultivar', 'durum', 'wild_emmer']
     summary = pd.DataFrame()
@@ -116,18 +170,7 @@ def extract_derived(genome):
         for name in sample_name:
             sample = pd.read_table('data/' + genome + '/' + genome + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
-            cu_code = pd.read_table('data/curatedLib.txt', sep=":", header=None)
-            cu_code.columns = ['Classification', 'TE', 'species']
-            # 1. classify
-            sample['Classification'] = ''
-            for i in range(len(sample)):
-                for j in range(len(cu_code)):
-                    if sample['seq'][i] == cu_code['TE'][j]:
-                        sample.loc[i, 'Classification'] = cu_code.loc[j, 'Classification']
-                        break
-                if sample['Classification'][i] == '':
-                    sample.loc[i, 'Classification'] = sample['seq'][i].split('#')[1]
-                    sample = te_code(sample)
+            sample = mod_sample(sample)
             # 2. stats
             grouped = sample.groupby('Classification')
             summ = grouped.agg(
@@ -135,31 +178,95 @@ def extract_derived(genome):
                 size=('bases', 'sum'),
             )
             summ['species'] = spc
+            summ['sample'] = name
             summary = pd.concat([summary, summ])
     return summary
 
 
-def to_boxplot():
-    summ = extract_derived('ab')
+def cs_div(genome):
+    [ages, species, signals] = cs_age(genome)
+    sample_name = choose_sample('landrace')
+    summary = pd.DataFrame()
+    for i in range(len(species)):
+        for name in sample_name:
+            sample = pd.read_table('data/cs/' + signals[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
+            sample = mod_sample(sample)
+            grouped = sample.groupby('Classification')
+            summ = grouped.agg(
+                count=('Classification', 'count'),
+                size=('bases', 'sum'),
+            )
+            summ['species'] = species[i]
+            summ['sample'] = name
+            summ['age'] = ages[i]
+            summary = pd.concat([summary, summ])
+    return summary
+
+
+def cs_cor():
+    cor = pd.DataFrame()
+    genome = 'd'
+    [ages, species, signals, seqs] = cs_age(genome)
+    cor = {}
+    for i in range(len(species)):
+        data_list = pd.read_table('data/cs/' + genome + '/' + seqs[i], sep='\t', header=None)[0]
+        cor['not in ' + species[i]] = data_list
+    # print(cor)
+    df = from_contents(cor)
+    # df = df.dropna()
+    if genome == 'a': upsetplot.plot(df, show_counts=True, facecolor="#348ABD")
+    if genome == 'b': upsetplot.plot(df, show_counts=True, facecolor="#7A68A6")
+    if genome == 'd': upsetplot.plot(df, show_counts=True, facecolor="#467821")
+    plt.show()
+    plt.show()
+
+
+def lib_boxplot():
+    # summ = extract_derived('ab')
+    # write_temp(summ)
+    # summ = read_temp()
+    summ = read_record('lib_d')
+    summ['size'] = summ['size'] / 10**9
+    fig, ax = plt.subplots()
+    plt.rcParams['font.size'] = 20
+    ax.figure.set_size_inches(16, 7.5)
+    sns.boxplot(x='Classification', y='size', hue='species', data=summ, showfliers=True,
+                palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
+    plt.title('TE content in different species (genome D)')
+    plt.ylabel('size (Gb)')
+    plt.legend(title='Species', framealpha=0.5, fontsize=20, title_fontsize=20)
+    plt.show()
+
+
+def cs_boxplot():
+    # summ = cs_div('d')
+    # write_temp(summ)
+    # summ = read_temp()
+    summ = read_record('cs_d')
     summ['size'] = summ['size'] / 10**9
     fig, ax = plt.subplots()
     plt.rcParams['font.size'] = 24
-    ax.figure.set_size_inches(18, 9)
-    sns.boxplot(x='Classification', y='size', hue='species', data=summ, showfliers=False,
-                palette='Set3', linewidth=2, dodge=True, ax=ax, width=0.8)
-    plt.title('TE content in different species')
-    plt.ylabel('size (Gb)')
-    plt.legend(title='Name')
+    ax.figure.set_size_inches(16, 7.5)
+    sns.boxplot(x='Classification', y='size', hue='age', data=summ, showfliers=True,
+                palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
+    plt.title('TE mutation load & Diverge time (genome D)')
+    # plt.xlabel('TE type')
+    plt.ylabel('TE Mutation Load (Gb)')
+    plt.legend( title='BW diverge time with:', framealpha=0.5, fontsize=18, title_fontsize=22)
     plt.show()
 
 
 def main():
     # bed = fai_to_bed(sys.argv[1])
     # bed.to_csv(sys.argv[2], sep='\t', header=False, index=False)
+
     # upset_plot('cs')
 
     # 1. run stats
-    to_boxplot()
+    # lib_boxplot()
+    # cs_boxplot()
+    cs_cor()
 
 
 if __name__ == '__main__':
