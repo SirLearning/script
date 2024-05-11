@@ -68,38 +68,49 @@ nohup sh ~/script/WeaTE/pop/abd.sh SRR7164604 la d &
 
 
 
-
-
-
-
-
-
-
 # !!!! CS !!!!
 # 1A sh
-sh ~/script/WeaTE/pop/cs.sh a bcs
-sh ~/script/WeaTE/pop/cs.sh a dcs
-sh ~/script/WeaTE/pop/cs.sh a dw
-sh ~/script/WeaTE/pop/cs.sh a we
+sh ~/script/WeaTE/pop/cs.sh a bcs cs
+sh ~/script/WeaTE/pop/cs.sh a dcs cs
+sh ~/script/WeaTE/pop/cs.sh a dw cs
+sh ~/script/WeaTE/pop/cs.sh a we cs
 mv a-*cs*.sum ..
 
 # 1B sh
-sh ~/script/WeaTE/pop/cs.sh b dw
-sh ~/script/WeaTE/pop/cs.sh b we
+sh ~/script/WeaTE/pop/cs.sh b dw cs
+sh ~/script/WeaTE/pop/cs.sh b we cs
+nohup sh ~/script/WeaTE/pop/cs.sh b acs cs &
+nohup sh ~/script/WeaTE/pop/cs.sh b dcs cs &
 mv b-*cs*.sum ..
 
 # 1D sh
-sh ~/script/WeaTE/pop/cs.sh d at
+sh ~/script/WeaTE/pop/cs.sh d at cs
+nohup sh ~/script/WeaTE/pop/cs.sh d acs cs &
+nohup sh ~/script/WeaTE/pop/cs.sh d bcs cs &
 
 # .. sh
-cat a-bw.CRR072401.sum b-bw.CRR072401.sum > ab-bw.CRR072401.sum
-cat a-bw.SRR7164576.sum b-bw.SRR7164576.sum > ab-bw.SRR7164576.sum
-cat a-bw.SRR7164580.sum b-bw.SRR7164580.sum > ab-bw.SRR7164580.sum
-cat a-bw.SRR7164572.sum b-bw.SRR7164572.sum > ab-bw.SRR7164572.sum
-cat a-bw.SRR7164606.sum b-bw.SRR7164606.sum > ab-bw.SRR7164606.sum
+nohup cat a-bw.CRR072401.sum b-bw.CRR072401.sum > ab-bw.CRR072401.sum
+nohup cat a-bw.SRR7164576.sum b-bw.SRR7164576.sum > ab-bw.SRR7164576.sum
+nohup cat a-bw.SRR7164580.sum b-bw.SRR7164580.sum > ab-bw.SRR7164580.sum
+nohup cat a-bw.SRR7164572.sum b-bw.SRR7164572.sum > ab-bw.SRR7164572.sum
+nohup cat a-bw.SRR7164606.sum b-bw.SRR7164606.sum > ab-bw.SRR7164606.sum
 
 cat a-we.CRR072401.sum b-we.CRR072401.sum > ab-we.CRR072401.sum
 cat a-we.SRR7164576.sum b-we.SRR7164576.sum > ab-we.SRR7164576.sum
 cat a-we.SRR7164580.sum b-we.SRR7164580.sum > ab-we.SRR7164580.sum
 cat a-we.SRR7164572.sum b-we.SRR7164572.sum > ab-we.SRR7164572.sum
 cat a-we.SRR7164606.sum b-we.SRR7164606.sum > ab-we.SRR7164606.sum
+
+
+
+# !!!! new TE !!!!
+sh ~/script/WeaTE/pop/cs.sh a 1 ol
+sh ~/script/WeaTE/pop/cs.sh a 2 ol
+sh ~/script/WeaTE/pop/cs.sh a 3 ol
+
+sh ~/script/WeaTE/pop/cs.sh b 1 ol
+sh ~/script/WeaTE/pop/cs.sh b 2 ol
+sh ~/script/WeaTE/pop/cs.sh b 3 ol
+
+sh ~/script/WeaTE/pop/cs.sh d 1 ol
+sh ~/script/WeaTE/pop/cs.sh d 2 ol
