@@ -134,5 +134,17 @@ cat dw-at | grep -v -f dw-dw > dw-1 # DW-WE
 cat dw-at | grep -f dw-dw > dw-2 # DW-now
 
 
-sh ~/script/WeaTE/pop/abd.sh
+# we
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072247 we ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072248 we ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072249 we ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072250 we ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072251 we ab &
+
+# dw
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072337 dw ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072338 dw ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072340 dw ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072341 dw ab &
+nohup sh ~/script/WeaTE/pop/abd.sh CRR072347 dw ab &
 
