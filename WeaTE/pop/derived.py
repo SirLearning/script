@@ -1,4 +1,6 @@
 import sys
+import string
+import scipy
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -134,6 +136,18 @@ def cs_age(genome):
         seq = ['cs-at', 'cs-acs', 'cs-bcs']
         order = ['d-0', 'd-1', 'd-2']
         region = ['ancestor-AT', 'AT-BW', 'BW-now']
+    if genome == 'we':
+        order = ['we-0', 'we-1', 'we-2']
+        region = ['ancestor-WE', 'WE-DW', 'WE-now']
+    if genome == 'dw':
+        order = ['dw-0', 'dw-1', 'dw-2']
+        region = ['ancestor-WE', 'WE-DW', 'DW-now']
+    if genome == 'ctv':
+        order = ['ctv-0', 'ctv-1', 'ctv-2']
+        region = ['ancestor-landrace', 'landrace-cultivar', 'cultivar-now']
+    if genome == 'ldr':
+        order = ['ldr-0', 'ldr-1', 'ldr-2']
+        region = ['ancestor-landrace', 'landrace-cultivar', 'landrace-now']
     return age, spc, sign, seq, order, region
 
 
@@ -232,6 +246,34 @@ def cs_region(genome):
     return summary
 
 
+def dm_region(genome):
+    [ages, species, signals, seqs, orders, regions] = cs_age(genome)
+    sample_name = []
+    if genome == 'we':
+        sample_name = choose_sample('wild_emmer')
+    if genome == 'dw':
+        sample_name = choose_sample('durum')
+    if genome == 'ctv':
+        sample_name = choose_sample('cultivar')
+    if genome == 'ldr':
+        sample_name = choose_sample('landrace')
+    summary = pd.DataFrame()
+    for i in range(len(regions)):
+        for name in sample_name:
+            sample = pd.read_table('data/lc/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
+            sample = mod_sample(sample)
+            grouped = sample.groupby('Classification')
+            summ = grouped.agg(
+                count=('Classification', 'count'),
+                size=('bases', 'sum'),
+            )
+            summ['region'] = regions[i]
+            summ['sample'] = name
+            summary = pd.concat([summary, summ])
+    return summary
+
+
 def cs_cor():
     cor = pd.DataFrame()
     genome = 'd'
@@ -248,6 +290,84 @@ def cs_cor():
     if genome == 'd': upsetplot.plot(df, show_counts=True, facecolor="#467821")
     plt.show()
     plt.show()
+
+
+def count_p(file1, file2, region1, region2, Classification):
+    df1 = read_record(file1)
+    df2 = read_record(file2)
+    stat, p_value = scipy.stats.ttest_ind(df1[(df1["region"] == region1) & (df1["Classification"] == Classification)]["size"],
+                                          df2[(df2["region"] == region2) & (df2["Classification"] == Classification)]["size"],
+                                          equal_var=False)
+    print(stat, p_value)
+    return p_value
+
+
+def sm_cp(spc, regions):
+    sample_name = []
+    if spc == 'we':
+        sample_name = choose_sample('wild_emmer')
+    if spc == 'dw':
+        sample_name = choose_sample('durum')
+    RLC = pd.DataFrame()
+    for i in range(len(regions)):
+        for j in range(len(sample_name)):
+            sample = pd.read_table('data/dm/' + spc + '-' + str(i) + '.' + sample_name[j] + '.sum', sep='\t', header=None)
+            sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
+            sample = mod_sample(sample)
+            sample_RLC = sample[sample['Classification'] == 'RLC']
+            sample_RLC['region'] = regions[i]
+            sample_RLC['sample'] = spc + '-' + str(j+1)
+            sample_RLC['species'] = spc
+            RLC = pd.concat([RLC, sample_RLC])
+    return RLC
+
+
+def order_region(genome,spc):
+    order = []
+    region = []
+    if genome == 'd':
+        if spc == 'at':
+            order = ['at-0', 'at-1', 'at-2']
+            region = ['ancestor-AT', 'AT-BW', 'AT-now']
+        if spc == 'cs':
+            order = ['cs-0', 'cs-1', 'cs-2']
+            region = ['ancestor-AT', 'AT-BW', 'BW-now']
+    if genome == 'ab':
+        if spc == 'cs':
+            order = ['cs-0', 'cs-1', 'cs-2']
+            region = ['ancestor-DW', 'DW-BW', 'BW-now']
+        if spc == 'dw':
+            order = ['dw-0', 'dw-1', 'dw-2']
+            region = ['ancestor-DW', 'DW-BW', 'DW-now']
+    return order, region
+
+
+def poly_region(genome, spc):
+    [orders, regions] = order_region(genome, spc)
+    sample_name = []
+    if spc == 'cs':
+        sample_name = choose_sample('landrace')
+    if spc == 'at':
+        sample_name = choose_sample('tauchii')
+    if spc == 'we':
+        sample_name = choose_sample('wild_emmer')
+    if spc == 'dw':
+        sample_name = choose_sample('durum')
+    summary = pd.DataFrame()
+    for i in range(len(regions)):
+        for name in sample_name:
+            sample = pd.read_table('data/poly/' + genome + '/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
+            sample = mod_sample(sample)
+            grouped = sample.groupby('Classification')
+            summ = grouped.agg(
+                count=('Classification', 'count'),
+                size=('bases', 'sum'),
+            )
+            summ['region'] = regions[i]
+            summ['sample'] = name
+            summary = pd.concat([summary, summ])
+    return summary
 
 
 def lib_boxplot():
@@ -287,6 +407,48 @@ def cs_boxplot():
     plt.show()
 
 
+def dm_boxplot():
+    # summ = dm_region('dw')
+    # summ = poly_region('d', 'at')
+    # summ = dm_region('ldr')
+    # write_temp(summ)
+    # summ = read_temp()
+    summ = read_record('poly_d-at')
+    summ['size'] = summ['size'] / 10**9
+    summ['region'] = string.capwords(summ['region'])
+    fig, ax = plt.subplots()
+    plt.rcParams['font.size'] = 24
+    ax.figure.set_size_inches(16, 7.5)
+    sns.boxplot(x='Classification', y='size', hue='region', data=summ, showfliers=True,
+                palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
+    plt.title('TE mutation load during landrace evolution')
+    # plt.title('TE mutation load during durum wheat (DW) evolution')
+    # plt.xlabel('TE type')
+    plt.ylabel('TE Mutation Load (Gb)')
+    plt.legend( title='Evolution period', framealpha=0.5, fontsize=18, title_fontsize=22)
+    plt.show()
+
+
+def cp_num_boxplot():
+    regions = ['ancestor-WE', 'WE-DW']
+    we_RLC = sm_cp('we', regions)
+    dw_RLC = sm_cp('dw', regions)
+    RLC = pd.concat([we_RLC, dw_RLC])
+    write_temp(RLC)
+    # RLC = read_temp()
+    # RLC = read_record('dm_RLC')
+    # print(RLC[RLC['mean'] > 20000])
+    fig, ax = plt.subplots()
+    plt.rcParams['font.size'] = 24
+    ax.figure.set_size_inches(16, 7.5)
+    sns.boxplot(x='region', y='mean', hue='sample', data=RLC, showfliers=False,
+                palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
+    plt.title('RLC copy number in different samples before domestication')
+    plt.ylabel('TE copy number')
+    plt.legend( title='Samples', framealpha=0.5, fontsize=18, title_fontsize=22)
+    plt.show()
+
+
 def main():
     # bed = fai_to_bed(sys.argv[1])
     # bed.to_csv(sys.argv[2], sep='\t', header=False, index=False)
@@ -295,8 +457,36 @@ def main():
 
     # 1. run stats
     # lib_boxplot()
-    cs_boxplot()
-    # cs_cor(a
+    # cs_boxplot()
+    # cs_cor()
+
+    # 2. analysis
+    # dm_boxplot()
+    # cp_num_boxplot()
+
+    # 3. count p-value
+    count_p('dm_we', 'dm_dw', 'ancestor-WE', 'RLC')
+    # count_p('lc_ctv', 'lc_ldr', 'ancestor-landrace', 'ancestor-landrace', 'DHH')
+    # count_p('lc_ctv', 'lc_ldr', 'ancestor-landrace', 'ancestor-landrace', 'RLC')
+    # count_p('lc_ctv', 'lc_ldr', 'landrace-cultivar', 'landrace-cultivar', 'RLC')
+    # count_p('lc_ctv', 'lc_ldr', 'landrace-cultivar', 'landrace-cultivar', 'RLG')
+    # count_p('lc_ctv', 'lc_ldr', 'cultivar-now', 'landrace-now', 'DHH')
+    # count_p('lc_ctv', 'lc_ldr', 'cultivar-now', 'landrace-now', 'RLG')
+    # df = read_record('dm_RLC')
+    # stat1, p_value1 = scipy.stats.ttest_ind(
+    #     # df[(df["region"] == 'ancestor-WE') & (df["species"] == 'we')]["mean"],
+    #     # df[(df["region"] == 'ancestor-WE') & (df["species"] == 'dw')]["mean"],
+    #     df[(df["region"] == 'ancestor-WE') & (df["sample"] == 'we-1')]["mean"],
+    #     df[(df["region"] == 'ancestor-WE') & (df["sample"] == 'dw-1')]["mean"],
+    #     equal_var=False)
+    # stat, p_value = scipy.stats.ttest_ind(
+    #     # df[(df["region"] == 'WE-DW') & (df["species"] == 'we')]["mean"],
+    #     # df[(df["region"] == 'WE-DW') & (df["species"] == 'dw')]["mean"],
+    #     df[(df["region"] == 'WE-DW') & (df["sample"] == 'we-1')]["mean"],
+    #     df[(df["region"] == 'WE-DW') & (df["sample"] == 'dw-1')]["mean"],
+    #     equal_var=False)
+    # print(p_value1, p_value)
+
 
 if __name__ == '__main__':
     main()
