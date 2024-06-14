@@ -11,3 +11,4 @@ rm $1.bed $1.fa.out.bed $1.$2.bed
 
 #find ./ -type f -exec wc -l {} \;
 #sh ~/script/WeaTE/pop/rm.sh
+
