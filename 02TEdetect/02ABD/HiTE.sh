@@ -3,10 +3,11 @@
 # --thread 20 \
 # --outdir /data1/home/dazheng/transposon/ABD/09HiTE/01A \
 
+cd /data1/home/dazheng/transposon/tools/HiTE
 # $1: genome file
 # $2: output directory
 # $3: thread
-python /data1/home/dazheng/transposon/tools/HiTE/main.py \
+python main.py \
  --genome $1 \
  --outdir $2 \
  --thread $3 \
