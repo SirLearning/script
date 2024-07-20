@@ -77,15 +77,15 @@ def cs_v2(anno_name):
     # 1. read anno
     anno = pd.read_table(anno_name, sep='\t', header=None)
     anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+    anno = no_parent(anno)
     attributes = anno['attributes'].str.split(';', expand=True)
-    attributes.columns = ['ID', 'Name', 'copie', 'post', 'range', 'status']
+    attributes.columns = ['ID', 'compo', 'copie', 'post', 'range', 'status']
     anno = pd.concat([anno, attributes], axis=1)
     # 2. most identity classification
-    anno = no_parent(anno)
     anno['Classification'] = anno['ID'].str.split('_').str[1]
     anno['Classification'] = anno['Classification'].str.replace('no', 'XXX')
     # 3. merge the attributes
-    anno.drop(['ID', 'Name', 'copie', 'post', 'range', 'status'], axis=1)
+    anno.drop(['ID', 'compo', 'copie', 'post', 'range', 'status'], axis=1)
     empty_cols = anno.columns[anno.isnull().all()]
     anno = anno.drop(empty_cols, axis=1)
     anno.reset_index(drop=True, inplace=True)
@@ -93,7 +93,7 @@ def cs_v2(anno_name):
 
 
 def no_parent(anno):
-    index = ~anno['Name'].str.contains('Parent')
+    index = ~anno['attributes'].str.contains('Parent')
     anno = anno[index]
     return anno
 
