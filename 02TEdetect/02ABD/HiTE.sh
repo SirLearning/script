@@ -19,3 +19,5 @@ python main.py \
  --EDTA_home /data1/home/dazheng/transposon/tools/EDTA \
  --coverage_threshold 0.8 \
  --is_wicker 1
+
+#nohup sh ~/script/02TEdetect/02ABD/HiTE.sh /data1/home/dazheng/transposon/ABD/09HiTE/00try/chr1A.fa /data1/home/dazheng/transposon/ABD/09HiTE/00try 40 &

@@ -73,6 +73,25 @@ def cs(anno_name):
     return anno
 
 
+def cs_v2(anno_name):
+    # 1. read anno
+    anno = pd.read_table(anno_name, sep='\t', header=None)
+    anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
+    attributes = anno['attributes'].str.split(';', expand=True)
+    attributes.columns = ['ID', 'Name', 'copie', 'post', 'range', 'status']
+    anno = pd.concat([anno, attributes], axis=1)
+    # 2. most identity classification
+    anno = no_parent(anno)
+    anno['Classification'] = anno['ID'].str.split('_').str[1]
+    anno['Classification'] = anno['Classification'].str.replace('no', 'XXX')
+    # 3. merge the attributes
+    anno.drop(['ID', 'Name', 'copie', 'post', 'range', 'status'], axis=1)
+    empty_cols = anno.columns[anno.isnull().all()]
+    anno = anno.drop(empty_cols, axis=1)
+    anno.reset_index(drop=True, inplace=True)
+    return anno
+
+
 def no_parent(anno):
     index = ~anno['Name'].str.contains('Parent')
     anno = anno[index]
@@ -132,10 +151,16 @@ def n_site(nn_name, anno_name, output_name):
 def main():
     anno = sys.argv[1]
     output = sys.argv[2]
-    # anno = '../data/cut.gff3'
+    mod = sys.argv[3]
+    # anno = '../data/try.gff3'
     # output = '../data/np.gff3'
-    # anno = edta(anno)
-    anno = cs(anno)
+    # mod = 'cs_v2'
+    if mod == 'edta':
+        anno = edta(anno)
+    elif mod == 'cs':
+        anno = cs(anno)
+    elif mod == 'cs_v2':
+        anno = cs_v2(anno)
     anno.to_csv(output, sep='\t', header=False, index=False)
     # columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'width', 'classification']
 
