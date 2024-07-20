@@ -149,12 +149,12 @@ def n_site(nn_name, anno_name, output_name):
 
 
 def main():
-    # anno = sys.argv[1]
-    # output = sys.argv[2]
-    # mod = sys.argv[3]
-    anno = '../data/try.gff3'
-    output = '../data/np.gff3'
-    mod = 'cs_v2'
+    anno = sys.argv[1]
+    output = sys.argv[2]
+    mod = sys.argv[3]
+    # anno = '../data/try.gff3'
+    # output = '../data/np.gff3'
+    # mod = 'cs_v2'
     if mod == 'edta':
         anno = edta(anno)
     elif mod == 'cs':
