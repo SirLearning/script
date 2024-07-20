@@ -37,7 +37,7 @@ def edta(anno_name):
     anno = no_parent(anno)
     # 3. change the classification according to TEcode
     anno = te_code(anno)
-    anno.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method'], axis=1, inplace=True)
+    anno = anno.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method'], axis=1, inplace=True)
     anno.reset_index(drop=True, inplace=True)
     return anno
 
@@ -66,7 +66,7 @@ def cs(anno_name):
     anno['Classification'] = anno['Classification'].str.replace('no_match', 'XXX')
     anno['Classification'] = anno['Classification'].str.split('_').str[0]
     # 3. merge the attributes
-    anno.drop(['ID', 'Name', 'Ontology_term', 'compo', 'soloLTR', 'status'], axis=1)
+    anno = anno.drop(['ID', 'Name', 'Ontology_term', 'compo', 'soloLTR', 'status'], axis=1)
     empty_cols = anno.columns[anno.isnull().all()]
     anno = anno.drop(empty_cols, axis=1)
     anno.reset_index(drop=True, inplace=True)
@@ -85,7 +85,7 @@ def cs_v2(anno_name):
     anno['Classification'] = anno['ID'].str.split('_').str[1]
     anno['Classification'] = anno['Classification'].str.replace('no', 'XXX')
     # 3. merge the attributes
-    anno.drop(['ID', 'compo', 'copie', 'post', 'range', 'status'], axis=1)
+    anno = anno.drop(['ID', 'compo', 'copie', 'post', 'range', 'status'], axis=1)
     empty_cols = anno.columns[anno.isnull().all()]
     anno = anno.drop(empty_cols, axis=1)
     anno.reset_index(drop=True, inplace=True)
@@ -149,12 +149,12 @@ def n_site(nn_name, anno_name, output_name):
 
 
 def main():
-    anno = sys.argv[1]
-    output = sys.argv[2]
-    mod = sys.argv[3]
-    # anno = '../data/try.gff3'
-    # output = '../data/np.gff3'
-    # mod = 'cs_v2'
+    # anno = sys.argv[1]
+    # output = sys.argv[2]
+    # mod = sys.argv[3]
+    anno = '../data/try.gff3'
+    output = '../data/np.gff3'
+    mod = 'cs_v2'
     if mod == 'edta':
         anno = edta(anno)
     elif mod == 'cs':
