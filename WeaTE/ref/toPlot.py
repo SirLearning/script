@@ -90,19 +90,39 @@ def do_plot(axs, file_name, chr):
     plt.show()
 
 
+def cs_dtb(axs, spc, name, chr, i):
+    cover = pd.read_table('../data/' + spc + '/coverage.' + name + '.dtb.txt', sep='\t', header=None)
+    cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
+    cover = cover[cover['chrom'] == chr]
+    axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
+    centromere(axs, spc, chr)
+    # axs.hist(cover['win_start'] / 1000000, weights=cover['coverage'], bins=cover['win_num'].iloc[-1], alpha=0.4, label=name
+
+
+def new_plot(axs, file_name, chr):
+    axs.figure.set_size_inches(16, 7)
+    for i in range(0, 11):
+        cs_dtb(axs, 'cs_v2', file_name[i], chr, i)
+    axs.set_xlabel('chromosome (Mb)')
+    axs.set_ylabel('coverage (%)')
+    # axs.set_title("TE distribution along " + chr)
+    # axs.legend(fontsize=14, framealpha=0.5)
+    plt.show()
+
+
 def main():
-    file_name = ['DHH', 'DTA', 'DTC', 'DTH', 'DTM', 'DTT', 'RIJ', 'RIL', 'RIR', 'RLC', 'RLG', 'RSX']
+    file_name = ['DHH', 'DTA', 'DTC', 'DTH', 'DTM', 'DTT', 'RIJ', 'RIL', 'RIR', 'RLC', 'RLG']
     plt.style.use('seaborn-v0_8-deep')
     # plt.style.use('fast')
     mpl.rcParams['font.size'] = 24
     plt.rcParams['xtick.labelsize'] = 20
     plt.rcParams['ytick.labelsize'] = 20
     fig, axA = plt.subplots()
-    do_plot(axA, file_name, 'chr1A')
+    new_plot(axA, file_name, 'Chr1A')
     fig, axB = plt.subplots()
-    do_plot(axB, file_name, 'chr1B')
+    new_plot(axB, file_name, 'Chr1B')
     fig, axD = plt.subplots()
-    do_plot(axD, file_name, 'chr1D')
+    new_plot(axD, file_name, 'Chr1D')
     # fig, axR = plt.subplots()
     # do_plot(axR, file_name, 'chr1R')
     # fig, axH = plt.subplots()
