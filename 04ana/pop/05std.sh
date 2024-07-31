@@ -1,5 +1,5 @@
 # nohup sh ~/script/04ana/pop/03map_threshold.sh 20 1A &
-bwa-mem2 mem -t 15 pkaba1.fa ../f1.$1.fq.gz ../r2.$1.fq.gz | samtools view -S -b - > $1.raw.bam
+bwa-mem2 mem -t 20 $2.fa ../../f1.$1.fq.gz ../../r2.$1.fq.gz | samtools view -S -b - > $1.raw.bam
 
 #samtools sort -n -m 4G -@ 10 -o $1.sort.bam -O bam $1.raw.bam && rm $1.raw.bam
 #samtools fixmate -@ 10 -m $1.sort.bam $1.fixmate.bam && rm $1.sort.bam
@@ -26,13 +26,10 @@ samtools index $1.fixmate.pos.bam && mosdepth -t 10 -n -Q 20 $1 $1.fixmate.pos.b
 #mv CRR072337 CRR072338 CRR072340 CRR072341 CRR072347 /data1/home/dazheng/transposon/pop/00data/02DW
 #mv CRR072405 CRR072406 CRR072407 CRR072408 CRR072409 /data1/home/dazheng/transposon/pop/00data/03AT
 
-#sh ~/script/04ana/pop/05std.sh 01
-#sh ~/script/04ana/pop/05std.sh 04
-#sh ~/script/04ana/pop/05std.sh 2
-#sh ~/script/04ana/pop/05std.sh 4
-#sh ~/script/04ana/pop/05std.sh 6
-#sh ~/script/04ana/pop/05std.sh 8
-#sh ~/script/04ana/pop/05std.sh 10
-#sh ~/script/04ana/pop/05std.sh 20
-#sh ~/script/04ana/pop/05std.sh 30
-#sh ~/script/04ana/pop/05std.sh 40
+
+#nohup sh ~/script/04ana/pop/05std.sh 2 acc1 &
+#nohup sh ~/script/04ana/pop/05std.sh 4 acc1 &
+#nohup sh ~/script/04ana/pop/05std.sh 2 almt1 &
+#nohup sh ~/script/04ana/pop/05std.sh 4 almt1 &
+#nohup sh ~/script/04ana/pop/05std.sh 2 prp &
+#nohup sh ~/script/04ana/pop/05std.sh 4 prp &

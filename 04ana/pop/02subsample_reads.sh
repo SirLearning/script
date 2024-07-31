@@ -18,14 +18,23 @@
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs_n.f1.fq.gz f1.36.fq cs_n.r2.fq.gz r2.36.fq 2286 &
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs_n.f1.fq.gz f1.38.fq cs_n.r2.fq.gz r2.38.fq 2413 &
 #nohup java -cp ~/js/pop/src/ ssReads 1 cs_n.f1.fq.gz f1.40.fq cs_n.r2.fq.gz r2.40.fq 2540 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.04.fq cs.r2.fq.gz r2.04.fq 25 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.08.fq cs.r2.fq.gz r2.08.fq 50 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.12.fq cs.r2.fq.gz r2.12.fq 75 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.16.fq cs.r2.fq.gz r2.16.fq 100 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.24.fq cs.r2.fq.gz r2.24.fq 150 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.28.fq cs.r2.fq.gz r2.28.fq 175 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.32.fq cs.r2.fq.gz r2.32.fq 200 &
-nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.36.fq cs.r2.fq.gz r2.36.fq 225 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.04.fq cs.r2.fq.gz r2.04.fq 25 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.08.fq cs.r2.fq.gz r2.08.fq 50 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.12.fq cs.r2.fq.gz r2.12.fq 75 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.16.fq cs.r2.fq.gz r2.16.fq 100 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.24.fq cs.r2.fq.gz r2.24.fq 150 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.28.fq cs.r2.fq.gz r2.28.fq 175 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.32.fq cs.r2.fq.gz r2.32.fq 200 &
+#nohup java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.36.fq cs.r2.fq.gz r2.36.fq 225 &
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.2.2.fq cs.r2.fq.gz r2.2.2.fq 138
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.2.4.fq cs.r2.fq.gz r2.2.4.fq 150
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.2.6.fq cs.r2.fq.gz r2.2.6.fq 163
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.2.8.fq cs.r2.fq.gz r2.2.8.fq 175
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.3.0.fq cs.r2.fq.gz r2.3.0.fq 188
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.3.2.fq cs.r2.fq.gz r2.3.2.fq 200
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.3.4.fq cs.r2.fq.gz r2.3.4.fq 213
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.3.6.fq cs.r2.fq.gz r2.3.6.fq 225
+java -cp ~/js/pop/src/ ssReads 1 cs.f1.fq.gz f1.3.8.fq cs.r2.fq.gz r2.3.8.fq 238
 #2 127
 #4 253
 #6 380
