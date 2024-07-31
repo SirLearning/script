@@ -26,13 +26,13 @@ samtools index $1.fixmate.pos.bam && mosdepth -t 10 -n -Q 20 $1 $1.fixmate.pos.b
 #mv CRR072337 CRR072338 CRR072340 CRR072341 CRR072347 /data1/home/dazheng/transposon/pop/00data/02DW
 #mv CRR072405 CRR072406 CRR072407 CRR072408 CRR072409 /data1/home/dazheng/transposon/pop/00data/03AT
 
-sh ~/script/04ana/pop/05std.sh 01
-sh ~/script/04ana/pop/05std.sh 04
-sh ~/script/04ana/pop/05std.sh 2
-sh ~/script/04ana/pop/05std.sh 4
-sh ~/script/04ana/pop/05std.sh 6
-sh ~/script/04ana/pop/05std.sh 8
-sh ~/script/04ana/pop/05std.sh 10
-sh ~/script/04ana/pop/05std.sh 20
-sh ~/script/04ana/pop/05std.sh 30
-sh ~/script/04ana/pop/05std.sh 40
+#sh ~/script/04ana/pop/05std.sh 01
+#sh ~/script/04ana/pop/05std.sh 04
+#sh ~/script/04ana/pop/05std.sh 2
+#sh ~/script/04ana/pop/05std.sh 4
+#sh ~/script/04ana/pop/05std.sh 6
+#sh ~/script/04ana/pop/05std.sh 8
+#sh ~/script/04ana/pop/05std.sh 10
+#sh ~/script/04ana/pop/05std.sh 20
+#sh ~/script/04ana/pop/05std.sh 30
+#sh ~/script/04ana/pop/05std.sh 40
