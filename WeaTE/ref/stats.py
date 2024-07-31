@@ -61,26 +61,26 @@ def self_overlap(anno_name, mode):
     end0 = 0
     classification0 = ''
     width0 = 0
-    if mode == 1: # mode 1: 0.8 mean length overlap with before in same classification
+    if mode == 1:  # mode 1: 0.8 mean length overlap with before in same classification
         for i in range(0, len(anno)):
             if (end0 - anno['start'][i]) > (width0 + anno['width'][i]) * 0.4 and anno['Classification'][i] == classification0:
                 anno.loc[i, 'overlap'] = True
             end0 = anno['end'][i]
             classification0 = anno['Classification'][i]
             width0 = anno['width'][i]
-    elif mode == 2: # mode 2: 0.8 overlap with before
+    elif mode == 2:  # mode 2: 0.8 overlap with before
         for i in range(0, len(anno)):
             if (end0 - anno['start'][i]) > (width0 + anno['width'][i]) * 0.4:
                 anno.loc[i, 'overlap'] = True
             end0 = anno['end'][i]
             width0 = anno['width'][i]
-    elif mode == 3: # mode 3: 0.8 overlap with before in same classification
+    elif mode == 3:  # mode 3: 0.8 overlap with before in same classification
         for i in range(0, len(anno)):
             if (end0 - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == classification0:
                 anno.loc[i, 'overlap'] = True
             end0 = anno['end'][i]
             classification0 = anno['Classification'][i]
-    elif mode == 4: # mode 4: 0.8 overlap with longest before
+    elif mode == 4:  # mode 4: 0.8 overlap with longest before
         for i in range(0, len(anno)):
             if (end0 - anno['start'][i]) > anno['width'][i] * 0.8:
                 anno.loc[i, 'overlap'] = True
