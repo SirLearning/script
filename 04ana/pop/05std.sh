@@ -33,3 +33,5 @@ samtools index $1.fixmate.pos.bam && mosdepth -t 10 -n -Q 20 $1 $1.fixmate.pos.b
 #nohup sh ~/script/04ana/pop/05std.sh 4 almt1 &
 #nohup sh ~/script/04ana/pop/05std.sh 2 prp &
 #nohup sh ~/script/04ana/pop/05std.sh 4 prp &
+
+
