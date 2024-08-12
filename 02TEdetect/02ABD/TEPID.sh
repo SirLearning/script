@@ -1,2 +1,9 @@
 # 1. tepid-map
-nohup tepid-map -x /data1/home/dazheng/transposon/load/02D/d.cs -y /data1/home/dazheng/transposon/ABD/00data/05refer/d.cs -p 20 -s 2000 -n CRR072401 -1 ../00data/02sample/f1.CRR072401.fq.gz -2 ../00data/02sample/r2.CRR072401.fq.gz &
+## preparing
+bowtie2-build --threads 20 ../00data/abd.cs.fa abd.cs
+yaha -g ../00data/abd.cs.fa
+## mapping
+nohup tepid-map -x /data1/home/dazheng/transposon/load/01test/abd.cs.fa  -p 20 -s 2000 -n CRR072401 -1 f1.CRR072401.fq.gz -2 r2.CRR072401.fq.gz &
+samtools index -c CRR072401.bam # csi index
+# 2. tepid-discover
+nohup tepid-discover -k -p 20 -n CRR072401 -c CRR072401.bam -s CRR072401.split.bam -t subD.cs.gff3 &
