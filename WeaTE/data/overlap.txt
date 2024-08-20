@@ -1,3 +1,0 @@
-mean_length    21364   9868
-lattar_length  23524   10748
-longest_end    59240   24483

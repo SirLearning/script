@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/ash/bash
 
 for i in "$@"
 do

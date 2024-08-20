@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N EVM1_tel
 #PBS -l walltime=00:20:00
 #PBS -l mem=5G
@@ -11,7 +11,7 @@ module load blast+/2.3.0-foss-2016a-python-2.7.11
 
 ## Setup: Manual specification of program directories
 EVMDIR=/home/n8942188/various_programs/EVidenceModeler
-PARALLELDIR=/home/n8942188/anaconda3/bin
+PARALLELDIR=/home/n8942188/anaconda3/ash
 BUSCODIR=/home/n8942188/various_programs/busco
 BUSCOLINEAGE=/home/n8942188/various_programs/busco/lineage/metazoa_odb9
 SCRIPTDIR=/home/n8942188/scripts/Genome_analysis_scripts

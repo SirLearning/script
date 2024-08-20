@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N het_STATS
 #PBS -l walltime=03:00:00
 #PBS -l mem=30G

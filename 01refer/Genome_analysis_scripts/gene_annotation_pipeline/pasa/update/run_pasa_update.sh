@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N tel_PASA
 #PBS -l walltime=200:00:00
 #PBS -l mem=30G

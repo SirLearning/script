@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N leenatab
 #PBS -l walltime=06:00:00

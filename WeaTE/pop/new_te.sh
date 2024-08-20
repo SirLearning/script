@@ -6,9 +6,6 @@ cat no-bd | grep -v -f ol-cs > no-bd-cs # 1218
 cat no-bd-cs | grep -f cs-we > ol-dw # 317
 cat no-bd-cs | grep -v -f ol-dw > ol-we # 901
 
-
-
-
 # b
 cat cs-acs | grep -f cs-dcs > no-ad
 cat /data1/home/dazheng/transposon/pop/03mapping/b.cs | grep -v -f no-ad > ol-0

@@ -1577,7 +1577,7 @@ p.add_argument("-sigporg", dest="signalporg", type = str, choices = ['euk', 'gra
                options. Refer to the SignalP manual if unsure what these mean (default == 'euk').""")
 p.add_argument("-c", "-cygwindir", dest="cygwindir", type=str, default="",
                help="""If -sigp is provided, Cygwin is required since you are running this program on a Windows computer.
-               Specify the location of the bin directory here or, if this is already in your PATH, you can leave this blank."""
+               Specify the location of the ash directory here or, if this is already in your PATH, you can leave this blank."""
                if platform.system() == 'Windows' else argparse.SUPPRESS)
 # Behaviour opts
 p.add_argument("-nosigpskip", dest="nosigpskip", action='store_true', default=False,

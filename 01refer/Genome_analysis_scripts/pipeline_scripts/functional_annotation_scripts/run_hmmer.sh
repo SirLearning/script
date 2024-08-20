@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N tel_HMMER
 #PBS -l walltime=24:00:00

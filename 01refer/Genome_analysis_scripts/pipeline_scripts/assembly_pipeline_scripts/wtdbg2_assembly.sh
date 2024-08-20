@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N wtdbg2
 #PBS -l ncpus=18

@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /ash/bash
 
 # get $1-$2
 RepeatMasker -e ncbi -pa 10 -q -no_is -norna -nolow -div 20 -lib $2.fa $1.fa # 80% same in sequence

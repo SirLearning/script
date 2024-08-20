@@ -166,7 +166,7 @@ def make_trimmomatic_script(argsContainer, MEM="30G", CPUS="2"):
         filePrefixes = [os.path.basename(argsContainer.forwardFiles[i]).replace(argsContainer.readsSuffix, "") for i in range(len(argsContainer.forwardFiles))]
     
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N trim_{prefix}
 #PBS -l walltime=24:00:00
 #PBS -l mem={MEM}
@@ -266,7 +266,7 @@ def symlink_for_trimmomatic(forwardReads, reverseReads=None):
 
 def make_trim_concat_script(argsContainer, MEM="5G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N prep_{prefix}
 #PBS -l walltime=12:00:00
 #PBS -l mem={MEM}
@@ -302,7 +302,7 @@ cat *.trimmed_2P.fq > {outputDirectory}/{prefix}_2.fq
 
 def make_trin_dn_script(argsContainer, MEM="670G", CPUS="12"):    
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N trindn_{prefix}
 #PBS -l walltime=120:00:00
 #PBS -l mem={MEM}
@@ -359,7 +359,7 @@ ${{TRINITYDIR}}/Trinity --CPU ${{CPUS}} \\
 
 def make_star_script(argsContainer, MEM="150G", CPUS="12"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N star_{prefix}
 #PBS -l walltime=120:00:00
 #PBS -l mem={MEM}
@@ -429,7 +429,7 @@ ${{STARDIR}}/STAR --runThreadN ${{CPUS}} \\
 
 def make_subset_script(argsContainer, MEM="10G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N subset_{prefix}
 #PBS -l walltime=01:00:00
 #PBS -l mem={MEM}
@@ -468,7 +468,7 @@ python ${{GENSCRIPTDIR}}/fasta_extractSubset.py -i ${{TRANSCRIPTOME}} \\
 
 def make_denovo_details_script(argsContainer, MEM="10G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N details_{prefix}
 #PBS -l walltime=01:00:00
 #PBS -l mem={MEM}
@@ -516,7 +516,7 @@ echo "INSERT_SIZE: ${{INSERTSIZE}} ; MAXREADLEN: ${{MAXREADLEN}}" > ${{PREFIX}}.
 
 def make_picard_script(argsContainer, MEM="5G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N picard_{prefix}
 #PBS -l walltime=04:00:00
 #PBS -l mem={MEM}
@@ -575,7 +575,7 @@ echo "INSERT_SIZE: ${{INSERTSIZE}} ; MAXREADLEN: ${{MAXREADLEN}}" > ${{PREFIX}}.
 
 def make_readsize_script(argsContainer, MEM="5G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N readSz_{prefix}
 #PBS -l walltime=04:00:00
 #PBS -l mem=5G
@@ -617,7 +617,7 @@ echo "MAXREADLEN: ${{MAXREADLEN}}" > ${{PREFIX}}.rnaseq_details.txt
 
 def make_oases_script(argsContainer, MEM="600G", CPUS="12"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N oasvel_{prefix}
 #PBS -l walltime=60:00:00
 #PBS -l mem={MEM}
@@ -723,7 +723,7 @@ echo "oases done"
 
 def make_spades_script(argsContainer, MEM="260G", CPUS="12"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N spades_{prefix}
 #PBS -l walltime=48:00:00
 #PBS -l mem={MEM}
@@ -774,7 +774,7 @@ ${{SPADESDIR}}/spades.py --rna \\
 
 def make_abyss_script(argsContainer, MEM="260G", CPUS="18"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N abyss_{prefix}
 #PBS -l walltime=200:00:00
 #PBS -l mem={MEM}
@@ -830,7 +830,7 @@ done
 
 def make_config_script(argsContainer, MEM="5G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N cfg_{prefix}
 #PBS -l walltime=00:10:00
 #PBS -l mem={MEM}
@@ -879,7 +879,7 @@ python {genScriptDir}/pipeline_scripts/transcriptome_assembly_pipeline/create_so
 
 def make_soap_script(argsContainer, MEM="450G", CPUS="18"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N soap_{prefix}
 #PBS -l walltime=80:00:00
 #PBS -l mem={MEM}
@@ -924,7 +924,7 @@ def make_sort_script(argsContainer, MEM="50", CPUS="8"):
     '''
     
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N sort_{prefix}
 #PBS -l walltime=15:00:00
 #PBS -l mem={MEM}G
@@ -968,7 +968,7 @@ def make_trin_gg_script(argsContainer, MEM="180G", CPUS="12", MAXINTRON="21000")
     '''
     
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N tringg_{prefix}
 #PBS -l walltime=150:00:00
 #PBS -l mem={MEM}
@@ -1017,7 +1017,7 @@ ln -s trinity_out_dir.Trinity-GG.fasta Trinity-GG.fasta
 
 def make_scallop_script(argsContainer, MEM="50G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N scal_{prefix}
 #PBS -l walltime=80:00:00
 #PBS -l mem={MEM}
@@ -1064,7 +1064,7 @@ gtf_to_fasta ${{PREFIX}}.gtf \\
 
 def make_master_concat_script(argsContainer, MEM="10G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N mcat_{prefix}
 #PBS -l walltime=02:00:00
 #PBS -l mem={MEM}
@@ -1113,7 +1113,7 @@ python ${{VARSCRIPTDIR}}/fasta_handling_master_code.py -i ${{PREFIX}}_denovo_tra
 
 def make_evg_script(argsContainer, MEM="90G", CPUS="8"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N evg_{prefix}
 #PBS -l walltime=90:00:00
 #PBS -l mem={MEM}
@@ -1168,7 +1168,7 @@ ${{EVGSCRIPTSDIR}}/prot/tr2aacds.pl -debug \\
 
 def make_okalt_script(argsContainer, MEM="10G", CPUS="1"):
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N okalt_{prefix}
 #PBS -l walltime=01:00:00
 #PBS -l mem={MEM}
@@ -1204,7 +1204,7 @@ def make_busco_script(argsContainer, MEM="55G", CPUS="8"):
         "fastaFiles and modes lengths must be equal"
     
     scriptText = \
-"""#!/bin/bash -l
+"""#!/ash/bash -l
 #PBS -N busco_{prefix}
 #PBS -l walltime=08:00:00
 #PBS -l mem={MEM}
@@ -1295,16 +1295,16 @@ def main():
                    default="/home/stewarz2/various_programs/Trimmomatic-0.36/trimmomatic-0.36.jar")
     p.add_argument("-cdhit", dest="cdhit",
                    required=False,
-                   help="Specify the location of the CD-HIT bin dir (default=HPC location)",
-                   default="/pkg/suse12/software/cd-hit/4.6.4-foss-2016a-2015-0603/bin")
+                   help="Specify the location of the CD-HIT ash dir (default=HPC location)",
+                   default="/pkg/suse12/software/cd-hit/4.6.4-foss-2016a-2015-0603/ash")
     p.add_argument("-star", dest="star",
                    required=False,
                    help="Specify the location of the STAR executable (default=HPC location)",
-                   default="/home/stewarz2/various_programs/STAR-2.7.10a/bin/Linux_x86_64_static")
+                   default="/home/stewarz2/various_programs/STAR-2.7.10a/ash/Linux_x86_64_static")
     p.add_argument("-soap", dest="soap",
                    required=False,
                    help="Specify the location of the SOAPdenovo-Trans executables (default=HPC location)",
-                   default="/home/stewarz2/various_programs/SOAPdenovo-Trans-bin-v1.03")
+                   default="/home/stewarz2/various_programs/SOAPdenovo-Trans-ash-v1.03")
     p.add_argument("-oases", dest="oases",
                    required=False,
                    help="Specify the location of the oases executable (default=HPC location)",
@@ -1316,7 +1316,7 @@ def main():
     p.add_argument("-spades", dest="spades",
                    required=False,
                    help="Specify the location of the SPAdes spades.py script (default=HPC location)",
-                   default="/home/stewarz2/various_programs/SPAdes-3.15.5-Linux/bin")
+                   default="/home/stewarz2/various_programs/SPAdes-3.15.5-Linux/ash")
     p.add_argument("-transabyss", dest="transabyss",
                    required=False,
                    help="Specify the location of the Trans-ABySS executable (default=HPC location)",
@@ -1339,8 +1339,8 @@ def main():
                    default="/home/stewarz2/various_programs/evigene/scripts")
     p.add_argument("-busco", dest="busco",
                    required=False,
-                   help="Specify the location of the BUSCO bin dir (default=HPC location)",
-                   default="/home/stewarz2/various_programs/busco-5.2.1/bin")
+                   help="Specify the location of the BUSCO ash dir (default=HPC location)",
+                   default="/home/stewarz2/various_programs/busco-5.2.1/ash")
     p.add_argument("-buscoConfig", dest="buscoConfig",
                    required=False,
                    help="Specify the full path of the BUSCO config file (default=HPC location)",

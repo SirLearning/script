@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N canu
 #PBS -l ncpus=18

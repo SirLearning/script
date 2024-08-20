@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N aultab
 #PBS -l walltime=04:00:00

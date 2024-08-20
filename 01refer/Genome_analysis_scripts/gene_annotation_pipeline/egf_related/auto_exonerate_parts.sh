@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N tub_exonerate
 #PBS -l walltime=150:00:00
 #PBS -l mem=90G

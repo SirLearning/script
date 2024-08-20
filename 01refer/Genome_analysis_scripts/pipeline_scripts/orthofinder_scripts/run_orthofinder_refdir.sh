@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N toxins_ortho
 #PBS -l walltime=04:00:00
 #PBS -l mem=30G
