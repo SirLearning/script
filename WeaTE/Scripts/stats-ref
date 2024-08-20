@@ -63,7 +63,7 @@ dtb () {
   awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
   TEs=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "RIJ" "RIL" "RIR" "RLC" "RLG" "RSX")
   for TE in "${TEs[@]}"; do
-    awk -v var=$TE -F'\t' '$10==var' mod.anno.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.$TE.dtb.txt
+    awk -v var=$TE -F'\t' '$11==var' mod.anno.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.$TE.dtb.txt
   done
 }
 
