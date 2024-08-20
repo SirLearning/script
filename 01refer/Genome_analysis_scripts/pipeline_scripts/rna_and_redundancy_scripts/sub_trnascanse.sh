@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N tel_tRNA
 #PBS -l walltime=02:00:00
 #PBS -l mem=5G

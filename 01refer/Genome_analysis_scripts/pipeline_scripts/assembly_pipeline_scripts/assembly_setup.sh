@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 
 #PBS -N assembly_setup
 #PBS -l ncpus=1

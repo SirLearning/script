@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 
 #PBS -N rep_pipe
 #PBS -l walltime=100:00:00

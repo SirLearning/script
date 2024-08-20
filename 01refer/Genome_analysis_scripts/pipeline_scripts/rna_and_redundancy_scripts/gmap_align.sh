@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N tel_GMAP
 #PBS -l walltime=12:00:00
 #PBS -l mem=20G

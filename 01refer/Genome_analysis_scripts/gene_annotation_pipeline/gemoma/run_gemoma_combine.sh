@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N GAF_avo
 #PBS -l walltime=00:10:00
 #PBS -l mem=10G

@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N tel_PURGE1
 #PBS -l ncpus=12

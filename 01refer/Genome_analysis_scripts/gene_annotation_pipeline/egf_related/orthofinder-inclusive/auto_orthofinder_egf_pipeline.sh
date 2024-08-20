@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 
 #PBS -N orth2xnerate
 #PBS -l ncpus=8

@@ -55,7 +55,7 @@ def run_helperscript(args, probIDs):
 
 def run_seqclean(args):
     # Get seqclean location in relation to provided scripts directory
-    sqDir = os.path.join(args.pasaDir, '..', 'bin')
+    sqDir = os.path.join(args.pasaDir, '..', 'ash')
     # Format cmd and run
     cmd = os.path.join(sqDir, 'seqclean') + ' ' + args.txomeFile
     run_sq = subprocess.Popen(cmd, stdout = subprocess.DEVNULL, stderr = subprocess.PIPE, shell = True)

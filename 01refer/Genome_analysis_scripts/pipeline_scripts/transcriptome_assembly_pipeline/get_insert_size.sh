@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N insert_size
 #PBS -l walltime=01:00:00
 #PBS -l mem=10G

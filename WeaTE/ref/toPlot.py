@@ -37,11 +37,34 @@ def compare_te_hist(axs, file, method):
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.8, label=method)
 
 
+def compare_te(axs, file, name, method, color, fig_type):
+    file = str(file)
+    density = pd.read_table('data/old/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
+    density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
+    if fig_type == 'hist':
+        axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.7,
+                 label=name, color=color)
+    elif fig_type == 'plot':
+        axs.plot(density['win_start']/1000000, density['density'], label=method, alpha=0.8, color=color)
+        # axs.plot(density['win_start']/1000000, density['density'], label=triticeae, alpha=0.8, color=color)
+
+
 def difference_te_hist(axs, file, method):
     file = str(file)
     density = pd.read_table('data/' + method + '/chr1ANM.' + file + '.density.txt', sep='\s+', header=None)
     density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
     axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.4, label=method)
+
+
+def difference_te(axs, file, name, method, color, fig_type):
+    file = str(file)
+    density = pd.read_table('data/old/' + method + '/stats.' + file + '.dtb.txt', sep='\s+', header=None)
+    density.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'density']
+    if fig_type == 'hist':
+        axs.hist(density['win_start']/1000000, weights=density['density'], bins=density['win_num'].iloc[-1], alpha=0.8,
+                 label=name, color=color)
+    elif fig_type == 'plot':
+        axs.plot(density['win_start']/1000000, density['density'], label=name, alpha=0.8, color=color)
 
 
 def centromere(axs, spc, method):
@@ -108,6 +131,14 @@ def new_plot(axs, file_name, chr):
     # axs.set_title("TE distribution along " + chr)
     # axs.legend(fontsize=14, framealpha=0.5)
     plt.show()
+
+
+def plot_length(name):
+    length = pd.read_table('../data/old/' + name + '/stats.length.txt', sep='\t')
+    length.columns = ['Classification', 'width']
+    length['length (kb)'] = length['width'] / 1000
+    length['triticeae'] = name  # 添加一个新的列 'triticeae'
+    return length
 
 
 def main():

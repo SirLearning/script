@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N species_ARRPIPE
 #PBS -l ncpus=1
@@ -17,7 +17,7 @@ ITERATION=1
 
 # Setup of details that DO NOT vary each iteration
 ## Setup: Program file locations
-BAMUTIL=/home/n8942188/various_programs/bamUtil/bin
+BAMUTIL=/home/n8942188/various_programs/bamUtil/ash
 VARIOUSSCRIPTSDIR=/home/n8942188/scripts/Various_scripts
 
 ## Setup: Conda environment triticeae containg arrow installation

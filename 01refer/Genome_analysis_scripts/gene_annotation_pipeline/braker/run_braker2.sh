@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 
 #PBS -N tel_BRK
 #PBS -l ncpus=14

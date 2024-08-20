@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
 #PBS -N SCAFF_process
 #PBS -l walltime=76:00:00
 #PBS -l mem=20G

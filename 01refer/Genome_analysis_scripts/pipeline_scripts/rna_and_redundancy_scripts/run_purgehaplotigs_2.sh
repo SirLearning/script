@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/ash/bash -l
  
 #PBS -N tel_PURGE2
 #PBS -l ncpus=PLACE_HOLDER
