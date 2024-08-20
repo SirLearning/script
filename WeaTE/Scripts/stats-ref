@@ -54,7 +54,7 @@ mod () {
 
 nl () {
   touch stats.summ.txt stats.length.txt stats.overlap.gff3
-  python ~/script/WeaTE/ref/stats.py $fai $anno stats.summ.txt stats.length.txt stats.overlap.gff3
+  python ~/script/WeaTE/ref/stats.py $fai mod.anno.gff3 stats.summ.txt stats.length.txt stats.overlap.gff3
 }
 
 dtb () {

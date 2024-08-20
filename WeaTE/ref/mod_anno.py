@@ -20,7 +20,7 @@ output = 'mod.n.site.gff3'
 
 def edta(anno_name):
     # 1. read anno
-    anno = pd.read_table(anno_name, sep='\t', header=None)
+    anno = pd.read_table(anno_name, sep='\t', header=None, comment='#')
     anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     anno['width'] = anno['end'] - anno['start'] + 1
     attributes = anno['attributes'].str.split(';', expand=True)
@@ -44,7 +44,7 @@ def edta(anno_name):
 
 def cs(anno_name):
     # 1. read anno
-    anno = pd.read_table(anno_name, sep='\t', header=None)
+    anno = pd.read_table(anno_name, sep='\t', header=None, comment='#')
     anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     attributes = anno['attributes'].str.split(';', expand=True)
     attributes.columns = ['ID', 'Name', 'Ontology_term', 'compo', 'soloLTR', 'status']
@@ -75,7 +75,7 @@ def cs(anno_name):
 
 def cs_v2(anno_name):
     # 1. read anno
-    anno = pd.read_table(anno_name, sep='\t', header=None)
+    anno = pd.read_table(anno_name, sep='\t', header=None, comment='#')
     anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']
     anno = no_parent(anno)
     attributes = anno['attributes'].str.split(';', expand=True)
