@@ -21,7 +21,7 @@ def summary(fai_name, anno_name):
     fai.columns = ['chr', 'size', 'start', 'line', 'width']
     size = fai['size'].sum()
     if isinstance(anno_name, str):
-        anno = pd.read_table(anno_name, sep='\t', header=None)
+        anno = pd.read_table(anno_name, sep='\t', header=None, comment='#')
         anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes',
                         'width', 'classification']
     else:
