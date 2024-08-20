@@ -37,7 +37,7 @@ def edta(anno_name):
     anno = no_parent(anno)
     # 3. change the classification according to TEcode
     anno = te_code(anno)
-    anno = anno.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method'], axis=1, inplace=True)
+    anno = anno.drop(['ID', 'Name', 'Sequence_ontology', 'Identity', 'Method'], axis=1)
     anno.reset_index(drop=True, inplace=True)
     return anno
 
