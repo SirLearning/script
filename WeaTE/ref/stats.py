@@ -45,7 +45,7 @@ def length(anno_name):
                         'width', 'classification']
     else:
         anno = anno_name
-    TE_length = pd.concat([anno['Classification'], anno['width']], axis=1)
+    TE_length = pd.concat([anno['classification'], anno['width']], axis=1)
     return TE_length
 
 
@@ -63,10 +63,10 @@ def self_overlap(anno_name, mode):
     width0 = 0
     if mode == 1:  # mode 1: 0.8 mean length overlap with before in same classification
         for i in range(0, len(anno)):
-            if (end0 - anno['start'][i]) > (width0 + anno['width'][i]) * 0.4 and anno['Classification'][i] == classification0:
+            if (end0 - anno['start'][i]) > (width0 + anno['width'][i]) * 0.4 and anno['classification'][i] == classification0:
                 anno.loc[i, 'overlap'] = True
             end0 = anno['end'][i]
-            classification0 = anno['Classification'][i]
+            classification0 = anno['classification'][i]
             width0 = anno['width'][i]
     elif mode == 2:  # mode 2: 0.8 overlap with before
         for i in range(0, len(anno)):
@@ -76,10 +76,10 @@ def self_overlap(anno_name, mode):
             width0 = anno['width'][i]
     elif mode == 3:  # mode 3: 0.8 overlap with before in same classification
         for i in range(0, len(anno)):
-            if (end0 - anno['start'][i]) > anno['width'][i] * 0.8 and anno['Classification'][i] == classification0:
+            if (end0 - anno['start'][i]) > anno['width'][i] * 0.8 and anno['classification'][i] == classification0:
                 anno.loc[i, 'overlap'] = True
             end0 = anno['end'][i]
-            classification0 = anno['Classification'][i]
+            classification0 = anno['classification'][i]
     elif mode == 4:  # mode 4: 0.8 overlap with longest before
         for i in range(0, len(anno)):
             if (end0 - anno['start'][i]) > anno['width'][i] * 0.8:
