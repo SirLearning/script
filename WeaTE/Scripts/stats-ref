@@ -1,0 +1,78 @@
+#! /bin/bash
+
+# shellcheck disable=SC1007
+fai=  anno=  wins=  pg=  steps='all'
+
+usage="$(basename "$0") -- stats the annotation of TE in the genome
+  -h  show help and exit
+  -i  {seq}.fai
+  -a  {seq}.mod.EDTA.TEanno.gff3
+  -p  program used for annotation, edta or cs
+  -w  window size, normally 5000000
+  -s  steps of stats, default all, 'nl' for number and length, 'dtb' for density distribution"
+
+if [ $# -eq 0 ]; then
+  echo "$usage"
+  exit 1
+fi
+
+while getopts :i:a:p:w:s:h opt; do
+  case $opt in
+    h)  echo "$usage"
+        exit
+        ;;
+    i)  fai=$OPTARG
+        ;;
+    a)  anno=$OPTARG
+        ;;
+    p)  pg=$OPTARG
+        ;;
+    w)  wins=$OPTARG
+        ;;
+    s)  steps=$OPTARG
+        ;;
+    :)  printf "missing argument for -%s\n" "$OPTARG" >&2
+        echo "$usage" >&2
+        exit 1
+        ;;
+    \?) printf "illegal option: -%s\n" "$OPTARG" >&2
+        echo "$usage" >&2
+        exit 1
+        ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+mod () {
+  touch mod.anno.gff3
+  if [ $pg == "edta" ]; then
+    python ~/script/WeaTE/ref/mod_anno.py $anno mod.anno.gff3 edta
+  elif [ $pg == "cs" ]; then
+    python ~/script/WeaTE/ref/mod_anno.py $anno mod.anno.gff3 cs_v2
+  fi
+}
+
+nl () {
+  touch stats.summ.txt stats.length.txt stats.overlap.gff3
+  python ~/script/WeaTE/ref/stats.py $fai $anno stats.summ.txt stats.length.txt stats.overlap.gff3
+}
+
+dtb () {
+  awk '{print $1"\t"$2}' $fai > stats.genome
+  bedtools makewindows -g stats.genome -w $wins -s $wins > stats.dtb.bed3
+  awk '{print $1"\t"$2"\t"$3"\t"NR"\t.\t+"}' stats.dtb.bed3 > stats.dtb.bed6
+  TEs=("DHH" "DTA" "DTC" "DTH" "DTM" "DTT" "RIJ" "RIL" "RIR" "RLC" "RLG" "RSX")
+  for TE in "${TEs[@]}"; do
+    awk -v var=$TE -F'\t' '$10==var' mod.anno.gff3 | bedtools coverage -a stats.dtb.bed6 -b - -mean -F 0.5 > coverage.$TE.dtb.txt
+  done
+}
+
+mod
+if [ $steps == 'all' ]; then
+  nl
+  dtb
+elif [ $steps == 'nl' ]; then
+  nl
+elif [ $steps == 'dtb' ]; then
+  dtb
+fi
