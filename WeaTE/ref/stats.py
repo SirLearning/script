@@ -28,7 +28,7 @@ def summary(fai_name, anno_name):
         anno = anno_name
     # 2. get the TE number in each type
     grouped = anno.query(
-        "`type` not in ['target_site_duplication', 'long_terminal_repeat']").groupby('Classification')
+        "`type` not in ['target_site_duplication', 'long_terminal_repeat']").groupby('classification')
     summ = grouped.agg(
         count=('type', 'count'),
         mean_size=('width', 'mean'),
