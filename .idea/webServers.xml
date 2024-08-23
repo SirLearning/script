@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="000429a3-4fc1-43aa-84e8-2461f224240c" name="lulab_203">
+        <fileTransfer rootFolder="/data1/home/dazheng/script" accessType="SFTP" host="159.226.116.203" port="22" sshConfigId="c9b8f2ae-49bc-4754-bd36-adeb4e1bb49e" sshConfig="dazheng@159.226.116.203:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
