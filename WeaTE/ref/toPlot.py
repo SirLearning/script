@@ -95,7 +95,7 @@ def centromere(axs, spc, method):
 
 
 def genome_dtb(axs, spc, name, method, i):
-    cover = pd.read_table('../data/' + spc + '/' + method + '/coverage.' + name + '.dtb.txt', sep='\s+', header=None)
+    cover = pd.read_table('data/' + spc + '/' + method + '/coverage.' + name + '.dtb.txt', sep='\s+', header=None)
     cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
     axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
     centromere(axs, spc, method)
@@ -114,7 +114,7 @@ def do_plot(axs, file_name, chr):
 
 
 def cs_dtb(axs, spc, name, chr, i):
-    cover = pd.read_table('../data/' + spc + '/coverage.' + name + '.dtb.txt', sep='\t', header=None)
+    cover = pd.read_table('data/' + spc + '/coverage.' + name + '.dtb.txt', sep='\t', header=None)
     cover.columns = ['chrom', 'win_start', 'win_end', 'win_num', 'none', 'strand', 'coverage']
     cover = cover[cover['chrom'] == chr]
     axs.plot(cover['win_start']/1000000, cover['coverage']*100, label=name, alpha=1-i/20, linewidth=4)
@@ -134,7 +134,7 @@ def new_plot(axs, file_name, chr):
 
 
 def plot_length(name):
-    length = pd.read_table('../data/old/' + name + '/stats.length.txt', sep='\t')
+    length = pd.read_table('data/old/' + name + '/stats.length.txt', sep='\t')
     length.columns = ['Classification', 'width']
     length['length (kb)'] = length['width'] / 1000
     length['triticeae'] = name  # 添加一个新的列 'triticeae'

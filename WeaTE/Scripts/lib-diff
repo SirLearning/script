@@ -1,16 +1,47 @@
 #! /bin/bash
 
+div=20 cover=0.8
+
+usage() {
+  echo "Usage: lib-diff <seq1> <seq2> -d <int> -c <int> -- output the sequences differ from seq2 in seq1 library"
+  echo "  -d sequence divergence (default: 20)"
+  echo "  -c sequence coverage (default: 0.8)"
+  exit 1
+}
+
+if [ $# -eq 0 ]; then
+  usage
+fi
+
+while getopts "d:c:" opt; do
+  case $opt in
+    d)
+      div=$OPTARG
+      ;;
+    c)
+      cover=$OPTARG
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
 # get $1-$2
-RepeatMasker -e ncbi -pa 10 -q -no_is -norna -nolow -div 20 -lib $2.fa $1.fa # 80% same in sequence
-perl ~/transposon/tools/parseRM/RMout_to_bed.pl $1.fa.out base0
-rm *.cat *.masked *.tbl *.cat.gz
+RepeatMasker -e ncbi -pa 10 -q -no_is -norna -nolow -div $div -lib $2.fa $1.fa # 80% same in sequence
 touch $1.bed
 samtools faidx $1.fa
-python ~/script/WeaTE/pop/rm.py $1.fa.fai $1.bed
-bedtools intersect -f 0.8 -r -v -a $1.bed -b $1.fa.out.bed > $1.$2.bed # 80% intersect (sequence region)
+python ~/script/WeaTE/pop/mod.py RM $1.fa.out $1.fa.fai $1.bed
+bedtools intersect -f $cover -r -v -a $1.bed -b $1.fa.out.bed > $1.$2.bed # 80% intersect (sequence region)
 cut -f1 $1.$2.bed > $1-$2
-rm $1.bed $1.fa.out.bed $1.$2.bed
+# remove intermediate files
+if find . -maxdepth 1 -name "*.cat.gz" | grep -q .; then
+  rm *.cat.gz
+else
+  rm *.cat
+fi
+rm *.masked *.tbl $1.bed $1.fa.out.bed $1.$2.bed
 
 #find ./ -type f -exec wc -l {} \;
-# lib-diff $1 $2
+# lib-diff -1 $1 -2 $2
 
