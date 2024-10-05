@@ -152,7 +152,7 @@ def seq_region(anno_name, region):
     anno = edta(anno_name)
     anno = anno.drop(['Classification'], axis=1)
     region = region.split(':')
-    anno = anno.loc[(int(anno['start']) >= int(region[0])) & (int(anno['end']) <= int(region[1]))]
+    anno = anno[(int(anno['start']) >= int(region[0])) & (int(anno['end']) <= int(region[1]))]
     return anno
 
 
