@@ -148,20 +148,34 @@ def n_site(nn_name, anno_name, output_name):
                 output_file.write(line)
 
 
-def main():
-    anno = sys.argv[1]
-    output = sys.argv[2]
-    mod = sys.argv[3]
-    # anno = '../data/try.gff3'
-    # output = '../data/np.gff3'
-    # mod = 'cs_v2'
+def seq_region(anno_name, region):
+    anno = edta(anno_name)
+    anno = anno.drop(['Classification'], axis=1)
+    region = region.split(':')
+    anno = anno.loc[(int(anno['start']) >= int(region[0])) & (int(anno['end']) <= int(region[1]))]
+    return anno
+
+
+def mod_type(mod, type, anno):
     if mod == 'edta':
-        anno = edta(anno)
+        if re.match(r'^\d+:\d:$', type):
+            anno = seq_region(anno, type)
+        elif type == 'TE':
+            anno = edta(anno)
     elif mod == 'cs':
         anno = cs(anno)
     elif mod == 'cs_v2':
         anno = cs_v2(anno)
-    anno.to_csv(output, sep='\t', header=False, index=False)
+    return anno
+
+
+def main():
+    anno = sys.argv[1]
+    output = sys.argv[2]
+    mod = sys.argv[3]
+    type = sys.argv[4]
+    mod_type(mod, type, anno).to_csv(output, sep='\t', header=False, index=False)
+    # anno.to_csv(output, sep='\t', header=False, index=False)
     # columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'width', 'classification']
 
 

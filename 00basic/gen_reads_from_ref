@@ -1,0 +1,1 @@
+nohup iss generate -p 10 -g kg.1.fa -n 2666667  --mode basic -o ./ &
