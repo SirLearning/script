@@ -150,17 +150,19 @@ def n_site(nn_name, anno_name, output_name):
 
 def seq_region(anno_name, region):
     anno = edta(anno_name)
-    anno = anno.drop(['Classification'], axis=1)
+    anno = anno.drop(['Classification', 'width'], axis=1)
     region = region.split(':')
-    anno = anno[(int(anno['start']) >= int(region[0])) & (int(anno['end']) <= int(region[1]))]
-    return anno
+    anno['start'] = anno['start'].astype(int)
+    anno['end'] = anno['end'].astype(int)
+    anno_region = anno.loc[(anno['start'] >= int(region[0])) & (anno['end'] <= int(region[1]))]
+    return anno_region
 
 
-def mod_type(mod, type, anno):
+def mod_type(mod, ana_type, anno):
     if mod == 'edta':
-        if re.match(r'^\d+:\d:$', type):
-            anno = seq_region(anno, type)
-        elif type == 'TE':
+        if re.match(r'^\d+:\d+$', ana_type):
+            anno = seq_region(anno, ana_type)
+        else:
             anno = edta(anno)
     elif mod == 'cs':
         anno = cs(anno)
@@ -173,8 +175,10 @@ def main():
     anno = sys.argv[1]
     output = sys.argv[2]
     mod = sys.argv[3]
-    type = sys.argv[4]
-    mod_type(mod, type, anno).to_csv(output, sep='\t', header=False, index=False)
+    ana_type = sys.argv[4]
+    # anno1 = mod_type(mod, ana_type, anno)
+    # print(anno1)
+    mod_type(mod, ana_type, anno).to_csv(output, sep='\t', header=False, index=False)
     # anno.to_csv(output, sep='\t', header=False, index=False)
     # columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes', 'width', 'classification']
 
