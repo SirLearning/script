@@ -8,4 +8,4 @@ nohup tepid-map -x ./cs.1 -y ./cs.1.X15_01_65525S  -p 20 -s 2000 -n kg.1 -1 kg.1
 #samtools index -c CRR072401.bam # csi index
 # 2. tepid-discover
 nohup tepid-discover -k -p 20 -n CRR072401 -c CRR072401.bam -s CRR072401.split.bam -t subD.cs.gff3 &
-nohup tepid-discover -k -p 20 -n kg.1  -c kg.1.bam -s kg.1.split.bam
+nohup tepid-discover -k -p 20 -n kg.1  -c kg.1.bam -s kg.1.split.bam -t cs.1.gff3 &
