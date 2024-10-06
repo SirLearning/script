@@ -18,5 +18,7 @@ tepid-map -x ./cs.$1 -y ./cs.$1.X*  -p 20 -s 2000 -n kg.$1 -1 kg.$1_R1.fastq -2 
 
 # 2. tepid-discover
 #nohup tepid-discover -k -p 20 -n CRR072401 -c CRR072401.bam -s CRR072401.split.bam -t subD.cs.gff3 &
+touch cs.$1.gff3
+python ~/script/WeaTE/ref/mod_anno.py ../00map/chr1A.anno.gff3 cs.$1.gff3 edta $2
 gff2bed < cs.$1.gff3 > cs.$1.bed
 tepid-discover -p 20 -n kg.$1  -c kg.$1.bam -s kg.$1.split.bam -t cs.$1.bed
