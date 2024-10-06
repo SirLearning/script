@@ -13,7 +13,7 @@ bowtie2-build --threads 20 cs.$1.fa cs.$1
 yaha -t 10 -g cs.$1.fa
 ## mapping
 #nohup tepid-map -x /data1/home/dazheng/transposon/load/01test/abd.cs.fa  -p 20 -s 2000 -n CRR072401 -1 f1.CRR072401.fq.gz -2 r2.CRR072401.fq.gz &
-tepid-map -x ./cs.$1 -y ./cs.$1.X*  -p 20 -s 2000 -n kg.$1 -1 kg.$1_R1.fq -2 kg.$1_R2.fq
+tepid-map -x ./cs.$1 -y ./cs.$1.X*  -p 20 -s 2000 -n kg.$1 -1 kg.$1_R1.fastq -2 kg.$1_R2.fastq
 #samtools index -c CRR072401.bam # csi index
 
 # 2. tepid-discover
