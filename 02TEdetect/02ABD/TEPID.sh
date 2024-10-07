@@ -3,8 +3,8 @@
 # $3 kg region
 
 # 0. 20M test
-seqkit subseq -r $2 ../00map/cs.1A.fa -o cs.$1.fa
-seqkit subseq -r $3 ../00map/kg.1A.fa -o kg.$1.fa
+seqkit subseq -r $2 -R ../00map/cs.1A.fa -o cs.$1.fa
+seqkit subseq -r $3 -R ../00map/kg.1A.fa -o kg.$1.fa
 iss generate -p 10 -g kg.$1.fa -n 2666667  --mode basic -o ./kg.$1
 
 # 1. tepid-map
