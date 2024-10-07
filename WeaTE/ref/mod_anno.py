@@ -157,6 +157,7 @@ def seq_region(anno_name, region):
     anno_region = anno.loc[(anno['start'] >= int(region[0])) & (anno['end'] <= int(region[1]))].copy()
     anno_region['start'] = anno_region['start'] - int(region[0]) + 1
     anno_region['end'] = anno_region['end'] - int(region[0]) + 1
+    anno_region['seqid'] = anno_region['seqid'] + ':' + region[0] + '-' + region[1]
     return anno_region
 
 
