@@ -13,13 +13,16 @@ if [ $# -eq 0 ]; then
   usage
 fi
 
-while getopts "d:c:" opt; do
+while getopts "d:c:h:" opt; do
   case $opt in
     d)
       div=$OPTARG
       ;;
     c)
       cover=$OPTARG
+      ;;
+    h)
+      usage
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
