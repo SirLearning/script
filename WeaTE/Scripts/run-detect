@@ -4,7 +4,6 @@ curated=''  thread=''  log_num=''  outdir=''
 
 usage() {
   echo "Usage: run TE detect programs"
-    echo "  -h        help"
     echo "  -p <str>  program name, including EDTA[edta], RepeatModeler[rm2], ClariTE[clt], HiTE[hite]"
     echo "  -g <str>  reference genome sequence"
     echo "  -c <str>  curated TE library"
@@ -18,11 +17,8 @@ if [ $# -eq 0 ]; then
   usage
 fi
 
-while getopts "h:p:g:c:t:n:o:" opt; do
+while getopts "p:g:c:t:n:o:" opt; do
   case $opt in
-    h)  usage
-        exit
-        ;;
     p) prog=$OPTARG
       ;;
     g) genome=$OPTARG
