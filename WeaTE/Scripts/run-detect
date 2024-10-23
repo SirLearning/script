@@ -38,12 +38,12 @@ while getopts "p:g:c:t:n:o:" opt; do
 done
 
 if [ $prog == "edta" ]; then
-  nohup perl ~/transposon/tools/EDTA/EDTA.pl \
+  perl ~/miniconda3/envs/TE/share/EDTA/EDTA.pl \
     --genome "$genome" \
     --overwrite 0 \
     --sensitive 1 \
     --anno 1 \
-    --threads "$thread" > "$log_num".log 2>&1 &
+    --threads "$thread" > "$log_num".log 2>&1
 elif [ $prog == "hite" ]; then
   cd ~/transposon/tools/HiTE
   python main.py \
