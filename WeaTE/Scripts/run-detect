@@ -20,26 +20,19 @@ fi
 
 while getopts "h:p:g:c:t:n:o:" opt; do
   case $opt in
-    h)
-      usage
+    h) usage
       ;;
-    p)
-      prog=$OPTARG
+    p) prog=$OPTARG
       ;;
-    g)
-      genome=$OPTARG
+    g) genome=$OPTARG
       ;;
-    c)
-      curated=$OPTARG
+    c) curated=$OPTARG
       ;;
-    t)
-      thread=$OPTARG
+    t) thread=$OPTARG
       ;;
-    n)
-      log_num=$OPTARG
+    n) log_num=$OPTARG
       ;;
-    o)
-      outdir=$OPTARG
+    o) outdir=$OPTARG
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
