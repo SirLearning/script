@@ -20,8 +20,9 @@ fi
 
 while getopts "h:p:g:c:t:n:o:" opt; do
   case $opt in
-    h) usage
-      ;;
+    h)  usage
+        exit
+        ;;
     p) prog=$OPTARG
       ;;
     g) genome=$OPTARG
