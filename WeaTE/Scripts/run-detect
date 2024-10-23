@@ -39,23 +39,23 @@ done
 
 if [ $prog == "edta" ]; then
   nohup perl ~/transposon/tools/EDTA/EDTA.pl \
-    --genome genome \
+    --genome "$genome" \
     --overwrite 0 \
     --sensitive 1 \
     --anno 1 \
-    --threads thread > log_num.log 2>&1 &
+    --threads "$thread" > "$log_num".log 2>&1 &
 elif [ $prog == "hite" ]; then
   cd ~/transposon/tools/HiTE
   python main.py \
-    --genome genome \
-    --outdir outdir \
-    --thread thread \
+    --genome "$genome" \
+    --outdir "$outdir" \
+    --thread "$thread" \
     --domain 1 \
     --recover 1 \
     --annotate 1 \
     --intact_anno 1 \
     --BM_EDTA 1 \
-    --EDTA_home /data1/home/dazheng/transposon/tools/EDTA \
+    --EDTA_home ~/transposon/tools/EDTA \
     --coverage_threshold 0.8 \
     --is_wicker 1
 fi
