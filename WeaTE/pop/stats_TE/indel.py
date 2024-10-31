@@ -5,17 +5,22 @@ import pandas as pd
 def mod(name):
     ins_ana = pd.read_csv("WeaTE/data/indel/insertion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
     del_ana = pd.read_csv("WeaTE/data/indel/deletion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
-    ins_ana.columns = ['ID', 'reads']
-    del_ana.columns = ['ID', 'reads']
+    ins_ana.columns = ['insertion', 'reads']
+    del_ana.columns = ['deletion', 'reads']
     ins_ana['test'] = str(name)
     del_ana['test'] = str(name)
+    ins_ana.drop(columns='reads', inplace=True)
+    del_ana.drop(columns='reads', inplace=True)
     return ins_ana, del_ana
 
 
 def num_plot(ins_ana, del_ana):
+    # plt.style.use('seaborn')
     fig, ax = plt.subplots()
-    ins_ana.groupby('test')['reads'].sum().plot(kind='bar', ax=ax, color='b', alpha=0.7, label='insertion')
-    del_ana.groupby('test')['reads'].sum().plot(kind='bar', ax=ax, color='r', alpha=0.7, label='deletion')
+    ins_ana.groupby('test').count().plot(kind='bar', ax=ax, color='#f38121', alpha=0.8, label='insertion')
+    del_ana.groupby('test').count().plot(kind='bar', ax=ax, color='#1b78b3', alpha=0.6, label='deletion')
+    plt.ylabel('Number')
+    plt.title('Number of insertion and deletion detected')
     plt.show()
 
 
