@@ -45,16 +45,12 @@ plt.grid(False)
 # Remove axis ticks and labels
 plt.xticks([])
 plt.yticks([])
-plt.xlabel('')
-plt.ylabel('')
 # Add title and labels
-
 plt.title('TE age distribution')
 plt.xlabel('time')
 plt.ylabel('TE activity')
-plt.legend()
 
 # Show plot
 plt.legend().set_visible(False)
-
-plt.savefig('plot.pdf')
+plt.show()
+# plt.savefig('plot.pdf')

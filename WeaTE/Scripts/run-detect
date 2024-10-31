@@ -38,7 +38,7 @@ while getopts "p:g:c:t:n:o:" opt; do
 done
 
 if [ $prog == "edta" ]; then
-  perl ~/miniconda3/envs/TE/share/EDTA/EDTA.pl \
+  ~/miniconda3/envs/TE/share/EDTA/EDTA.pl \
     --genome "$genome" \
     --overwrite 0 \
     --sensitive 1 \
@@ -59,9 +59,4 @@ elif [ $prog == "hite" ]; then
     --coverage_threshold 0.8 \
     --is_wicker 1
 fi
-
-# Invalid value for shared scalar at /data/home/dazheng/miniconda3/envs/TE/share/LTR_retriever/bin/LTR.identifier.pl line 114, <ANNO> line 296.
-# LTR_retriever -genome ../../cs.1.fa -inharvest ca.1.fa.mod.rawLTR.scn -u 1.3e-8 -threads 20 -noanno -trf_path /data/home/dazheng/miniconda3/envs/TE/bin/trf -blastplus /data/home/dazheng/miniconda3/envs/TE/bin/makeblastdb -repeatmasker /data/home/dazheng/miniconda3/envs/TE/bin/RepeatMasker
-
-
 
