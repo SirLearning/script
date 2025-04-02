@@ -20,5 +20,5 @@ perl ~/transposon/tools/EDTA/EDTA.pl \
 --anno 1 \
 --threads $2 > test.log 2>&1 &
 
-nohup perl ~/transposon/tools/EDTA/EDTA.pl --genome $1 --overwrite 0 --sensitive 1 --anno 1 --threads $2 > test.log 2>&1 &
+nohup perl /data/home/dazheng/software/EDTA/EDTA.pl --genome $1 --overwrite 0 --sensitive 1 --anno 1 --threads $2 --curatedlib /data/home/dazheng/transposon/00library/00curatedLib/$3.fa > test.log 2>&1 &
 
