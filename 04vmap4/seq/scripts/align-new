@@ -1,0 +1,68 @@
+#! /bin/bash
+
+# the formal template for reads alignment in Lulab (used in Vmap4 Watkins)
+## $1: number
+## $2: /path/to/index
+## $3: /path/to/fastq_data
+mapfile -t fqlist < fqlist"$1".txt
+mapfile -t smlist < smlist"$1".txt
+size=${#fqlist[@]}
+for (( i = 0; i < size; i++ ));
+do
+bwa-mem2 mem -t 20 -R "@RG\tID:Triticum\tPL:illumina\tSM:${smlist[i]}" "$2"/abd_iwgscV1.fa.gz "$3"/${fqlist[i]}/${fqlist[i]}_f1.fastq.gz "$3"/${fqlist[i]}/${fqlist[i]}_r2.fastq.gz | samtools view -S -b -> ${fqlist[i]}.bam
+samtools sort -n -m 4G -@ 20 -o ${fqlist[i]}.namesort.bam -O bam ${fqlist[i]}.bam && samtools fixmate -@ 20 -m ${fqlist[i]}.namesort.bam ${fqlist[i]}.fixmate.bam && samtools sort -m 4G -@ 20 -o ${fqlist[i]}.fixmate.pos.bam -O bam ${fqlist[i]}.fixmate.bam && rm -f ${fqlist[i]}.namesort.bam && samtools markdup -@ 20 -r ${fqlist[i]}.fixmate.pos.bam ${fqlist[i]}.rmdup.bam && rm -f ${fqlist[i]}.fixmate.bam && rm -f ${fqlist[i]}.fixmate.pos.bam && rm -f ${fqlist[i]}.bam
+done
+
+## version old bwa
+mapfile -t fqlist < fqlist.txt
+mapfile -t smlist < smlist.txt
+size=${#fqlist[@]}
+for (( i = 0; i < size; i++ ));
+do
+bwa mem -t 20 -R "@RG\tID:Triticum\tPL:illumina\tSM:${smlist[i]}" /nfs/public_data/wheat/00_genome/reference/v1.0/ABD/bwaLib/abd_iwgscV1.fa.gz "$1"/${fqlist[i]}/${fqlist[i]}_f1.fastq.gz "$1"/${fqlist[i]}/${fqlist[i]}_r2.fastq.gz | samtools view -S -b -> ${fqlist[i]}.bam
+samtools sort -n -m 4G -@ 20 -o ${fqlist[i]}.namesort.bam -O bam ${fqlist[i]}.bam && samtools fixmate -@ 20 -m ${fqlist[i]}.namesort.bam ${fqlist[i]}.fixmate.bam && samtools sort -m 4G -@ 20 -o ${fqlist[i]}.fixmate.pos.bam -O bam ${fqlist[i]}.fixmate.bam && rm -f ${fqlist[i]}.namesort.bam && samtools markdup -@ 20 -r ${fqlist[i]}.fixmate.pos.bam ${fqlist[i]}.rmdup.bam && rm -f ${fqlist[i]}.fixmate.bam && rm -f ${fqlist[i]}.fixmate.pos.bam
+done
+
+mapfile -t rmlist < rmlist.txt
+size=${#rmlist[@]}
+for (( i = 0; i < size; i++ ));
+do
+ rm -r ${rmlist[i]}
+done
+
+mapfile -t dllist < dllist.txt
+mapfile -t dirlist < dirlist.txt
+size=${#dllist[@]}
+for (( i = 0; i < size; i++ ));
+do
+wget ftp://download.big.ac.cn/gsa2/CRA012590/2/${dllist[i]} -P $1${dirlist[i]}
+done
+
+
+mapfile -t rmlist < $1
+size=${#rmlist[@]}
+for (( i = 0; i < size; i++ ));
+do
+  rm -r ${rmlist[i]}
+done
+
+
+#
+#for i in `cat fqlist.txt`
+#do
+#bwa-mem2 mem -t 20 -R "@RG\tID:Triticum\tPL:illumina\tSM:${i}" /nfs/publicData/wheat/00_genome/reference/v1.0/D/bwaLib/d_iwgscV1.fa.gz ${i}/${i}_1.fq.gz ${i}/${i}_2.fq.gz | samtools view -S -b -> ${i}.bam
+#samtools sort -n -m 4G -@ 20 -o ${i}.namesort.bam -O bam ${i}.bam && samtools fixmate -@ 20 -m ${i}.namesort.bam ${i}.fixmate.bam && samtools sort -m 4G -@ 20 -o ${i}.fixmate.pos.bam -O bam ${i}.fixmate.bam && rm -f ${i}.namesort.bam && samtools markdup -@ 20 -r ${i}.fixmate.pos.bam ${i}.rmdup.bam && rm -f ${i}.fixmate.bam && rm -f ${i}.fixmate.pos.bam
+#done
+
+mapfile -t tag < $1
+size=${#tag[@]}
+echo "Tags loaded: ${#tag[@]}"
+for ((i=0; i<size; i++));
+  do
+  echo "Processing tag: ${tag[i]}"
+  if [ -f ${tag[i]}.rmdup.bam ]; then
+    echo "Removing file: ${tag[i]}.bam"
+    rm -r ${tag[i]}.bam
+  fi
+done
+

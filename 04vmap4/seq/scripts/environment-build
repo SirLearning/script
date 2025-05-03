@@ -1,0 +1,20 @@
+#! /bin/bash
+
+# 0. install conda
+wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-py39_24.9.2-0-Linux-x86_64.sh
+sh Miniconda3-py39_24.9.2-0-Linux-x86_64.sh
+scp dazheng@159.226.116.203:~/.condarc .
+## At the end of the installation, choose yes to initialize conda
+
+# 1. reads align-vmap tools
+conda install fastqc
+conda install bwa-mem2
+conda install samtools
+
+# 1.1 set perl language in .bashrc
+export LANGUAGE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+(CRR875830.rmdup.bam CRR875838.bam CRR875838.rmdup.bam CRR875842.bam CRR875842.rmdup.bam CRR875844.bam CRR875844.rmdup.bam CRR875851.bam CRR875851.rmdup.bam CRR875853.bam CRR875853.rmdup.bam CRR875854.bam CRR875854.rmdup.bam CRR875867.bam CRR875867.rmdup.bam CRR875869.bam CRR875869.rmdup.bam CRR875870.bam CRR875870.rmdup.bam CRR875873.bam CRR875873.rmdup.bam CRR875875.bam CRR875875.rmdup.bam CRR875889.bam CRR875889.rmdup.bam CRR875892.bam CRR875892.rmdup.bam CRR875893.bam CRR875893.rmdup.bam CRR875896.bam CRR875896.rmdup.bam CRR875897.bam CRR875897.rmdup.bam CRR875900.bam CRR875900.rmdup.bam CRR875913.bam CRR875913.rmdup.bam CRR875914.bam CRR875914.rmdup.bam CRR875916.bam CRR875916.rmdup.bam CRR875918.bam CRR875918.rmdup.bam CRR875920.bam CRR875920.rmdup.bam CRR875925.bam CRR875925.rmdup.bam CRR875926.bam CRR875926.rmdup.bam CRR875931.bam CRR875931.rmdup.bam CRR875936.bam CRR875936.rmdup.bam CRR875938.bam CRR875938.rmdup.bam CRR875942.bam CRR875942.rmdup.bam)
