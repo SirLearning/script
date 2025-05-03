@@ -8,6 +8,7 @@
             <path value="file://$PROJECT_DIR$/05pop/data" />
             <path value="file://$PROJECT_DIR$/WeaTE/data" />
             <path value="file://$PROJECT_DIR$/weaTE/data" />
+            <path value="file://$PROJECT_DIR$/resources" />
           </resourceRoots>
         </entryData>
       </entry>

@@ -1,2 +1,0 @@
-# biotools
-perl scripts
