@@ -1,0 +1,78 @@
+#! /bin/bash
+
+# root
+su
+useradd -m hadoop -s /bin/bash
+passwd hadoop
+adduser hadoop sudo
+
+apt-get update
+apt-get install openjdk-8-jdk
+java -version
+
+su hadoop
+gedit ~/.bashrc # export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+echo $JAVA_HOME
+
+wget https://mirrors.tuna.tsinghua.edu.cn/apache/hadoop/common/stable/hadoop-3.4.1.tar.gz
+sudo tar -zxvf ~/hadoop-3.4.1.tar.gz -C /usr/local
+cd /usr/local/
+sudo mv hadoop-3.4.1/ hadoop
+sudo chown -R hadoop ./hadoop
+cd /hadoop/
+./bin/hadoop version
+mkdir input
+cp etc/hadoop/*xml input/
+
+# 伪分布式配置
+sudo gedit etc/hadoop/core-site.xml
+## content
+	<property>
+		<name>hadoop.tmp.dir</name>
+<value>file:/usr/local/hadoop/tmp</value>
+		<description>Abase for other
+temporary directories.</description>
+	</property>
+	<property>
+		<name>fs.defaultFS</name>
+<value>hdfs://localhost:9000</value>
+	</property>
+##
+sudo gedit etc/hadoop/hdfs-site.xml
+##
+	<property>
+		<name>dfs.replication</name>
+		<value>1</value>
+	</property>
+	<property>
+		<name>dfs.namenode.name.dir</name>
+		<value>file:/usr/local/hadoop/tmp/dfs/name</value>
+	</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>file:/usr/local/hadoop/tmp/dfs/data</value>
+	</property>
+##
+
+# ssh localhost
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+ssh localhost
+
+# 运行实例
+./sbin/start-all.sh
+jps
+./bin/hdfs dfs -mkdir /count
+./bin/hdfs dfs -ls /
+
+./bin/hdfs dfs -put input/wheat_genome.txt /count
+./bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.4.1.jar wordcount /count/wheat_genome.txt /out
+./bin/hdfs dfs -cat /out/*
+mkdir -p output
+./bin/hdfs dfs -get /out/* output/
+cat output/part-r-00000
+./sbin/stop-all.sh
+
+

@@ -1,0 +1,306 @@
+# 66 data1
+# 66 data1 1
+CRR875830	Leda-1  #
+CRR875838	Lutin-3 #
+# 66 data1 2
+CRR875842	Mahndorfer-1    #
+CRR875844	Mahndorfer-3    #
+CRR875851	Maris Dove-2    #
+CRR875853	Maris Dove-4    #
+CRR875854	Maris Huntsman-1    #
+CRR875867	Minister-1  #
+CRR875869	Minister-3  #
+CRR875870	Minister-4  #
+CRR875873	Moisson-1   #
+CRR875875	Moisson-3   #
+# 66 data1 3
+CRR875889	Norda-3 #
+CRR875892	Norda-6 #
+CRR875893	Norman-1    #
+CRR875896	Norman-4    #
+CRR875897	Obelisk-1   #
+CRR875900	Odeon-2 #
+CRR875913	Orlando-3   #
+CRR875914	Orlando-4   #
+CRR875916	Palur-2 #
+CRR875918	Palur-4 #
+CRR875920	Pamyat Azieva-2 #
+CRR875925	Pavon 76-2  #
+CRR875926	Pavon 76-3  #
+CRR875931	Peragis-2   #
+CRR875936	Pfau-3  #
+CRR875938	Pomerelle-1 #
+CRR875942	Pony-2  #
+
+# 66 data2
+# 66 data2 1
+CRR875953	Rabe-1  #
+CRR875955	Rabe-3  #
+CRR875970	Renan-1 #
+CRR875973	Renan-4 #
+CRR875978	Revelation-3    #
+CRR875985	Rimpaus Braun-1 #
+CRR875999	Shamrock-2  #
+CRR876001	Shamrock-4  #
+CRR876005	Sicco-2 #
+CRR876010	Soissons-1  #
+# 66 data2 2
+CRR876016	Solstice-2  #
+CRR876018	Spark-1 #
+CRR876021	Spark-4 #
+CRR876025	Sperber-4   #
+CRR876032	Stamm 101-3 #
+CRR876039	Stella-3    #
+CRR876040	Super 152-1 #
+CRR876042	Svale-1 #
+CRR876060	Taras-3 #
+CRR876093	Vaguedepis-2    #
+CRR876096	Veritas-2   #
+CRR876102	Vilmorin 53-1   #
+CRR876103	Vilmorin 53-2   #
+
+# 115 1
+CRR876109	Voyage-1    #
+CRR875826	Kranich-1   #
+CRR875827	Kranich-2   #
+CRR875828	Lancelot-1  #
+CRR875829	Lancelot-2  #
+CRR875831	Leda-2  #
+CRR875832	Legend-1    #
+CRR875833	Legend-2    #
+CRR875834	Longbow-1   #
+# 115 2
+CRR875835	Longbow-2   #
+CRR875836	Lutin-1 #
+CRR875837	Lutin-2 #
+CRR875839	MISR 1-1    #
+CRR875840	MISR 1-2    #
+CRR875841	MISR 1-3    #
+CRR875843	Mahndorfer-2    #
+CRR875845	Mahndorfer-4    #
+CRR875846	Malacca-1   #
+# 115 3
+CRR875847	Malacca-2   #
+CRR875848	Marco-1 #
+CRR875849	Marco-2 #
+CRR875850	Maris Dove-1    #
+CRR875852	Maris Dove-3    #
+CRR875855	Maris Huntsman-2    #
+CRR875856	Maris Huntsman-3    #
+CRR875857	Maris Widgeon-1 #
+CRR875858	Maris Widgeon-2 #
+# 115 4
+CRR875859	Maris ranger-1  #
+CRR875860	Maris ranger-2  #
+CRR875861	Mendel-1    #
+CRR875862	Mendel-2    #
+CRR875863	Mercia-1    #
+CRR875864	Mercia-2    #
+CRR875865	Mina-1  #
+CRR875866	Mina-2  #
+CRR875868	Minister-2  #
+# 115 5
+CRR875871	Mironovska-1    #
+CRR875872	Mironovska-2    #
+CRR875874	Moisson-2   #
+CRR875876	Moisson-4   #
+CRR875877	Muck-1  #
+CRR875878	Muck-2  #
+CRR875879	Multiweiss-1    #
+CRR875880	Multiweiss-2    #
+CRR875881	Nautica-1   #
+# 115 6
+CRR875882	Nautica-2   #
+CRR875883	Nautica-3   #
+CRR875884	Nautica-4   #
+CRR875885	Newhaven-1  #
+CRR875886	Newhaven-2  #
+CRR875887	Norda-1 #
+CRR875888	Norda-2 #
+CRR875890	Norda-4 #
+CRR875891	Norda-5 #
+CRR875894	Norman-2    #
+CRR875895	Norman-3    #
+# 115 7
+CRR875898	Obelisk-2   #
+CRR875899	Odeon-1 #
+CRR875901	Odeon-3 #
+CRR875902	Odeon-4 #
+CRR875903	Odin-1  #
+CRR875904	Odin-2  #
+CRR875905	Oenus-1 #
+CRR875906	Oenus-2 #
+CRR875907	Opata-1 #
+CRR875908	Opata-2 #
+CRR875909	Opata-3 #
+CRR875910	Opata-4 #
+CRR875911	Orlando-1   #
+CRR875912	Orlando-2   #
+CRR875915	Palur-1 #
+CRR875917	Palur-3 #
+CRR875919	Pamyat Azieva-1 #
+CRR875921	Pastiche-1  #
+CRR875922	Pastiche-2  #
+CRR875923	Pastiche-3  #
+CRR875924	Pavon 76-1  #
+CRR875927	Pavon 76-4  #
+CRR875928	Pepital-1   #
+CRR875929	Pepital-2   #
+CRR875930	Peragis-1   #
+# 115 8
+CRR875932	Perlo-1 #
+CRR875933	Perlo-2 #
+CRR875934	Pfau-1  #
+CRR875935	Pfau-2  #
+CRR875937	Pfau-4  #
+CRR875939	Pomerelle-2 #
+CRR875940	Pomerelle-3 #
+CRR875941	Pony-1  #
+CRR875943	Pony-3  #
+CRR875944	Prof Marshall-1 #
+CRR875945	Prof Marshall-2 #
+CRR875946	Prof Marshall-3 #
+CRR875947	Prophet-1   #
+CRR875948	Prophet-2   #
+CRR875949	Prophet-3   #
+CRR875950	Prophet-4   #
+CRR875951	Prophet-5   #
+CRR875952	Prophet-6   #
+CRR875954	Rabe-2  #
+CRR875956	Rebel-1 #
+CRR875957	Rebel-2 #
+CRR875958	Recital-1   #
+CRR875959	Recital-2   #
+CRR875960	Record-1    #
+CRR875961	Record-2    #
+# 115 9
+CRR875962	Record-3    #
+CRR875963	Record-4    #
+CRR875964	Red Fife-1  #
+CRR875965	Red Fife-2  #
+CRR875966	Reedling-1  #
+CRR875967	Reedling-2  #
+CRR875968	Regent-1    #
+CRR875969	Regent-2    #
+CRR875971	Renan-2 #
+CRR875972	Renan-3 #
+CRR875974	Rendezvous-1    #
+CRR875975	Rendezvous-2    #
+CRR875976	Revelation-1    #
+CRR875977	Revelation-2    #
+CRR875979	Rialto-1    #
+CRR875980	Rialto-2    #
+CRR875981	Riband-1    #
+CRR875982	Riband-2    #
+CRR875983	Rimpaus Bastard 2-1 #
+CRR875984	Rimpaus Bastard 2-2 #
+CRR875986	Rimpaus Braun-2 #
+CRR875987	Rimpaus Braun-3 #
+CRR875988	RitzlhoferNeu-1 #
+CRR875989	RitzlhoferNeu-2 #
+CRR875990	Robigus-1   #
+# 115 10
+CRR875991	Robigus-2   #
+CRR875992	Savannah-1  #
+CRR875993	Savannah-2  #
+CRR875994	Schweigers Taca-1   #
+CRR875995	Schweigers Taca-2   #
+CRR875996	Scipion-1   #
+CRR875997	Scipion-2   #
+CRR875998	Shamrock-1  #
+CRR876000	Shamrock-3  #
+CRR876002	Shango-1    #
+CRR876003	Shango-2    #
+CRR876004	Sicco-1 #
+CRR876006	Sicco-3 #
+CRR876007	Sicco-4 #
+CRR876008	Slejpner-1  #
+CRR876009	Slejpner-2  #
+CRR876011	Soissons-2  #
+CRR876012	Soissons-3  #
+CRR876013	Soleil-1    #
+CRR876014	Soleil-2    #
+CRR876015	Solstice-1  #
+CRR876017	Solstice-3  #
+CRR876019	Spark-2 #
+CRR876020	Spark-3 #
+CRR876022	Sperber-1   #
+# 115 11
+CRR876023	Sperber-2   #
+CRR876024	Sperber-3   #
+CRR876026	Spitfire-1  #
+CRR876027	Spitfire-2  #
+CRR876028	Sportsman-1 #
+CRR876029	Sportsman-2 #
+CRR876030	Stamm 101-1 #
+CRR876031	Stamm 101-2 #
+CRR876033	Starke 2-1  #
+CRR876034	Starke 2-2  #
+CRR876035	Stava-1 #
+CRR876036	Stava-2 #
+CRR876037	Stella-1    #
+CRR876038	Stella-2    #
+CRR876041	Super 152-2 #
+CRR876043	Svale-2 #
+CRR876044	Svale-3 #
+CRR876045	Tadorna-1   #
+CRR876046	Tadorna-2   #
+CRR876047	Tadorna-3   #
+CRR876048	Talent-1    #
+CRR876049	Talent-2    #
+CRR876050	Tambor-1    #
+CRR876051	Tambor-2    #
+CRR876052	Tandem-1    #
+# 115 12
+CRR876053	Tandem-2    #
+CRR876054	Tanker-1    #
+CRR876055	Tanker-2    #
+CRR876056	Tanker-3    #
+CRR876057	Tanker-4    #
+CRR876058	Taras-1 #
+CRR876059	Taras-2 #
+CRR876061	Taras-4 #
+CRR876062	Thatcher-1  #
+CRR876063	Thatcher-2  #
+CRR876064	Thor-1  #
+CRR876065	Thor-2  #
+CRR876066	Thor-3  #
+CRR876067	Titus-1 #
+CRR876068	Titus-2 #
+CRR876069	Titus-3 #
+CRR876070	Top-1   #
+CRR876071	Top-2   #
+CRR876072	Top-3   #
+CRR876073	Torch-1 #
+CRR876074	Torch-2 #
+CRR876075	Torfrida-1  #
+CRR876076	Torfrida-2  #
+CRR876077	Trafalgar-1 #
+CRR876078	Trafalgar-2 #
+# 115 13
+CRR876079	Trafalgar-3 #
+CRR876080	Treasure-1  #
+CRR876081	Treasure-2  #
+CRR876082	Tremie-1    #
+CRR876083	Tremie-2    #
+CRR876084	Triumph NDL-1   #
+CRR876085	Triumph NDL-2   #
+CRR876086	Tschermaks-1    #
+CRR876087	Tschermaks-2    #
+CRR876088	Turpin-1    #
+CRR876089	Turpin-2    #
+CRR876090	Urban-1 #
+CRR876091	Urban-2 #
+CRR876092	Vaguedepis-1    #
+CRR876094	Vaguedepis-3    #
+CRR876095	Veritas-1   #
+CRR876097	Veritas-3   #
+CRR876098	Veritas-4   #
+CRR876099	Vilmorin 27-1   #
+CRR876100	Vilmorin 27-2   #
+CRR876101	Vilmorin 27-3   #
+CRR876104	Vilmorin 53-3   #
+CRR876105	Virgo-1 #
+CRR876106	Virgo-2 #
+CRR876107	Vocal-1 #
+CRR876108	Vocal-2 #
