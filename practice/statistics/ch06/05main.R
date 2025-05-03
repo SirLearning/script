@@ -1,0 +1,5 @@
+source("ch06/04TSdiff.conf.ellipse.R"); library(MASS); set.seed(1)
+n = 50; m = 45; Sig = matrix(c(1, 0.7, 0.7, 1), 2, 2)
+mu1 = c(10, 4); biv1 = mvrnorm(n, mu1, Sig)
+mu2 = c(8, 3); biv2 = mvrnorm(m, mu2, Sig)
+TSdiff.conf.ellipse(biv1, biv2, alpha = 0.95)

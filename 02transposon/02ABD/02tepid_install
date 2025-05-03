@@ -1,0 +1,2 @@
+conda create -n tepid python=2.7
+conda install tepid
