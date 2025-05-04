@@ -28,7 +28,7 @@ def imetrics_peak_parse(imetrics_file):
                 continue
             if '\t' not in line:
                 continue
-            # Hold onto data
+            # Hold onto transposon
             col = line.rstrip('\r\n ').split('\t')
             cols.append([int(col[0]), int(col[1])])
             nums.append(int(col[1]))

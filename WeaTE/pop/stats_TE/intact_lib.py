@@ -2,10 +2,10 @@
 import sys
 import pandas as pd
 
-allTE_name = 'data/np.gff3'
-fai_name = 'data/chr1A.fa.fai'
-output_name = 'data/np.stats'
-TEcode_name = 'data/TEcode'
+allTE_name = 'transposon/np.gff3'
+fai_name = 'transposon/chr1A.fa.fai'
+output_name = 'transposon/np.stats'
+TEcode_name = 'transposon/TEcode'
 
 TE_code = pd.read_table(TEcode_name, sep=',', header=None)
 TE_code.columns = ['cls', 'new_cls']

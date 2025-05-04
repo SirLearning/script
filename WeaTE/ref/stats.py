@@ -16,7 +16,7 @@ output3 = 'stats.overlap.gff3'
 
 
 def summary(fai_name, anno_name):
-    # 1. read data
+    # 1. read transposon
     fai = pd.read_table(fai_name, header=None)
     fai.columns = ['chr', 'size', 'start', 'line', 'width']
     size = fai['size'].sum()

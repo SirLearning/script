@@ -13,7 +13,7 @@ usage = """Script which will process an outfmt6 BLAST-like file and check contig
 which have hits more significant than cut-off for alignments that exceed
 a specified proportion of the contig. This script has some hard-coded components to handle the
 Symbiodinium genome assemblies which didn't have sequence names modified. This would need to be
-modified to have this script process data neutrally.
+modified to have this script process transposon neutrally.
 """
 
 # Reqs
@@ -71,7 +71,7 @@ with open(blastFile, 'r') as fileIn:
                 else:
                         continue
 
-# Process BLAST alignment data into non-overlapping chunks
+# Process BLAST alignment transposon into non-overlapping chunks
 for key, value in contigHits.items():
         for key2, value2 in value.items():
                 value2.sort()

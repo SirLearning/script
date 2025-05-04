@@ -172,12 +172,12 @@ def read_temp():
 
 
 def read_record(sign):
-    summ = pd.read_table('data/' + sign, sep='\t', header=0)
+    summ = pd.read_table('transposon/' + sign, sep='\t', header=0)
     return summ
 
 
 def write_temp(df):
-    df.to_csv('data/temp', sep='\t', header=True, index=True)
+    df.to_csv('transposon/temp', sep='\t', header=True, index=True)
 
 
 def extract_derived(genome):
@@ -190,7 +190,7 @@ def extract_derived(genome):
     for spc in species:
         sample_name = choose_sample(spc)
         for name in sample_name:
-            sample = pd.read_table('data/' + genome + '/' + genome + '.' + name + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/' + genome + '/' + genome + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             # 2. stats
@@ -211,7 +211,7 @@ def cs_div(genome):
     summary = pd.DataFrame()
     for i in range(len(species)):
         for name in sample_name:
-            sample = pd.read_table('data/cs/' + signals[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/cs/' + signals[i] + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             grouped = sample.groupby('Classification')
@@ -232,7 +232,7 @@ def cs_region(genome):
     summary = pd.DataFrame()
     for i in range(len(regions)):
         for name in sample_name:
-            sample = pd.read_table('data/cs/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/cs/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             grouped = sample.groupby('Classification')
@@ -260,7 +260,7 @@ def dm_region(genome):
     summary = pd.DataFrame()
     for i in range(len(regions)):
         for name in sample_name:
-            sample = pd.read_table('data/lc/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/lc/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             grouped = sample.groupby('Classification')
@@ -280,7 +280,7 @@ def cs_cor():
     [ages, species, signals, seqs] = cs_age(genome)
     cor = {}
     for i in range(len(species)):
-        data_list = pd.read_table('data/cs/' + genome + '/' + seqs[i], sep='\t', header=None)[0]
+        data_list = pd.read_table('transposon/cs/' + genome + '/' + seqs[i], sep='\t', header=None)[0]
         cor['not in ' + species[i]] = data_list
     # print(cor)
     df = from_contents(cor)
@@ -311,7 +311,7 @@ def sm_cp(spc, regions):
     RLC = pd.DataFrame()
     for i in range(len(regions)):
         for j in range(len(sample_name)):
-            sample = pd.read_table('data/dm/' + spc + '-' + str(i) + '.' + sample_name[j] + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/dm/' + spc + '-' + str(i) + '.' + sample_name[j] + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             sample_RLC = sample[sample['Classification'] == 'RLC']
@@ -356,7 +356,7 @@ def poly_region(genome, spc):
     summary = pd.DataFrame()
     for i in range(len(regions)):
         for name in sample_name:
-            sample = pd.read_table('data/poly/' + genome + '/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
+            sample = pd.read_table('transposon/poly/' + genome + '/' + orders[i] + '.' + name + '.sum', sep='\t', header=None)
             sample.columns = ['seq', 'length', 'bases', 'mean', 'min', 'max']
             sample = mod_sample(sample)
             grouped = sample.groupby('Classification')
@@ -397,7 +397,7 @@ def cs_boxplot():
     fig, ax = plt.subplots()
     plt.rcParams['font.size'] = 24
     ax.figure.set_size_inches(16, 7.5)
-    # sns.boxplot(x='Classification', y='size', hue='age', data=summ, showfliers=True,
+    # sns.boxplot(x='Classification', y='size', hue='age', transposon=summ, showfliers=True,
     sns.boxplot(x='Classification', y='size', hue='region', data=summ, showfliers=True,
                 palette='Set3', linewidth=1.5, dodge=True, ax=ax, width=0.75)
     plt.title('TE mutation load during wheat evolution (genome D)')

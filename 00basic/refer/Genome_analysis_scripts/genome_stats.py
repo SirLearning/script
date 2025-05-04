@@ -130,7 +130,7 @@ def AltFastqGeneralIterator(handle):
                         raise ValueError(
                                 "Records in Fastq files should start with '@' character")
                 title_line = line[1:].rstrip()
-                # Will now be at least one line of quality data - in most FASTQ files
+                # Will now be at least one line of quality transposon - in most FASTQ files
                 # just one line! We therefore use string concatenation (if needed)
                 # rather using than the "".join(...) trick just in case it is multiline:
                 seq_string = handle_readline().rstrip()
@@ -153,23 +153,23 @@ def AltFastqGeneralIterator(handle):
                         raise ValueError("Whitespace is not allowed in the sequence.")
                 seq_len = len(seq_string)
 
-                # Will now be at least one line of quality data...
+                # Will now be at least one line of quality transposon...
                 quality_string = handle_readline().rstrip()
-                # There may now be more quality data, or another sequence, or EOF
+                # There may now be more quality transposon, or another sequence, or EOF
                 while True:
                         line = handle_readline()
                         if not line:
                                 break  # end of file
                         if line[0] == "@":
                                 # This COULD be the start of a new sequence. However, it MAY just
-                                # be a line of quality data which starts with a "@" character.  We
+                                # be a line of quality transposon which starts with a "@" character.  We
                                 # should be able to check this by looking at the sequence length
-                                # and the amount of quality data found so far.
+                                # and the amount of quality transposon found so far.
                                 if len(quality_string) >= seq_len:
                                         # We expect it to be equal if this is the start of a new record.
-                                        # If the quality data is longer, we'll raise an error below.
+                                        # If the quality transposon is longer, we'll raise an error below.
                                         break
-                                # Continue - its just some (more) quality data.
+                                # Continue - its just some (more) quality transposon.
                         quality_string += line.rstrip()
 
                 if seq_len != len(quality_string):
@@ -278,7 +278,7 @@ if __name__ == '__main__':
         usage = """%(prog)s reads in a FASTA/Q file and calculates a handful of statistics,
         including the number of contigs/reads, the size distribution of contigs/reads including
         shortest, longest, median, mean, and N50 values, as well as the total amount of sequencing
-        data in bp. These values are printed to terminal and, optionally, a text file may be produced.
+        transposon in bp. These values are printed to terminal and, optionally, a text file may be produced.
         """
         p = argparse.ArgumentParser(description=usage)
         p.add_argument("-i", dest="input",

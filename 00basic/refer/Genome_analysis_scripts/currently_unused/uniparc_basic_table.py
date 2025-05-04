@@ -60,7 +60,7 @@ if skipList != None:
 else:
         skipList = []
 
-# Obtain data
+# Obtain transposon
 grouper = lambda x: x.split('\t')[0]
 outDict = {}            # This will hold onto the full alignment details of the best hit
 altDict = {}            # This will hold onto alternative UPIs

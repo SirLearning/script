@@ -9,7 +9,7 @@ Module to summarize the number and length of TEs in a genome.
 """: parameter
 fai = 'lib.fa.fai'
 cu_code = 'curatedLib.txt'
-output_name = 'data/curated_lib/stats.length.txt'
+output_name = 'transposon/curated_lib/stats.length.txt'
 """
 
 

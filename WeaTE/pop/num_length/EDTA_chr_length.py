@@ -7,9 +7,9 @@ def main():
     tecode_name = sys.argv[2]
     output_name = sys.argv[3]
 
-    # anno_name = 'data/test.gff3'
-    # tecode_name = 'data/TEcode'
-    # output_name = 'data/length.txt'
+    # anno_name = 'transposon/test.gff3'
+    # tecode_name = 'transposon/TEcode'
+    # output_name = 'transposon/length.txt'
 
     anno = pd.read_table(anno_name, sep='\t', header=None)
     anno.columns = ['seqid', 'source', 'type', 'start', 'end', 'score', 'strand', 'phase', 'attributes']

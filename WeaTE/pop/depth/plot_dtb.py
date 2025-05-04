@@ -25,7 +25,7 @@ def main():
     plt.legend(title='Name')
     plt.show()
 
-    with open('data/vu_reads_depth/threshold.txt', 'w') as f:
+    with open('../../../resources/transposon/vu_reads_depth/threshold.txt', 'w') as f:
         for i in range(len(summary)):
             if summary.loc[i, 'threshold']:
                 f.write(summary.loc[i, 'chrom'] + '\t' + summary.loc[i, 'chr'] + '\n')
@@ -54,17 +54,17 @@ def peak(data):
 
 
 def chr_main(chr):
-    summary_name = "data/vu_reads_depth/" + chr + ".mosdepth.summary.txt"
+    summary_name = "transposon/vu_reads_depth/" + chr + ".mosdepth.summary.txt"
     summary = pd.read_table(summary_name, sep="\t", header=None)
     summary.columns = ['chrom', 'length', 'bases', 'mean', 'min', 'max']
 
-    args = "data/depth_dtb/" + chr + ".mosdepth.global.dist.txt"
+    args = "transposon/depth_dtb/" + chr + ".mosdepth.global.dist.txt"
     prb = (x.rstrip().split("\t") for x in open(args))
     summary = dtb_form(prb, summary)
 
     # TE type
     summary['type'] = summary['chrom'].str.split('#').str[1]
-    tecode = pd.read_table("data/TEcode", sep=",", header=None)
+    tecode = pd.read_table("../../../resources/transposon/TEcode", sep=",", header=None)
     tecode.columns = ['cls', 'new_cls']
     for i in range(0, len(tecode)):
         summary.loc[summary['type'] == tecode['cls'][i], 'type'] = tecode['new_cls'][i]
@@ -147,21 +147,21 @@ def dtb_form(prb, summary):
     return summary
 
 
-# def peak(data):
-#     p_data = np.zeros_like(data, dtype=np.int32)
-#     count = data.shape[0]
+# def peak(transposon):
+#     p_data = np.zeros_like(transposon, dtype=np.int32)
+#     count = transposon.shape[0]
 #     arr_rowsum = []
 #     for k in range(1, count // 2 + 1):
 #         row_sum = 0
 #         for i in range(k, count - k):
-#             if data[i] > data[i - k] and data[i] > data[i + k]:
+#             if transposon[i] > transposon[i - k] and transposon[i] > transposon[i + k]:
 #                 row_sum -= 1
 #         arr_rowsum.append(row_sum)
 #     min_index = np.argmin(arr_rowsum)
 #     max_window_length = min_index
 #     for k in range(1, max_window_length + 1):
 #         for i in range(k, count - k):
-#             if data[i] > data[i - k] and data[i] > data[i + k]:
+#             if transposon[i] > transposon[i - k] and transposon[i] > transposon[i + k]:
 #                 p_data[i] += 1
 #     return np.where(p_data == max_window_length)[0]
 

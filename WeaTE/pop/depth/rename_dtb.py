@@ -6,9 +6,9 @@ depth_name = sys.argv[1]
 tecode_name = sys.argv[2]
 output_name = sys.argv[3]
 
-# anno_name = 'data/test.gff3'
-# tecode_name = 'data/TEcode'
-# output_name = 'data/length.txt'
+# anno_name = 'transposon/test.gff3'
+# tecode_name = 'transposon/TEcode'
+# output_name = 'transposon/length.txt'
 
 depth = pd.read_table(depth_name, sep='\t', header=None)
 depth.columns = ['TE', 'depth', 'prob']

@@ -2,10 +2,10 @@ import pandas as pd
 
 
 def main():
-    cover_name = 'data/6A.lib.fa.out'
-    fai_1A_name = 'data/1A.lib.fa.fai'
-    fai_6A_name = 'data/6A.lib.fa.fai'
-    output_name = 'data/same_high.txt'
+    cover_name = 'transposon/6A.lib.fa.out'
+    fai_1A_name = 'transposon/1A.lib.fa.fai'
+    fai_6A_name = 'transposon/6A.lib.fa.fai'
+    output_name = 'transposon/same_high.txt'
 
     fai_1A = pd.read_table(fai_1A_name, sep='\t', header=None)
     fai_1A.columns = ['name', 'length', 'offset', 'linebases', 'linewidth']

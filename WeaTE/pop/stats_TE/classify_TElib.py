@@ -2,9 +2,9 @@ import pandas as pd
 
 
 def main():
-    lib_name = 'data/intact.fa.fai'
-    TElib_name = 'data/TElib.fai'
-    intactTE_name = 'data/intactTE.fai'
+    lib_name = 'transposon/intact.fa.fai'
+    TElib_name = 'transposon/TElib.fai'
+    intactTE_name = 'transposon/intactTE.fai'
 
     # Read the library file
     lib = pd.read_table(lib_name, sep="\t", header=None)

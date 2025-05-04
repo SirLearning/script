@@ -278,7 +278,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
 
   # Used as end points of colour gradients, with white as other end point,
-  # and for colouring binary data (logical vectors)
+  # and for colouring binary transposon (logical vectors)
   #
   SPECIAL_COLORS <- c("#1f78b4", "#e31a1c", "#33a02c", "#b15928",
     "#6a3d9a", "#ff7f00")
@@ -543,7 +543,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   read_file <- function(file, sep, na, quote) {
 
     read_xl <- function(sheet, path, na) {
-      # for some reason read_excel() yields a 'tibble' instead of a data frame,
+      # for some reason read_excel() yields a 'tibble' instead of a transposon frame,
       # which does not display the same behaviour of `[`; hence we convert
       tryCatch(expr = as.data.frame(readxl::read_excel(path = path, na = na,
         sheet = sheet, col_names = TRUE, col_types = NULL, skip = 0L,
@@ -696,7 +696,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  # Here '...' contains the data part.
+  # Here '...' contains the transposon part.
   #
   print_itol <- function(outdir, title, annotation, ...) {
 
@@ -792,7 +792,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   }
 
 
-  ## Functions for columns according to data type (class)
+  ## Functions for columns according to transposon type (class)
 
 
   # Output varies depending on the number of colours and symbols chosen and/or
@@ -1103,7 +1103,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       for (i in which(vapply(x, is.double, NA)))
         class(x[, i]) <- "pseudointeger"
 
-    # convert integers and logical vectors to other data types if requested;
+    # convert integers and logical vectors to other transposon types if requested;
     # convert factors that look like dates to to double vectors if requested
     switch(
       EXPR = convint,
@@ -1216,7 +1216,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
 
     klass <- vapply(x, class, "")
 
-    # normal columns, dispatch done according to data type (class)
+    # normal columns, dispatch done according to transposon type (class)
     mapply(FUN = function(fun, ...) fun(...), x = x, name = names(x),
       fun = lapply(sprintf("emit_branch_annotation_%s", klass), match.fun),
       branchpos = assort(klass, NULL), SIMPLIFY = FALSE,
@@ -1232,7 +1232,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
   ## Main
 
 
-  # The main function, taking care of all columns of data frame 'x'.
+  # The main function, taking care of all columns of transposon frame 'x'.
   #
   itol_files <- function(x, lcol, bcol, icol, jcol, scol, idpat, precision,
       maxsize, favour, strict, convint, convdbl, outdir, borwid, restrict) {
@@ -1305,7 +1305,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
       }
     }
 
-    # normal columns, dispatch done according to data type (class)
+    # normal columns, dispatch done according to transposon type (class)
     x <- x[, -c(idpos, lpos, cpos), drop = FALSE]
     klass <- vapply(x, class, "")
 
@@ -1355,7 +1355,7 @@ create_itol_files <- function(infiles, identifier = "ID", label = "Label",
     na.strings <- ""
 
   for (infile in infiles)
-    # note that read_file() is supposed to return a list of data frames
+    # note that read_file() is supposed to return a list of transposon frames
     lapply(X = read_file(infile, separator, na.strings, quote),
       FUN = itol_files, bcol = background, precision = precision, lcol = label,
       icol = identifier, scol = emblems, idpat = template, maxsize = max.size,

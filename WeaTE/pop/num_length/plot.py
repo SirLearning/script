@@ -5,12 +5,12 @@ import matplotlib as mpl
 
 plt.style.use('seaborn-v0_8-deep')
 
-intact_summ = pd.read_table('data/np.stats', sep='\s+', header=0, index_col=0)
+intact_summ = pd.read_table('../../../resources/transposon/np.stats', sep='\s+', header=0, index_col=0)
 intact_summ.index.name = 'Classification'
 intact_summ['size (Mb)'] = intact_summ['size'] / 1000000
 intact_summ.index = intact_summ.index.fillna('NULL')
 
-TElib_summ = pd.read_table('data/TElib.stats', sep='\s+', header=0, index_col=0)
+TElib_summ = pd.read_table('../../../resources/transposon/TElib.stats', sep='\s+', header=0, index_col=0)
 TElib_summ.index.name = 'Classification'
 TElib_summ['size (Mb)'] = TElib_summ['size'] / 1000000
 TElib_summ.index = TElib_summ.index.fillna('NULL')

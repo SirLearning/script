@@ -1,0 +1,16 @@
+#! /bin/bash
+
+# parameters
+## $1: bamlist number
+## $2: output directory
+
+mapfile -t bams < plist"$1".txt
+size=${#bams[@]}
+echo "bams loaded: ${#bams[@]}"
+for (( i = 0; i < size; i++ )); do
+  echo "copy files of: ${bams[i]}"
+  cp -ax "${bams[i]}"* "$2"
+done
+
+
+

@@ -1,4 +1,4 @@
-# process the initial data
+# process the initial transposon
 # TE annotation analysis
 import os
 import pandas as pd

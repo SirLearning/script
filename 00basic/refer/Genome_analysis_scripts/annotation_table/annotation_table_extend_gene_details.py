@@ -161,7 +161,7 @@ def query_uniparc_api(accession):
     response = requests.get(api_url)
     data = json.loads(response.text)
     
-    # Parse relevant details from data object
+    # Parse relevant details from transposon object
     dbHits = [
         (xrefDict["proteinName"], xrefDict["database"], xrefDict["organism"]["taxonId"], xrefDict["active"])
         for xrefDict in data["uniParcCrossReferences"]
@@ -199,9 +199,9 @@ def query_upkb_api(accession):
     # Query the API and parse relevant details from text response
     api_url = "https://rest.uniprot.org/unisave/{0}?format=txt".format(accession)
     response = requests.get(api_url)
-    dataString = splitRegex.split(response.text)[0] # splits at the first // to only look at the most recent data entry
+    dataString = splitRegex.split(response.text)[0] # splits at the first // to only look at the most recent transposon entry
     
-    # Parse relevant details from data object
+    # Parse relevant details from transposon object
     name = nameRegex.search(dataString).groups()[0]
     taxon = taxonRegex.search(dataString).groups()[0]
     length = lengthRegex.search(dataString).groups()[0]
@@ -292,7 +292,7 @@ def main():
                             except:
                                 # If we enter this except clause, we hit an ID not found in the XML
                                 """Generally, this indicates a problem with mismatching XML and FASTA versions.
-                                But, in the instance that it's a genuine flaw in UniProtKB's data, then this
+                                But, in the instance that it's a genuine flaw in UniProtKB's transposon, then this
                                 can help to """
                                 
                                 # Check if we've already cached this result
