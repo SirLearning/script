@@ -899,7 +899,7 @@ def output_func(inputDict, outFileName):
                         # Format base triticeae details
                         pathID = value[1] + '.' + key
                         name = 'gmap_gene_find_' + key
-                        mrnaID = pathID.replace('.path', '.mrna')       # Could theoretically be a problem if the gene triticeae contains .path in its actual triticeae, but this isn't the case with my data and shouldn't be with others
+                        mrnaID = pathID.replace('.path', '.mrna')       # Could theoretically be a problem if the gene triticeae contains .path in its actual triticeae, but this isn't the case with my transposon and shouldn't be with others
                         # Extract details
                         firstCoord = value[0][0]
                         firstInts = [int(firstCoord[0]), int(firstCoord[1])]

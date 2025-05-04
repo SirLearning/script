@@ -12,9 +12,9 @@ for i in range(1, 8):
 
 
 # # 生成10000个符合指数分布的随机数
-# data = np.random.exponential(scale, 10000)
-# print(data)
+# transposon = np.random.exponential(scale, 10000)
+# print(transposon)
 #
 # # 绘制直方图，bins参数表示条形的数量
-# plt.hist(data, bins=100, density=True)
+# plt.hist(transposon, bins=100, density=True)
 # plt.show()

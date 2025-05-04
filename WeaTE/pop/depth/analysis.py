@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-TEcode = 'data/TEcode'
+TEcode = 'transposon/TEcode'
 
 
 def main():
@@ -66,7 +66,7 @@ def main():
     plt.show()
 
     # 5. reads_pct of TEs after threshold
-    threshold = pd.read_table('data/vu_reads_depth/threshold.txt', header=None)
+    threshold = pd.read_table('../../../resources/transposon/vu_reads_depth/threshold.txt', header=None)
     threshold.columns = ['chrom', 'chr']
     th = depth
     for i in range(len(threshold)):
@@ -100,8 +100,8 @@ def calculate_cv(reads_pct, ref_pct):
 
 
 def plot_depth(chr):
-    summ = pd.read_table("data/vu_reads_depth/" + chr + ".mosdepth.summary.txt", sep="\t", header=0)
-    # summ = pd.read_table("data/vu_reads_depth/" + chr + ".mosdepth.summary.txt", sep="\t", header=0)
+    summ = pd.read_table("transposon/vu_reads_depth/" + chr + ".mosdepth.summary.txt", sep="\t", header=0)
+    # summ = pd.read_table("transposon/vu_reads_depth/" + chr + ".mosdepth.summary.txt", sep="\t", header=0)
     summ['type'] = summ['chrom'].str.split('#').str[1]
     tecode = pd.read_table(TEcode, sep=",", header=None)
     tecode.columns = ['cls', 'new_cls']
@@ -123,7 +123,7 @@ def to_group(grouped):
     return pct
 
 def nl_stats(chr):
-    te = pd.read_table("data/ref_depth/stats.chr" + chr + ".length.txt", sep='\t', header=None)
+    te = pd.read_table("transposon/ref_depth/stats.chr" + chr + ".length.txt", sep='\t', header=None)
     te.columns = ['type', 'length']
     te['length'] = te['length'].astype(int)
     te = te[~te['type'].str.contains('X')]

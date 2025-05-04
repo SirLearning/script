@@ -29,7 +29,7 @@ idFile = args.idFile
 outfile = args.outfile
 evalue = args.evalue
 
-# Obtain data
+# Obtain transposon
 grouper = lambda x: x.split('\t')[0]
 outDict = {}
 with open(blastTab, 'r') as fileIn:

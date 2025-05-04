@@ -70,7 +70,7 @@ p.add_argument("-fo", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
 
 args = p.parse_args()
 
-# Obtain data from arguments
+# Obtain transposon from arguments
 fastaFile = args.fastaFile
 hmmerFile = args.hmmerFile
 dbBlastTabFile = args.dbBlastTabFile

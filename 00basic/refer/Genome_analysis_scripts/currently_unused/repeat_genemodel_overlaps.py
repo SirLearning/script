@@ -27,7 +27,7 @@ p.add_argument("-f", "-force", dest="force", choices = ['y', 'n', 'Y', 'N'],
 
 args = p.parse_args()
 
-# Obtain data from arguments
+# Obtain transposon from arguments
 gffFile = args.gffFile
 genomeFile = args.genomeFile
 ovlPercent = args.percentageOverlap

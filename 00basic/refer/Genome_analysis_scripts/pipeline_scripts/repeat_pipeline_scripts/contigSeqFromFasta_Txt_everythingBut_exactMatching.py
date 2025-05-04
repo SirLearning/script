@@ -36,7 +36,7 @@ if outfile != None:
                 os.remove(outfile)
 
 if fasta == None or outfile == None:
-        # Obtain data from fasta file
+        # Obtain transposon from fasta file
         print('Enter the triticeae of the fasta file you wish to search.')
         while True:
                 try:

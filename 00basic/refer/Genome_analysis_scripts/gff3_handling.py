@@ -801,7 +801,7 @@ def ncls_feature_narrowing(nclsEntries, featureID, featureIndex):       # This c
                         del nclsEntries[k]
         return nclsEntries
 
-## GFF3 data structure manipulation
+## GFF3 transposon structure manipulation
 def longest_iso(geneDictObj):
         longestMrna = ['', 0]           # We pick out the representative gene based on length. If length is identical, we'll end up picking the entry listed first in the gff3 file since our > condition won't be met. I doubt this will happen much or at all though.
         for mrna in geneDictObj['feature_list']:

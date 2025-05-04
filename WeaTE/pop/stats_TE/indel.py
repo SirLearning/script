@@ -3,8 +3,8 @@ import pandas as pd
 
 
 def mod(name):
-    ins_ana = pd.read_csv("WeaTE/data/indel/insertion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
-    del_ana = pd.read_csv("WeaTE/data/indel/deletion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
+    ins_ana = pd.read_csv("WeaTE/transposon/indel/insertion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
+    del_ana = pd.read_csv("WeaTE/transposon/indel/deletion_reads_kg." + str(name) + ".txt", header=None, sep='\t')
     ins_ana.columns = ['insertion', 'reads']
     del_ana.columns = ['deletion', 'reads']
     ins_ana['test'] = str(name)

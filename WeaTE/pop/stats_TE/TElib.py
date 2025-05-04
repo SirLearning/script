@@ -1,9 +1,9 @@
 import pandas as pd
 
-fai_name = 'data/CS.1A.TElib.fa.fai'
-chr_name = 'data/chr1A.fa.fai'
-output_name = 'data/TElib.stats'
-TEcode_name = 'data/TEcode'
+fai_name = 'transposon/CS.1A.TElib.fa.fai'
+chr_name = 'transposon/chr1A.fa.fai'
+output_name = 'transposon/TElib.stats'
+TEcode_name = 'transposon/TEcode'
 
 chr = pd.read_table(chr_name, sep='\t', header=None)
 chr.columns = ['chr', 'size', 'start', 'line', 'width']

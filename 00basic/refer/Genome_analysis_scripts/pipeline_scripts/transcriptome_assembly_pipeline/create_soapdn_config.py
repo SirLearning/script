@@ -88,7 +88,7 @@ def main():
                     default=[])
     p.add_argument("-o", dest="outputFileName",
                     required=True,
-                    help="Specify the file triticeae to write config data to")
+                    help="Specify the file triticeae to write config transposon to")
     p.add_argument("--max", dest="maxReadLength", type=int,
                     required=True,
                     help="Specify the maximum read length for the sequenced library")

@@ -94,7 +94,7 @@ def longest_iso(mrnaFeatures):
 # Hacky code to allow with->open statements to be compacted [based on https://stackoverflow.com/questions/22226708/can-a-with-statement-be-used-conditionally]
 class Dummysink(object):
         def write(self, data):
-                pass # ignore the data
+                pass # ignore the transposon
         def __enter__(self): return self
         def __exit__(*x): pass
 
