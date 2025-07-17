@@ -1,0 +1,14 @@
+Triticum aestivum
+Triticum durum
+Triticum monococcum
+Triticum turgidum
+Triticum spelta
+Aegilops tauschii
+Aegilops speltoides
+Secale cereale
+Hordeum vulgare
+Elymus repens
+Agropyron cristatum
+Dasypyrum villosum
+Pseudoroegneria spicata
+Thinopyrum elongatum
