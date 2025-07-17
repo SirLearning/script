@@ -1,5 +1,0 @@
-chr1A	EDTA	repeat_region	22	1833	9851	+	.	ID=TE_homo_4;Name=XXX_Bgt_rDNA_consensus-1;Classification=Unspecified;Sequence_ontology=SO:0000657;Identity=0.848;Method=homology
-chr1A	EDTA	repeat_region	1833	2072	1889	+	.	ID=TE_homo_5;Name=TE_00000100;Classification=Unknown;Sequence_ontology=SO:0000657;Identity=0.979;Method=homology
-chr1A	EDTA	repeat_region	2047	2215	725	+	.	ID=TE_homo_6;Name=XXX_Bgt_rDNA_consensus-1;Classification=Unspecified;Sequence_ontology=SO:0000657;Identity=0.766;Method=homology
-chr1A	EDTA	repeat_region	2239	2439	1595	+	.	ID=TE_homo_7;Name=TE_00000100;Classification=Unknown;Sequence_ontology=SO:0000657;Identity=0.98;Method=homology
-chr1A	EDTA	repeat_region	2438	2856	1438	+	.	ID=TE_homo_8;Name=XXX_Bgt_rDNA_consensus-1;Classification=Unspecified;Sequence_ontology=SO:0000657;Identity=0.725;Method=homology
