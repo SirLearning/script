@@ -7,6 +7,13 @@
   <component name="RMarkdownSettings">
     <option name="renderProfiles">
       <map>
+        <entry key="file://$PROJECT_DIR$/04DumpNice/07_VMap3/vmap3.Rmd">
+          <value>
+            <RMarkdownRenderProfile>
+              <option name="outputDirectoryUrl" value="file://$PROJECT_DIR$/04DumpNice/07_VMap3" />
+            </RMarkdownRenderProfile>
+          </value>
+        </entry>
         <entry key="file://$PROJECT_DIR$/Rtools/1.rmd">
           <value>
             <RMarkdownRenderProfile>
