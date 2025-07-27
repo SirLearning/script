@@ -22,7 +22,7 @@ echo ========================================
 echo FastCall2 Pipeline - Windows Runner
 echo ========================================
 
-REM Basic run command
+REM Basic run command (without reports to avoid path issues)
 echo Running FastCall2 pipeline...
 nextflow run runFastCall2.nf ^
     --reference %REFERENCE_GENOME% ^
@@ -41,4 +41,10 @@ if %errorlevel% neq 0 (
 
 echo Pipeline completed successfully!
 echo Results can be found in: %OUTPUT_DIR%
+
+REM Optional: Run with reports (if you want detailed execution reports)
+echo.
+echo To run with detailed execution reports, use:
+echo nextflow run runFastCall2.nf -c nextflow.config.with_reports [other parameters]
+echo.
 pause

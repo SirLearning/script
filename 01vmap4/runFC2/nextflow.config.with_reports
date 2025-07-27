@@ -1,5 +1,6 @@
 /*
- * Nextflow configuration file for FastCall2 pipeline
+ * Enhanced Nextflow configuration file for FastCall2 pipeline with reporting
+ * Use this configuration if you want detailed execution reports
  */
 
 // Global configuration
@@ -58,21 +59,25 @@ docker {
     enabled = false
 }
 
-// Report configuration
+// Report configuration - ENABLED
 timeline {
-    enabled = false
+    enabled = true
+    file = 'timeline.html'
 }
 
 report {
-    enabled = false
+    enabled = true
+    file = 'report.html'
 }
 
 trace {
-    enabled = false
+    enabled = true
+    file = 'trace.txt'
 }
 
 dag {
-    enabled = false
+    enabled = true
+    file = 'dag.dot'
 }
 
 // Manifest
