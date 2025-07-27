@@ -118,6 +118,12 @@ workflow {
     ========================================
     """.stripIndent()
 
+    // Create output directories
+    def output_dir = file(params.output_dir)
+    def pipeline_info_dir = file("./pipeline_info")
+    output_dir.mkdirs()
+    pipeline_info_dir.mkdirs()
+
     // Create chromosome channel
     chromosome_ch = Channel.fromList(params.chromosomes)
     
