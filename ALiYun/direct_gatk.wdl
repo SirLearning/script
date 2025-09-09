@@ -6,18 +6,15 @@ workflow wgs {
         String sample_id
         String reads_group
 
-        File fastq1
-        File fastq2
-
         Array[File] genome_indexes
         File reference_fasta
+        File sorted_bam
+        File sorted_bam_index
 
-        # Docker image - should contain damo-bwa-mem2 and damo_samtools for BWA-MEM2 alignment
         String docker_img = "registry-vpc.cn-hangzhou.aliyuncs.com/easy-gene/genomes-in-the-cloud:1.0"
         # Alternative BaWA-MEM2 optimized Docker image:
         String docker_damo = "registry.cn-hangzhou.aliyuncs.com/damo-gene/dna-variant-calling-cpu@sha256:64c131e1c08fed5c7399ddef7b9aeb87eea0eaacaa8f5dde0ab93019b5a7230e"
         String docker_samtools16 = "registry-vpc.cn-hangzhou.aliyuncs.com/easy-gene/samtools:v1.16"
-
     }
 
     call create_sequence_dict {
@@ -26,64 +23,19 @@ workflow wgs {
             docker_img = docker_img
     }
 
-    call bwa_align {
-        input: 
-            sample_id=sample_id,
-            reads_group=reads_group,
-            fastq1=fastq1,
-            fastq2=fastq2,
-            genome_indexes=genome_indexes,
-            docker_img=docker_damo
-    }
+    # call create_sequence_gzi {
+    #     input:
+    #         reference_fasta = reference_fasta,
+    #         docker_img = docker_samtools16
+    # }
 
     call dedup {
         input:
             sample_id=sample_id,
-            sorted_bam = bwa_align.sorted_bam_output,
+            sorted_bam = sorted_bam,
+            sorted_bam_index = sorted_bam_index,
             docker_img = docker_img
     }
-
-    # call gen_bqsr_scatter {
-    #     input:
-    #         genome_dict=create_sequence_dict.genome_dict
-    # }
-
-    # scatter (sequence_group_intervals in gen_bqsr_scatter.sequence_grouping) {
-    #     call base_recalibrator {
-    #         input:
-    #             grouping=sequence_group_intervals,
-    #             sample_id=sample_id,
-    #             dedup_bam=dedup.dedup_bam_output,
-    #             genome_indexes=genome_indexes,
-    #             docker_img=docker_img
-    #     }
-    # }
-
-    # call gather_bqsr_report {
-    #     input:
-    #         recalibration_reports=base_recalibrator.recalibration_report_output,
-    #         sample_id=sample_id,
-    #         docker_img=docker_img
-    # }
-
-    # scatter (subgroup in gen_bqsr_scatter.sequence_grouping_with_unmapped) {
-    #     call apply_bqsr {
-    #         input:
-    #             sample_id=sample_id,
-    #             calling_region=subgroup,
-    #             dedup_bam=dedup.dedup_bam_output,
-    #             genome_indexes=genome_indexes,
-    #             bqsr_grp=gather_bqsr_report.bqsr_grp_output,
-    #             docker_img=docker_img
-    #     }
-    # }
-
-    # call gather_bam_files {
-    #     input:
-    #         sample_id=sample_id,
-    #         separate_recalibrated_bams = apply_bqsr.separate_recalibrated_bam,
-    #         docker_img=docker_img
-    # }
 
     call gen_hc_scatter {
         input:
@@ -121,7 +73,7 @@ workflow wgs {
 
     output {
         # Pair[File,File] output_bam = gather_bam_files.recalibrated_bam_output
-        Array[File] reference_indices = genome_indexes
+        Array[File] reference_indices = genome_indexes  # 引用task的输出
         Pair[File,File] output_bam = dedup.dedup_bam_output
         Pair[File,File] output_gvcf = merge_vcfs.gvcf_output
         File output_vcf = genotype_gvcfs.vcf_output
@@ -157,101 +109,37 @@ task create_sequence_dict {
     }
 }
 
+# task create_sequence_gzi {
+#     input {
+#         File reference_fasta
+#         # String samtools = "/usr/local/bin/samtools-1.21/"
+#         String docker_img
+#     }
 
-task bwa_align {
-
-    input {
-        # reads pair
-        File fastq1
-        File fastq2
-
-        # pre-built genome index files
-        Array[File] genome_indexes
-
-        # experiments info
-        String reads_group
-        String sample_id
-
-        # bwa-mem2 parameters
-        String bwa_mem2_cmd = "damo-bwa-mem2"
-        String samtools_cmd = "damo_samtools"
-        String bwa_opts = ""
+#     String gzi_filename = reference_fasta + ".gzi"
     
-        # Resource
-        Int cpu = 32
-        String memory = "128G"
-        String disk = "1000G"
+#     command <<<
+#         bgzip -r ~{reference_fasta}
+#         cp ~{reference_fasta}.gzi ~{gzi_filename}
+#     >>>
 
-        # docker image
-        String docker_img
-    }
+#     runtime {
+#         docker: docker_img
+#         cpu: 16
+#         memory: "64G"
+#         disk: "250G"
+#     }
 
-    String sorted_bam = sample_id + ".sorted.bam"
-    String sorted_bam_index = sorted_bam + ".bai"
-
-    command <<<
-        set -euxo pipefail
-        threads=$(nproc)
-        
-        # 构建正确的 read group 格式
-        if [[ "~{reads_group}" == @RG* ]]; then
-            RG_LINE="~{reads_group}"
-        else
-            RG_LINE="@RG\tID:~{sample_id}\tSM:~{sample_id}\tPL:ILLUMINA\tLB:~{reads_group}"
-        fi
-        
-        echo "Using read group: $RG_LINE"
-        echo "Using reference: ~{genome_indexes[0]}"
-        
-        ~{bwa_mem2_cmd} mem -R "$RG_LINE" \
-        ~{genome_indexes[0]} \
-        ~{fastq1} ~{fastq2} \
-        -t $threads \
-        | ~{samtools_cmd} sort -o ~{sorted_bam} -T tmp -l3 -@ $threads --write-index
-
-        # 验证文件是否生成
-        if [[ -f "~{sorted_bam}" ]]; then
-            echo "✓ BAM file created: ~{sorted_bam}"
-            ls -lh ~{sorted_bam}
-        else
-            echo "✗ BAM file not found: ~{sorted_bam}"
-            exit 1
-        fi
-        
-        # 检查索引文件
-        if [[ -f "~{sorted_bam}.bai" ]]; then
-            echo "✓ BAI index created: ~{sorted_bam}.bai"
-            ls -lh ~{sorted_bam}.bai
-        elif [[ -f "~{sorted_bam}.csi" ]]; then
-            echo "✓ CSI index created, converting to BAI format"
-            mv ~{sorted_bam}.csi ~{sorted_bam}.bai
-        else
-            echo "✗ Index file not found"
-            # 单独创建索引文件
-            echo "creating index file: ~{sorted_bam}.bai"
-            ~{samtools_cmd} index ~{sorted_bam}
-            echo "Files in current directory:"
-            ls -la
-        fi
-    >>>
-
-    runtime {
-        cpu: cpu
-        memory: memory
-        disk: disk
-        docker: docker_img
-    }
-
-    output {
-        Pair[File, File] sorted_bam_output = (sorted_bam, sorted_bam + ".bai")
-        Array[File] reference_indices = genome_indexes
-    }
-}
+#     output {
+#         File genome_gzi = gzi_filename
+#     }
+# }
 
 task dedup {
     input {
         String sample_id
-        Pair[File, File] sorted_bam
+        File sorted_bam
+        File sorted_bam_index
         String gatk_Launcher = "/usr/local/bin/gatk-4.1.4.1/gatk"
         String java_opts = "'-Xms4000m -Djava.io.tmpdir=/mnt -Dsamjdk.compression_level=2'"
 
@@ -275,7 +163,7 @@ task dedup {
     command <<<
         ~{gatk_Launcher} --java-options ~{java_opts} \
         MarkDuplicates \
-        -I ~{sorted_bam.left} \
+        -I ~{sorted_bam} \
         -O ~{dedup_bam} \
         -M ~{dedup_metrics} \
         ~{true="--REMOVE_DUPLICATES true" false="" remove_duplicates} \
