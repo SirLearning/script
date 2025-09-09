@@ -2,65 +2,66 @@ version 1.0
 
 workflow move_files {
     input {
-        Array[File] input_files
-        String output_dir = "oss://your-bucket/reference"
-        String docker = "registry.cn-hangzhou.aliyuncs.com/damo-gene/dna-variant-calling@sha256:e94797b919ac4d3d13652d7c1b472552d33348316bb118a7f26de6473eecf5e7"
+        # 使用OSS bucket挂载数据
+        String bucket = "填入您当前账号下的需要挂载的bucket名字"
+        Array[String] input_files = ["如/easygene_data/reference/hg38.fa", "/easygene_data/reference/hg38.fa.fai", "/easygene_data/reference/other_file.txt"]
+        String target_directory = "reference/"
+
+        String docker = "registry.cn-hangzhou.aliyuncs.com/damo-gene/dna-variant-calling-cpu@sha256:64c131e1c08fed5c7399ddef7b9aeb87eea0eaacaa8f5dde0ab93019b5a7230e"
     }
 
-    call move_to_directory {
-        input:
-            files = input_files,
-            target_directory = output_dir,
-            docker = docker
+    scatter (single_file in input_files) {
+        call CopyFiles {
+            input:
+                bucket = bucket,
+                input_file = single_file,  # 传入单个文件
+                target_directory = target_directory,
+                docker = docker
+        }
     }
 
     output {
-        Array[File] moved_files = move_to_directory.moved_files
     }
 }
 
-task move_to_directory {
+task CopyFiles {
     input {
-        Array[File] files
+        String bucket
+        String input_file
         String target_directory
-
+        
         Int cpu = 32
         String memory = "128G"
         String disk = "100G"
         String docker
     }
 
+    
     command <<<
-        # Check if output directory is OSS path
-        if [[ ${target_directory} == oss://* ]]; then
-            # For OSS output, copy files to local temp directory first
-            mkdir -p temp_output
-            for file in ~{sep=' ' files}; do
-                cp $file temp_output/
-            done
-            # Then upload to OSS using ossutil
-            ossutil cp -r temp_output/ ${target_directory}/
+        set -euxo pipefail
+        
+        echo "Processing file: ~{input_file}"
+        
+        if [[ -f "~{input_file}" ]]; then
+            echo "Copying file: ~{input_file} to ~{target_directory}"
+            cp "~{input_file}" "~{target_directory}"
+            echo "✓ Successfully copied: ~{input_file}"
         else
-            # For local output
-            mkdir -p ${target_directory}
-            for file in ~{sep=' ' files}; do
-                cp $file ${target_directory}/
-            done
+            echo "✗ File not found: ~{input_file}"
+            exit 1
         fi
+        
+        echo "File copied to: ~{target_directory}/$(basename ~{input_file})"
+        ls -la "~{target_directory}"
     >>>
-
-    output {
-        Array[File] moved_files = if (sub(target_directory, "oss://.*", "oss") == "oss")
-            then glob("temp_output/*")
-            else glob("${target_directory}/*")
-    }
 
     runtime {
         cpu: cpu
         memory: memory
         disk: disk
         docker: docker
-        continueOnReturnCode: 0
+        env: {
+            "BUCKET": bucket
+        }
     }
 }
-
