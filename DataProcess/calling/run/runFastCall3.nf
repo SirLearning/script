@@ -22,6 +22,7 @@ params.output_dir = "output"
 params.threads = 16
 params.memory = "64g"
 params.help = false
+params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
 
 // Workflow control parameters
 params.workflow_mode = "full"  // Options: "full", "disc_only", "blib_only", "scan_only", "from_disc", "from_blib"
@@ -104,6 +105,40 @@ def getPopulationConfig(pop, home_dir) {
     return popConfigs[pop]
 }
 
+// Java version management function
+def getJavaSetupScript(javaVersion, javaLibDir) {
+    def javaVersionMap = [
+        "java8": "jdk-8",
+        "java11": "jdk-11", 
+        "java17": "jdk-17",
+        "java21": "jdk-21"
+    ]
+    
+    def javaDir = javaVersionMap[javaVersion]
+    if (!javaDir) {
+        def validVersions = javaVersionMap.keySet().join(", ")
+        throw new Exception("Unknown Java version: ${javaVersion}. Valid options: ${validVersions}")
+    }
+    
+    def javaHome = "${javaLibDir}/${javaDir}"
+    
+    return """
+    # Switch to ${javaVersion} (${javaDir})
+    export JAVA_HOME=${javaHome}
+    export PATH=\$JAVA_HOME/bin:\$PATH
+    
+    # Verify Java version
+    if [ ! -d "\$JAVA_HOME" ]; then
+        echo "Error: Java directory not found: \$JAVA_HOME"
+        echo "Available Java versions in ${javaLibDir}:"
+        ls -la ${javaLibDir}/ || echo "Java lib directory not accessible"
+        exit 1
+    fi
+    
+    java -version 2>&1 | head -3
+    """.stripIndent()
+}
+
 // Path validation function
 def validatePaths(pathMap) {
     def errors = []
@@ -151,11 +186,20 @@ def helpMessage() {
         --threads           Number of threads (default: 32)
         --memory            Memory allocation (default: 100g)
         --chromosomes       List of chromosomes to process (default: 0-44)
+        --java_lib          Java installation base directory (default: /data/dazheng/lib/jvm)
         
     Java version management:
-        The pipeline automatically uses java21 command for prepareTaxaBamMap process
-        and java17 command for all FastCall3 processes (disc, blib, scan).
-        Make sure these commands are available in your system PATH.
+        The pipeline automatically manages Java versions using the --java_lib parameter.
+        Java versions are expected to be in subdirectories: jdk-8, jdk-11, jdk-17, jdk-21
+        - prepareTaxaBamMap process uses Java 21 (jdk-21)
+        - FastCall3 processes (disc, blib, scan) use Java 17 (jdk-17)
+        
+        Example directory structure:
+        /data/dazheng/lib/jvm/
+        ├── jdk-8/
+        ├── jdk-11/
+        ├── jdk-17/
+        └── jdk-21/
         
     Workflow control:
         --workflow_mode     Workflow execution mode (default: full)
@@ -216,6 +260,21 @@ workflow runFastCall3_workflow {
     def reference = params.reference ?: "${params.home_dir}/00data/03ref/ABD/abd_iwgscV1.fa.gz"
     def samtools_path = params.samtools_path ?: "samtools"
 
+    def output_path = params.output_dir ?: "${params.home_dir}/output/${params.job}"
+    
+    // Handle chromosome parameter - can be a list or a single value
+    def chromosomes = params.chromosomes
+    if (chromosomes instanceof String || chromosomes instanceof GString) {
+        // Single chromosome passed as string
+        chromosomes = [chromosomes.toString()]
+    } else if (chromosomes instanceof List) {
+        // Multiple chromosomes or default list
+        chromosomes = chromosomes.collect { it.toString() }
+    } else {
+        // Fallback to default range
+        chromosomes = (0..44).collect { it.toString() }
+    }
+
     log.info """\
     ========================================
     FastCall3 Advanced Pipeline
@@ -229,13 +288,14 @@ workflow runFastCall3_workflow {
     TIGER jar        : ${tiger_jar}
     Workshop jar     : ${workshop_jar}
     Samtools path    : ${samtools_path}
-    Output directory : ${params.output_dir}
+    Output directory : ${output_path}
+    Java library dir : ${params.java_lib}
     Workflow mode    : ${params.workflow_mode}
     Skip taxa map    : ${params.skip_taxa_map}
     Resume checkpoint: ${params.resume_from_checkpoint}
     Threads          : ${params.threads}
     Memory           : ${params.memory}
-    Chromosomes      : ${params.chromosomes.size()} total (${params.chromosomes[0]}...${params.chromosomes[-1]})
+    Chromosomes      : ${chromosomes.size()} total (${chromosomes[0]}...${chromosomes[-1]})
     ========================================
     """.stripIndent()
 
@@ -254,8 +314,8 @@ workflow runFastCall3_workflow {
     }
 
     // Create output directories
-    def output_dir = file(params.output_dir)
-    def pipeline_info_dir = file("./pipeline_info")
+    def output_dir = file(output_path)
+    def pipeline_info_dir = file("./pipeline_info/${params.job}")
     output_dir.mkdirs()
     pipeline_info_dir.mkdirs()
 
@@ -265,8 +325,8 @@ workflow runFastCall3_workflow {
     if (!params.skip_taxa_map) {
         prep_results = prepareTaxaBamMap(
             file(workshop_jar), 
-            file(depth_dir),
-            file(bam_dir),
+            depth_dir,
+            bam_dir,
             params.home_dir,
             params.job
         )
@@ -292,12 +352,12 @@ workflow runFastCall3_workflow {
     }
     
     // Create chromosome channel
-    chromosome_ch = Channel.fromList(params.chromosomes)
+    chromosome_ch = Channel.fromList(chromosomes)
     
     // Generate population statistics
     pop_stats = generate_population_stats(
-        file(bam_dir),
-        file(depth_dir),
+        bam_dir,
+        depth_dir,
         params.pop
     )
     
@@ -330,7 +390,7 @@ workflow runFastCall3_workflow {
                 samtools_path
             )
             
-            collect_results(scan_results.vcf_files.collect())
+            collect_results(scan_results.vcf_files.collect(), chromosomes)
             break
             
         case "disc_only":
@@ -382,7 +442,7 @@ workflow runFastCall3_workflow {
                 samtools_path
             )
             
-            collect_results(scan_results.vcf_files.collect())
+            collect_results(scan_results.vcf_files.collect(), chromosomes)
             break
             
         case "blib_only":
@@ -463,7 +523,7 @@ workflow runFastCall3_workflow {
                 samtools_path
             )
             
-            collect_results(scan_results.vcf_files.collect())
+            collect_results(scan_results.vcf_files.collect(), chromosomes)
             break
             
         default:
@@ -504,8 +564,8 @@ process prepareTaxaBamMap {
     
     input:
     path workshop_jar
-    path depth_dir
-    path bam_dir
+    val depth_dir
+    val bam_dir
     val home_dir
     val job
     
@@ -517,69 +577,29 @@ process prepareTaxaBamMap {
     script:
     def output_bam_file = "${job}.taxaBamMap.txt"
     def output_run_file = "${job}.taxaRunMap.txt"
+    def javaSetup = getJavaSetupScript("java21", params.java_lib)
     """
     echo "Preparing taxa-BAM mapping file for population ${params.pop}..." > prepare_taxa_bam_map_${params.pop}.log
     echo "Using Java 21 for prepareTaxaBamMap process" >> prepare_taxa_bam_map_${params.pop}.log
     
-    # Switch to Java 21
-    export JAVA_HOME=/data/dazheng/lib/jvm/jdk-21
-    export PATH=\$JAVA_HOME/bin:\$PATH
-    java -version >> prepare_taxa_bam_map_${params.pop}.log 2>&1
+    ${javaSetup} >> prepare_taxa_bam_map_${params.pop}.log 2>&1
     
-    # Try Workshop jar first, but don't fail if it doesn't work
-    echo "Attempting to use Workshop jar..." >> prepare_taxa_bam_map_${params.pop}.log
-    java -Xmx16g -jar ${workshop_jar} \\
+    # Use TaxaBamMap.java only
+    echo "Running TaxaBamMap from Workshop jar..." >> prepare_taxa_bam_map_${params.pop}.log
+    
+    java -Xmx16g -jar "${workshop_jar}" \\
         -d ${depth_dir} \\
         -b ${bam_dir} \\
         -o ${output_bam_file} \\
         -t ${output_run_file} \\
-        >> prepare_taxa_bam_map_${params.pop}.log 2>&1 || echo "Workshop jar failed, proceeding with manual method..." >> prepare_taxa_bam_map_${params.pop}.log
+        >> prepare_taxa_bam_map_${params.pop}.log 2>&1
     
-    # Create manual mapping if Workshop jar failed or file is empty
-    if [ ! -f ${output_bam_file} ] || [ ! -s ${output_bam_file} ]; then
-        echo "Creating taxa-BAM map manually..." >> prepare_taxa_bam_map_${params.pop}.log
-        
-        # Get absolute paths
-        bam_abs_path=\$(readlink -f ${bam_dir})
-        depth_abs_path=\$(readlink -f ${depth_dir})
-        
-        # Create manual mapping with absolute paths
-        echo -e "Taxa\\tBAM\\tDepth" > ${output_bam_file}
-        for bam_file in ${bam_dir}/*.bam; do
-            if [ -f "\$bam_file" ]; then
-                taxa_name=\$(basename "\$bam_file" .bam)
-                bam_absolute="\$bam_abs_path/\$taxa_name.bam"
-                depth_file="\$depth_abs_path/\$taxa_name.bam.mosdepth.summary.txt"
-                
-                # Check if depth file exists
-                if [ -f "\$depth_file" ]; then
-                    echo -e "\$taxa_name\\t\$bam_absolute\\t\$depth_file" >> ${output_bam_file}
-                else
-                    echo -e "\$taxa_name\\t\$bam_absolute\\tNA" >> ${output_bam_file}
-                    echo "Warning: Depth file not found for \$taxa_name" >> prepare_taxa_bam_map_${params.pop}.log
-                fi
-            fi
-        done
-        
-        echo "Manual taxa-BAM mapping created with \$(wc -l < ${output_bam_file}) entries" >> prepare_taxa_bam_map_${params.pop}.log
-    fi
+    echo "TaxaBamMap execution completed" >> prepare_taxa_bam_map_${params.pop}.log
     
-    # Create a simple taxa-run mapping file if it doesn't exist
-    if [ ! -f ${output_run_file} ] || [ ! -s ${output_run_file} ]; then
-        echo -e "Taxa\\tRun" > ${output_run_file}
-        for bam_file in ${bam_dir}/*.bam; do
-            if [ -f "\$bam_file" ]; then
-                taxa_name=\$(basename "\$bam_file" .bam)
-                echo -e "\$taxa_name\\t\$taxa_name" >> ${output_run_file}
-            fi
-        done
-    fi
-    
-    echo "Taxa-BAM mapping preparation completed for population ${params.pop}" >> prepare_taxa_bam_map_${params.pop}.log
-    
-    # Also copy to standard location for reuse
+    # Copy to standard location for reuse
     mkdir -p ${home_dir}/00data/05taxaBamMap
     cp ${output_bam_file} ${home_dir}/00data/05taxaBamMap/
+    cp ${output_run_file} ${home_dir}/00data/05taxaBamMap/ 2>/dev/null || true
     """
 }
 
@@ -603,14 +623,12 @@ process fastcall3_disc {
     path "disc_${chromosome}.log", emit: log
     
     script:
+    def javaSetup = getJavaSetupScript("java17", params.java_lib)
     """
     echo "Starting disc analysis for chromosome ${chromosome}..." > disc_${chromosome}.log
     echo "Using Java 17 for FastCall3 disc process" >> disc_${chromosome}.log
     
-    # Switch to Java 17
-    export JAVA_HOME=/data/dazheng/lib/jvm/jdk-17
-    export PATH=\$JAVA_HOME/bin:\$PATH
-    java -version >> disc_${chromosome}.log 2>&1
+    ${javaSetup} >> disc_${chromosome}.log 2>&1
     
     java -Xmx${params.memory} -jar ${tiger_jar} \\
         -app FastCall3 \\
@@ -654,14 +672,12 @@ process fastcall3_blib {
     path "blib_${chromosome}.log", emit: log
     
     script:
+    def javaSetup = getJavaSetupScript("java17", params.java_lib)
     """
     echo "Starting blib generation for chromosome ${chromosome}..." > blib_${chromosome}.log
     echo "Using Java 17 for FastCall3 blib process" >> blib_${chromosome}.log
     
-    # Switch to Java 17
-    export JAVA_HOME=/data/dazheng/lib/jvm/jdk-17
-    export PATH=\$JAVA_HOME/bin:\$PATH
-    java -version >> blib_${chromosome}.log 2>&1
+    ${javaSetup} >> blib_${chromosome}.log 2>&1
     
     # Check if disc files exist
     if [ ! -f *.ing ]; then
@@ -705,14 +721,12 @@ process fastcall3_scan {
     
     script:
     def lib_file = blib_files.find { it.name.endsWith('.lib.gz') }
+    def javaSetup = getJavaSetupScript("java17", params.java_lib)
     """
     echo "Starting scan analysis for chromosome ${chromosome}..." > scan_${chromosome}.log
     echo "Using Java 17 for FastCall3 scan process" >> scan_${chromosome}.log
     
-    # Switch to Java 17
-    export JAVA_HOME=/data/dazheng/lib/jvm/jdk-17
-    export PATH=\$JAVA_HOME/bin:\$PATH
-    java -version >> scan_${chromosome}.log 2>&1
+    ${javaSetup} >> scan_${chromosome}.log 2>&1
     
     # Verify that lib file exists
     if [ ! -f "${lib_file}" ]; then
@@ -748,6 +762,7 @@ process collect_results {
     
     input:
     path(vcf_files)
+    val(chromosomes_list)
     
     output:
     path "merged_variants.vcf.gz", optional: true
@@ -785,8 +800,8 @@ process collect_results {
     echo "Date: \$(date)" >> summary_stats.txt
     echo "Population: ${params.pop}" >> summary_stats.txt
     echo "Job: ${params.job}" >> summary_stats.txt
-    echo "Number of chromosomes processed: ${params.chromosomes.size()}" >> summary_stats.txt
-    echo "Chromosomes: ${params.chromosomes.join(', ')}" >> summary_stats.txt
+    echo "Number of chromosomes processed: ${chromosomes_list.size()}" >> summary_stats.txt
+    echo "Chromosomes: ${chromosomes_list.join(', ')}" >> summary_stats.txt
     echo "Home directory: ${params.home_dir}" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "Parameters used:" >> summary_stats.txt
@@ -815,7 +830,7 @@ html = '''
 <p><strong>Date:</strong> ''' + str(datetime.datetime.now()) + '''</p>
 <p><strong>Population:</strong> ${params.pop}</p>
 <p><strong>Job:</strong> ${params.job}</p>
-<p><strong>Chromosomes processed:</strong> ${params.chromosomes.size()}</p>
+<p><strong>Chromosomes processed:</strong> ${chromosomes_list.size()}</p>
 <p><strong>VCF files generated:</strong> \$vcf_count</p>
 </body>
 </html>
@@ -838,8 +853,8 @@ process generate_population_stats {
     publishDir "${params.output_dir}/${params.job}/stats", mode: 'move'
     
     input:
-    path bam_dir
-    path depth_dir
+    val bam_dir
+    val depth_dir
     val pop
     
     output:
