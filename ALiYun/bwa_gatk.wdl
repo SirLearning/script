@@ -93,7 +93,7 @@ workflow wgs {
                 # input_bam=gather_bam_files.recalibrated_bam_output,
                 input_bam=dedup.dedup_bam_output,
                 calling_region=intervals,
-                reference_indices=bwa_align.reference_indices,
+                reference_indices=genome_indexes,
                 docker_img=docker_img
         }
     }
@@ -109,14 +109,14 @@ workflow wgs {
         input: 
             genome_dict=create_sequence_dict.genome_dict,
             sample_id=sample_id,
-            reference_indices=bwa_align.reference_indices,
+            reference_indices=genome_indexes,
             gvcf=merge_vcfs.gvcf_output,
             docker_img=docker_img
     }
 
     output {
         # Pair[File,File] output_bam = gather_bam_files.recalibrated_bam_output
-        Array[File] reference_indices = bwa_align.reference_indices  # 引用task的输出
+        Array[File] reference_indices = genome_indexes
         Pair[File,File] output_bam = dedup.dedup_bam_output
         Pair[File,File] output_gvcf = merge_vcfs.gvcf_output
         File output_vcf = genotype_gvcfs.vcf_output
@@ -184,93 +184,55 @@ task bwa_align {
     String sorted_bam = sample_id + ".sorted.bam"
     String sorted_bam_index = sorted_bam + ".bai"
 
-    # 预定义索引文件名
-    String ref_basename = basename(genome_indexes[0])
-    String amb_file = ref_basename + ".amb"
-    String ann_file = ref_basename + ".ann"
-    String bwt_file = ref_basename + ".bwt"
-    String pac_file = ref_basename + ".pac"
-    String sa_file = ref_basename + ".sa"
-    String fai_file = ref_basename + ".fai"
-
     command <<<
+        set -euxo pipefail
         cpu_cores=$(nproc)
-
-        # 找到参考基因组文件
-        REF_GENOME=""
-        for file in ~{sep=" " genome_indexes}; do
-            if [[ "$file" == *.fa || "$file" == *.fasta || "$file" == *.fa.gz || "$file" == *.fasta.gz ]]; then
-                REF_GENOME="$file"
-                break
-            fi
-        done
-        
-        if [[ -z "$REF_GENOME" ]]; then
-            REF_GENOME="~{genome_indexes[0]}"
-        fi
-        
-        echo "Reference genome: $REF_GENOME"
-        
-        # 检查是否需要构建索引
-        BASE_NAME=$(basename "$REF_GENOME")
-
-        # 将参考基因组文件复制到当前工作目录
-        echo "Copying reference genome to local directory..."
-        cp "$REF_GENOME" "./$BASE_NAME"    # 修复：使用正确的变量名
-
-
-        # # 将所有索引文件复制到当前工作目录
-        # echo "Copying all index files to local directory..."
-        # for index_file in ~{sep=" " genome_indexes}; do
-        #     index_basename=$(basename "$index_file")
-        #     cp "$index_file" "./$index_basename"
-        #     echo "Copied: $index_basename"
-        # done
-
-        if [[ ! -f "${BASE_NAME}.bwt" ]]; then
-            echo "Building BWA index..."
-            ~{bwa_release}/bwa index "./$BASE_NAME"
-        else
-            echo "BWA index already exists"
-        fi
-
-        # 检查复制后的文件
-        echo "Files in current directory:"
-        ls -la
-
-        # 验证所有BWA索引文件是否存在
-        echo "Checking BWA index files:"
-        for ext in .amb .ann .bwt .pac .sa; do
-            index_file="${BASE_NAME}${ext}"
-            if [[ -f "$index_file" ]]; then
-                echo "✓ Found: $index_file"
-            else
-                echo "✗ Missing: $index_file"
-                exit 1
-            fi
-        done
 
         # 构建正确的 read group 格式
         if [[ "~{reads_group}" == @RG* ]]; then
-            # 如果已经是正确格式，直接使用
             RG_LINE="~{reads_group}"
         else
-            # 如果不是，构建标准格式
             RG_LINE="@RG\tID:~{sample_id}\tSM:~{sample_id}\tPL:ILLUMINA\tLB:~{reads_group}"
         fi
         
         echo "Using read group: $RG_LINE"
-        echo "Using reference: ./$BASE_NAME"
+        echo "Using reference: ~{genome_indexes[0]}"
 
         ~{bwa_release}/bwa mem \
         ~{bwa_opts} \
         -t $cpu_cores \
         -R "$RG_LINE" \
-        "./$BASE_NAME" \
+        ~{genome_indexes[0]} \
         ~{fastq1} ~{fastq2} \
         | ~{samtools_release}/samtools sort -@ $cpu_cores -o ~{sorted_bam}
 
         ~{samtools_release}/samtools index ~{sorted_bam}
+
+        
+        # 验证文件是否生成
+        if [[ -f "~{sorted_bam}" ]]; then
+            echo "✓ BAM file created: ~{sorted_bam}"
+            ls -lh ~{sorted_bam}
+        else
+            echo "✗ BAM file not found: ~{sorted_bam}"
+            exit 1
+        fi
+        
+        # 检查索引文件
+        if [[ -f "~{sorted_bam}.bai" ]]; then
+            echo "✓ BAI index created: ~{sorted_bam}.bai"
+            ls -lh ~{sorted_bam}.bai
+        elif [[ -f "~{sorted_bam}.csi" ]]; then
+            echo "✓ CSI index created, converting to BAI format"
+            mv ~{sorted_bam}.csi ~{sorted_bam}.bai
+        else
+            echo "✗ Index file not found"
+            # 单独创建索引文件
+            echo "creating index file: ~{sorted_bam}.bai"
+            ~{samtools_release}/samtools index ~{sorted_bam}
+            echo "Files in current directory:"
+            ls -la
+        fi
     >>>
 
     runtime {
@@ -282,7 +244,7 @@ task bwa_align {
 
     output {
         Pair[File, File] sorted_bam_output = (sorted_bam, sorted_bam_index)
-        Array[File] reference_indices = [ref_basename, amb_file, ann_file, bwt_file, pac_file, sa_file, fai_file]
+        Array[File] reference_indices = genome_indexes
     }
 }
 
@@ -665,20 +627,20 @@ task haplotype_caller {
     String hc_gvcf = sample_id + "_hc.g.vcf.gz"    
 
     command <<<
-        # 复制参考基因组文件到本地
-        REF_BASENAME=$(basename ~{reference_indices[0]})
-        cp ~{reference_indices[0]} ./$REF_BASENAME
-        # 复制参考基因组索引文件到本地
-        for ext in .bwt .pac .sa; do
-            index_file="${REF_BASENAME}${ext}"
-            cp ~{reference_indices[0]}$ext ./$index_file
-        done
+        # # 复制参考基因组文件到本地
+        # REF_BASENAME=$(basename ~{reference_indices[0]})
+        # cp ~{reference_indices[0]} ./$REF_BASENAME
+        # # 复制参考基因组索引文件到本地
+        # for ext in .bwt .pac .sa; do
+        #     index_file="${REF_BASENAME}${ext}"
+        #     cp ~{reference_indices[0]}$ext ./$index_file
+        # done
 
-        cp ~{genome_dict} ./$(basename ~{reference_indices[0]} .fa.gz).dict
+        # cp ~{genome_dict} ./$(basename ~{reference_indices[0]} .fa.gz).dict
 
         ~{gatk_Launcher} --java-options ~{java_opts} \
         HaplotypeCaller \
-        -R ./$REF_BASENAME \
+        -R ~{reference_indices[0]} \
         -I ~{input_bam.left} \
         ~{calling_region} \
         --ERC GVCF \
@@ -765,16 +727,16 @@ task genotype_gvcfs {
     String vcf = sample_id + ".vcf.gz"
 
     command <<<
-        # 复制参考基因组文件到本地
-        REF_BASENAME=$(basename ~{reference_indices[0]})
-        cp ~{reference_indices[0]} ./$REF_BASENAME
-        # 复制参考基因组索引文件到本地
-        for ext in .bwt .pac .sa; do
-            index_file="${REF_BASENAME}${ext}"
-            cp ~{reference_indices[0]}$ext ./$index_file
-        done
+        # # 复制参考基因组文件到本地
+        # REF_BASENAME=$(basename ~{reference_indices[0]})
+        # cp ~{reference_indices[0]} ./$REF_BASENAME
+        # # 复制参考基因组索引文件到本地
+        # for ext in .bwt .pac .sa; do
+        #     index_file="${REF_BASENAME}${ext}"
+        #     cp ~{reference_indices[0]}$ext ./$index_file
+        # done
 
-        cp ~{genome_dict} ./$(basename ~{reference_indices[0]} .fa.gz).dict
+        # cp ~{genome_dict} ./$(basename ~{reference_indices[0]} .fa.gz).dict
 
         ~{gatk_Launcher} --java-options ~{java_opts} \
         GenotypeGVCFs \
