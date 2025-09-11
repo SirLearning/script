@@ -14,10 +14,11 @@ include { data_processing_workflow } from './DataProcess/overall/data_processing
 include { alignment_workflow } from './DataProcess/alignment/sequence_alignment.nf' 
 include { depth_qc_workflow } from './DataProcess/overall/depth_qc.nf'
 include { fastcall2_workflow } from './DataProcess/calling/run/runFastCall2.nf'
+include { fastcall3_workflow } from './DataProcess/calling/run/runFastCall3.nf'
 include { performance_workflow } from './DataProcess/calling/perf/fastcall.nf'
 
 // Parameters
-params.workflow_type = "alignment"  // data_processing, alignment, depth_qc, fastcall2, performance
+params.workflow_type = "alignment"  // data_processing, alignment, depth_qc, fastcall2, fastcall3, performance
 params.help = false
 
 def helpMessage() {
@@ -34,6 +35,7 @@ def helpMessage() {
         alignment          Align reads to reference genome
         depth_qc           Calculate depth and run quality control
         fastcall2          Run FastCall2 variant calling
+        fastcall3          Run FastCall3 variant calling
         performance        Run performance analysis
     
     Global Options:
@@ -77,11 +79,13 @@ workflow {
         depth_qc_workflow()
     } else if (params.workflow_type == 'fastcall2') {
         fastcall2_workflow()
+    } else if (params.workflow_type == 'fastcall3') {
+        fastcall3_workflow()
     } else if (params.workflow_type == 'performance') {
         performance_workflow()
     } else {
         log.error "Unknown workflow type: ${params.workflow_type}"
-        log.error "Valid options: data_processing, alignment, depth_qc, fastcall2, performance"
+        log.error "Valid options: data_processing, alignment, depth_qc, fastcall2, fastcall3, performance"
         exit 1
     }
 }
