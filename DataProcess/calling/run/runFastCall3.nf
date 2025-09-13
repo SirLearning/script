@@ -15,7 +15,7 @@ params.depth_dir = null  // Add depth directory parameter
 params.reference = null
 params.pop = null
 params.job = null
-params.tiger_jar = null
+params.tiger_jar = "TIGER_F3_20250911.jar"
 params.workshop_jar = null
 params.samtools_path = null
 params.output_dir = "output"
@@ -23,6 +23,20 @@ params.threads = 16
 params.memory = "64g"
 params.help = false
 params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
+
+// TIGER jar version compatibility and configuration
+params.tiger_jar_versions = [
+    "TIGER_F3_20250911.jar": [
+        java_version: "java17",
+        fastcall_version: "FastCall3",
+        app_name: "FastCall3"
+    ],
+    "TIGER_20250526.jar": [
+        java_version: "java8", 
+        fastcall_version: "FastCall2",
+        app_name: "FastCall2"
+    ]
+]
 
 // Workflow control parameters
 params.workflow_mode = "full"  // Options: "full", "disc_only", "blib_only", "scan_only", "from_disc", "from_blib"
@@ -48,51 +62,61 @@ params.scan_p_value = 0.05
 params.chromosomes = (0..44).collect { it.toString() }
 
 // Population configuration function
+// TODO: make different reference genome file for different population
 def getPopulationConfig(pop, home_dir) {
     def popConfigs = [
         "A": [
             bam_dir: "${home_dir}/00data/02bam/bam1/A",
             depth_dir: "${home_dir}/00data/04depth/01A",
+            reference: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
             description: "A genome population"
         ],
         "AB": [
             bam_dir: "${home_dir}/00data/02bam/bam1/AB",
             depth_dir: "${home_dir}/00data/04depth/02AB",
+            reference: "${home_dir}/00data/03ref/02AB/ab_iwgscV1.fa.gz",
             description: "AB genome population"
         ],
         "ABD": [
             bam_dir: "${home_dir}/00data/02bam/bam1/ABD",
             depth_dir: "${home_dir}/00data/04depth/03ABD",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "ABD genome population"
         ],
         "D": [
             bam_dir: "${home_dir}/00data/02bam/bam1/D",
             depth_dir: "${home_dir}/00data/04depth/04D",
+            reference: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz",
             description: "D genome population"
         ],
         "HZNU": [
             bam_dir: "${home_dir}/00data/02bam/bam1/HZNU",
             depth_dir: "${home_dir}/00data/04depth/05HZNU",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "HZNU collection"
         ],
         "Nature": [
             bam_dir: "${home_dir}/00data/02bam/bam1/Nature",
             depth_dir: "${home_dir}/00data/04depth/06Nature",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "Nature publication samples"
         ],
         "S": [
             bam_dir: "${home_dir}/00data/02bam/bam1/S",
             depth_dir: "${home_dir}/00data/04depth/07S",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "S genome population"
         ],
         "WAP": [
             bam_dir: "${home_dir}/00data/02bam/bam1/ABD",
             depth_dir: "${home_dir}/00data/04depth/08WAP",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "WAP collection"
         ],
         "Watkins": [
             bam_dir: "${home_dir}/00data/02bam/bam1/Watkins",
             depth_dir: "${home_dir}/00data/04depth/09Watkins",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "Watkins collection"
         ]
     ]
@@ -139,6 +163,100 @@ def getJavaSetupScript(javaVersion, javaLibDir) {
     """.stripIndent()
 }
 
+// TIGER jar configuration function
+def getTigerJarConfig(tigerJarPath) {
+    def jarFile = file(tigerJarPath)
+    def jarName = jarFile.name
+    
+    // Get configuration from version mapping
+    def config = params.tiger_jar_versions[jarName]
+    
+    if (!config) {
+        // Try to infer from filename patterns
+        if (jarName.contains("F3") || jarName.contains("FastCall3")) {
+            log.warn "Unknown TIGER jar: ${jarName}. Assuming FastCall3 configuration."
+            config = [
+                java_version: "java17",
+                fastcall_version: "FastCall3", 
+                app_name: "FastCall3"
+            ]
+        } else if (jarName.contains("2023") || jarName.contains("FastCall2")) {
+            log.warn "Unknown TIGER jar: ${jarName}. Assuming FastCall2 configuration."
+            config = [
+                java_version: "java8",
+                fastcall_version: "FastCall2",
+                app_name: "FastCall2" 
+            ]
+        } else {
+            log.warn "Unknown TIGER jar: ${jarName}. Using default FastCall3 configuration."
+            config = [
+                java_version: "java17",
+                fastcall_version: "FastCall3",
+                app_name: "FastCall3"
+            ]
+        }
+    }
+    
+    return [
+        path: tigerJarPath,
+        name: jarName,
+        java_version: config.java_version,
+        fastcall_version: config.fastcall_version,
+        app_name: config.app_name
+    ]
+}
+
+// TIGER jar path resolution function
+def resolveTigerJarPath(tigerJar, homeDir) {
+    def candidatePaths = []
+    
+    // If tiger_jar is provided and is absolute path
+    if (tigerJar && file(tigerJar).isAbsolute()) {
+        candidatePaths << tigerJar
+    }
+    
+    // If tiger_jar is provided as relative path or filename
+    if (tigerJar && !file(tigerJar).isAbsolute()) {
+        candidatePaths << "${homeDir}/${tigerJar}"
+        candidatePaths << "${homeDir}/lib/${tigerJar}"
+    }
+    
+    // Default locations based on jar name
+    def jarName = tigerJar ?: params.tiger_jar
+    if (homeDir) {
+        candidatePaths << "${homeDir}/lib/${jarName}"
+        candidatePaths << "${homeDir}/software/${jarName}"
+        candidatePaths << "${homeDir}/tools/${jarName}"
+        candidatePaths << "${homeDir}/bin/${jarName}"
+        candidatePaths << "${homeDir}/${jarName}"
+    }
+    
+    // System-wide locations
+    candidatePaths << "/usr/local/lib/${jarName}"
+    candidatePaths << "/opt/tiger/${jarName}"
+    candidatePaths << "./${jarName}"
+    
+    // Find the first existing file
+    for (path in candidatePaths) {
+        if (file(path).exists()) {
+            log.info "Found TIGER jar at: ${path}"
+            return path
+        }
+    }
+    
+    // If not found, provide helpful error message
+    def searchedPaths = candidatePaths.join("\n  - ")
+    throw new Exception("""
+TIGER jar file not found. Searched locations:
+  - ${searchedPaths}
+
+To fix this issue:
+1. Specify the full path: --tiger_jar /path/to/your/TIGER.jar
+2. Place the jar file in one of the standard locations
+3. Check the filename is correct
+""".stripIndent())
+}
+
 // Path validation function
 def validatePaths(pathMap) {
     def errors = []
@@ -160,6 +278,41 @@ def validatePaths(pathMap) {
     return [isValid: isValid, errors: errors]
 }
 
+// Function to read chromosomes from fai file
+def getChromosomesFromFai(referencePath) {
+    def faiPath = "${referencePath}.fai"
+    def faiFile = file(faiPath)
+    
+    if (!faiFile.exists()) {
+        log.warn "FAI file not found: ${faiPath}. Using default chromosome list."
+        return (0..44).collect { it.toString() }
+    }
+    
+    try {
+        def chromosomes = []
+        faiFile.eachLine { line ->
+            if (line.trim()) {
+                def parts = line.split('\t')
+                if (parts.length >= 1) {
+                    chromosomes << parts[0].trim()
+                }
+            }
+        }
+        
+        if (chromosomes.isEmpty()) {
+            log.warn "No chromosomes found in FAI file: ${faiPath}. Using default chromosome list."
+            return (0..44).collect { it.toString() }
+        }
+        
+        log.info "Found ${chromosomes.size()} chromosomes in FAI file: ${chromosomes.join(', ')}"
+        return chromosomes
+        
+    } catch (Exception e) {
+        log.warn "Error reading FAI file ${faiPath}: ${e.message}. Using default chromosome list."
+        return (0..44).collect { it.toString() }
+    }
+}
+
 def helpMessage() {
     log.info """
     ========================================
@@ -174,7 +327,27 @@ def helpMessage() {
         --pop               Population/Project name
                            Options: A, AB, ABD, D, HZNU, Nature, S, WAP, Watkins
         --job               Job name for output identification
-        --tiger_jar         Path to TIGER jar file (default: \${home_dir}/lib/TIGER_F3_20250911.jar)
+    
+    TIGER jar configuration:
+        --tiger_jar    TIGER jar filename (default: TIGER_F3_20250911.jar)
+                           Common options:
+                           - TIGER_F3_20250911.jar (FastCall3 latest)
+                           - TIGER_F3_20250910.jar (FastCall3 previous)  
+                           - TIGER_20250526.jar (FastCall2)
+                           - Tiger.jar (legacy)
+        
+        TIGER jar search locations (in order):
+        1. Absolute path specified by --tiger_jar
+        2. \${home_dir}/lib/\${jar_name}
+        3. \${home_dir}/software/\${jar_name}
+        4. \${home_dir}/tools/\${jar_name}
+        5. \${home_dir}/bin/\${jar_name}
+        6. \${home_dir}/\${jar_name}
+        7. /usr/local/lib/\${jar_name}
+        8. /opt/tiger/\${jar_name}
+        9. ./\${jar_name}
+        
+    Other required tools:
         --workshop_jar      Path to Workshop jar file (default: \${home_dir}/lib/Workshop.jar)
     
     Optional parameters:
@@ -193,6 +366,11 @@ def helpMessage() {
         Java versions are expected to be in subdirectories: jdk-8, jdk-11, jdk-17, jdk-21
         - prepareTaxaBamMap process uses Java 21 (jdk-21)
         - FastCall3 processes (disc, blib, scan) use Java 17 (jdk-17)
+        
+        TIGER jar version compatibility:
+        - TIGER_F3_*.jar: Requires Java 17 or 21
+        - TIGER_202*.jar: Requires Java 11 or 17  
+        - Tiger.jar: Requires Java 8 or 11
         
         Example directory structure:
         /data/dazheng/lib/jvm/
@@ -221,6 +399,22 @@ def helpMessage() {
         --scan_min_depth    Minimum depth for scan (default: 30)
         --scan_min_qual     Minimum quality for scan (default: 20)
         --scan_p_value      P-value threshold (default: 0.05)
+        
+    Examples:
+        # Basic usage with auto-detected TIGER jar
+        nextflow run runFastCall3.nf --home_dir /data/project --pop A --job test_run
+        
+        # Specify custom TIGER jar
+        nextflow run runFastCall3.nf --home_dir /data/project --pop A --job test_run \\
+            --tiger_jar /path/to/custom/TIGER.jar
+            
+        # Use different TIGER jar version
+        nextflow run runFastCall3.nf --home_dir /data/project --pop A --job test_run \\
+            --tiger_jar_name TIGER_20250526.jar
+            
+        # Resume from disc results
+        nextflow run runFastCall3.nf --home_dir /data/project --pop A --job test_run \\
+            --workflow_mode from_disc
     """.stripIndent()
 }
 
@@ -255,24 +449,29 @@ workflow runFastCall3_workflow {
     def bam_dir = params.bam_dir ?: popConfig.bam_dir
     def depth_dir = params.depth_dir ?: popConfig.depth_dir
     
-    def tiger_jar = params.tiger_jar ?: "${params.home_dir}/lib/TIGER_F3_20250911.jar"
+    // Resolve and configure TIGER jar automatically
+    def tiger_jar_path = resolveTigerJarPath(params.tiger_jar, params.home_dir)
+    def tiger_jar_config = getTigerJarConfig(tiger_jar_path)
+    
     def workshop_jar = params.workshop_jar ?: "${params.home_dir}/lib/Workshop.jar"
-    def reference = params.reference ?: "${params.home_dir}/00data/03ref/ABD/abd_iwgscV1.fa.gz"
+    def reference = params.reference ?: popConfig.reference
     def samtools_path = params.samtools_path ?: "samtools"
 
     def output_path = params.output_dir ?: "${params.home_dir}/output/${params.job}"
+
+    // Validate essential paths
+    def pathValidation = validatePaths([
+        "Home directory": params.home_dir,
+        "BAM directory": bam_dir,
+        "Reference genome": reference,
+        "TIGER jar": tiger_jar_config.path,
+        "Workshop jar": workshop_jar
+    ])
     
-    // Handle chromosome parameter - can be a list or a single value
-    def chromosomes = params.chromosomes
-    if (chromosomes instanceof String || chromosomes instanceof GString) {
-        // Single chromosome passed as string
-        chromosomes = [chromosomes.toString()]
-    } else if (chromosomes instanceof List) {
-        // Multiple chromosomes or default list
-        chromosomes = chromosomes.collect { it.toString() }
-    } else {
-        // Fallback to default range
-        chromosomes = (0..44).collect { it.toString() }
+    if (!pathValidation.isValid) {
+        log.error "Path validation failed:"
+        pathValidation.errors.each { log.error "  - ${it}" }
+        exit 1
     }
 
     log.info """\
@@ -285,7 +484,11 @@ workflow runFastCall3_workflow {
     Depth directory  : ${depth_dir}
     Job name         : ${params.job}
     Reference genome : ${reference}
-    TIGER jar        : ${tiger_jar}
+    TIGER jar        : ${tiger_jar_config.path}
+    TIGER jar name   : ${tiger_jar_config.name}
+    FastCall version : ${tiger_jar_config.fastcall_version}
+    Java version     : ${tiger_jar_config.java_version}
+    App name         : ${tiger_jar_config.app_name}
     Workshop jar     : ${workshop_jar}
     Samtools path    : ${samtools_path}
     Output directory : ${output_path}
@@ -295,23 +498,8 @@ workflow runFastCall3_workflow {
     Resume checkpoint: ${params.resume_from_checkpoint}
     Threads          : ${params.threads}
     Memory           : ${params.memory}
-    Chromosomes      : ${chromosomes.size()} total (${chromosomes[0]}...${chromosomes[-1]})
     ========================================
     """.stripIndent()
-
-    // Validate essential paths
-    def pathValidation = validatePaths([
-        "Home directory": params.home_dir,
-        "BAM directory": bam_dir,
-        "Reference genome": reference,
-        "TIGER jar": tiger_jar
-    ])
-    
-    if (!pathValidation.isValid) {
-        log.error "Path validation failed:"
-        pathValidation.errors.each { log.error "  - ${it}" }
-        exit 1
-    }
 
     // Create output directories
     def output_dir = file(output_path)
@@ -351,8 +539,30 @@ workflow runFastCall3_workflow {
         }
     }
     
+    // Determine chromosomes from fai file if default, otherwise use provided chromosomes
+    def chromosomes = params.chromosomes
+    if (chromosomes == (0..44).collect { it.toString() }) {
+        // Use default params.chromosomes, get from fai file
+        chromosomes = getChromosomesFromFai(reference)
+        log.info "Using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
+    } else if (chromosomes instanceof String || chromosomes instanceof GString) {
+        // Single chromosome passed as string
+        chromosomes = [chromosomes.toString()]
+        log.info "Using single chromosome: ${chromosomes[0]}"
+    } else if (chromosomes instanceof List) {
+        // Multiple chromosomes provided
+        chromosomes = chromosomes.collect { it.toString() }
+        log.info "Using provided chromosomes: ${chromosomes.join(', ')}"
+    } else {
+        // Fallback to fai file
+        chromosomes = getChromosomesFromFai(reference)
+        log.info "Fallback: using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
+    }
+    
     // Create chromosome channel
     chromosome_ch = Channel.fromList(chromosomes)
+    
+    log.info "Pipeline setup completed. Processing ${chromosomes.size()} chromosomes: ${chromosomes.size() > 0 ? chromosomes[0] + '...' + chromosomes[-1] : 'none'}"
     
     // Generate population statistics
     pop_stats = generate_population_stats(
@@ -372,22 +582,25 @@ workflow runFastCall3_workflow {
                 chromosome_ch, 
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             
             blib_results = fastcall3_blib(
                 disc_results.disc_files,
                 file(reference),
-                file(tiger_jar)
+                file(tiger_jar_config.path),
+                tiger_jar_config
             )
             
             scan_results = fastcall3_scan(
                 blib_results.blib_files,
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             
             collect_results(scan_results.vcf_files.collect(), chromosomes)
@@ -399,8 +612,9 @@ workflow runFastCall3_workflow {
                 chromosome_ch, 
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             log.info "Disc analysis completed. Use 'from_disc' mode to continue."
             break
@@ -414,16 +628,18 @@ workflow runFastCall3_workflow {
                 exit 1
             }
             
-            disc_files_ch = Channel.fromPath("${disc_dir}/*.ing")
+            disc_files_ch = Channel.fromPath("${disc_dir}/*/*.ing.gz")
                 .map { file -> 
-                    def chr = file.name.tokenize('.')[0] 
+                    def chr = file.parent.name.tokenize('_')[0] 
                     tuple(chr, file)
                 }
             
             // Check if we have disc files
-            disc_count = file(disc_dir).list().findAll { it.endsWith('.ing') }.size()
+            disc_count = file(disc_dir).listFiles().findAll { 
+                it.isDirectory() && it.list().any { it.endsWith('.ing.gz') } 
+            }.size()
             if (disc_count == 0) {
-                log.error "No .ing files found in ${disc_dir}"
+                log.error "No .ing.gz files found in ${disc_dir}"
                 exit 1
             }
             log.info "Found ${disc_count} disc files to process"
@@ -431,15 +647,17 @@ workflow runFastCall3_workflow {
             blib_results = fastcall3_blib(
                 disc_files_ch,
                 file(reference),
-                file(tiger_jar)
+                file(tiger_jar_config.path),
+                tiger_jar_config
             )
             
             scan_results = fastcall3_scan(
                 blib_results.blib_files,
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             
             collect_results(scan_results.vcf_files.collect(), chromosomes)
@@ -453,16 +671,17 @@ workflow runFastCall3_workflow {
                 exit 1
             }
             
-            disc_files_ch = Channel.fromPath("${disc_dir}/*.ing")
+            disc_files_ch = Channel.fromPath("${disc_dir}/*/*.ing.gz")
                 .map { file -> 
-                    def chr = file.name.tokenize('.')[0] 
+                    def chr = file.parent.name.tokenize('_')[0] 
                     tuple(chr, file)
                 }
             
             blib_results = fastcall3_blib(
                 disc_files_ch,
                 file(reference),
-                file(tiger_jar)
+                file(tiger_jar_config.path),
+                tiger_jar_config
             )
             log.info "Blib generation completed. Use 'from_blib' mode to continue."
             break
@@ -494,8 +713,9 @@ workflow runFastCall3_workflow {
                 blib_files_ch,
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             
             collect_results(scan_results.vcf_files.collect())
@@ -519,8 +739,9 @@ workflow runFastCall3_workflow {
                 blib_files_ch,
                 file(reference),
                 taxa_bam_map,
-                file(tiger_jar),
-                samtools_path
+                file(tiger_jar_config.path),
+                samtools_path,
+                tiger_jar_config
             )
             
             collect_results(scan_results.vcf_files.collect(), chromosomes)
@@ -609,7 +830,7 @@ process fastcall3_disc {
     cpus params.threads
     errorStrategy 'retry'
     maxRetries 2
-    publishDir "${params.output_dir}/${params.job}/disc", mode: 'move', pattern: "*.ing"
+    publishDir "${params.output_dir}/${params.job}/disc", mode: 'copy', pattern: "*/**.ing.gz"
     
     input:
     val chromosome
@@ -617,21 +838,30 @@ process fastcall3_disc {
     path taxa_bam_map
     path tiger_jar
     val samtools_path
+    val tiger_jar_config
     
     output:
-    tuple val(chromosome), path("*.ing"), emit: disc_files
+    tuple val(chromosome), path("*/**.ing.gz"), emit: disc_files
     path "disc_${chromosome}.log", emit: log
     
     script:
-    def javaSetup = getJavaSetupScript("java17", params.java_lib)
+    def javaSetup = getJavaSetupScript(tiger_jar_config.java_version, params.java_lib)
     """
     echo "Starting disc analysis for chromosome ${chromosome}..." > disc_${chromosome}.log
-    echo "Using Java 17 for FastCall3 disc process" >> disc_${chromosome}.log
+    echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} disc process" >> disc_${chromosome}.log
     
     ${javaSetup} >> disc_${chromosome}.log 2>&1
     
+    # Monitor system resources
+    echo "System resources before TIGER execution:" >> disc_${chromosome}.log
+    echo "Memory: \$(free -h | grep Mem)" >> disc_${chromosome}.log
+    echo "CPU cores: ${params.threads}" >> disc_${chromosome}.log
+    echo "Java memory allocation: ${params.memory}" >> disc_${chromosome}.log
+    echo "TIGER jar: ${tiger_jar_config.name}" >> disc_${chromosome}.log
+    echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> disc_${chromosome}.log
+    
     java -Xmx${params.memory} -jar ${tiger_jar} \\
-        -app FastCall3 \\
+        -app ${tiger_jar_config.app_name} \\
         -mod disc \\
         -a ${reference} \\
         -b ${taxa_bam_map} \\
@@ -666,27 +896,37 @@ process fastcall3_blib {
     tuple val(chromosome), path(disc_files)
     path reference
     path tiger_jar
+    val tiger_jar_config
     
     output:
     tuple val(chromosome), path("*.lib.gz"), emit: blib_files
     path "blib_${chromosome}.log", emit: log
     
     script:
-    def javaSetup = getJavaSetupScript("java17", params.java_lib)
+    def javaSetup = getJavaSetupScript(tiger_jar_config.java_version, params.java_lib)
     """
     echo "Starting blib generation for chromosome ${chromosome}..." > blib_${chromosome}.log
-    echo "Using Java 17 for FastCall3 blib process" >> blib_${chromosome}.log
+    echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} blib process" >> blib_${chromosome}.log
     
     ${javaSetup} >> blib_${chromosome}.log 2>&1
     
     # Check if disc files exist
-    if [ ! -f *.ing ]; then
-        echo "Error: No .ing files found from disc step" >> blib_${chromosome}.log
+    if [ ! -f */*.ing.gz ]; then
+        echo "Error: No .ing.gz files found from disc step" >> blib_${chromosome}.log
         exit 1
     fi
     
+    echo "Input disc files:" >> blib_${chromosome}.log
+    ls -la */*.ing.gz >> blib_${chromosome}.log
+    
+    # Monitor system resources
+    echo "System resources before TIGER execution:" >> blib_${chromosome}.log
+    echo "Memory: \$(free -h | grep Mem)" >> blib_${chromosome}.log
+    echo "TIGER jar: ${tiger_jar_config.name}" >> blib_${chromosome}.log
+    echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> blib_${chromosome}.log
+    
     java -Xmx${params.memory} -jar ${tiger_jar} \\
-        -app FastCall3 \\
+        -app ${tiger_jar_config.app_name} \\
         -mod blib \\
         -a ${reference} \\
         -b 1 \\
@@ -714,6 +954,7 @@ process fastcall3_scan {
     path taxa_bam_map
     path tiger_jar
     val samtools_path
+    val tiger_jar_config
     
     output:
     tuple val(chromosome), path("*.{vcf,vcf.gz}"), emit: vcf_files
@@ -721,10 +962,10 @@ process fastcall3_scan {
     
     script:
     def lib_file = blib_files.find { it.name.endsWith('.lib.gz') }
-    def javaSetup = getJavaSetupScript("java17", params.java_lib)
+    def javaSetup = getJavaSetupScript(tiger_jar_config.java_version, params.java_lib)
     """
     echo "Starting scan analysis for chromosome ${chromosome}..." > scan_${chromosome}.log
-    echo "Using Java 17 for FastCall3 scan process" >> scan_${chromosome}.log
+    echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} scan process" >> scan_${chromosome}.log
     
     ${javaSetup} >> scan_${chromosome}.log 2>&1
     
@@ -734,8 +975,17 @@ process fastcall3_scan {
         exit 1
     fi
     
+    echo "Input library file: ${lib_file}" >> scan_${chromosome}.log
+    echo "Library file size: \$(stat -c%s ${lib_file}) bytes" >> scan_${chromosome}.log
+    
+    # Monitor system resources
+    echo "System resources before TIGER execution:" >> scan_${chromosome}.log
+    echo "Memory: \$(free -h | grep Mem)" >> scan_${chromosome}.log
+    echo "TIGER jar: ${tiger_jar_config.name}" >> scan_${chromosome}.log
+    echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> scan_${chromosome}.log
+    
     java -Xmx${params.memory} -jar ${tiger_jar} \\
-        -app FastCall3 \\
+        -app ${tiger_jar_config.app_name} \\
         -mod scan \\
         -a ${reference} \\
         -b ${taxa_bam_map} \\
@@ -803,6 +1053,11 @@ process collect_results {
     echo "Number of chromosomes processed: ${chromosomes_list.size()}" >> summary_stats.txt
     echo "Chromosomes: ${chromosomes_list.join(', ')}" >> summary_stats.txt
     echo "Home directory: ${params.home_dir}" >> summary_stats.txt
+    echo "" >> summary_stats.txt
+    echo "TIGER Configuration:" >> summary_stats.txt
+    echo "- TIGER jar: \$(basename ${tiger_jar_config.path})" >> summary_stats.txt
+    echo "- FastCall version: ${tiger_jar_config.fastcall_version}" >> summary_stats.txt
+    echo "- Java version: ${tiger_jar_config.java_version}" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "Parameters used:" >> summary_stats.txt
     echo "- Min depth: ${params.disc_min_depth}" >> summary_stats.txt
