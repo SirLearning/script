@@ -62,9 +62,20 @@ params.scan_p_value = 0.05
 params.chromosomes = (0..44).collect { it.toString() }
 
 // Population configuration function
-// TODO: make different reference genome file for different population
 def getPopulationConfig(pop, home_dir) {
     def popConfigs = [
+        "test": [
+            bam_dir: "${home_dir}/01testData/02bamDepth/01test",
+            depth_dir: "${home_dir}/01testData/02bamDepth/01test",
+            reference: "${home_dir}/01testData/03ref/abd_1M.fa",
+            description: "Test dataset"
+        ]
+        "test_chr1" = [
+            bam_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
+            depth_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
+            reference: "${home_dir}/01testData/03ref/abd_1_1M.fa",
+            description: "Test dataset chromosome 1"
+        ]
         "A": [
             bam_dir: "${home_dir}/00data/02bam/bam1/A",
             depth_dir: "${home_dir}/00data/04depth/01A",
