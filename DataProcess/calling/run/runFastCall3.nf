@@ -26,7 +26,7 @@ params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
 
 // TIGER jar version compatibility and configuration
 params.tiger_jar_versions = [
-    "TIGER_F3_20250911.jar": [
+    "TIGER_F3_20250915.jar": [
         java_version: "java17",
         fastcall_version: "FastCall3",
         app_name: "FastCall3"
@@ -69,13 +69,13 @@ def getPopulationConfig(pop, home_dir) {
             depth_dir: "${home_dir}/01testData/02bamDepth/01test",
             reference: "${home_dir}/01testData/03ref/abd_1M.fa",
             description: "Test dataset"
-        ]
-        "test_chr1" = [
+        ],
+        "test_chr1": [
             bam_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
             depth_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
             reference: "${home_dir}/01testData/03ref/abd_1_1M.fa",
             description: "Test dataset chromosome 1"
-        ]
+        ],
         "A": [
             bam_dir: "${home_dir}/00data/02bam/bam1/A",
             depth_dir: "${home_dir}/00data/04depth/01A",
