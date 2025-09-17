@@ -61,18 +61,28 @@ params.scan_p_value = 0.05
 // Chromosome list (can be modified based on your reference)
 params.chromosomes = (0..44).collect { it.toString() }
 
+// execute by screen command line (on 243):
+// screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
+// nextflow run /data/dazheng/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop test --job test --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
+
 // Population configuration function
 def getPopulationConfig(pop, home_dir) {
     def popConfigs = [
+        "chr1": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/A",
+            depth_dir: "${home_dir}/00data/04depth/01A",
+            reference: "${home_dir}/00data/03ref/05chr1/chr1.fa.gz",
+            description: "Test dataset chromosome 1"
+        ],
         "test": [
-            bam_dir: "${home_dir}/01testData/02bamDepth/01test",
-            depth_dir: "${home_dir}/01testData/02bamDepth/01test",
+            bam_dir: "${home_dir}/01testData/02bam/01test",
+            depth_dir: "${home_dir}/01testData/04depth/01test",
             reference: "${home_dir}/01testData/03ref/abd_1M.fa",
             description: "Test dataset"
         ],
         "test_chr1": [
-            bam_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
-            depth_dir: "${home_dir}/01testData/02bamDepth/02test1chr",
+            bam_dir: "${home_dir}/01testData/02bam/02test1chr",
+            depth_dir: "${home_dir}/01testData/04depth/01test",
             reference: "${home_dir}/01testData/03ref/abd_1_1M.fa",
             description: "Test dataset chromosome 1"
         ],
