@@ -63,7 +63,7 @@ params.chromosomes = (0..44).collect { it.toString() }
 
 // execute by screen command line (on 243):
 // screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
-// nextflow run /data/dazheng/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop test --job test --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop ABD --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 
 // Population configuration function
 def getPopulationConfig(pop, home_dir) {
