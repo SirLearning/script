@@ -928,12 +928,12 @@ process fastcall3_disc {
     # Monitor system resources
     echo "System resources before TIGER execution:" >> disc_${chromosome}.log
     echo "Memory: \$(free -h | grep Mem)" >> disc_${chromosome}.log
-    echo "CPU cores: ${params.threads}" >> disc_${chromosome}.log
-    echo "Java memory allocation: ${params.memory}" >> disc_${chromosome}.log
+    echo "CPU cores (allocated): ${task.cpus}" >> disc_${chromosome}.log
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> disc_${chromosome}.log
     echo "TIGER jar: ${tiger_jar_config.name}" >> disc_${chromosome}.log
     echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> disc_${chromosome}.log
     
-    java -Xmx${params.memory} -jar ${tiger_jar} \\
+    java -Xmx${task.memory.toGiga()}g -jar ${tiger_jar} \\
         -app ${tiger_jar_config.app_name} \\
         -mod disc \\
         -a ${reference} \\
@@ -948,7 +948,7 @@ process fastcall3_disc {
         -j ${params.disc_min_het_freq} \\
         -k ${params.disc_max_het_freq} \\
         -l ${chromosome} \\
-        -m ${params.threads} \\
+        -m ${task.cpus} \\
         -n ./ \\
         -o ${samtools_path} \\
         >> disc_${chromosome}.log 2>&1
@@ -995,16 +995,18 @@ process fastcall3_blib {
     # Monitor system resources
     echo "System resources before TIGER execution:" >> blib_${chromosome}.log
     echo "Memory: \$(free -h | grep Mem)" >> blib_${chromosome}.log
+    echo "CPU cores (allocated): ${task.cpus}" >> blib_${chromosome}.log
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> blib_${chromosome}.log
     echo "TIGER jar: ${tiger_jar_config.name}" >> blib_${chromosome}.log
     echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> blib_${chromosome}.log
     
-    java -Xmx${params.memory} -jar ${tiger_jar} \\
+    java -Xmx${task.memory.toGiga()}g -jar ${tiger_jar} \\
         -app ${tiger_jar_config.app_name} \\
         -mod blib \\
         -a ${reference} \\
         -b 1 \\
         -c 2 \\
-        -d ${params.threads} \\
+        -d ${task.cpus} \\
         -e ./ \\
         -f ./ \\
         >> blib_${chromosome}.log 2>&1
@@ -1054,10 +1056,12 @@ process fastcall3_scan {
     # Monitor system resources
     echo "System resources before TIGER execution:" >> scan_${chromosome}.log
     echo "Memory: \$(free -h | grep Mem)" >> scan_${chromosome}.log
+    echo "CPU cores (allocated): ${task.cpus}" >> scan_${chromosome}.log
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> scan_${chromosome}.log
     echo "TIGER jar: ${tiger_jar_config.name}" >> scan_${chromosome}.log
     echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> scan_${chromosome}.log
     
-    java -Xmx${params.memory} -jar ${tiger_jar} \\
+    java -Xmx${task.memory.toGiga()}g -jar ${tiger_jar} \\
         -app ${tiger_jar_config.app_name} \\
         -mod scan \\
         -a ${reference} \\
@@ -1069,7 +1073,7 @@ process fastcall3_scan {
         -g ${params.scan_min_qual} \\
         -h ${params.scan_p_value} \\
         -i ${samtools_path} \\
-        -j ${params.threads} \\
+        -j ${task.cpus} \\
         -k ./ \\
         >> scan_${chromosome}.log 2>&1
     
