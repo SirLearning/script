@@ -23,6 +23,8 @@ params.threads = 16
 params.memory = "64g"
 params.help = false
 params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
+// Single chromosome selector (optional). If set, only this chromosome will be processed.
+params.chr = null
 
 // TIGER jar version compatibility and configuration
 params.tiger_jar_versions = [
@@ -64,6 +66,8 @@ params.chromosomes = (0..44).collect { it.toString() }
 // execute by screen command line (on 243):
 // screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop ABD --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
+
 
 // Population configuration function
 def getPopulationConfig(pop, home_dir) {
@@ -134,12 +138,36 @@ def getPopulationConfig(pop, home_dir) {
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "WAP collection"
         ],
-        "Watkins": [
-            bam_dir: "${home_dir}/00data/02bam/bam1/Watkins",
-            depth_dir: "${home_dir}/00data/04depth/09Watkins",
+        "115": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/115",
+            depth_dir: "${home_dir}/00data/02bam/bam2/115",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
-            description: "Watkins collection"
-        ]
+            description: "115 collection"
+        ],
+        "203": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/203",
+            depth_dir: "${home_dir}/00data/02bam/bam2/203",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
+            description: "203 collection"
+        ],
+        "204": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/204",
+            depth_dir: "${home_dir}/00data/02bam/bam2/204",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
+            description: "204 collection"
+        ],
+        "243": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/243",
+            depth_dir: "${home_dir}/00data/02bam/bam2/243",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
+            description: "243 collection"
+        ],
+        "66": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/66",
+            depth_dir: "${home_dir}/00data/02bam/bam2/66",
+            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
+            description: "66 collection"
+        ],
     ]
     
     if (!popConfigs.containsKey(pop)) {
@@ -379,6 +407,7 @@ def helpMessage() {
         --output_dir        Output directory (default: output)
         --threads           Number of threads (default: 32)
         --memory            Memory allocation (default: 100g)
+    --chr               Single chromosome to process (overrides --chromosomes)
         --chromosomes       List of chromosomes to process (default: 0-44)
         --java_lib          Java installation base directory (default: /data/dazheng/lib/jvm)
         
@@ -560,24 +589,31 @@ workflow runFastCall3_workflow {
         }
     }
     
-    // Determine chromosomes from fai file if default, otherwise use provided chromosomes
-    def chromosomes = params.chromosomes
-    if (chromosomes == (0..44).collect { it.toString() }) {
-        // Use default params.chromosomes, get from fai file
-        chromosomes = getChromosomesFromFai(reference)
-        log.info "Using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
-    } else if (chromosomes instanceof String || chromosomes instanceof GString) {
-        // Single chromosome passed as string
-        chromosomes = [chromosomes.toString()]
-        log.info "Using single chromosome: ${chromosomes[0]}"
-    } else if (chromosomes instanceof List) {
-        // Multiple chromosomes provided
-        chromosomes = chromosomes.collect { it.toString() }
-        log.info "Using provided chromosomes: ${chromosomes.join(', ')}"
+    // Determine chromosomes from fai file if default, otherwise use provided chromosomes.
+    // If --chr is specified, it overrides --chromosomes and runs only that chromosome.
+    def chromosomes
+    if (params.chr) {
+        chromosomes = [params.chr.toString()]
+        log.info "Using single chromosome from --chr: ${chromosomes[0]}"
     } else {
-        // Fallback to fai file
-        chromosomes = getChromosomesFromFai(reference)
-        log.info "Fallback: using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
+        def chromParam = params.chromosomes
+        if (chromParam == (0..44).collect { it.toString() }) {
+            // Use default params.chromosomes, get from fai file
+            chromosomes = getChromosomesFromFai(reference)
+            log.info "Using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
+        } else if (chromParam instanceof String || chromParam instanceof GString) {
+            // Single chromosome passed as string
+            chromosomes = [chromParam.toString()]
+            log.info "Using single chromosome: ${chromosomes[0]}"
+        } else if (chromParam instanceof List) {
+            // Multiple chromosomes provided
+            chromosomes = chromParam.collect { it.toString() }
+            log.info "Using provided chromosomes: ${chromosomes.join(', ')}"
+        } else {
+            // Fallback to fai file
+            chromosomes = getChromosomesFromFai(reference)
+            log.info "Fallback: using chromosomes from fai file: ${chromosomes.size()} chromosomes found"
+        }
     }
     
     // Create chromosome channel
@@ -654,6 +690,10 @@ workflow runFastCall3_workflow {
                     def chr = file.parent.name.tokenize('_')[0] 
                     tuple(chr, file)
                 }
+                .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
+            if (params.chr) {
+                log.info "Filtering disc inputs to chromosome: ${params.chr}"
+            }
             
             // Check if we have disc files
             disc_count = file(disc_dir).listFiles().findAll { 
@@ -697,6 +737,10 @@ workflow runFastCall3_workflow {
                     def chr = file.parent.name.tokenize('_')[0] 
                     tuple(chr, file)
                 }
+                .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
+            if (params.chr) {
+                log.info "Filtering disc inputs to chromosome: ${params.chr}"
+            }
             
             blib_results = fastcall3_blib(
                 disc_files_ch,
@@ -721,6 +765,10 @@ workflow runFastCall3_workflow {
                     def chr = file.name.tokenize('.')[0] 
                     tuple(chr, file)
                 }
+                .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
+            if (params.chr) {
+                log.info "Filtering blib inputs to chromosome: ${params.chr}"
+            }
             
             // Check if we have blib files
             blib_count = file(blib_dir).list().findAll { it.endsWith('.lib.gz') }.size()
@@ -739,7 +787,7 @@ workflow runFastCall3_workflow {
                 tiger_jar_config
             )
             
-            collect_results(scan_results.vcf_files.collect())
+            collect_results(scan_results.vcf_files.collect(), chromosomes)
             break
             
         case "scan_only":
@@ -755,6 +803,10 @@ workflow runFastCall3_workflow {
                     def chr = file.name.tokenize('.')[0] 
                     tuple(chr, file)
                 }
+                .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
+            if (params.chr) {
+                log.info "Filtering blib inputs to chromosome: ${params.chr}"
+            }
             
             scan_results = fastcall3_scan(
                 blib_files_ch,

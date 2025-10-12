@@ -1,0 +1,1 @@
+task_id	hash	name	tag	status	exit	cpus	memory	attempt	duration	realtime	%cpu	%mem	rss	peak_rss	vmem	peak_vmem	read_bytes	write_bytes	submit	start	complete
