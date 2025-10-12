@@ -138,31 +138,31 @@ def getPopulationConfig(pop, home_dir) {
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "WAP collection"
         ],
-        "115": [
+        "w115": [
             bam_dir: "${home_dir}/00data/02bam/bam2/115",
             depth_dir: "${home_dir}/00data/02bam/bam2/115",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "115 collection"
         ],
-        "203": [
+        "w203": [
             bam_dir: "${home_dir}/00data/02bam/bam2/203",
             depth_dir: "${home_dir}/00data/02bam/bam2/203",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "203 collection"
         ],
-        "204": [
+        "w204": [
             bam_dir: "${home_dir}/00data/02bam/bam2/204",
             depth_dir: "${home_dir}/00data/02bam/bam2/204",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "204 collection"
         ],
-        "243": [
+        "w243": [
             bam_dir: "${home_dir}/00data/02bam/bam2/243",
             depth_dir: "${home_dir}/00data/02bam/bam2/243",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "243 collection"
         ],
-        "66": [
+        "w66": [
             bam_dir: "${home_dir}/00data/02bam/bam2/66",
             depth_dir: "${home_dir}/00data/02bam/bam2/66",
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
