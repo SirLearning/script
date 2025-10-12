@@ -407,7 +407,7 @@ def helpMessage() {
         --output_dir        Output directory (default: output)
         --threads           Number of threads (default: 32)
         --memory            Memory allocation (default: 100g)
-    --chr               Single chromosome to process (overrides --chromosomes)
+        --chr               Single chromosome to process (overrides --chromosomes)
         --chromosomes       List of chromosomes to process (default: 0-44)
         --java_lib          Java installation base directory (default: /data/dazheng/lib/jvm)
         
