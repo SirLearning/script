@@ -68,6 +68,8 @@ params.chromosomes = (0..44).collect { it.toString() }
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop ABD --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20251013.jar
+
 
 // Population configuration function
 def getPopulationConfig(pop, home_dir) {
@@ -306,6 +308,47 @@ To fix this issue:
 """.stripIndent())
 }
 
+// WORKSHOP jar path resolution function
+def resolveWorkshopJarPath(workshopJar, homeDir) {
+    def candidatePaths = []
+
+    if (workshopJar) {
+        def wf = file(workshopJar)
+        if (wf.isAbsolute()) {
+            candidatePaths << workshopJar
+        } else {
+            // relative path provided, try relative to CWD and homeDir/lib
+            candidatePaths << workshopJar
+            if (homeDir) candidatePaths << "${homeDir}/lib/${workshopJar}"
+        }
+    }
+
+    // Standard locations
+    if (homeDir) candidatePaths << "${homeDir}/lib/Workshop.jar"
+    if (homeDir) candidatePaths << "${homeDir}/software/Workshop.jar"
+    if (homeDir) candidatePaths << "${homeDir}/tools/Workshop.jar"
+    candidatePaths << "./Workshop.jar"
+    candidatePaths << "/usr/local/lib/Workshop.jar"
+
+    for (path in candidatePaths) {
+        if (file(path).exists()) {
+            log.info "Found Workshop jar at: ${path}"
+            return path
+        }
+    }
+
+    def searched = candidatePaths.unique().join("\n  - ")
+    throw new Exception("""
+Workshop jar file not found. Searched locations:
+  - ${searched}
+
+To fix this issue:
+1. Specify the full path: --workshop_jar /path/to/Workshop.jar
+2. Place the jar file under ${homeDir}/lib/Workshop.jar
+3. Check the filename is correct
+""".stripIndent())
+}
+
 // Path validation function
 def validatePaths(pathMap) {
     def errors = []
@@ -503,7 +546,7 @@ workflow runFastCall3_workflow {
     def tiger_jar_path = resolveTigerJarPath(params.tiger_jar, params.home_dir)
     def tiger_jar_config = getTigerJarConfig(tiger_jar_path)
     
-    def workshop_jar = params.workshop_jar ?: "${params.home_dir}/lib/Workshop.jar"
+    def workshop_jar_path = resolveWorkshopJarPath(params.workshop_jar, params.home_dir)
     def reference = params.reference ?: popConfig.reference
     def samtools_path = params.samtools_path ?: "samtools"
 
@@ -515,7 +558,7 @@ workflow runFastCall3_workflow {
         "BAM directory": bam_dir,
         "Reference genome": reference,
         "TIGER jar": tiger_jar_config.path,
-        "Workshop jar": workshop_jar
+        "Workshop jar": workshop_jar_path
     ])
     
     if (!pathValidation.isValid) {
@@ -543,7 +586,7 @@ workflow runFastCall3_workflow {
     FastCall version : ${tiger_jar_config.fastcall_version}
     Java version     : ${tiger_jar_config.java_version}
     App name         : ${tiger_jar_config.app_name}
-    Workshop jar     : ${workshop_jar}
+    Workshop jar     : ${workshop_jar_path}
     Samtools path    : ${samtools_path}
     Output directory : ${output_path}
     Java library dir : ${params.java_lib}
@@ -566,7 +609,7 @@ workflow runFastCall3_workflow {
     // Step 1: Prepare taxa-BAM mapping (unless skipped)
     if (!params.skip_taxa_map) {
         prep_results = prepareTaxaBamMap(
-            file(workshop_jar), 
+            file(workshop_jar_path), 
             depth_dir,
             bam_dir,
             params.home_dir,
@@ -950,17 +993,17 @@ process fastcall3_disc {
     ${javaSetup} >> disc_${chromosome}.log 2>&1
 
     # Link reference sidecar files if provided to avoid regenerating indices
-    ref_base=$(basename "${reference}")
+    ref_base=\$(basename "${reference}")
     # .fai
     if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
-        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> disc_${chromosome}.log || true
-        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> disc_${chromosome}.log
+        ln -sf "${ref_fai_path}" "\${ref_base}.fai" 2>> disc_${chromosome}.log || true
+        echo "Linked FAI: \${ref_base}.fai -> ${ref_fai_path}" >> disc_${chromosome}.log
     fi
     # .gzi for gzipped fasta
-    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+    if [[ "\${ref_base}" == *.gz ]]; then
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
-            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> disc_${chromosome}.log || true
-            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> disc_${chromosome}.log
+            ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> disc_${chromosome}.log || true
+            echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> disc_${chromosome}.log
         fi
     fi
     # no .dict required
@@ -1026,15 +1069,15 @@ process fastcall3_blib {
     ${javaSetup} >> blib_${chromosome}.log 2>&1
 
     # Link reference sidecar files if provided to avoid regenerating indices
-    ref_base=$(basename "${reference}")
+    ref_base=\$(basename "${reference}")
     if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
         ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> blib_${chromosome}.log || true
         echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> blib_${chromosome}.log
     fi
-    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+    if [[ "\${ref_base}" == *.gz ]]; then
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
-            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> blib_${chromosome}.log || true
-            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> blib_${chromosome}.log
+            ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> blib_${chromosome}.log || true
+            echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> blib_${chromosome}.log
         fi
     fi
     # no .dict required
@@ -1103,15 +1146,15 @@ process fastcall3_scan {
     ${javaSetup} >> scan_${chromosome}.log 2>&1
 
     # Link reference sidecar files if provided to avoid regenerating indices
-    ref_base=$(basename "${reference}")
+    ref_base=\$(basename "${reference}")
     if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
         ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> scan_${chromosome}.log || true
         echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> scan_${chromosome}.log
     fi
-    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+    if [[ "\${ref_base}" == *.gz ]]; then
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
-            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> scan_${chromosome}.log || true
-            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> scan_${chromosome}.log
+            ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> scan_${chromosome}.log || true
+            echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> scan_${chromosome}.log
         fi
     fi
     # no .dict required
