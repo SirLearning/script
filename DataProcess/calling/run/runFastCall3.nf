@@ -524,6 +524,10 @@ workflow runFastCall3_workflow {
         exit 1
     }
 
+    // Pre-resolve reference sidecar files (if exist) so tools can reuse them without regenerating
+    def ref_fai_path  = file("${reference}.fai").exists() ? "${reference}.fai" : ""
+    def ref_gzi_path  = file("${reference}.gzi").exists() ? "${reference}.gzi" : ""
+
     log.info """\
     ========================================
     FastCall3 Advanced Pipeline
@@ -638,6 +642,8 @@ workflow runFastCall3_workflow {
             disc_results = fastcall3_disc(
                 chromosome_ch, 
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -647,6 +653,8 @@ workflow runFastCall3_workflow {
             blib_results = fastcall3_blib(
                 disc_results.disc_files,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 file(tiger_jar_config.path),
                 tiger_jar_config
             )
@@ -654,6 +662,8 @@ workflow runFastCall3_workflow {
             scan_results = fastcall3_scan(
                 blib_results.blib_files,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -668,6 +678,8 @@ workflow runFastCall3_workflow {
             disc_results = fastcall3_disc(
                 chromosome_ch, 
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -708,6 +720,8 @@ workflow runFastCall3_workflow {
             blib_results = fastcall3_blib(
                 disc_files_ch,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 file(tiger_jar_config.path),
                 tiger_jar_config
             )
@@ -715,6 +729,8 @@ workflow runFastCall3_workflow {
             scan_results = fastcall3_scan(
                 blib_results.blib_files,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -745,6 +761,8 @@ workflow runFastCall3_workflow {
             blib_results = fastcall3_blib(
                 disc_files_ch,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 file(tiger_jar_config.path),
                 tiger_jar_config
             )
@@ -781,6 +799,8 @@ workflow runFastCall3_workflow {
             scan_results = fastcall3_scan(
                 blib_files_ch,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -811,6 +831,8 @@ workflow runFastCall3_workflow {
             scan_results = fastcall3_scan(
                 blib_files_ch,
                 file(reference),
+                ref_fai_path,
+                ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
@@ -908,6 +930,8 @@ process fastcall3_disc {
     input:
     val chromosome
     path reference
+    val ref_fai_path
+    val ref_gzi_path
     path taxa_bam_map
     path tiger_jar
     val samtools_path
@@ -924,6 +948,22 @@ process fastcall3_disc {
     echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} disc process" >> disc_${chromosome}.log
     
     ${javaSetup} >> disc_${chromosome}.log 2>&1
+
+    # Link reference sidecar files if provided to avoid regenerating indices
+    ref_base=$(basename "${reference}")
+    # .fai
+    if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
+        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> disc_${chromosome}.log || true
+        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> disc_${chromosome}.log
+    fi
+    # .gzi for gzipped fasta
+    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+        if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
+            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> disc_${chromosome}.log || true
+            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> disc_${chromosome}.log
+        fi
+    fi
+    # no .dict required
     
     # Monitor system resources
     echo "System resources before TIGER execution:" >> disc_${chromosome}.log
@@ -968,6 +1008,8 @@ process fastcall3_blib {
     input:
     tuple val(chromosome), path(disc_files)
     path reference
+    val ref_fai_path
+    val ref_gzi_path
     path tiger_jar
     val tiger_jar_config
     
@@ -982,6 +1024,20 @@ process fastcall3_blib {
     echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} blib process" >> blib_${chromosome}.log
     
     ${javaSetup} >> blib_${chromosome}.log 2>&1
+
+    # Link reference sidecar files if provided to avoid regenerating indices
+    ref_base=$(basename "${reference}")
+    if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
+        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> blib_${chromosome}.log || true
+        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> blib_${chromosome}.log
+    fi
+    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+        if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
+            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> blib_${chromosome}.log || true
+            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> blib_${chromosome}.log
+        fi
+    fi
+    # no .dict required
     
     # Check if disc files exist
     if [ ! -f */*.ing.gz ]; then
@@ -1026,6 +1082,8 @@ process fastcall3_scan {
     input:
     tuple val(chromosome), path(blib_files)
     path reference
+    val ref_fai_path
+    val ref_gzi_path
     path taxa_bam_map
     path tiger_jar
     val samtools_path
@@ -1043,6 +1101,20 @@ process fastcall3_scan {
     echo "Using ${tiger_jar_config.java_version} for ${tiger_jar_config.fastcall_version} scan process" >> scan_${chromosome}.log
     
     ${javaSetup} >> scan_${chromosome}.log 2>&1
+
+    # Link reference sidecar files if provided to avoid regenerating indices
+    ref_base=$(basename "${reference}")
+    if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
+        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> scan_${chromosome}.log || true
+        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> scan_${chromosome}.log
+    fi
+    if echo "${ref_base}" | grep -qE '\\.gz$'; then
+        if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
+            ln -sf "${ref_gzi_path}" "${ref_base}.gzi" 2>> scan_${chromosome}.log || true
+            echo "Linked GZI: ${ref_base}.gzi -> ${ref_gzi_path}" >> scan_${chromosome}.log
+        fi
+    fi
+    # no .dict required
     
     # Verify that lib file exists
     if [ ! -f "${lib_file}" ]; then
