@@ -25,6 +25,8 @@ params.help = false
 params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
 // Single chromosome selector (optional). If set, only this chromosome will be processed.
 params.chr = null
+// Optional: user-provided taxa-BAM mapping file to bypass generation
+params.taxa_bam_map = null
 // Output sub-folders (can be overridden at runtime). ing_dir, vlib_dir, gen_dir determine where .ing.gz, .lib.gz and VCFs go
 // Note: Do not assign defaults here to avoid Nextflow "defined multiple times" warnings when users pass CLI values.
 
@@ -77,6 +79,7 @@ params.chromosomes = (0..44).collect { it.toString() }
 
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode from_disc --tiger_jar TIGER_F3_20251013.jar --ing_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/ing --vlib_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/vLib --gen_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/gen
 
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode from_disc --tiger_jar TIGER_F3_20251016.jar --ing_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/ing --vlib_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/vLib --gen_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/gen
 
 // Population configuration function
 def getPopulationConfig(pop, home_dir) {
@@ -458,6 +461,7 @@ def helpMessage() {
         --ing_dir           Directory for disc outputs (.ing.gz). Default: <output_dir>/<job>/ing
         --vlib_dir          Directory for blib outputs (.lib.gz). Default: <output_dir>/<job>/vLib
         --gen_dir           Directory for scan outputs (VCF). Default: <output_dir>/<job>/gen
+        --taxa_bam_map      Path to an existing taxaBamMap.txt; if provided, the pipeline will use it directly and skip generation
         --threads           Number of threads (default: 32)
         --memory            Memory allocation (default: 100g)
         --chr               Single chromosome to process (overrides --chromosomes)
@@ -628,8 +632,19 @@ workflow runFastCall3_workflow {
 
     def taxaBamMap_dir = file("${params.home_dir}/00data/05taxaBamMap")
 
-    // Step 1: Prepare taxa-BAM mapping (unless skipped)
-    if (!params.skip_taxa_map) {
+    // Step 1: Prepare or load taxa-BAM mapping
+    def taxa_bam_map
+    if (params.taxa_bam_map) {
+        // User provided a mapping file; validate and use it directly
+        def provided = file(params.taxa_bam_map)
+        if (!provided.exists()) {
+            log.error "Provided --taxa_bam_map does not exist: ${params.taxa_bam_map}"
+            exit 1
+        }
+        taxa_bam_map = Channel.fromPath(provided)
+        log.info "Using user-provided taxa-BAM mapping: ${provided}"
+    } else if (!params.skip_taxa_map) {
+        // Generate mapping
         prep_results = prepareTaxaBamMap(
             file(workshop_jar_path), 
             depth_dir,
@@ -638,11 +653,11 @@ workflow runFastCall3_workflow {
             params.job
         )
         taxa_bam_map = prep_results.taxa_bam_map
+        log.info "Generated taxa-BAM mapping for job: ${params.job}"
     } else {
         // Use existing taxa-BAM mapping file
         def existing_taxa_map = "${params.output_dir}/${params.job}/taxa_bam_map/${params.job}.taxaBamMap.txt"
         def fallback_taxa_map = "${taxaBamMap_dir}/${params.job}.taxaBamMap.txt"
-        
         if (file(existing_taxa_map).exists()) {
             taxa_bam_map = Channel.fromPath(existing_taxa_map)
             log.info "Using existing taxa-BAM mapping: ${existing_taxa_map}"
@@ -653,7 +668,7 @@ workflow runFastCall3_workflow {
             log.error "Taxa-BAM mapping file not found in either:"
             log.error "  - ${existing_taxa_map}"
             log.error "  - ${fallback_taxa_map}"
-            log.error "Set --skip_taxa_map false to generate it, or provide the correct path"
+            log.error "Provide --taxa_bam_map, or set --skip_taxa_map false to generate it"
             exit 1
         }
     }
