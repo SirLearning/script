@@ -25,9 +25,16 @@ params.help = false
 params.java_lib = "/data/dazheng/lib/jvm"  // Java installation base directory
 // Single chromosome selector (optional). If set, only this chromosome will be processed.
 params.chr = null
+// Output sub-folders (can be overridden at runtime). ing_dir, vlib_dir, gen_dir determine where .ing.gz, .lib.gz and VCFs go
+// Note: Do not assign defaults here to avoid Nextflow "defined multiple times" warnings when users pass CLI values.
 
 // TIGER jar version compatibility and configuration
 params.tiger_jar_versions = [
+    "TIGER_F3_20251016.jar": [
+        java_version: "java17",
+        fastcall_version: "FastCall3",
+        app_name: "FastCall3"
+    ],
     "TIGER_F3_20250915.jar": [
         java_version: "java17",
         fastcall_version: "FastCall3",
@@ -68,7 +75,7 @@ params.chromosomes = (0..44).collect { it.toString() }
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop ABD --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 
-// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20251013.jar
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode from_disc --tiger_jar TIGER_F3_20251013.jar --ing_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/ing --vlib_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/vLib --gen_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/gen
 
 
 // Population configuration function
@@ -448,6 +455,9 @@ def helpMessage() {
         --reference         Reference genome fasta file
         --samtools_path     Path to samtools executable
         --output_dir        Output directory (default: output)
+        --ing_dir           Directory for disc outputs (.ing.gz). Default: <output_dir>/<job>/ing
+        --vlib_dir          Directory for blib outputs (.lib.gz). Default: <output_dir>/<job>/vLib
+        --gen_dir           Directory for scan outputs (VCF). Default: <output_dir>/<job>/gen
         --threads           Number of threads (default: 32)
         --memory            Memory allocation (default: 100g)
         --chr               Single chromosome to process (overrides --chromosomes)
@@ -552,6 +562,11 @@ workflow runFastCall3_workflow {
 
     def output_path = params.output_dir ?: "${params.home_dir}/output/${params.job}"
 
+    // Resolve sub output dirs from params or derive sensible defaults (avoid reassigning params to prevent warnings)
+    def ing_dir_resolved  = (params.ing_dir  ?: "${output_path}/ing").toString().replaceAll(/\/+/, "/")
+    def vlib_dir_resolved = (params.vlib_dir ?: "${output_path}/vLib").toString().replaceAll(/\/+/, "/")
+    def gen_dir_resolved  = (params.gen_dir  ?: "${output_path}/gen").toString().replaceAll(/\/+/, "/")
+
     // Validate essential paths
     def pathValidation = validatePaths([
         "Home directory": params.home_dir,
@@ -589,6 +604,9 @@ workflow runFastCall3_workflow {
     Workshop jar     : ${workshop_jar_path}
     Samtools path    : ${samtools_path}
     Output directory : ${output_path}
+    ING directory    : ${ing_dir_resolved}
+    vLib directory   : ${vlib_dir_resolved}
+    GEN directory    : ${gen_dir_resolved}
     Java library dir : ${params.java_lib}
     Workflow mode    : ${params.workflow_mode}
     Skip taxa map    : ${params.skip_taxa_map}
@@ -603,6 +621,10 @@ workflow runFastCall3_workflow {
     def pipeline_info_dir = file("./pipeline_info/${params.job}")
     output_dir.mkdirs()
     pipeline_info_dir.mkdirs()
+    // Ensure sub-dirs exist
+    file(ing_dir_resolved).mkdirs()
+    file(vlib_dir_resolved).mkdirs()
+    file(gen_dir_resolved).mkdirs()
 
     def taxaBamMap_dir = file("${params.home_dir}/00data/05taxaBamMap")
 
@@ -689,17 +711,20 @@ workflow runFastCall3_workflow {
                 ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
+                ing_dir_resolved,
                 samtools_path,
                 tiger_jar_config
             )
             
             blib_results = fastcall3_blib(
-                disc_results.disc_files,
+                    chromosome_ch,
                 file(reference),
                 ref_fai_path,
                 ref_gzi_path,
                 file(tiger_jar_config.path),
-                tiger_jar_config
+                tiger_jar_config,
+                ing_dir_resolved,
+                vlib_dir_resolved
             )
             
             scan_results = fastcall3_scan(
@@ -710,10 +735,17 @@ workflow runFastCall3_workflow {
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
-                tiger_jar_config
+                tiger_jar_config,
+                gen_dir_resolved
             )
             
-            collect_results(scan_results.vcf_files.collect(), chromosomes)
+            collect_results(
+                scan_results.vcf_files.map{ chr, f -> f }.collect(),
+                chromosomes,
+                tiger_jar_config.name,
+                tiger_jar_config.fastcall_version,
+                tiger_jar_config.java_version
+            )
             break
             
         case "disc_only":
@@ -725,6 +757,7 @@ workflow runFastCall3_workflow {
                 ref_gzi_path,
                 taxa_bam_map,
                 file(tiger_jar_config.path),
+                params.ing_dir,
                 samtools_path,
                 tiger_jar_config
             )
@@ -732,41 +765,52 @@ workflow runFastCall3_workflow {
             break
             
         case "from_disc":
-            // Start from existing disc results
-            def disc_dir = "${params.output_dir}/${params.job}/disc"
+            // Start from existing disc (ing) results
+            def disc_dir = ing_dir_resolved
             if (!file(disc_dir).exists()) {
                 log.error "Disc directory not found: ${disc_dir}"
                 log.error "Run workflow with 'disc_only' or 'full' mode first"
                 exit 1
             }
             
-            disc_files_ch = Channel.fromPath("${disc_dir}/*/*.ing.gz")
-                .map { file -> 
-                    def chr = file.parent.name.tokenize('_')[0] 
-                    tuple(chr, file)
+            disc_files_ch = Channel.fromPath("${disc_dir}/**/*.ing.gz")
+                .map { f ->
+                    def fname = f.name
+                    def m = (fname =~ /^([^_]+)_.*\.ing\.gz$/)
+                    def chr = m.find() ? m.group(1) : f.parent.name.tokenize('_')[0]
+                    tuple(chr, f)
                 }
+                .groupTuple()
                 .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
             if (params.chr) {
                 log.info "Filtering disc inputs to chromosome: ${params.chr}"
             }
             
-            // Check if we have disc files
-            disc_count = file(disc_dir).listFiles().findAll { 
-                it.isDirectory() && it.list().any { it.endsWith('.ing.gz') } 
-            }.size()
+            // Check if we have disc files (recursively search subfolders like A001/A002)
+            def disc_count = 0
+            def disc_root = new File(disc_dir as String)
+            if (disc_root.exists()) {
+                disc_root.eachFileRecurse(groovy.io.FileType.FILES) { f ->
+                    if (f.name.endsWith('.ing.gz')) disc_count++
+                }
+            }
             if (disc_count == 0) {
                 log.error "No .ing.gz files found in ${disc_dir}"
                 exit 1
             }
             log.info "Found ${disc_count} disc files to process"
             
+            // Reduce to chromosome-only channel to avoid staging all .ing.gz
+            def chr_only_from_disc = disc_files_ch.map { chr, files -> chr }.distinct()
             blib_results = fastcall3_blib(
-                disc_files_ch,
+                chr_only_from_disc,
                 file(reference),
                 ref_fai_path,
                 ref_gzi_path,
                 file(tiger_jar_config.path),
-                tiger_jar_config
+                tiger_jar_config,
+                ing_dir_resolved,
+                vlib_dir_resolved
             )
             
             scan_results = fastcall3_scan(
@@ -777,44 +821,58 @@ workflow runFastCall3_workflow {
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
-                tiger_jar_config
+                tiger_jar_config,
+                params.gen_dir
             )
             
-            collect_results(scan_results.vcf_files.collect(), chromosomes)
+            collect_results(
+                scan_results.vcf_files.map{ chr, f -> f }.collect(),
+                chromosomes,
+                tiger_jar_config.name,
+                tiger_jar_config.fastcall_version,
+                tiger_jar_config.java_version
+            )
             break
             
         case "blib_only":
-            // Only run blib generation from existing disc results
-            def disc_dir = "${params.output_dir}/${params.job}/disc"
+            // Only run blib generation from existing disc (ing) results
+            def disc_dir = params.ing_dir
             if (!file(disc_dir).exists()) {
                 log.error "Disc directory not found: ${disc_dir}"
                 exit 1
             }
             
-            disc_files_ch = Channel.fromPath("${disc_dir}/*/*.ing.gz")
-                .map { file -> 
-                    def chr = file.parent.name.tokenize('_')[0] 
-                    tuple(chr, file)
+            disc_files_ch = Channel.fromPath("${disc_dir}/**/*.ing.gz")
+                .map { f ->
+                    def fname = f.name
+                    def m = (fname =~ /^([^_]+)_.*\.ing\.gz$/)
+                    def chr = m.find() ? m.group(1) : f.parent.name.tokenize('_')[0]
+                    tuple(chr, f)
                 }
+                .groupTuple()
                 .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
             if (params.chr) {
                 log.info "Filtering disc inputs to chromosome: ${params.chr}"
             }
             
+            // Reduce to chromosome-only channel to avoid staging all .ing.gz
+            def chr_only_blib = disc_files_ch.map { chr, files -> chr }.distinct()
             blib_results = fastcall3_blib(
-                disc_files_ch,
+                chr_only_blib,
                 file(reference),
                 ref_fai_path,
                 ref_gzi_path,
                 file(tiger_jar_config.path),
-                tiger_jar_config
+                tiger_jar_config,
+                params.ing_dir,
+                params.vlib_dir
             )
             log.info "Blib generation completed. Use 'from_blib' mode to continue."
             break
             
         case "from_blib":
-            // Start from existing blib results
-            def blib_dir = "${params.output_dir}/${params.job}/blib"
+            // Start from existing blib (vLib) results
+            def blib_dir = vlib_dir_resolved
             if (!file(blib_dir).exists()) {
                 log.error "Blib directory not found: ${blib_dir}"
                 log.error "Run workflow with 'blib_only', 'from_disc', or 'full' mode first"
@@ -822,9 +880,11 @@ workflow runFastCall3_workflow {
             }
             
             blib_files_ch = Channel.fromPath("${blib_dir}/*.lib.gz")
-                .map { file -> 
-                    def chr = file.name.tokenize('.')[0] 
-                    tuple(chr, file)
+                .map { f ->
+                    def fname = f.name
+                    def m = (fname =~ /^([^_]+)_.*\.lib\.gz$/)
+                    def chr = m.find() ? m.group(1) : fname.tokenize('.')[0]
+                    tuple(chr, f)
                 }
                 .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
             if (params.chr) {
@@ -832,7 +892,7 @@ workflow runFastCall3_workflow {
             }
             
             // Check if we have blib files
-            blib_count = file(blib_dir).list().findAll { it.endsWith('.lib.gz') }.size()
+            blib_count = file(blib_dir).exists() ? file(blib_dir).list().findAll { it.endsWith('.lib.gz') }.size() : 0
             if (blib_count == 0) {
                 log.error "No .lib.gz files found in ${blib_dir}"
                 exit 1
@@ -847,24 +907,33 @@ workflow runFastCall3_workflow {
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
-                tiger_jar_config
+                tiger_jar_config,
+                gen_dir_resolved
             )
             
-            collect_results(scan_results.vcf_files.collect(), chromosomes)
+            collect_results(
+                scan_results.vcf_files.map{ chr, f -> f }.collect(),
+                chromosomes,
+                tiger_jar_config.name,
+                tiger_jar_config.fastcall_version,
+                tiger_jar_config.java_version
+            )
             break
             
         case "scan_only":
-            // Only run scan from existing blib results
-            def blib_dir = "${params.output_dir}/${params.job}/blib"
+            // Only run scan from existing blib (vLib) results
+            def blib_dir = vlib_dir_resolved
             if (!file(blib_dir).exists()) {
                 log.error "Blib directory not found: ${blib_dir}"
                 exit 1
             }
             
             blib_files_ch = Channel.fromPath("${blib_dir}/*.lib.gz")
-                .map { file -> 
-                    def chr = file.name.tokenize('.')[0] 
-                    tuple(chr, file)
+                .map { f ->
+                    def fname = f.name
+                    def m = (fname =~ /^([^_]+)_.*\.lib\.gz$/)
+                    def chr = m.find() ? m.group(1) : fname.tokenize('.')[0]
+                    tuple(chr, f)
                 }
                 .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
             if (params.chr) {
@@ -879,10 +948,17 @@ workflow runFastCall3_workflow {
                 taxa_bam_map,
                 file(tiger_jar_config.path),
                 samtools_path,
-                tiger_jar_config
+                tiger_jar_config,
+                gen_dir_resolved
             )
             
-            collect_results(scan_results.vcf_files.collect(), chromosomes)
+            collect_results(
+                scan_results.vcf_files.map{ chr, f -> f }.collect(),
+                chromosomes,
+                tiger_jar_config.name,
+                tiger_jar_config.fastcall_version,
+                tiger_jar_config.java_version
+            )
             break
             
         default:
@@ -968,7 +1044,7 @@ process fastcall3_disc {
     cpus params.threads
     errorStrategy 'retry'
     maxRetries 2
-    publishDir "${params.output_dir}/${params.job}/disc", mode: 'copy', pattern: "*/**.ing.gz"
+    publishDir({ (params.ing_dir ?: "${params.output_dir}/${params.job}/ing").toString().replaceAll(/\/+/, "/") }, mode: 'copy', pattern: "*.ing.gz")
     
     input:
     val chromosome
@@ -977,11 +1053,12 @@ process fastcall3_disc {
     val ref_gzi_path
     path taxa_bam_map
     path tiger_jar
+    val ing_path
     val samtools_path
     val tiger_jar_config
     
     output:
-    tuple val(chromosome), path("*/**.ing.gz"), emit: disc_files
+    tuple val(chromosome), path("*.ing.gz"), emit: disc_files
     path "disc_${chromosome}.log", emit: log
     
     script:
@@ -999,13 +1076,15 @@ process fastcall3_disc {
         ln -sf "${ref_fai_path}" "\${ref_base}.fai" 2>> disc_${chromosome}.log || true
         echo "Linked FAI: \${ref_base}.fai -> ${ref_fai_path}" >> disc_${chromosome}.log
     fi
-    # .gzi for gzipped fasta
-    if [[ "\${ref_base}" == *.gz ]]; then
+    # .gzi for gzipped fasta (POSIX compatible)
+    case "\${ref_base}" in
+      *.gz)
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
             ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> disc_${chromosome}.log || true
             echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> disc_${chromosome}.log
         fi
-    fi
+        ;;
+    esac
     # no .dict required
     
     # Monitor system resources
@@ -1032,11 +1111,19 @@ process fastcall3_disc {
         -k ${params.disc_max_het_freq} \\
         -l ${chromosome} \\
         -m ${task.cpus} \\
-        -n ./ \\
+        -n ${ing_path} \\
         -o ${samtools_path} \\
         >> disc_${chromosome}.log 2>&1
     
     echo "Disc analysis for chromosome ${chromosome} completed" >> disc_${chromosome}.log
+
+    # Symlink produced .ing.gz back into workdir so Nextflow can capture as output
+    if ls ${ing_path}/${chromosome}_*.ing.gz >/dev/null 2>&1; then
+        ln -sf ${ing_path}/${chromosome}_*.ing.gz . 2>> disc_${chromosome}.log || true
+    else
+        # fallback: pull any .ing.gz for this run
+        find ${ing_path} -maxdepth 2 -type f -name "${chromosome}*.ing.gz" -exec ln -sf {} . \\; 2>> disc_${chromosome}.log || true
+    fi
     """
 }
 
@@ -1046,15 +1133,17 @@ process fastcall3_blib {
     cpus params.threads
     errorStrategy 'retry'
     maxRetries 2
-    publishDir "${params.output_dir}/${params.job}/blib", mode: 'move', pattern: "*.lib.gz"
+    publishDir({ (params.vlib_dir ?: "${params.output_dir}/${params.job}/vLib").toString().replaceAll(/\/+/, "/") }, mode: 'copy', pattern: "*.lib.gz")
     
     input:
-    tuple val(chromosome), path(disc_files)
+    val chromosome
     path reference
     val ref_fai_path
     val ref_gzi_path
     path tiger_jar
     val tiger_jar_config
+    val ing_path
+    val vLib_path
     
     output:
     tuple val(chromosome), path("*.lib.gz"), emit: blib_files
@@ -1071,25 +1160,31 @@ process fastcall3_blib {
     # Link reference sidecar files if provided to avoid regenerating indices
     ref_base=\$(basename "${reference}")
     if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
-        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> blib_${chromosome}.log || true
-        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> blib_${chromosome}.log
+        ln -sf "${ref_fai_path}" "\${ref_base}.fai" 2>> blib_${chromosome}.log || true
+        echo "Linked FAI: \${ref_base}.fai -> ${ref_fai_path}" >> blib_${chromosome}.log
     fi
-    if [[ "\${ref_base}" == *.gz ]]; then
+    case "\${ref_base}" in
+      *.gz)
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
             ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> blib_${chromosome}.log || true
             echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> blib_${chromosome}.log
         fi
-    fi
+        ;;
+    esac
     # no .dict required
     
     # Check if disc files exist
-    if [ ! -f */*.ing.gz ]; then
-        echo "Error: No .ing.gz files found from disc step" >> blib_${chromosome}.log
+    # Check if disc files exist under ing_path for this chromosome (search recursively)
+    if ! find ${ing_path} -type f -name "${chromosome}_*.ing.gz" | grep -q . ; then
+        echo "Error: No .ing.gz files found for chromosome ${chromosome} under ${ing_path}" >> blib_${chromosome}.log
         exit 1
     fi
+    echo "Counting input disc files under ${ing_path}..." >> blib_${chromosome}.log
+    cnt_ing=\$(find ${ing_path} -type f -name "${chromosome}_*.ing.gz" | wc -l)
+    echo "Found \$cnt_ing .ing.gz chunks for chromosome ${chromosome}" >> blib_${chromosome}.log
     
-    echo "Input disc files:" >> blib_${chromosome}.log
-    ls -la */*.ing.gz >> blib_${chromosome}.log
+    echo "Input disc files (showing up to 5 examples):" >> blib_${chromosome}.log
+    find ${ing_path} -type f -name "${chromosome}_*.ing.gz" | head -n 5 >> blib_${chromosome}.log 2>/dev/null || true
     
     # Monitor system resources
     echo "System resources before TIGER execution:" >> blib_${chromosome}.log
@@ -1103,14 +1198,23 @@ process fastcall3_blib {
         -app ${tiger_jar_config.app_name} \\
         -mod blib \\
         -a ${reference} \\
-        -b 1 \\
+        -b ${chromosome} \\
         -c 2 \\
         -d ${task.cpus} \\
-        -e ./ \\
-        -f ./ \\
+        -e ${ing_path} \\
+        -f ${vLib_path} \\
         >> blib_${chromosome}.log 2>&1
     
     echo "Blib generation for chromosome ${chromosome} completed" >> blib_${chromosome}.log
+
+    # Symlink produced lib for this chromosome back into workdir so Nextflow can capture it
+    if ls ${vLib_path}/${chromosome}_*.lib.gz >/dev/null 2>&1; then
+        ln -sf ${vLib_path}/${chromosome}_*.lib.gz . 2>> blib_${chromosome}.log || true
+    else
+        # If naming differs, just link the latest .lib.gz
+        latest_lib=\$(ls -1t ${vLib_path}/*.lib.gz 2>/dev/null | head -n1)
+        [ -n "\$latest_lib" ] && ln -sf "\$latest_lib" . 2>> blib_${chromosome}.log || true
+    fi
     """
 }
 
@@ -1120,7 +1224,7 @@ process fastcall3_scan {
     cpus params.threads
     errorStrategy 'retry'
     maxRetries 2
-    publishDir "${params.output_dir}/${params.job}/scan", mode: 'move', pattern: "*.{vcf,vcf.gz}"
+    publishDir({ (params.gen_dir ?: "${params.output_dir}/${params.job}/gen").toString().replaceAll(/\/+/, "/") }, mode: 'copy', pattern: "**")
     
     input:
     tuple val(chromosome), path(blib_files)
@@ -1131,13 +1235,14 @@ process fastcall3_scan {
     path tiger_jar
     val samtools_path
     val tiger_jar_config
+    val gen_path
     
     output:
-    tuple val(chromosome), path("*.{vcf,vcf.gz}"), emit: vcf_files
+    tuple val(chromosome), path("*.vcf*"), emit: vcf_files
+    path "gen_sub/**", optional: true, emit: gen_folders
     path "scan_${chromosome}.log", emit: log
     
     script:
-    def lib_file = blib_files.find { it.name.endsWith('.lib.gz') }
     def javaSetup = getJavaSetupScript(tiger_jar_config.java_version, params.java_lib)
     """
     echo "Starting scan analysis for chromosome ${chromosome}..." > scan_${chromosome}.log
@@ -1148,25 +1253,27 @@ process fastcall3_scan {
     # Link reference sidecar files if provided to avoid regenerating indices
     ref_base=\$(basename "${reference}")
     if [ -n "${ref_fai_path}" ] && [ -f "${ref_fai_path}" ]; then
-        ln -sf "${ref_fai_path}" "${ref_base}.fai" 2>> scan_${chromosome}.log || true
-        echo "Linked FAI: ${ref_base}.fai -> ${ref_fai_path}" >> scan_${chromosome}.log
+        ln -sf "${ref_fai_path}" "\${ref_base}.fai" 2>> scan_${chromosome}.log || true
+        echo "Linked FAI: \${ref_base}.fai -> ${ref_fai_path}" >> scan_${chromosome}.log
     fi
-    if [[ "\${ref_base}" == *.gz ]]; then
+    case "\${ref_base}" in
+      *.gz)
         if [ -n "${ref_gzi_path}" ] && [ -f "${ref_gzi_path}" ]; then
             ln -sf "${ref_gzi_path}" "\${ref_base}.gzi" 2>> scan_${chromosome}.log || true
             echo "Linked GZI: \${ref_base}.gzi -> ${ref_gzi_path}" >> scan_${chromosome}.log
         fi
-    fi
+        ;;
+    esac
     # no .dict required
     
-    # Verify that lib file exists
-    if [ ! -f "${lib_file}" ]; then
-        echo "Error: Library file ${lib_file} not found" >> scan_${chromosome}.log
+    # Resolve the lib file (staged by Nextflow) for this chromosome
+    lib_file_path="${blib_files}"
+    if [ ! -f "\$lib_file_path" ]; then
+        echo "Error: Library file \$lib_file_path not found" >> scan_${chromosome}.log
         exit 1
     fi
-    
-    echo "Input library file: ${lib_file}" >> scan_${chromosome}.log
-    echo "Library file size: \$(stat -c%s ${lib_file}) bytes" >> scan_${chromosome}.log
+    echo "Input library file: \$lib_file_path" >> scan_${chromosome}.log
+    echo "Library file size: \$(stat -c%s \"\$lib_file_path\") bytes" >> scan_${chromosome}.log
     
     # Monitor system resources
     echo "System resources before TIGER execution:" >> scan_${chromosome}.log
@@ -1181,18 +1288,37 @@ process fastcall3_scan {
         -mod scan \\
         -a ${reference} \\
         -b ${taxa_bam_map} \\
-        -c ${lib_file} \\
-        -d 1 \\
+        -c "\$lib_file_path" \\
+        -d ${chromosome} \\
         -e 0 \\
-        -f ${params.scan_min_depth} \\
-        -g ${params.scan_min_qual} \\
-        -h ${params.scan_p_value} \\
+        -f 30 \\
+        -g 20 \\
+        -h 0.05 \\
         -i ${samtools_path} \\
         -j ${task.cpus} \\
-        -k ./ \\
+        -k ${gen_path} \\
         >> scan_${chromosome}.log 2>&1
     
     echo "Scan analysis for chromosome ${chromosome} completed" >> scan_${chromosome}.log
+
+    # Symlink produced VCFs back into workdir for Nextflow capture (search recursively, including VCF subfolder)
+    found_vcf=0
+    if find ${gen_path} -type f -name "${chromosome}*.vcf*" | grep -q . ; then
+        find ${gen_path} -type f -name "${chromosome}*.vcf*" -exec ln -sf {} . \\; 2>> scan_${chromosome}.log || true
+        found_vcf=1
+    fi
+    if [ "\$found_vcf" -eq 0 ]; then
+        # fallback: any VCFs
+        find ${gen_path} -type f -name "*.vcf*" -exec ln -sf {} . \\; 2>> scan_${chromosome}.log || true
+    fi
+
+    # Expose all immediate subfolders under gen_path as outputs by symlinking into gen_sub
+    mkdir -p gen_sub
+    # Symlink each immediate subdirectory (e.g., VCF, Logs, etc.) into gen_sub so Nextflow can publish them
+    find ${gen_path} -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
+        b=\$(basename "\$d")
+        ln -s "\$d" "gen_sub/\$b" 2>> scan_${chromosome}.log || cp -r "\$d" "gen_sub/\$b" 2>> scan_${chromosome}.log || true
+    done
     """
 }
 
@@ -1205,6 +1331,9 @@ process collect_results {
     input:
     path(vcf_files)
     val(chromosomes_list)
+    val(tiger_jar_name)
+    val(tiger_fastcall_version)
+    val(tiger_java_version)
     
     output:
     path "merged_variants.vcf.gz", optional: true
@@ -1247,9 +1376,9 @@ process collect_results {
     echo "Home directory: ${params.home_dir}" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "TIGER Configuration:" >> summary_stats.txt
-    echo "- TIGER jar: \$(basename ${tiger_jar_config.path})" >> summary_stats.txt
-    echo "- FastCall version: ${tiger_jar_config.fastcall_version}" >> summary_stats.txt
-    echo "- Java version: ${tiger_jar_config.java_version}" >> summary_stats.txt
+    echo "- TIGER jar: ${tiger_jar_name}" >> summary_stats.txt
+    echo "- FastCall version: ${tiger_fastcall_version}" >> summary_stats.txt
+    echo "- Java version: ${tiger_java_version}" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "Parameters used:" >> summary_stats.txt
     echo "- Min depth: ${params.disc_min_depth}" >> summary_stats.txt
