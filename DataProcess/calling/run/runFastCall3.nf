@@ -150,6 +150,12 @@ def getPopulationConfig(pop, home_dir) {
             reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
             description: "WAP collection"
         ],
+        "WAP2": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/ABD",
+            depth_dir: "${home_dir}/00data/04depth/08WAP",
+            reference: "${home_dir}/00data/03ref/05WAP2/wap_batch2.fa.gz",
+            description: "WAP collection"
+        ],
         "w115": [
             bam_dir: "${home_dir}/00data/02bam/bam2/115",
             depth_dir: "${home_dir}/00data/02bam/bam2/115",
