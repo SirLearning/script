@@ -1245,7 +1245,7 @@ process fastcall3_scan {
     cpus params.threads
     errorStrategy 'retry'
     maxRetries 2
-    publishDir({ (params.gen_dir ?: "${params.output_dir}/${params.job}/gen").toString().replaceAll(/\/+/, "/") }, mode: 'copy', pattern: "**")
+    // Do not publish/copy outputs here; TIGER already writes VCFs under gen_path/VCF
     
     input:
     tuple val(chromosome), path(blib_files)
@@ -1260,7 +1260,6 @@ process fastcall3_scan {
     
     output:
     tuple val(chromosome), path("*.vcf*"), emit: vcf_files
-    path "gen_sub/**", optional: true, emit: gen_folders
     path "scan_${chromosome}.log", emit: log
     
     script:
@@ -1322,7 +1321,7 @@ process fastcall3_scan {
     
     echo "Scan analysis for chromosome ${chromosome} completed" >> scan_${chromosome}.log
 
-    # Symlink produced VCFs back into workdir for Nextflow capture (search recursively, including VCF subfolder)
+    # Symlink produced VCFs back into workdir for Nextflow capture only (no publishing)
     found_vcf=0
     if find ${gen_path} -type f -name "${chromosome}*.vcf*" | grep -q . ; then
         find ${gen_path} -type f -name "${chromosome}*.vcf*" -exec ln -sf {} . \\; 2>> scan_${chromosome}.log || true
@@ -1332,14 +1331,6 @@ process fastcall3_scan {
         # fallback: any VCFs
         find ${gen_path} -type f -name "*.vcf*" -exec ln -sf {} . \\; 2>> scan_${chromosome}.log || true
     fi
-
-    # Expose all immediate subfolders under gen_path as outputs by symlinking into gen_sub
-    mkdir -p gen_sub
-    # Symlink each immediate subdirectory (e.g., VCF, Logs, etc.) into gen_sub so Nextflow can publish them
-    find ${gen_path} -mindepth 1 -maxdepth 1 -type d -print0 | while IFS= read -r -d '' d; do
-        b=\$(basename "\$d")
-        ln -s "\$d" "gen_sub/\$b" 2>> scan_${chromosome}.log || cp -r "\$d" "gen_sub/\$b" 2>> scan_${chromosome}.log || true
-    done
     """
 }
 
