@@ -141,7 +141,7 @@ def getPopulationConfig(pop, home_dir) {
         "S": [
             bam_dir: "${home_dir}/00data/02bam/bam1/S",
             depth_dir: "${home_dir}/00data/04depth/07S",
-            reference: "${home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz",
+            reference: "${home_dir}/00data/03ref/06B/b_iwgscV1.fa.gz",
             description: "S genome population"
         ],
         "WAP": [
