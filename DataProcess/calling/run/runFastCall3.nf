@@ -1302,8 +1302,8 @@ process fastcall3_scan {
     echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> scan_${chromosome}.log
     echo "TIGER jar: ${tiger_jar_config.name}" >> scan_${chromosome}.log
     echo "FastCall version: ${tiger_jar_config.fastcall_version}" >> scan_${chromosome}.log
-    
-    java -Xmx${task.memory.toGiga()}g -jar ${tiger_jar} \\
+
+    java -Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g -jar ${tiger_jar} \\
         -app ${tiger_jar_config.app_name} \\
         -mod scan \\
         -a ${reference} \\
