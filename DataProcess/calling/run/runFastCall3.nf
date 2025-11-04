@@ -55,19 +55,22 @@ params.skip_taxa_map = false   // Skip taxa-BAM map generation if already exists
 params.resume_from_checkpoint = false  // Resume from existing intermediate files
 
 // FastCall3 disc parameters
-params.disc_min_depth = 30
-params.disc_min_qual = 20
-params.disc_min_snp_count = 2
-params.disc_min_allele_freq = 0.2
-params.disc_min_coverage = 3
-params.disc_max_missing = 0.8
-params.disc_min_het_freq = 0.35
-params.disc_max_het_freq = 0.2
+params.disc_min_MQ = 30
+params.disc_min_BQ = 20
+params.disc_min_DC = 2
+params.disc_min_DR = 0.2
+params.disc_max_DR = 3
+params.disc_HoR = 0.8
+params.disc_HeR = 0.35
+params.disc_TDR = 0.2
+
+// FastCall3 blib parameters
+params.blib_MAO = 2
 
 // FastCall3 scan parameters
-params.scan_min_depth = 30
-params.scan_min_qual = 20
-params.scan_p_value = 0.05
+params.scan_min_MQ = 30
+params.scan_min_BQ = 20
+params.scan_error_rate = 0.05
 
 // Chromosome list (can be modified based on your reference)
 params.chromosomes = (0..44).collect { it.toString() }
@@ -499,19 +502,22 @@ def helpMessage() {
         --resume_from_checkpoint Resume from existing intermediate files (default: false)
     
     Disc parameters:
-        --disc_min_depth    Minimum depth for disc (default: 30)
-        --disc_min_qual     Minimum quality for disc (default: 20)
-        --disc_min_snp_count    Minimum SNP count (default: 2)
-        --disc_min_allele_freq  Minimum allele frequency (default: 0.2)
-        --disc_min_coverage     Minimum coverage (default: 3)
-        --disc_max_missing      Maximum missing rate (default: 0.8)
-        --disc_min_het_freq     Minimum heterozygous frequency (default: 0.35)
-        --disc_max_het_freq     Maximum heterozygous frequency (default: 0.2)
+        --disc_min_MQ   Minimum mapping quality for disc (default: 30)
+        --disc_min_BQ   Minimum base quality for disc (default: 20)
+        --disc_min_DC   Minimum read depth count (default: 2)
+        --disc_min_DR   Minimum read depth ratio (default: 0.2)
+        --disc_max_DR   Maximum read depth ratio (default: 3)
+        --disc_HoR  Homozygous ratio (default: 0.8)
+        --disc_HeR  Heterozygous ratio (default: 0.35)
+        --disc_TDR  Third allele depth ratio (default: 0.2)
     
+    Blib parameters:
+        --blib_MAO      Minor allele occurrence threshold (default: 2)
+
     Scan parameters:
-        --scan_min_depth    Minimum depth for scan (default: 30)
-        --scan_min_qual     Minimum quality for scan (default: 20)
-        --scan_p_value      P-value threshold (default: 0.05)
+        --scan_min_MQ   Minimum mapping quality for scan (default: 30)
+        --scan_min_BQ   Minimum base quality for scan (default: 20)
+        --scan_error_rate   combined error rate of sequencing and misalignment (default: 0.05)
         
     Examples:
         # Basic usage with auto-detected TIGER jar
@@ -1122,14 +1128,14 @@ process fastcall3_disc {
         -a ${reference} \\
         -b ${taxa_bam_map} \\
         -c 0 \\
-        -d ${params.disc_min_depth} \\
-        -e ${params.disc_min_qual} \\
-        -f ${params.disc_min_snp_count} \\
-        -g ${params.disc_min_allele_freq} \\
-        -h ${params.disc_min_coverage} \\
-        -i ${params.disc_max_missing} \\
-        -j ${params.disc_min_het_freq} \\
-        -k ${params.disc_max_het_freq} \\
+        -d ${params.disc_min_MQ} \\
+        -e ${params.disc_min_BQ} \\
+        -f ${params.disc_min_DC} \\
+        -g ${params.disc_min_DR} \\
+        -h ${params.disc_max_DR} \\
+        -i ${params.disc_HoR} \\
+        -j ${params.disc_HeR} \\
+        -k ${params.disc_TDR} \\
         -l ${chromosome} \\
         -m ${task.cpus} \\
         -n ${ing_path} \\
@@ -1220,7 +1226,7 @@ process fastcall3_blib {
         -mod blib \\
         -a ${reference} \\
         -b ${chromosome} \\
-        -c 2 \\
+        -c ${params.blib_MAO} \\
         -d ${task.cpus} \\
         -e ${ing_path} \\
         -f ${vLib_path} \\
@@ -1311,9 +1317,9 @@ process fastcall3_scan {
         -c "\$lib_file_path" \\
         -d ${chromosome} \\
         -e 0 \\
-        -f 30 \\
-        -g 20 \\
-        -h 0.05 \\
+        -f ${paras.scan_min_MQ} \\
+        -g ${paras.scan_min_BQ} \\
+        -h ${paras.scan_error_rate} \\
         -i ${samtools_path} \\
         -j ${task.cpus} \\
         -k ${gen_path} \\
@@ -1380,7 +1386,7 @@ process collect_results {
     # Generate summary statistics
     echo "FastCall3 Pipeline Summary" > summary_stats.txt
     echo "=========================" >> summary_stats.txt
-    echo "Date: \$(date)" >> summary_stats.txt
+    echo "Date: $(date)" >> summary_stats.txt
     echo "Population: ${params.pop}" >> summary_stats.txt
     echo "Job: ${params.job}" >> summary_stats.txt
     echo "Number of chromosomes processed: ${chromosomes_list.size()}" >> summary_stats.txt
@@ -1393,14 +1399,31 @@ process collect_results {
     echo "- Java version: ${tiger_java_version}" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "Parameters used:" >> summary_stats.txt
-    echo "- Min depth: ${params.disc_min_depth}" >> summary_stats.txt
-    echo "- Min quality: ${params.disc_min_qual}" >> summary_stats.txt
-    echo "- Min allele frequency: ${params.disc_min_allele_freq}" >> summary_stats.txt
-    echo "- P-value threshold: ${params.scan_p_value}" >> summary_stats.txt
-    echo "- Threads: ${params.threads}" >> summary_stats.txt
-    echo "- Memory: ${params.memory}" >> summary_stats.txt
+    echo "----------------" >> summary_stats.txt
+    echo "Disc Parameters:" >> summary_stats.txt
+    echo "  - Min Mapping Quality (disc_min_MQ): ${params.disc_min_MQ}" >> summary_stats.txt
+    echo "  - Min Base Quality (disc_min_BQ): ${params.disc_min_BQ}" >> summary_stats.txt
+    echo "  - Min Read Depth Count (disc_min_DC): ${params.disc_min_DC}" >> summary_stats.txt
+    echo "  - Min Read Depth Ratio (disc_min_DR): ${params.disc_min_DR}" >> summary_stats.txt
+    echo "  - Max Read Depth Ratio (disc_max_DR): ${params.disc_max_DR}" >> summary_stats.txt
+    echo "  - Homozygous Ratio (disc_HoR): ${params.disc_HoR}" >> summary_stats.txt
+    echo "  - Heterozygous Ratio (disc_HeR): ${params.disc_HeR}" >> summary_stats.txt
+    echo "  - Third Allele Depth Ratio (disc_TDR): ${params.disc_TDR}" >> summary_stats.txt
     echo "" >> summary_stats.txt
-    echo "VCF files processed: \$vcf_count" >> summary_stats.txt
+    echo "Blib Parameters:" >> summary_stats.txt
+    echo "  - Minor Allele Occurrence (blib_MAO): ${params.blib_MAO}" >> summary_stats.txt
+    echo "" >> summary_stats.txt
+    echo "Scan Parameters:" >> summary_stats.txt
+    echo "  - Min Mapping Quality (scan_min_MQ): ${params.scan_min_MQ}" >> summary_stats.txt
+    echo "  - Min Base Quality (scan_min_BQ): ${params.scan_min_BQ}" >> summary_stats.txt
+    echo "  - Combined Error Rate (scan_error_rate): ${params.scan_error_rate}" >> summary_stats.txt
+    echo "  - Note: Some scan parameters (e.g., -c, -e) are hardcoded in the script." >> summary_stats.txt
+    echo "" >> summary_stats.txt
+    echo "Resource Parameters:" >> summary_stats.txt
+    echo "  - Threads: ${params.threads}" >> summary_stats.txt
+    echo "  - Memory: ${params.memory}" >> summary_stats.txt
+    echo "" >> summary_stats.txt
+    echo "VCF files processed: $vcf_count" >> summary_stats.txt
     echo "" >> summary_stats.txt
     echo "Output files:" >> summary_stats.txt
     ls -la *.vcf* >> summary_stats.txt 2>/dev/null || echo "No VCF files found" >> summary_stats.txt
