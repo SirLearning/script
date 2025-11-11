@@ -95,3 +95,5 @@ workflow GENOTYPE_PIPELINE {
         pca_results    = POPULATION_STRUCTURE.out.pca_results
         geno_stats     = GENOTYPE_STATS.out.geno_stats
 }
+
+
