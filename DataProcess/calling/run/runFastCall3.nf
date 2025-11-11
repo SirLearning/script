@@ -1386,7 +1386,7 @@ process collect_results {
     # Generate summary statistics
     echo "FastCall3 Pipeline Summary" > summary_stats.txt
     echo "=========================" >> summary_stats.txt
-    echo "Date: $(date)" >> summary_stats.txt
+    echo "Date: \$(date)" >> summary_stats.txt
     echo "Population: ${params.pop}" >> summary_stats.txt
     echo "Job: ${params.job}" >> summary_stats.txt
     echo "Number of chromosomes processed: ${chromosomes_list.size()}" >> summary_stats.txt
