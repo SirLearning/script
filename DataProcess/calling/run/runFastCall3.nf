@@ -839,9 +839,24 @@ workflow runFastCall3_workflow {
                 ing_dir_resolved,
                 vlib_dir_resolved
             )
+
+            def blib_done = blib_results.blib_files.map{ 1 }.last()
+
+            def ch_scan_input = blib_done.flatMap { _ ->
+                Channel
+                    .fromPath("${vlib_dir_resolved}/*.lib.gz")
+                    .map { f ->
+                        // 提取染色体名，按你的命名约定调整
+                        def m = (f.name =~ /^([^_]+)_.*\\.lib\\.gz$/)
+                        def chr = m.find() ? m.group(1) : f.name.replaceAll(/\\.lib\\.gz$/, '')
+                        tuple(chr, f)
+                    }
+                    // 如果有 --chr 过滤的话保留
+                    .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
+            }
             
             scan_results = fastcall3_scan(
-                blib_results.blib_files,
+                ch_scan_input,
                 file(reference),
                 ref_fai_path,
                 ref_gzi_path,
@@ -1317,9 +1332,9 @@ process fastcall3_scan {
         -c "\$lib_file_path" \\
         -d ${chromosome} \\
         -e 0 \\
-        -f ${paras.scan_min_MQ} \\
-        -g ${paras.scan_min_BQ} \\
-        -h ${paras.scan_error_rate} \\
+        -f ${params.scan_min_MQ} \\
+        -g ${params.scan_min_BQ} \\
+        -h ${params.scan_error_rate} \\
         -i ${samtools_path} \\
         -j ${task.cpus} \\
         -k ${gen_path} \\
