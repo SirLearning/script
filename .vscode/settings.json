@@ -1,4 +1,5 @@
 {
     "nextflow.telemetry.enabled": true,
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "r.lsp.promptToInstall": false
 }
