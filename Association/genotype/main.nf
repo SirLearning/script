@@ -26,9 +26,36 @@ def usage() {
       --enable_genotype_stats  true|false (default: false)
 
     Example:
-      nextflow run Association/genotype/main.nf --vcf data/cohort.vcf.gz --id cohortA \
-          --outdir results/genotype --enable_genotype_stats true
+      nextflow run Association/genotype/main.nf --vcf data/cohort.vcf.gz --id cohortA --outdir results/genotype --enable_genotype_stats true
+
+    Examples using screen:
+        screen -dmS genotype_pipe bash -c "cd /data/home/dazheng/01projects/vmap4/04chr1Geno && source ~/.bashrc && conda activate stats && nextflow ..."
     """
+}
+
+params.mod = null
+
+def getMod(mod, home_dir) {
+    def modConfigs = [
+        "chr1": [
+            vcf_path: "${home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
+        ],
+        "test_first": [
+            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.first.1M.vcf.gz"
+        ],
+        "test_mid": [
+            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.mid.1M.vcf.gz"
+        ],
+        "test_last": [
+            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.last.1M.vcf.gz"
+        ]
+    ]
+
+    if (mod) {
+        return mod
+    } else {
+        return "Association/genotype"
+    }
 }
 
 workflow {

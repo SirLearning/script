@@ -840,23 +840,14 @@ workflow runFastCall3_workflow {
                 vlib_dir_resolved
             )
 
-            def blib_done = blib_results.blib_files.map{ 1 }.last()
+            // 等待所有 blib 结束后再启动 scan：先收集全部 blib 输出为列表，再展开为 (chr, path) 元组流
+            def gated_scan_input = blib_results.blib_files
+                .collect()
+                .flatMap { lst -> Channel.fromList(lst) }
+                .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
 
-            def ch_scan_input = blib_done.flatMap { _ ->
-                Channel
-                    .fromPath("${vlib_dir_resolved}/*.lib.gz")
-                    .map { f ->
-                        // 提取染色体名，按你的命名约定调整
-                        def m = (f.name =~ /^([^_]+)_.*\\.lib\\.gz$/)
-                        def chr = m.find() ? m.group(1) : f.name.replaceAll(/\\.lib\\.gz$/, '')
-                        tuple(chr, f)
-                    }
-                    // 如果有 --chr 过滤的话保留
-                    .filter { chr, file -> params.chr ? chr == params.chr.toString() : true }
-            }
-            
             scan_results = fastcall3_scan(
-                ch_scan_input,
+                gated_scan_input,
                 file(reference),
                 ref_fai_path,
                 ref_gzi_path,
@@ -864,7 +855,7 @@ workflow runFastCall3_workflow {
                 file(tiger_jar_config.path),
                 samtools_path,
                 tiger_jar_config,
-                params.gen_dir
+                gen_dir_resolved
             )
             
             collect_results(
