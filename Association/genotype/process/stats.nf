@@ -192,36 +192,36 @@ process PLINK_PCA {
 }
 
 process PLOT_PLINK_PCA {
-        tag { "plot plink pca ${meta.id}" }
-        publishDir "${params.outdir}/genotype/stats/plots", mode: 'copy'
-        cpus 1
+    tag { "plot plink pca ${meta.id}" }
+    publishDir "${params.outdir}/genotype/stats/plots", mode: 'copy'
+    cpus 1
 
-        input:
-        tuple val(meta), path(eigenvec), path(eigenval)
-        val(meta2)
-        path(metadata)
+    input:
+    tuple val(meta), path(eigenvec), path(eigenval)
+    val(meta2)
+    path(metadata)
 
-        output:
-        tuple val(meta), path('*.pca_pc12.pdf'), emit: pca_plot
-        path "*.log"
+    output:
+    tuple val(meta), path('*.pca_pc12.pdf'), emit: pca_plot
+    path "*.log"
 
-        when:
-        params.enable_pca_plot
+    when:
+    params.enable_pca_plot
 
-        script:
-        def prefix = meta.id ?: 'pca'
-        def log = "${prefix}.pca_plot.log"
-        def mdflag = metadata ? "--metadata ${metadata}" : ""
-        """
-        set -euo pipefail
-        echo "[PCA Plot] Generating PC1 vs PC2 plot" | tee ${log}
-        Rscript src/r/dumpnice/wrappers/plot_pca_from_eigenvec.R \
-            --eigenvec ${eigenvec} \
-            --eigenval ${eigenval} \
-            ${mdflag} \
-            --out-prefix ${prefix} >> ${log} 2>&1 || true
-        ls -1 *.pca_pc12.pdf >/dev/null 2>&1 || touch ${prefix}.pca_pc12.pdf
-        """
+    script:
+    def prefix = meta.id ?: 'pca'
+    def log = "${prefix}.pca_plot.log"
+    def mdflag = metadata ? "--metadata ${metadata}" : ""
+    """
+    set -euo pipefail
+    echo "[PCA Plot] Generating PC1 vs PC2 plot" | tee ${log}
+    Rscript src/r/dumpnice/wrappers/plot_pca_from_eigenvec.R \
+        --eigenvec ${eigenvec} \
+        --eigenval ${eigenval} \
+        ${mdflag} \
+        --out-prefix ${prefix} >> ${log} 2>&1 || true
+    ls -1 *.pca_pc12.pdf >/dev/null 2>&1 || touch ${prefix}.pca_pc12.pdf
+    """
 }
 
 process PLOT_PLINK_QC {
