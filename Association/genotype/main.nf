@@ -34,28 +34,33 @@ def usage() {
 }
 
 params.mod = null
+params.chr = null
 
 def getMod(mod, home_dir) {
     def modConfigs = [
         "chr1": [
-            vcf_path: "${home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
+            vcf_file: "${home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
         ],
         "test_first": [
-            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.first.1M.vcf.gz"
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.first.1M.vcf.gz"
         ],
         "test_mid": [
-            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.mid.1M.vcf.gz"
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.mid.1M.vcf.gz"
         ],
         "test_last": [
-            vcf_path: "${home_dir}/00data/06vcf/02test/chr001.last.1M.vcf.gz"
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.last.1M.vcf.gz"
+        ],
+        "vmap4": [
+            vcf_path: "${home_dir}/00data/06vcf/03run/"
         ]
     ]
 
-    if (mod) {
-        return mod
-    } else {
-        return "Association/genotype"
+    if (!modConfigs.containsKey(mod)) {
+        log.error "Unknown mod specified: ${mod}"
+        System.exit(1)
     }
+
+    return modConfigs[mod]
 }
 
 workflow {
@@ -63,6 +68,21 @@ workflow {
 
     // Build input channel of tuples: [ val(meta), path(vcf) ]
     Channel ch_vcf
+
+    def modConfig = getMod(params.mod, params.home_dir)
+    if (modConfig.vcf_file) {
+        def f = file(modConfig.vcf_file)
+        if (!f.exists()) {
+            log.error "Mod VCF file not found: ${f}"
+            System.exit(1)
+        }
+        def id = params.mod
+        ch_vcf = Channel.of( [ [id: id], f ] )
+    } else if (modConfig.vcf_path) {
+        def pattern = "${modConfig.vcf_path}/*.vcf.gz"
+        ch_vcf = Channel.fromPath(pattern, checkIfExists: true)
+            .map { vcf -> [ [id: vcf.baseName.replaceAll(/\.vcf(\.gz)?$/, '')], vcf ] }
+    } else
 
     if (params.vcf) {
         def f = file(params.vcf)
