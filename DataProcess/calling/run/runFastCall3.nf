@@ -841,19 +841,17 @@ workflow runFastCall3_workflow {
             )
 
             // 等待所有 blib 结束后再启动 scan：先收集全部 blib 输出为列表，再展开为 (chr, path) 元组流
-            // 使用“完成信号 + 目录扫描”的稳健 gating：所有 blib 完成后，再按 vLib 目录生成 (chr, lib) 输入
-            def blib_done = blib_results.blib_files.map { 1 }.last()
-            def gated_scan_input = blib_done.flatMap { _ ->
-                Channel
-                    .fromPath("${vlib_dir_resolved}/*.lib.gz", checkIfExists: true)
-                    .map { f ->
-                        def m = (f.name =~ /^([^_]+)_.*\\.lib\\.gz$/)
-                        def chr = m.find() ? m.group(1) : f.baseName.replaceAll(/\\.lib$/, '')
-                        tuple(chr, f)
-                    }
-                    // 单参数过滤以避免 DataflowBroadcast 参与求值
-                    .filter { tup -> params.chr ? tup[0] == params.chr.toString() : true }
-            }
+            // 等待所有 blib 结束后再启动 scan：先收集全部 blib 输出为列表，再“扁平化”为 (chr, file) 流
+            def gated_scan_input = blib_results.blib_files
+                // Serialize tuple to string to avoid unintended tuple iteration during flattening
+                .map { chr, f -> "${chr}\t${f.toString()}" }
+                .collect()   // -> emits a single List of strings once all blib tasks complete
+                .flatMap { list -> list } // -> emit each string
+                .map { line ->
+                    def parts = line.split('\t', 2)
+                    tuple(parts[0], file(parts[1]))
+                }
+                .filter { tup -> params.chr ? tup[0] == params.chr.toString() : true }
 
             scan_results = fastcall3_scan(
                 gated_scan_input,
