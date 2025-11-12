@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 // --- Include modules ---
 include { FILTER_VCF }           from './process/filter.nf'
 include { GENOTYPE_STATS }       from './process/stats.nf'
+include { ASSESS } from './process/assess.nf'
 include { KINSHIP_ANALYSIS }     from './analysis/kinship.nf'
 include { POPULATION_STRUCTURE } from './analysis/ps.nf'
 
@@ -65,8 +66,13 @@ def getModConfig(mod, home_dir) {
 
 def getJobConfig(job) {
     def jobConfigs = [
+        "all": [
+        ],
+        "process": [
+        ],
         "filter": [
-            
+        ],
+        "assess": [
         ]
     ]
 
@@ -103,32 +109,18 @@ workflow {
         System.exit(1)
     }
 
-    GENOTYPE_PIPELINE(ch_vcf)
+    // 1. Filter/assess VCF file
+    FILTER_VCF(ch_vcf)
+
+    // 2. Kinship analysis
+    KINSHIP_ANALYSIS(FILTER_VCF.out.vcf)
+
+    // 3. Population structure analysis
+    POPULATION_STRUCTURE(FILTER_VCF.out.vcf)
+
+    // 4. Optional genotype summary stats (guarded by params.enable_genotype_stats)
+    GENOTYPE_STATS(FILTER_VCF.out.vcf)
 }
 
-// --- Genotype Processing Workflow ---
-workflow GENOTYPE_PIPELINE {
-    take:
-        ch_vcf // channel: [ val(meta), path(vcf) ]
-
-    main:
-        // 1. Filter/assess VCF file
-        FILTER_VCF(ch_vcf)
-
-        // 2. Kinship analysis
-        KINSHIP_ANALYSIS(FILTER_VCF.out.vcf)
-
-        // 3. Population structure analysis
-        POPULATION_STRUCTURE(FILTER_VCF.out.vcf)
-
-        // 4. Optional genotype summary stats (guarded by params.enable_genotype_stats)
-        GENOTYPE_STATS(FILTER_VCF.out.vcf)
-
-    emit:
-        filtered_vcf   = FILTER_VCF.out.vcf
-        kinship_matrix = KINSHIP_ANALYSIS.out.kinship_matrix
-        pca_results    = POPULATION_STRUCTURE.out.pca_results
-        geno_stats     = GENOTYPE_STATS.out.geno_stats
-}
 
 
