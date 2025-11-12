@@ -841,19 +841,20 @@ workflow runFastCall3_workflow {
             )
 
             // 等待所有 blib 结束后再启动 scan：先收集全部 blib 输出为列表，再展开为 (chr, path) 元组流
-            // 全量收集 blib 输出后再统一展开，避免 DataflowBroadcast 进入二参数 filter 造成 MissingMethodException
-            def gated_scan_input = blib_results.blib_files
-                .collect()                // 收集成单个 List (等所有 blib 完成才得到这个值)
-                .flatMap { list ->        // 展开成逐条 tuple 流
-                    Channel.fromList(list)
-                }
-                // 用单参数过滤，避免期望两个形参 (chr,file) 时 Nextflow 传入广播包装导致异常
-                .filter { tup ->
-                    def chr = tup[0]
-                    params.chr ? chr == params.chr.toString() : true
-                }
+            // 使用“完成信号 + 目录扫描”的稳健 gating：所有 blib 完成后，再按 vLib 目录生成 (chr, lib) 输入
+            def blib_done = blib_results.blib_files.map { 1 }.last()
+            def gated_scan_input = blib_done.flatMap { _ ->
+                Channel
+                    .fromPath("${vlib_dir_resolved}/*.lib.gz", checkIfExists: true)
+                    .map { f ->
+                        def m = (f.name =~ /^([^_]+)_.*\\.lib\\.gz$/)
+                        def chr = m.find() ? m.group(1) : f.baseName.replaceAll(/\\.lib$/, '')
+                        tuple(chr, f)
+                    }
+                    // 单参数过滤以避免 DataflowBroadcast 参与求值
+                    .filter { tup -> params.chr ? tup[0] == params.chr.toString() : true }
+            }
 
-            // 现在 gated_scan_input 发出的每个元素是长度为2的 List/tuple: [chr, libFile]
             scan_results = fastcall3_scan(
                 gated_scan_input,
                 file(reference),
