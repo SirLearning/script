@@ -24,7 +24,7 @@ params.ing_dir = null
 params.vlib_dir = null
 params.gen_dir = null
 // 3. software settings
-params.tiger_jar = "TIGER_F3_20251016.jar"
+params.tiger_jar = "TIGER_F3_20251118.jar"
 params.workshop_jar = "Workshop.jar"
 params.samtools = "samtools"
 // 4. single chromosome selector
