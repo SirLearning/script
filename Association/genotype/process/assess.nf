@@ -7,6 +7,37 @@ nextflow.enable.dsl=2
  * minor allele frequency (MAF).
  */
 
+workflow assess {
+	take:
+		vcf_ch
+
+	main:
+		prepared_vcf_ch = vcf_ch.map { meta, vcf -> PREPARE_VCF_GZ(meta, vcf) }
+
+		counts_ch = prepared_vcf_ch.map { meta, vcf -> QUICK_COUNTS(meta, vcf) }
+
+		vcftools_stats = prepared_vcf_ch.map { meta, vcf -> VCFTOOLS_STATS(meta, vcf) }
+
+		bcftools_tags = prepared_vcf_ch.map { meta, vcf -> BCFTOOLS_TAGS(meta, vcf) }
+
+		qc_plots = prepared_vcf_ch
+			.ifEmpty { log.warn "No VCFs provided for DumpNice VCF QC assessment." }
+			.map { meta, vcf -> DUMPNICE_VCF_QC_ASSESS(meta, vcf) }
+
+	emit:
+		counts_ch
+		vcftools_stats.maf_freq
+		vcftools_stats.hwe
+		vcftools_stats.miss_site
+		vcftools_stats.miss_indv
+		vcftools_stats.depth_site
+		vcftools_stats.depth_indv
+		vcftools_stats.site_qual
+		bcftools_tags.maf_missing
+		bcftools_tags.gq_summary
+		qc_plots.qc_plots
+}
+
 process PREPARE_VCF_GZ {
 	tag { "prepare ${meta.id}" }
 	publishDir "${params.outdir}/assess", mode: 'copy'

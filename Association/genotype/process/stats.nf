@@ -1,23 +1,10 @@
 nextflow.enable.dsl=2
 
-workflow {
-    take:
-        ch_vcf // tuple val(meta), path(vcf)
+// --- Genotype statistics workflow ---
+// Parameters
+def pc_num = 5
 
-    main:
-        GENOTYPE_PLINK_STATS(ch_vcf)
-
-    emit:
-        bfiles: GENOTYPE_PLINK_STATS.out.bfiles
-        missing: GENOTYPE_PLINK_STATS.out.missing
-        freq: GENOTYPE_PLINK_STATS.out.freq
-        het: GENOTYPE_PLINK_STATS.out.het
-        pca: GENOTYPE_PLINK_STATS.out.pca
-        plots: GENOTYPE_PLINK_STATS.out.plots
-        pca_plot: GENOTYPE_PLINK_STATS.out.pca_plot
-}
-
-workflow GENOTYPE_PLINK_STATS {
+workflow stats {
     take:
         ch_vcf // tuple val(meta), path(vcf)
 
@@ -81,113 +68,38 @@ process GENOTYPE_STATS {
  *  - Optional quick plots (histograms) via inline R
  */
 
-process PLINK_FROM_VCF {
-    tag { "plink make-bed ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plink", mode: 'copy'
-    cpus 2
+process plink_stats {
+    tag { "plink stats for: ${meta.id}" }
+    publishDir "${params.outdir}/genotype/stats", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(meta), path("${meta.id}.bed"), path("${meta.id}.bim"), path("${meta.id}.fam")
 
     output:
-    tuple val(meta), path("*.bed"), path("*.bim"), path("*.fam"), val(prefix), emit: bfiles
     path "*.log"
 
     script:
-    def prefix = meta.id ?: 'plink'
-    def chrset = params.plink_chr_set ?: 42
-    def log = "${prefix}.plink_makebed.log"
+    def log = "${prefix}.plink_stats.log"
     """
     set -euo pipefail
-    echo "[PLINK] VCF->BED for ${vcf}" | tee ${log}
-    plink \
-      --vcf ${vcf} \
-      --double-id \
-      --make-bed \
-      --chr-set ${chrset} \
-      --out ${prefix} >> ${log} 2>&1
-    echo ${prefix} > __prefix.txt
-    """
-}
+    plink --bfile ${meta.id} \\
+        --pca ${pc_num} \\
+        --out ${meta.id} \\
+        --threads ${task.cpus}.pca >> ${log} 2>&1
 
-process PLINK_MISSING {
-    tag { "plink missing ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plink", mode: 'copy'
-    cpus 1
+    plink --bfile ${meta.id} \\
+        --autosome-num 42 \\
+        --missing \\
+        --out ${meta.id}.missing >> ${log} 2>&1
 
-    input:
-    tuple val(meta), path(bed), path(bim), path(fam), val(prefix)
+    plink --bfile ${meta.id} \\
+        --autosome-num 42 \\
+        --freq \\
+        --out ${meta.id}.freq >> ${log} 2>&1
 
-    output:
-    tuple val(meta), path("*.imiss"), path("*.lmiss"), emit: missing
-    path "*.log"
-
-    script:
-    def log = "${prefix}.missing.log"
-    """
-    set -euo pipefail
-    plink --bfile ${prefix} --missing --out ${prefix} > ${log} 2>&1
-    """
-}
-
-process PLINK_FREQ {
-    tag { "plink freq ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plink", mode: 'copy'
-    cpus 1
-
-    input:
-    tuple val(meta), path(bed), path(bim), path(fam), val(prefix)
-
-    output:
-    tuple val(meta), path("*.frq"), emit: freq
-    path "*.log"
-
-    script:
-    def log = "${prefix}.freq.log"
-    """
-    set -euo pipefail
-    plink --bfile ${prefix} --freq --out ${prefix} > ${log} 2>&1
-    """
-}
-
-process PLINK_HET {
-    tag { "plink het ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plink", mode: 'copy'
-    cpus 1
-
-    input:
-    tuple val(meta), path(bed), path(bim), path(fam), val(prefix)
-
-    output:
-    tuple val(meta), path("*.het"), emit: het
-    path "*.log"
-
-    script:
-    def log = "${prefix}.het.log"
-    """
-    set -euo pipefail
-    plink --bfile ${prefix} --het --out ${prefix} > ${log} 2>&1
-    """
-}
-
-process PLINK_PCA {
-    tag { "plink pca ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plink", mode: 'copy'
-    cpus 2
-
-    input:
-    tuple val(meta), path(bed), path(bim), path(fam), val(prefix)
-
-    output:
-    tuple val(meta), path("*.eigenvec"), path("*.eigenval"), emit: pca
-    path "*.log"
-
-    script:
-    def ncomp = params.plink_pca_components ?: 10
-    def log = "${prefix}.pca.log"
-    """
-    set -euo pipefail
-    plink --bfile ${prefix} --pca ${ncomp} --out ${prefix} > ${log} 2>&1
+    plink --bfile ${meta.id} \\
+        --het \\
+        --out ${meta.id}.het >> ${log} 2>&1
     """
 }
 
