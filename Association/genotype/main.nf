@@ -1,12 +1,13 @@
-#!/usr/bin/env nextflow
 nextflow.enable.dsl=2
 
 // --- Include modules ---
-include { FILTER_VCF }           from './process/filter.nf'
-include { GENOTYPE_STATS }       from './process/stats.nf'
-include { ASSESS } from './process/assess.nf'
-include { KINSHIP_ANALYSIS }     from './analysis/kinship.nf'
-include { POPULATION_STRUCTURE } from './analysis/ps.nf'
+// Avoid conflict with `process` keyword by aliasing the imported workflow
+include { process as PROCESS } from './process/process.nf'
+include { filter as FILTER } from './process/filter.nf'
+include { stats as STATS } from './process/stats.nf'
+include { access as ASSESS } from './process/assess.nf'
+include { kinship as KINSHIP } from './analysis/kinship.nf'
+include { population_structure as POPULATION_STRUCTURE } from './analysis/ps.nf'
 
 // --- Help / usage ---
 def usage() {
@@ -16,43 +17,41 @@ def usage() {
     ================================================
     Required params:
         --home_dir <dir>      Home directory for predefined modules
+        --src_dir <dir>       Source directory for scripts and resources
         --mod <string>        Predefined module name for input data
         --job <string>        Job name/ID (default: genotype_<mod>)
 
     Common params (see nextflow.config for more):
-        --outdir <dir>         Output base directory (default: results/genotype)
-        --filter_tool          bcftools|gatk (default: bcftools)
-        --pca_k <int>          Number of PCs for PCA (default: 5)
-        --enable_genotype_stats  true|false (default: false)
 
     Example:
-      nextflow run Association/genotype/main.nf --mod test_first --home_dir /data/home/user/project --outdir results/genotype --enable_genotype_stats true
+        nextflow run /data/dazheng/git/script/Association/genotype/main.nf --mod test_first --home_dir /data/dazheng/01projects/vmap4 --job all
 
     Examples using screen:
         screen -dmS genotype_pipe bash -c "cd /data/home/dazheng/01projects/vmap4/04chr1Geno && source ~/.bashrc && conda activate stats && nextflow ..."
+        
+        screen -dmS test bash -c "cd /data/dazheng/01projects/vmap4/05chr1Geno/02test_wf && source ~/.bashrc && conda activate stats && nextflow ..."
     """
 }
 
-params.home_dir = null
 params.mod = null
 params.job = null
 
 def getModConfig(mod, home_dir) {
     def modConfigs = [
         "chr1": [
-            vcf_file: "${home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
+            vcf_file: "${params.home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
         ],
         "test_first": [
-            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.first.1M.vcf.gz"
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.f1M.vcf"
         ],
         "test_mid": [
-            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.mid.1M.vcf.gz"
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.m1M.vcf"
         ],
         "test_last": [
-            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.last.1M.vcf.gz"
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
         ],
         "vmap4": [
-            vcf_path: "${home_dir}/00data/06vcf/03run/"
+            vcf_path: "${params.home_dir}/00data/06vcf/03run/"
         ]
     ]
 
@@ -65,61 +64,75 @@ def getModConfig(mod, home_dir) {
 }
 
 def getJobConfig(job) {
-    def jobConfigs = [
+    def job_configs = [
         "all": [
+            process_out: "${params.home_dir}/05chr1Geno/01process/"
         ],
         "process": [
+            process_out: "${params.home_dir}/05chr1Geno/01process/"
         ],
         "filter": [
         ],
         "assess": [
+        ],
+        "stats": [
+        ],
+        "kinship": [
+        ],
+        "population_structure": [
         ]
     ]
 
-    if (!jobConfigs.containsKey(job)) {
+    if (!job_configs.containsKey(job)) {
         log.error "Unknown job specified: ${job}"
         System.exit(1)
     }
 
-    return jobConfigs[job]
+    return job_configs[job]
 }
 
 workflow {
     if (params.help) { usage(); System.exit(0) }
 
     // Build input channel of tuples: [ val(meta), path(vcf) ]
-    Channel ch_vcf
+    def ch_vcf
 
     def modConfig = getModConfig(params.mod, params.home_dir)
     if (modConfig.vcf_file) {
         def f = file(modConfig.vcf_file)
+        log.info "Using VCF file: ${f}"
         if (!f.exists()) {
             log.error "Mod VCF file not found: ${f}"
             System.exit(1)
         }
-        def id = params.mod
-        ch_vcf = Channel.of( [ [id: id], f ] )
+        def id = f.baseName.replaceAll(/\.vcf(\.gz)?$/, '')
+        def meta = [id: id]
+        // Emit one tuple [meta, vcf] as a proper channel item
+        ch_vcf = Channel.of([ meta, f ])
+        // Debug view to confirm tuple structure
+        ch_vcf.view { item -> "DEBUG ch_vcf single-file -> ${item}" }
     } else if (modConfig.vcf_path) {
         def pattern = "${modConfig.vcf_path}/*.vcf.gz"
         ch_vcf = Channel.fromPath(pattern, checkIfExists: true)
             .map { vcf -> [ [id: vcf.baseName.replaceAll(/\.vcf(\.gz)?$/, '')], vcf ] }
+        ch_vcf.view { item -> "DEBUG ch_vcf multi-file -> ${item}" }
     } else {
         usage()
         log.error "No valid input found for mod: ${params.mod}"
         System.exit(1)
     }
 
-    // 1. Filter/assess VCF file
-    FILTER_VCF(ch_vcf)
+    def job_config = getJobConfig(params.job ?: "all")
+    def combined_ch = ch_vcf.combine(Channel.value(job_config))
 
-    // 2. Kinship analysis
-    KINSHIP_ANALYSIS(FILTER_VCF.out.vcf)
-
-    // 3. Population structure analysis
-    POPULATION_STRUCTURE(FILTER_VCF.out.vcf)
-
-    // 4. Optional genotype summary stats (guarded by params.enable_genotype_stats)
-    GENOTYPE_STATS(FILTER_VCF.out.vcf)
+    if (params.job == "all") {
+        PROCESS(combined_ch)
+        FILTER(PROCESS.vcf, PROCESS.plink_bfile, job_config)
+        // ASSESS(FILTER.out.vcf, job_config)
+        // STATS(FILTER.out.vcf, job_config)
+        // KINSHIP(FILTER.out.vcf, job_config)
+        // POPULATION_STRUCTURE(FILTER.out.vcf, job_config)
+    }
 }
 
 

@@ -1,5 +1,40 @@
 nextflow.enable.dsl = 2
 
+// --- Filter parameters ---
+// QUAL threshold (only applied when set; see assess.nf)
+def qual = 30
+// MAF thresholds
+def maf = 0.05
+// HWE threshold (currently not applied in bcftools step, placeholder)
+def hwe_pval = 1e-6
+
+workflow filter {
+    take:
+    vcf
+    plink_bfile
+    val job_config
+
+    main:
+    // Index VCF if needed
+    indexed_vcf = INDEX_VCF(vcf)
+
+    // Choose filtering method based on params.filter_tool
+    filtered_vcf = null
+    if (params.filter_tool == 'gatk') {
+        filtered_vcf = GATK_FILTER(indexed_vcf.vcf)
+    } else {
+        filtered_vcf = BCFTOOLS_FILTER(indexed_vcf.vcf)
+    }
+
+    // Optional DumpNice QC plots
+    dumpnice_site_plots = DUMPNICE_SITE_QC(filtered_vcf.vcf)
+    dumpnice_vcf_plots  = DUMPNICE_VCF_QC(filtered_vcf.vcf)
+    dumpnice_taxa_plots = DUMPNICE_TAXA_QC(filtered_vcf.vcf)
+
+    emit:
+    vcf = filtered_vcf.vcf
+}
+
 process INDEX_VCF {
     tag { "index ${meta.id}" }
     publishDir params.outdir + '/filter', mode: 'copy'
