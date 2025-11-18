@@ -9,87 +9,8 @@ include { access as ASSESS } from './process/assess.nf'
 include { kinship as KINSHIP } from './analysis/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './analysis/ps.nf'
 
-// --- Help / usage ---
-def usage() {
-    log.info """
-    ================================================
-    Genotype pipeline entry (Association/genotype)
-    ================================================
-    Required params:
-        --home_dir <dir>      Home directory for predefined modules
-        --src_dir <dir>       Source directory for scripts and resources
-        --mod <string>        Predefined module name for input data
-        --job <string>        Job name/ID (default: genotype_<mod>)
-
-    Common params (see nextflow.config for more):
-
-    Example:
-        nextflow run /data/dazheng/git/script/Association/genotype/main.nf --mod test_first --home_dir /data/dazheng/01projects/vmap4 --job all
-
-    Examples using screen:
-        screen -dmS genotype_pipe bash -c "cd /data/home/dazheng/01projects/vmap4/04chr1Geno && source ~/.bashrc && conda activate stats && nextflow ..."
-        
-        screen -dmS test bash -c "cd /data/dazheng/01projects/vmap4/05chr1Geno/02test_wf && source ~/.bashrc && conda activate stats && nextflow ..."
-    """
-}
-
 params.mod = null
 params.job = null
-
-def getModConfig(mod, home_dir) {
-    def modConfigs = [
-        "chr1": [
-            vcf_file: "${params.home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
-        ],
-        "test_first": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.f1M.vcf"
-        ],
-        "test_mid": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.m1M.vcf"
-        ],
-        "test_last": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
-        ],
-        "vmap4": [
-            vcf_path: "${params.home_dir}/00data/06vcf/03run/"
-        ]
-    ]
-
-    if (!modConfigs.containsKey(mod)) {
-        log.error "Unknown mod specified: ${mod}"
-        System.exit(1)
-    }
-
-    return modConfigs[mod]
-}
-
-def getJobConfig(job) {
-    def job_configs = [
-        "all": [
-            process_out: "${params.home_dir}/05chr1Geno/01process/"
-        ],
-        "process": [
-            process_out: "${params.home_dir}/05chr1Geno/01process/"
-        ],
-        "filter": [
-        ],
-        "assess": [
-        ],
-        "stats": [
-        ],
-        "kinship": [
-        ],
-        "population_structure": [
-        ]
-    ]
-
-    if (!job_configs.containsKey(job)) {
-        log.error "Unknown job specified: ${job}"
-        System.exit(1)
-    }
-
-    return job_configs[job]
-}
 
 workflow {
     if (params.help) { usage(); System.exit(0) }
@@ -125,15 +46,69 @@ workflow {
     def job_config = getJobConfig(params.job ?: "all")
     def combined_ch = ch_vcf.combine(Channel.value(job_config))
 
-    if (params.job == "all") {
+    if (params.mod == "classic") {
         PROCESS(combined_ch)
         FILTER(PROCESS.vcf, PROCESS.plink_bfile, job_config)
-        // ASSESS(FILTER.out.vcf, job_config)
-        // STATS(FILTER.out.vcf, job_config)
-        // KINSHIP(FILTER.out.vcf, job_config)
-        // POPULATION_STRUCTURE(FILTER.out.vcf, job_config)
+        ASSESS(FILTER.out.vcf, job_config)
+        STATS(FILTER.out.vcf, job_config)
+        KINSHIP(FILTER.out.vcf, job_config)
+        POPULATION_STRUCTURE(FILTER.out.vcf, job_config)
     }
 }
+
+// --- Help / usage ---
+def usage() {
+    log.info """
+    ================================================
+    Genotype pipeline entry (Association/genotype)
+    ================================================
+    Required params:
+        --home_dir <dir>      Home directory for predefined modules
+        --src_dir <dir>       Source directory for scripts and resources
+        --mod <string>        Predefined module name for input data
+        --job <string>        Job name/ID (default: genotype_<mod>)
+
+    Common params (see nextflow.config for more):
+
+    Example:
+        nextflow run /data/dazheng/git/script/Association/genotype/main.nf --mod test_first --home_dir /data/dazheng/01projects/vmap4 --job all
+
+    Examples using screen:
+        screen -dmS genotype_pipe bash -c "cd /data/home/dazheng/01projects/vmap4/04chr1Geno && source ~/.bashrc && conda activate stats && nextflow ..."
+        
+        screen -dmS test bash -c "cd /data/dazheng/01projects/vmap4/05chr1Geno/02test_wf && source ~/.bashrc && conda activate stats && nextflow ..."
+    """
+}
+
+
+def getJobConfig(job, home_dir) {
+    def jobConfigs = [
+        "chr1": [
+            vcf_file: "${params.home_dir}/00data/06vcf/01chr1/chr001.vcf.gz"
+        ],
+        "test_first": [
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.f1M.vcf"
+        ],
+        "test_mid": [
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.m1M.vcf"
+        ],
+        "test_last": [
+            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
+        ],
+        "vmap4": [
+            vcf_path: "${params.home_dir}/00data/06vcf/03run/"
+        ]
+    ]
+
+    if (!jobConfigs.containsKey(job)) {
+        log.error "Unknown job specified: ${job}"
+        System.exit(1)
+    }
+
+    return jobConfigs[job]
+}
+
+
 
 
 

@@ -12,6 +12,7 @@ nextflow.enable.dsl=2
 // 1. directory
 params.home_dir = null
 params.user_dir = null
+params.output_dir = null
 // 2. work specific
 params.job = null
 params.mod = null   // includes "full", "disc_only", "blib_only", "scan_only", "from_disc", "from_blib"
@@ -19,7 +20,6 @@ params.server = null  // server name
 
 // --- Optional parameters ---
 // 1. directory
-output_path = "output"
 params.ing_dir = null
 params.vlib_dir = null
 params.gen_dir = null
@@ -53,6 +53,9 @@ params.scan_error_rate = 0.05
 params.help = false
 
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --user_dir /data/dazheng --job test_chr12 --mod full --server 107 --gen_tbm 1
+
+// screen -dmS all bash -c "cd /data/home/tusr1/01projects/vmap4/04runScreens/02run && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --output_dir /data/home/tusr1/01projects/vmap4/04runScreens --job all --mod from_blib --server s243 --gen_tbm 1"
+// nextflow run /data/home/tusr1/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --output_dir /data/home/tusr1/01projects/vmap4/04runScreens --job all --mod from_blib --server s243 --gen_tbm 1
 
 // execute by screen command line (on 243):
 // screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
@@ -95,7 +98,7 @@ workflow runFastCall3_workflow {
 
     // --- set default variables ---
     def wheat_chrs = (0..44).collect { it.toString() }
-    def output_path = "output/${params.job}"
+    def output_path = "${params.output_dir}/${params.job}"
     def taxaBamMap_dir = file("${params.home_dir}/00data/05taxaBamMap")
 
     // --- retrieve parameters ---
@@ -321,7 +324,6 @@ workflow runFastCall3_workflow {
             
         case "blib_only":
             // Only run blib generation from existing disc (ing) results
-            def blib_chr = chr_config_ch.chr
             blib_results = fastcall3_blib(
                 chr_config_ch,
                 tiger_jar_input,
@@ -340,17 +342,24 @@ workflow runFastCall3_workflow {
                 log.error "Run workflow with 'blib_only', 'from_disc', or 'full' mode first"
                 exit 1
             }
-            def blib_chr_lib = null
-            file("${blib_dir}").listFiles()
-                .findAll { it.name.endsWith(".lib.gz") }
-                .each { f ->
-                    def fname = f.name
-                    def m = (fname =~ /^([^_]+)_.*\.lib\.gz$/)
-                    def chr = m.find() ? m.group(1) : fname.tokenize('.')[0]
-                    if (chr == chr_config_ch.chr) {
-                        blib_chr_lib = tuple(chr, f)
+            def blib_chr_lib = chr_config_ch
+                .map { chromo, ref, tbm ->
+                    def lib_file = file(blib_dir).listFiles()
+                        .find { f ->
+                            if (!f.name.endsWith(".lib.gz")) return false
+                            def fname = f.name
+                            def m = (fname =~ /^([^_]+)_.*\.lib\.gz$/)
+                            def lib_chr = m.find() ? m.group(1) : fname.tokenize('.')[0]
+                            return lib_chr == chromo
+                        }
+                    if (lib_file) {
+                        return tuple(chromo, lib_file)
+                    } else {
+                        log.warn "No .lib.gz file found for chromosome: ${chromo} in ${blib_dir}"
+                        return null
                     }
                 }
+                .filter { it != null }
             if (!blib_chr_lib) {
                 log.error "No .lib.gz file found for chromosome: ${chr_config_ch.chr} in ${blib_dir}"
                 exit 1
@@ -461,7 +470,7 @@ process concatTaxaBamMap {
 
 process fastcall3_disc {
     tag "disc_${chromosome}"
-    publishDir(ing_path, mode: 'copy', overwrite: true)
+    publishDir("${params.output_dir}/${params.job}/ing", mode: 'copy', overwrite: true)
     
     input:
     tuple val(chromosome), path(reference), path(taxa_bam_map)
@@ -470,7 +479,6 @@ process fastcall3_disc {
     val ing_path
     
     output:
-    tuple val(chromosome), path("${chromosome}_*.ing.gz"), emit: chr_ing
     tuple val(chromosome), path(reference), path(taxa_bam_map), emit: chr_config
     path "disc_${chromosome}.log", emit: log
     
@@ -511,20 +519,12 @@ process fastcall3_disc {
         >> disc_${chromosome}.log 2>&1
 
     echo "Disc analysis for chromosome ${chromosome} completed" >> disc_${chromosome}.log
-
-    # Symlink produced .ing.gz back into workdir so Nextflow can capture as output
-    if ls ${ing_path}/${chromosome}_*.ing.gz >/dev/null 2>&1; then
-        ln -sf ${ing_path}/${chromosome}_*.ing.gz . 2>> disc_${chromosome}.log || true
-    else
-        # fallback: pull any .ing.gz for this run
-        find ${ing_path} -maxdepth 2 -type f -name "${chromosome}*.ing.gz" -exec ln -sf {} . \\; 2>> disc_${chromosome}.log || true
-    fi
     """
 }
 
 process fastcall3_blib {
     tag "blib_${chromosome}"
-    publishDir("${params.output_path}/${params.job}/vLib", mode: 'copy', overwrite: true)
+    publishDir("${params.output_dir}/${params.job}/vLib", mode: 'copy', overwrite: true)
     
     input:
     tuple val(chromosome), path(reference), path(taxa_bam_map)
@@ -592,7 +592,7 @@ process fastcall3_blib {
 
 process fastcall3_scan {
     tag "scan_${chromosome}"
-    publishDir("${params.output_path}/${params.job}/scan", mode: 'move', overwrite: false)
+    publishDir("${params.output_dir}/${params.job}/gen", mode: 'move', overwrite: false)
     
     input:
     tuple val(scan_chr), path(blib_file)
@@ -602,11 +602,11 @@ process fastcall3_scan {
     val gen_path
     
     output:
-    tuple val(chromosome), path("${gen_path}/VCF/*.vcf*"), emit: vcf_files
+    // tuple val(chromosome), path("*.vcf*"), emit: vcf_files
     path "scan_${chromosome}.log", emit: log
     
     script:
-    def javaSetup = getJavaSetupScript(java_version, params.java_lib)
+    def javaSetup = getJavaSetupScript(java_version, java_lib_dir)
     // FIX: Typo 'param.home_dir' -> 'params.home_dir'
     // def chr_config = getChrConfig(chromosome, params.home_dir)
     """
@@ -630,7 +630,7 @@ process fastcall3_scan {
     echo "CPU cores (allocated): ${task.cpus}" >> scan_${chromosome}.log
     echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> scan_${chromosome}.log
     echo "TIGER jar: ${tiger_jar}" >> scan_${chromosome}.log
-    echo "FastCall version: ${fastcall_version}" >> scan_${chromosome}.log
+    echo "FastCall version: ${app_name}" >> scan_${chromosome}.log
 
     java -Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g -jar ${tiger_jar} \\
         -app ${app_name} \\
@@ -677,7 +677,7 @@ def getJobConfig(job, home_dir) {
         ],
         "test_chr12": [
             name: "test_chr12",
-            a_pop: ["A"],
+            a_pop: ["test_chr12"],
             b_pop: [],
             d_pop: [],
             chroms: ["1", "2"]
@@ -703,7 +703,7 @@ def getJobConfig(job, home_dir) {
 def getServerPopulations(tbm_gen_server) {
     def serverPopulations = [
         "s115": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],
-        "s107": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],
+        "s107": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature", "test_chr12"],
         "s66": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],
         "s203": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],
         "s204": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],
@@ -730,7 +730,7 @@ def getPopulationConfig(pop, home_dir) {
         ],
         "test_chr12": [
             bam_dir: "${home_dir}/00data/02bam/bam1/A",
-            depth_dir: "${home_dir}/00data/04depth/01A"
+            depth_dir: "${home_dir}/00data/04depth/09test12"
         ],
         "A": [
             bam_dir: "${home_dir}/00data/02bam/bam1/A",
@@ -899,6 +899,10 @@ def getSoftwareConfig(home_dir, user_dir, tiger_jar, workshop_jar, samtools) {
 // TIGER jar configuration function
 def getTigerJarConfig(tigerJarPath, java_lib_dir) {
     def tiger_jar_versions = [
+        "TIGER_F3_20251118.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
         "TIGER_F3_20251016.jar": [
             java_version: "java17",
             app_name: "FastCall3"
