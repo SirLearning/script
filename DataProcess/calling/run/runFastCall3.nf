@@ -812,7 +812,7 @@ def getChrConfig(chr, home_dir, sub_genome_tbm) {
         ],
         "D": [
             chromosome: chr,
-            reference: file("${home_dir}/00data/03ref/03D/d_iwgscV1.fa.gz")
+            reference: file("${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz")
         ],
         "ALL": [
             chromosome: chr,
