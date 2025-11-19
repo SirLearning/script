@@ -285,8 +285,7 @@ workflow runFastCall3_workflow {
                 vlib_dir_resolved
             )
             scan_results = fastcall3_scan(
-                blib_results.chr_lib,
-                blib_results.chr_config,
+                blib_results.chr_config_lib,
                 tiger_jar_input,
                 samtools_input,
                 gen_dir_resolved
@@ -313,8 +312,7 @@ workflow runFastCall3_workflow {
             )
 
             scan_results = fastcall3_scan(
-                blib_results.chr_lib,
-                blib_results.chr_config,
+                blib_results.chr_config_lib,
                 tiger_jar_input,
                 samtools_input,
                 gen_dir_resolved
@@ -342,8 +340,8 @@ workflow runFastCall3_workflow {
                 log.error "Run workflow with 'blib_only', 'from_disc', or 'full' mode first"
                 exit 1
             }
-            def blib_chr_lib = chr_config_ch
-                .map { chromo, ref, tbm ->
+            def blib_chr_config_lib_ch = chr_config_ch
+                .map { chromo, ref, fai, gzi, tbm ->
                     def lib_file = file(blib_dir).listFiles()
                         .find { f ->
                             if (!f.name.endsWith(".lib.gz")) return false
@@ -353,20 +351,19 @@ workflow runFastCall3_workflow {
                             return lib_chr == chromo
                         }
                     if (lib_file) {
-                        return tuple(chromo, lib_file)
+                        return tuple(chromo, ref, fai, gzi, tbm, lib_file)
                     } else {
                         log.warn "No .lib.gz file found for chromosome: ${chromo} in ${blib_dir}"
                         return null
                     }
                 }
                 .filter { it != null }
-            if (!blib_chr_lib) {
+            if (!blib_chr_config_lib_ch) {
                 log.error "No .lib.gz file found for chromosome: ${chr_config_ch.chr} in ${blib_dir}"
                 exit 1
             }
             scan_results = fastcall3_scan(
-                blib_chr_lib,
-                chr_config_ch,
+                blib_chr_config_lib_ch,
                 tiger_jar_input,
                 samtools_input,
                 gen_dir_resolved
@@ -473,13 +470,13 @@ process fastcall3_disc {
     publishDir("${params.output_dir}/${params.job}/ing", mode: 'copy', overwrite: true)
     
     input:
-    tuple val(chromosome), path(reference), path(taxa_bam_map)
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
     val samtools_path
     val ing_path
     
     output:
-    tuple val(chromosome), path(reference), path(taxa_bam_map), emit: chr_config
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), emit: chr_config
     path "disc_${chromosome}.log", emit: log
     
     script:
@@ -527,14 +524,13 @@ process fastcall3_blib {
     publishDir("${params.output_dir}/${params.job}/vLib", mode: 'copy', overwrite: true)
     
     input:
-    tuple val(chromosome), path(reference), path(taxa_bam_map)
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
     val ing_path
     val vLib_path
     
     output:
-    tuple val(chromosome), path("${chromosome}_*.lib.gz"), emit: chr_lib
-    tuple val(chromosome), path(reference), path(taxa_bam_map), emit: chr_config
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path("${chromosome}_*.lib.gz"), emit: chr_config_lib
     path "blib_${chromosome}.log", emit: log
     
     script:
@@ -595,8 +591,7 @@ process fastcall3_scan {
     publishDir("${params.output_dir}/${params.job}/gen", mode: 'move', overwrite: false)
     
     input:
-    tuple val(scan_chr), path(blib_file)
-    tuple val(chromosome), path(reference), path(taxa_bam_map)
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
     val samtools_path
     val gen_path
@@ -804,19 +799,27 @@ def getChrConfig(chr, home_dir, sub_genome_tbm) {
     def subGenomeConfigs = [
         "A": [
             chromosome: chr,
-            reference: file("${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz")
+            reference: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.gzi"
         ],
         "B": [
             chromosome: chr,
-            reference: file("${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz")
+            reference: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz.gzi"
         ],
         "D": [
             chromosome: chr,
-            reference: file("${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz")
+            reference: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz.gzi"
         ],
         "ALL": [
             chromosome: chr,
-            reference: file("${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz")
+            reference: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.gzi"
         ]
     ]
 
@@ -839,9 +842,11 @@ def getChrConfig(chr, home_dir, sub_genome_tbm) {
     }
     def config = subGenomeConfigs[sub_genome]
     def ref = file(config.reference)
+    def fai = file(config.fai_idx)
+    def gzi = file(config.gzi_idx)
     def tbm_file = file(sub_genome_tbm[sub_genome])
 
-    return tuple(config.chromosome, ref, tbm_file)
+    return tuple(config.chromosome, ref, fai, gzi, tbm_file)
 }
 
 // Java version management function
