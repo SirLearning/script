@@ -17,12 +17,23 @@ workflow process {
     vcf_in
 
     main:
-    // filter
-    filtered_vcf = vcftools_std_filter(vcf_in)
+    // --- format VCF ---
     // Receive the full tuple and capture the single output channel directly
-    gz_vcf = vcf_zip_idx(filtered_vcf.vcf)
+    gz_vcf = format_vcf_bgzip_idx(filtered_vcf.vcf)
     // Pass the resulting (meta, vcf.gz) tuples directly to PLINK
-    plink_out = vcf_to_plink(gz_vcf)
+    plink_out = format_vcf_plink(gz_vcf)
+    
+    // --- filtering steps ---
+    log.info """\
+    Starting VCF filtering using standard parameters: 
+        MAF >= ${maf}
+        MAC >= ${mac}
+        Min Alleles = ${min_alleles}
+        Max Alleles = ${max_alleles}
+        Max Missing = ${max_missing}
+    """
+    // filter
+    filtered_vcf = filter_vcftools_std(vcf_in)
 
     emit:
     vcf = gz_vcf.vcf
@@ -30,7 +41,7 @@ workflow process {
     plink_ped  = plink_out.plink_ped
 }
 
-process vcftools_std_filter {
+process filter_vcftools_std {
     tag { meta && meta.id ? "vcftools filter ${meta.id}" : 'vcftools filter' }
     publishDir 'output/process', mode: 'copy'
 
@@ -62,7 +73,7 @@ process vcftools_std_filter {
     """
 }
 
-process bcftools_std_filter {
+process filter_bcftools_std {
     tag { meta && meta.id ? "bcftools filter ${meta.id}" : 'bcftools filter' }
     publishDir 'output/process', mode: 'copy'
 
@@ -84,7 +95,7 @@ process bcftools_std_filter {
     """
 }
 
-process vcf_zip_idx {
+process format_vcf_bgzip_idx {
     tag { meta && meta.id ? "bgzip/tabix ${meta.id}" : 'bgzip/tabix' }
     // Use copy to keep files available for downstream processes (move would remove them before staging)
     publishDir 'output/process', mode: 'copy'
@@ -129,7 +140,7 @@ process vcf_zip_idx {
     """
 }
 
-process vcf_to_plink {
+process format_vcf_plink {
     tag { meta && meta.id ? "plink ${meta.id}" : 'plink' }
     // Keep generated bed/bim/fam for further steps
     publishDir 'output/process', mode: 'copy'
