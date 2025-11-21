@@ -2,8 +2,8 @@
 
 /*
  * Advanced FastCall3 pipeline for variant calling with enhanced features
- * Author: Based on FastCall2 workflow with improvements
- * Date: 2025-09-11
+ * Author: SirLearning
+ * Date: 2025-11-19
  */
 
 nextflow.enable.dsl=2
@@ -242,7 +242,8 @@ workflow runFastCall3_workflow {
     } else {
         chromosomes = ["0","43","44"]
         if (job_config.a_pop && job_config.a_pop.size() > 0) {
-            chromosomes += ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
+            // chromosomes += ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
+            chromosomes += ["1","2","7","13","14","19","20","25","26","31","38"]  // temporary remove some chr for finished job
         }
         if (job_config.b_pop && job_config.b_pop.size() > 0) {
             chromosomes += ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]

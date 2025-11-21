@@ -2,7 +2,7 @@
 
 /*
  * High-throughput FastCall2 pipeline for variant calling
- * Author: Based on FastCall2 workflow
+ * Author: SirLearning
  * Date: 2025-07-25
  */
 
