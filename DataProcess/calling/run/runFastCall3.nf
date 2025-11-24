@@ -249,7 +249,8 @@ workflow runFastCall3_workflow {
             chromosomes += ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
         }
         if (job_config.d_pop && job_config.d_pop.size() > 0) {
-            chromosomes += ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
+            // chromosomes += ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
+            chromosomes += ["6","11","12","17","18","23","24","29","30","35","36","41","42"]
         }
     }
     if (params.chr) {
@@ -370,7 +371,51 @@ workflow runFastCall3_workflow {
                 gen_dir_resolved
             )
             break
-            
+        
+        case "scan2":
+            // Start from existing blib (vLib) results (only scan)
+            def blib_dir = vlib_dir_resolved
+            if (!file(blib_dir).exists()) {
+                log.error "Blib directory not found: ${blib_dir}"
+                log.error "Run workflow with 'blib_only', 'from_disc', or 'full' mode first"
+                exit 1
+            }
+            // def scan2_tiger_jar_input = tuple(
+            //     software_config.tiger_jar_config.path,
+            //     "FastCall3_Scan_v2",
+            //     software_config.tiger_jar_config.java_version,
+            //     software_config.tiger_jar_config.java_lib_dir
+            // )
+            def blib_chr_config_lib_ch = chr_config_ch
+                .map { chromo, ref, fai, gzi, tbm ->
+                    def lib_file = file(blib_dir).listFiles()
+                        .find { f ->
+                            if (!f.name.endsWith(".lib.gz")) return false
+                            def fname = f.name
+                            def m = (fname =~ /^([^_]+)_.*\.lib\.gz$/)
+                            def lib_chr = m.find() ? m.group(1) : fname.tokenize('.')[0]
+                            return lib_chr == chromo
+                        }
+                    if (lib_file) {
+                        return tuple(chromo, ref, fai, gzi, tbm, lib_file)
+                    } else {
+                        log.warn "No .lib.gz file found for chromosome: ${chromo} in ${blib_dir}"
+                        return null
+                    }
+                }
+                .filter { it != null }
+            if (!blib_chr_config_lib_ch) {
+                log.error "No .lib.gz file found for chromosome: ${chr_config_ch.chr} in ${blib_dir}"
+                exit 1
+            }
+            scan_results = fastcall3_scan(
+                blib_chr_config_lib_ch,
+                tiger_jar_input,
+                samtools_input,
+                gen_dir_resolved
+            )
+            break
+
         default:
             log.error "Unknown workflow mode: ${workflow_mode}"
             log.error "Available modes: full, disc_only, blib_only, scan_only, from_disc, from_blib"
@@ -605,6 +650,8 @@ process fastcall3_scan {
     def javaSetup = getJavaSetupScript(java_version, java_lib_dir)
     // FIX: Typo 'param.home_dir' -> 'params.home_dir'
     // def chr_config = getChrConfig(chromosome, params.home_dir)
+    def chr_int = chromosome.toString().toInteger()
+    def vcf_name = (chr_int < 10) ? "chr00${chr_int}.vcf" : "chr0${chr_int}.vcf"
     """
     echo "Starting scan analysis for chromosome ${chromosome}..." > scan_${chromosome}.log
     echo "Using ${java_version} for ${app_name} scan process" >> scan_${chromosome}.log
@@ -644,6 +691,8 @@ process fastcall3_scan {
         -k ${gen_path} \\
         >> scan_${chromosome}.log 2>&1
     
+    bgzip -@ ${task.cpus} ${gen_path}/VCF/${vcf_name}
+
     echo "Scan analysis for chromosome ${chromosome} completed" >> scan_${chromosome}.log
     """
 }
