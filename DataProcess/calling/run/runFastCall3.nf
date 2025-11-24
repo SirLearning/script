@@ -24,7 +24,7 @@ params.ing_dir = null
 params.vlib_dir = null
 params.gen_dir = null
 // 3. software settings
-params.tiger_jar = "TIGER_F3_20251118.jar"
+params.tiger_jar = "TIGER_F3_20251121.jar"
 params.workshop_jar = "Workshop.jar"
 params.samtools = "samtools"
 // 4. single chromosome selector
@@ -380,12 +380,6 @@ workflow runFastCall3_workflow {
                 log.error "Run workflow with 'blib_only', 'from_disc', or 'full' mode first"
                 exit 1
             }
-            // def scan2_tiger_jar_input = tuple(
-            //     software_config.tiger_jar_config.path,
-            //     "FastCall3_Scan_v2",
-            //     software_config.tiger_jar_config.java_version,
-            //     software_config.tiger_jar_config.java_lib_dir
-            // )
             def blib_chr_config_lib_ch = chr_config_ch
                 .map { chromo, ref, fai, gzi, tbm ->
                     def lib_file = file(blib_dir).listFiles()
@@ -408,7 +402,7 @@ workflow runFastCall3_workflow {
                 log.error "No .lib.gz file found for chromosome: ${chr_config_ch.chr} in ${blib_dir}"
                 exit 1
             }
-            scan_results = fastcall3_scan(
+            scan_results = fastcall3_scan2(
                 blib_chr_config_lib_ch,
                 tiger_jar_input,
                 samtools_input,
@@ -691,7 +685,72 @@ process fastcall3_scan {
         -k ${gen_path} \\
         >> scan_${chromosome}.log 2>&1
     
-    bgzip -@ ${task.cpus} ${gen_path}/VCF/${vcf_name}
+    bgzip -f -@ ${task.cpus} ${gen_path}/VCF/${vcf_name}
+
+    echo "Scan analysis for chromosome ${chromosome} completed" >> scan_${chromosome}.log
+    """
+}
+
+process fastcall3_scan2 {
+    tag "scan2_${chromosome}"
+    publishDir("${params.output_dir}/${params.job}/gen", mode: 'move', overwrite: false)
+    
+    input:
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file)
+    tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
+    val samtools_path
+    val gen_path
+    
+    output:
+    // tuple val(chromosome), path("*.vcf*"), emit: vcf_files
+    path "scan_${chromosome}.log", emit: log
+    
+    script:
+    def javaSetup = getJavaSetupScript(java_version, java_lib_dir)
+    // FIX: Typo 'param.home_dir' -> 'params.home_dir'
+    // def chr_config = getChrConfig(chromosome, params.home_dir)
+    def chr_int = chromosome.toString().toInteger()
+    def vcf_name = (chr_int < 10) ? "chr00${chr_int}.vcf" : "chr0${chr_int}.vcf"
+    """
+    echo "Starting scan analysis for chromosome ${chromosome}..." > scan_${chromosome}.log
+    echo "Using ${java_version} for ${app_name} scan process" >> scan_${chromosome}.log
+    
+    ${javaSetup} >> scan_${chromosome}.log 2>&1
+    
+    # Resolve the lib file (staged by Nextflow) for this chromosome
+    lib_file_path="${blib_file}"
+    if [ ! -f "\$lib_file_path" ]; then
+        echo "Error: Library file \$lib_file_path not found" >> scan_${chromosome}.log
+        exit 1
+    fi
+    echo "Input library file: \$lib_file_path" >> scan_${chromosome}.log
+    echo "Library file size: \$(stat -c%s \"\$lib_file_path\") bytes" >> scan_${chromosome}.log
+    
+    # Monitor system resources
+    echo "System resources before TIGER execution:" >> scan_${chromosome}.log
+    echo "Memory: \$(free -h | grep Mem)" >> scan_${chromosome}.log
+    echo "CPU cores (allocated): ${task.cpus}" >> scan_${chromosome}.log
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> scan_${chromosome}.log
+    echo "TIGER jar: ${tiger_jar}" >> scan_${chromosome}.log
+    echo "FastCall version: ${app_name}" >> scan_${chromosome}.log
+
+    java -Xmx${task.memory.toGiga()}g -Xms${task.memory.toGiga()}g -jar ${tiger_jar} \\
+        -app ${app_name} \\
+        -mod scan2 \\
+        -a ${reference} \\
+        -b ${taxa_bam_map} \\
+        -c "\$lib_file_path" \\
+        -d ${chromosome} \\
+        -e 0 \\
+        -f ${params.scan_min_MQ} \\
+        -g ${params.scan_min_BQ} \\
+        -h ${params.scan_error_rate} \\
+        -i ${samtools_path} \\
+        -j ${task.cpus} \\
+        -k ${gen_path} \\
+        >> scan_${chromosome}.log 2>&1
+    
+    bgzip -f -@ ${task.cpus} ${gen_path}/VCF/${vcf_name}
 
     echo "Scan analysis for chromosome ${chromosome} completed" >> scan_${chromosome}.log
     """
@@ -954,6 +1013,10 @@ def getSoftwareConfig(home_dir, user_dir, tiger_jar, workshop_jar, samtools) {
 // TIGER jar configuration function
 def getTigerJarConfig(tigerJarPath, java_lib_dir) {
     def tiger_jar_versions = [
+        "TIGER_F3_20251121.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
         "TIGER_F3_20251118.jar": [
             java_version: "java17",
             app_name: "FastCall3"
