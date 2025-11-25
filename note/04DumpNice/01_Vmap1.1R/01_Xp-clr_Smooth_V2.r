@@ -78,32 +78,6 @@ for (num in c(1:4)){
   }
 }
 
-#merge
-Xp3_WA_CA_smooth22.txt
-
-Name=(WA_CA, WA_EA, WA_EU, WA_SA)
-
-for num in {1..10}
-do
-for i in {1,2,7,8,13,14,19,20,25,26,31,32,37,38}
-do
-sed '1d' Xp${num}_WA_CA_smooth${i}.txt | awk '{print "'$i'""\t"$0}'  
-done |sed '/NA/d' | sort -k6,6g -k1,1n -k2,2n | sed '1i Chr\tWindowStart\tWindowStop\tSNPcount\tMeanY\tWstat' > Xp${num}_WA_CA_smooth_A.txt
-for i in {3,4,9,10,15,16,21,22,27,28,33,34,39,40}
-do
-sed '1d' Xp${num}_WA_CA_smooth${i}.txt | awk '{print "'$i'""\t"$0}'  
-done |sed '/NA/d' | sort -k6,6g -k1,1n -k2,2n | sed '1i Chr\tWindowStart\tWindowStop\tSNPcount\tMeanY\tWstat' > Xp${num}_WA_CA_smooth_B.txt
-for i in {5,6,11,12,17,18,23,24,29,30,35,36,41,42}
-do
-sed '1d' Xp${num}_WA_CA_smooth${i}.txt  | awk '{print "'$i'""\t"$0}'  
-done |sed '/NA/d' | sort -k6,6g -k1,1n -k2,2n | sed '1i Chr\tWindowStart\tWindowStop\tSNPcount\tMeanY\tWstat' > Xp${num}_WA_CA_smooth_D.txt
-done
-
-mkdir lineage
-mv *A.txt *B.txt *D.txt lineage
-cd lineage
-mkdir Top5%
-for i in `ls *txt`; do  wc -l $i; done | awk '{print $2"\t"$1"\t"$1*0.01"\t"$1*0.05}' | awk -F"[.|\t]" '{print $1"\t"$3"\t"$4"\t"$6}' | awk '{print "tail -n "$4,$1".txt > Top5%/"$1".top5.bed"}'
 
 
 

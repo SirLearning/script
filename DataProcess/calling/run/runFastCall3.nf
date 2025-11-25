@@ -52,17 +52,18 @@ params.scan_error_rate = 0.05
 // --- help info ---
 params.help = false
 
-// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --user_dir /data/dazheng --job test_chr12 --mod full --server 107 --gen_tbm 1
+// --- 107 command line ---
+// nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --user_dir /data/dazheng --output_dir /data/dazheng/01projects/vmap4/04test.FC3/07a.new.wf --job test_chr12 --mod scan2 --server s107 --gen_tbm 1
 
+// --- 243 command line ---
 // screen -dmS all bash -c "cd /data/home/tusr1/01projects/vmap4/04runScreens/02run && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --output_dir /data/home/tusr1/01projects/vmap4/04runScreens --job all --mod from_blib --server s243 --gen_tbm 1"
 // nextflow run /data/home/tusr1/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --output_dir /data/home/tusr1/01projects/vmap4/04runScreens --job all --mod from_blib --server s243 --gen_tbm 1
 
-// execute by screen command line (on 243):
-// screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
-
+// --- old command line cache ---
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode from_disc --tiger_jar TIGER_F3_20251013.jar --ing_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/ing --vlib_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/vLib --gen_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/gen
 // nextflow run /data/dazheng/git/script/DataProcess/calling/run/runFastCall3.nf --home_dir /data/dazheng/01projects/vmap4 --java_lib /data/dazheng/lib/jvm --pop chr1 --job test_ABD --workflow_mode from_disc --tiger_jar TIGER_F3_20251016.jar --ing_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/ing --vlib_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/vLib --gen_dir /data/dazheng/01projects/vmap4/04testFastCall3/01chr1/gen
+// screen -dmS run_A_disc bash -c "cd /data/home/tusr1/01projects/runScreens/01A/disc && source ~/.bashrc && conda activate run && nextflow run /data/home/tusr1/01projects/DataProcess/calling/run/runFastCall3.nf --home_dir /data/home/tusr1/01projects/vmap4 --java_lib /data/home/tusr1/lib/jvm --pop A --job run_A_disc --workflow_mode disc_only --tiger_jar TIGER_F3_20250915.jar"
 
 
 workflow {
