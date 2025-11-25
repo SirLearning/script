@@ -1,0 +1,85 @@
+nextflow.enable.dsl=2
+// Using bcftools annotate to add functional annotations to VCF files
+
+workflow annotate {
+    take:
+    // Expect a combined channel: [ val(meta), path(vcf), val(job_config) ]
+    vcf_in
+
+    main:
+    // Annotate VCF using bcftools
+    annotated_vcf = annotate_vcf_bcftools(vcf_in)
+
+    emit:
+    vcf = annotated_vcf.vcf
+}
+
+process annotate_gene_vcf_bcftools {
+    tag { meta && meta.id ? "bcftools annotate ${meta.id}" : 'bcftools annotate' }
+    publishDir 'output/annotate', mode: 'copy'
+
+    input:
+    tuple val(meta), path(vcf), val(job_config)
+
+    output:
+    tuple val(meta) val("${meta.id}.annotated"), path("${meta.id}.annotated.vcf"), emit: vcf
+
+    script:
+    """
+    set -euo pipefail
+
+    in="${vcf}"
+    out="${meta.id}.annotated"
+
+    # Example annotation command, modify as needed
+    bcftools annotate -a annotations.gff -c CHROM,FROM,TO,GENE -o "${out}.vcf" "${in}"
+
+    """
+}
+
+process prepare_tab_file {
+    tag { meta && meta.id ? "prepare tab file ${meta.id}" : 'prepare tab file' }
+    publishDir 'output/annotate', mode: 'copy'
+
+    input:
+    tuple val(meta), path(vcf), val(job_config)
+
+    output:
+    tuple val(meta) val("${meta.id}.annotations.tab"), path("${meta.id}.annotations.tab"), emit: tab
+
+    script:
+    """
+    set -euo pipefail
+
+    in="${vcf}"
+    out="${meta.id}.annotations.tab"
+
+    # Extract annotations from VCF to a tab-delimited file
+    bcftools query -f '%CHROM\\t%POS\\t%REF\\t%ALT\\t%INFO/GENE\\n' "${in}" > "${out}"
+
+    """
+}
+
+process generate_gene_bed {
+    tag { meta && meta.id ? "generate gene bed ${meta.id}" : 'generate gene bed' }
+    publishDir 'output/annotate', mode: 'copy'
+
+    input:
+    tuple val(meta), path(vcf), val(job_config)
+
+    output:
+    tuple val(meta) val("${meta.id}.gene.bed"), path("${meta.id}.gene.bed"), emit: bed
+
+    script:
+    """
+    set -euo pipefail
+
+    in="${vcf}"
+    out="${meta.id}.gene.bed"
+
+    # Extract gene regions from VCF and create BED file
+    bcftools query -f '%CHROM\\t%POS\\t%END\\t%GENE\\n' "${in}" | \
+        awk '{print \$1, \$2-1, \$3, \$4}' OFS='\\t' > "${out}"
+
+    """
+}
