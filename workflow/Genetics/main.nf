@@ -6,8 +6,8 @@ include { process as PROCESS } from './genotype/process/process.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { access as ASSESS } from './genotype/assess.nf'
 include { annotate as ANNOTATE } from './genotype/annotate.nf'
-include { kinship as KINSHIP } from './dynamic/analysis/kinship.nf'
-include { population_structure as POPULATION_STRUCTURE } from './dynamic/analysis/ps.nf'
+include { kinship as KINSHIP } from './dynamic/kinship.nf'
+include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 
 
 
