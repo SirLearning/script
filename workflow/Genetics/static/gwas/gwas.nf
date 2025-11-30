@@ -1,5 +1,7 @@
 nextflow.enable.dsl = 2
 
+include { HAIL_GWAS } from './hail_gwas.nf'
+
 // Utilities
 def toCsvList(list) { list ? list.join(',') : '' }
 
@@ -210,22 +212,28 @@ workflow GWAS {
     ch_covar
 
     main:
-    ch_plink = VCF_TO_PLINK(ch_vcf).plink
-    ch_eigen = COMPUTE_PCA(ch_plink).eigen
+    if (params.tool == 'hail') {
+        HAIL_GWAS(ch_vcf, ch_pheno, ch_covar, params.trait)
+        results = HAIL_GWAS.out.results
+    } else {
+        ch_plink = VCF_TO_PLINK(ch_vcf).plink
+        ch_eigen = COMPUTE_PCA(ch_plink).eigen
 
-    // fam path for pheno/covar prep
-    ch_fam = ch_plink.map { bed,bim,fam -> fam }
-    ch_pcv = PREPARE_PHENO_AND_COVAR(ch_pheno, ch_covar, ch_fam, ch_eigen).pcv
+        // fam path for pheno/covar prep
+        ch_fam = ch_plink.map { bed,bim,fam -> fam }
+        ch_pcv = PREPARE_PHENO_AND_COVAR(ch_pheno, ch_covar, ch_fam, ch_eigen).pcv
 
-    // Pair genotype tuple with pheno/covar tuple (single combination)
-    ch_pair = ch_plink.combine(ch_pcv).map { pl, pcv ->
-        // pl is [bed,bim,fam], pcv is [pheno,covar]
-        tuple(pl[0], pl[1], pl[2], pcv[0], pcv[1])
+        // Pair genotype tuple with pheno/covar tuple (single combination)
+        ch_pair = ch_plink.combine(ch_pcv).map { pl, pcv ->
+            // pl is [bed,bim,fam], pcv is [pheno,covar]
+            tuple(pl[0], pl[1], pl[2], pcv[0], pcv[1])
+        }
+
+        ch_run1  = RUN_PLINK_GLM(ch_pair)
+        ch_run2  = RUN_RMVP_OR_GAPIT(ch_pair)
+        results = ch_run1.mix(ch_run2)
     }
 
-    ch_run1  = RUN_PLINK_GLM(ch_pair)
-    ch_run2  = RUN_RMVP_OR_GAPIT(ch_pair)
-
     emit:
-    ch_run1.mix(ch_run2)
+    results
 }

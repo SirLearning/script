@@ -2,14 +2,20 @@ nextflow.enable.dsl=2
 
 // --- Include modules ---
 // Avoid conflict with `process` keyword by aliasing the imported workflow
-include { process as PROCESS } from './genotype/process/process.nf'
+include { processor as PROCESSOR } from './genotype/process/processor.nf'
+include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { access as ASSESS } from './genotype/assess.nf'
 include { annotate as ANNOTATE } from './genotype/annotate.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
+include { GWAS } from './static/gwas/gwas.nf'
 
-
+// Hail specific modules
+include { HAIL_QC } from './genotype/hail_qc.nf'
+include { HAIL_KINSHIP } from './dynamic/hail_kinship.nf'
+include { HAIL_PCA } from './dynamic/hail_pca.nf'
+include { HAIL_GWAS } from './static/gwas/hail_gwas.nf'
 
 workflow {
     if (params.help) { usage(); System.exit(0) }
@@ -29,13 +35,13 @@ workflow {
         }
         def id = f.baseName.replaceAll(/\.vcf(\.gz)?$/, '')
         // Emit one tuple [id, vcf] as a proper channel item
-        ch_vcf = Channel.of([ id, f ])
+        ch_vcf = Channel.of([ [id: id], f ])
         // Debug view to confirm tuple structure
         ch_vcf.view { item -> "DEBUG ch_vcf single-file -> ${item}" }
     } else if (job_config.vcf_dir) {
         def pattern = "${job_config.vcf_dir}/*.vcf.gz"
         ch_vcf = Channel.fromPath(pattern, checkIfExists: true)
-            .map { vcf -> [ vcf.baseName.replaceAll(/\.vcf(\.gz)?$/, ''), vcf ] }
+            .map { vcf -> [ [id: vcf.baseName.replaceAll(/\.vcf(\.gz)?$/, '')], vcf ] }
         ch_vcf.view { item -> "DEBUG ch_vcf multi-file -> ${item}" }
     } else {
         usage()
@@ -44,11 +50,58 @@ workflow {
     }
 
     if (params.mod == "all") {
-        PROCESS(ch_vcf)
-        ASSESS(PROCESS.out.vcf, job_config)
-        STATS(PROCESS.out.vcf, job_config)
-        KINSHIP(PROCESS.out.vcf, job_config)
-        POPULATION_STRUCTURE(PROCESS.out.vcf, job_config)
+        // Common processing (Filtering)
+        // PROCESSOR handles tool selection internally for filtering
+        PROCESSOR(ch_vcf)
+        def ch_filtered_vcf = PROCESSOR.out.vcf.map{ meta, id, vcf -> tuple(meta, vcf) }
+
+        if (params.tool == 'hail') {
+            // Hail Workflow
+            HAIL_QC(ch_filtered_vcf)
+            HAIL_PCA(ch_filtered_vcf)
+            HAIL_KINSHIP(ch_filtered_vcf)
+            
+            // If phenotype is provided, run GWAS
+            if (params.pheno && params.trait) {
+                ch_pheno = Channel.fromPath(params.pheno)
+                ch_covar = params.covar ? Channel.fromPath(params.covar) : Channel.fromPath("NO_FILE").map{it -> file("NO_FILE")}
+                
+                HAIL_GWAS(ch_filtered_vcf, ch_pheno, ch_covar, params.trait)
+            }
+        } else {
+            // Standard Workflow (PLINK/VCFtools)
+            // Note: PROCESSOR.out.vcf is [meta, id, vcf]
+            // ASSESS expects [meta, vcf] or similar? Let's check ASSESS input.
+            // ASSESS takes vcf_ch. In main.nf original: ASSESS(PROCESS.out.vcf, job_config)
+            // But PROCESS.out.vcf was [vcf] or [id, vcf]?
+            // In processor.nf: emit: vcf = gz_vcf.vcf -> tuple val(meta), val(prefix), path(vcf)
+            // So we need to adapt if ASSESS expects something else.
+            // ASSESS takes vcf_ch. In assess.nf: take: vcf_ch. map { meta, vcf -> ... }
+            // So ASSESS expects [meta, vcf].
+            // PROCESSOR.out.vcf is [meta, prefix, vcf].
+            // We need to map it.
+            
+            ASSESS(ch_filtered_vcf)
+            STATS(ch_filtered_vcf)
+            KINSHIP(ch_filtered_vcf)
+            POPULATION_STRUCTURE(ch_filtered_vcf)
+        }
+    } else if (params.mod == "gwas") {
+        if (!params.pheno) { log.error "Missing --pheno"; System.exit(1) }
+        if (!params.trait) { log.error "Missing --trait"; System.exit(1) }
+        ch_pheno = Channel.fromPath(params.pheno)
+        
+        if (params.covar) {
+            ch_covar = Channel.fromPath(params.covar)
+        } else {
+            def no_covar = file("NO_FILE")
+            if (!no_covar.exists()) no_covar.text = ""
+            ch_covar = Channel.of(no_covar)
+        }
+        
+        // If using Hail, we might use raw VCF. If using PLINK, we might want processed VCF.
+        // For now, pass raw VCF.
+        GWAS(ch_vcf, ch_pheno, ch_covar)
     }
 }
 
@@ -61,8 +114,9 @@ def usage() {
     Required params:
         --home_dir <dir>      Home directory for predefined modules
         --src_dir <dir>       Source directory for scripts and resources
-        --mod <string>        Predefined module name for input data
+        --mod <string>        Predefined module name for input data (all, gwas)
         --job <string>        Job name/ID (default: genotype_<mod>)
+        --tool <string>       Tool to use (plink, hail). Default: plink
 
     Common params (see nextflow.config for more):
 

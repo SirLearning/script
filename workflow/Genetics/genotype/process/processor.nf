@@ -11,7 +11,7 @@ def max_missing = 0.05
 def qual = 30
 def hwe_pval = 1e-6 // not sure if used, maybe not now
 
-workflow process {
+workflow processor {
     take:
     // Expect a combined channel: [ val(), path(vcf), val(job_config) ]
     vcf_in
@@ -33,7 +33,11 @@ workflow process {
         Max Missing = ${max_missing}
     """
     // filter
-    filtered_vcf = filter_vcftools_std(vcf_in)
+    if (params.tool == 'hail') {
+        filtered_vcf = filter_hail(vcf_in)
+    } else {
+        filtered_vcf = filter_vcftools_std(vcf_in)
+    }
 
     // --- QC Stats ---
     stats_out = vcf_stats(filtered_vcf.vcf)
@@ -315,5 +319,34 @@ process arrange_wheat_chr_by_python {
         -o "${input_file.baseName}.arr_chr.txt" \\
         -c "${chrom_col}" \\
         -p "${pos_col}"
+    """
+}
+
+process filter_hail {
+    tag { meta.id ? "hail filter ${meta.id}" : 'hail filter' }
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+
+    input:
+    tuple val(meta), path(vcf), val(job_config)
+
+    output:
+    tuple val(meta), val("${meta.id}.hail.filtered"), path("${meta.id}.hail.filtered.vcf.gz"), emit: vcf
+
+    script:
+    def id = meta.id
+    def ref = params.reference_genome ?: ""
+    def ref_arg = ref ? "--reference ${ref}" : ""
+    """
+    python ${params.src_dir}/python/genetics/hail/filter.py \
+        --vcf ${vcf} \
+        --out ${id}.hail.filtered \
+        --maf ${maf} \
+        --mac ${mac} \
+        --min_alleles ${min_alleles} \
+        --max_alleles ${max_alleles} \
+        --max_missing ${max_missing} \
+        ${ref_arg}
+    
+    mv ${id}.hail.filtered.vcf.bgz ${id}.hail.filtered.vcf.gz
     """
 }

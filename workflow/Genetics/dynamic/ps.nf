@@ -1,16 +1,23 @@
 nextflow.enable.dsl=2
 
+include { HAIL_PCA } from './hail_pca.nf'
+
 workflow population_structure {
     take:
-    // Expect a combined channel: [ val(meta), path(vcf), val(job_config) ]
     vcf_in
+    config
 
     main:
-    // Run PCA for Population Structure Analysis
-    pca_results = run_pca(vcf_in)
+    if (params.tool == 'hail') {
+        HAIL_PCA(vcf_in)
+        pca_results = HAIL_PCA.out.scores
+    } else {
+        // Run PCA for Population Structure Analysis
+        pca_results = run_pca(vcf_in).pca_results
+    }
 
     emit:
-    pca = pca_results.pca_results
+    pca = pca_results
 }
 
 process run_pca {
