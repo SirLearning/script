@@ -43,10 +43,14 @@ workflow processor {
     stats_out = vcf_stats(filtered_vcf.vcf)
     plot_vcf_qc(stats_out.stats)
 
+    // --- Convert to MT ---
+    mt_out = vcf_to_mt_hail(filtered_vcf.vcf)
+
     emit:
     vcf = gz_vcf.vcf
     plink_bfile = plink_out.plink_bfile
     plink_ped  = plink_out.plink_ped
+    mt = mt_out.mt
 }
 
 process vcf_stats {
@@ -103,7 +107,7 @@ process filter_vcftools_std {
     tuple val(), path(vcf), val(job_config)
 
     output:
-    tuple val() val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
+    tuple val(), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
 
     script:
     """
@@ -348,5 +352,26 @@ process filter_hail {
         ${ref_arg}
     
     mv ${id}.hail.filtered.vcf.bgz ${id}.hail.filtered.vcf.gz
+    """
+}
+
+process vcf_to_mt_hail {
+    tag { meta.id ? "hail vcf2mt ${meta.id}" : 'hail vcf2mt' }
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+
+    input:
+    tuple val(meta), val(prefix), path(vcf)
+
+    output:
+    tuple val(meta), path("${prefix}.mt"), emit: mt
+
+    script:
+    def ref = params.reference_genome ?: ""
+    def ref_arg = ref ? "--reference ${ref}" : ""
+    """
+    python ${params.src_dir}/python/genetics/hail/vcf_to_mt.py \\
+        --vcf ${vcf} \\
+        --out ${prefix}.mt \\
+        ${ref_arg}
     """
 }
