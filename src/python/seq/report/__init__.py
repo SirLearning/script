@@ -1,0 +1,1 @@
+from .perf_analysis_generator import parse_perf_script_for_callgraph

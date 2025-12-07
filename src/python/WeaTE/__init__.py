@@ -1,8 +1,13 @@
 """
+"""
 WeaTE is a Python package for wheat TE transposon extraction and analysis.
 
 subpackage1 ref: reference transposon
 input:
+"""
+from . import pop
+from . import ref
+from . import Scripts
     mod_anno: annotated TE transposon
     fai: reference genome index
 output:
