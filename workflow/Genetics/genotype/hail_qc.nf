@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 process HAIL_QC {
     tag "hail qc ${meta.id}"
+    container "${params.hail_container}"
     publishDir "${params.outdir}/genotype/stats/hail", mode: 'copy'
 
     input:
