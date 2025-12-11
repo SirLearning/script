@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 // --- Include modules ---
 // Avoid conflict with `process` keyword by aliasing the imported workflow
-include { processor as PROCESSOR } from './genotype/process/processor.nf'
+include { processor as PROCESSOR } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { access as ASSESS } from './genotype/assess.nf'
@@ -150,6 +150,9 @@ def getJobConfig(job, home_dir) {
         ],
         "test_last": [
             vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
+        ],
+        "vmap4": [
+            vcf_dir: "${params.home_dir}/00data/06vcf/03vmap4"  // pending
         ]
     ]
 
