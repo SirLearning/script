@@ -169,7 +169,7 @@ process format_vcf_bgzip_idx {
     set -euo pipefail
 
     in=${vcf}
-    out=${prefix}.vcf.gz
+    out=${prefix}.vcf.bgz
     echo "Processing VCF for work: ${.id}" >&2
 
     if [[ "\${in}" == *.vcf.gz ]]; then
