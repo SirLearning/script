@@ -33,15 +33,15 @@ workflow {
             log.error "Mod VCF file not found: ${f}"
             System.exit(1)
         }
-        def id = f.baseName.replaceAll(/\.vcf(\.gz)?$/, '')
+        def id = f.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, '')
         // Emit one tuple [id, vcf] as a proper channel item
-        ch_vcf = Channel.of([ [id: id], f ])
+        ch_vcf = Channel.of([ id, f ])
         // Debug view to confirm tuple structure
         ch_vcf.view { item -> "DEBUG ch_vcf single-file -> ${item}" }
     } else if (job_config.vcf_dir) {
-        def pattern = "${job_config.vcf_dir}/*.vcf.gz"
+        def pattern = "${job_config.vcf_dir}/*.{vcf,vcf.gz,vcf.bgz}"
         ch_vcf = Channel.fromPath(pattern, checkIfExists: true)
-            .map { vcf -> [ [id: vcf.baseName.replaceAll(/\.vcf(\.gz)?$/, '')], vcf ] }
+            .map { vcf -> [ vcf.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, ''), vcf ] }
         ch_vcf.view { item -> "DEBUG ch_vcf multi-file -> ${item}" }
     } else {
         usage()
@@ -69,18 +69,6 @@ workflow {
                 HAIL_GWAS(ch_filtered_vcf, ch_pheno, ch_covar, params.trait)
             }
         } else {
-            // Standard Workflow (PLINK/VCFtools)
-            // Note: PROCESSOR.out.vcf is [meta, id, vcf]
-            // ASSESS expects [meta, vcf] or similar? Let's check ASSESS input.
-            // ASSESS takes vcf_ch. In main.nf original: ASSESS(PROCESS.out.vcf, job_config)
-            // But PROCESS.out.vcf was [vcf] or [id, vcf]?
-            // In processor.nf: emit: vcf = gz_vcf.vcf -> tuple val(meta), val(prefix), path(vcf)
-            // So we need to adapt if ASSESS expects something else.
-            // ASSESS takes vcf_ch. In assess.nf: take: vcf_ch. map { meta, vcf -> ... }
-            // So ASSESS expects [meta, vcf].
-            // PROCESSOR.out.vcf is [meta, prefix, vcf].
-            // We need to map it.
-            
             ASSESS(ch_filtered_vcf)
             STATS(ch_filtered_vcf)
             KINSHIP(ch_filtered_vcf)
@@ -102,6 +90,12 @@ workflow {
         // If using Hail, we might use raw VCF. If using PLINK, we might want processed VCF.
         // For now, pass raw VCF.
         GWAS(ch_vcf, ch_pheno, ch_covar)
+    } else if (params.mod == "assess") {
+        ASSESS(ch_vcf)
+    } else {
+        usage()
+        log.error "Unknown mod specified: ${params.mod}"
+        System.exit(1)
     }
 }
 
@@ -126,6 +120,11 @@ def usage() {
             --src_dir /data/dazheng/git/script/src \
             --output_dir /data/dazheng/01projects/vmap4/05ana.geno/01chr1.test \
             --mod all --job test
+        nextflow run /data/dazheng/git/script/workflow/Association/genotype/main.nf \
+            --home_dir /data/dazheng/01projects/vmap4 \
+            --src_dir /data/dazheng/git/script/src \
+            --output_dir /data/dazheng/01projects/vmap4/05ana.geno/01chr1.test \
+            --mod assess --job test
 
     Examples using screen:
         screen -dmS genotype_pipe bash -c "cd /data/home/dazheng/01projects/vmap4/04chr1Geno && source ~/.bashrc && conda activate stats && nextflow ..."
