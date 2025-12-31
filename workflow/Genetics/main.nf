@@ -12,10 +12,7 @@ include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 include { GWAS } from './static/gwas/gwas.nf'
 
 // Hail specific modules
-include { HAIL_QC } from './genotype/hail_qc.nf'
-include { HAIL_KINSHIP } from './dynamic/hail_kinship.nf'
-include { HAIL_PCA } from './dynamic/hail_pca.nf'
-include { HAIL_GWAS } from './static/gwas/hail_gwas.nf'
+include { HAIL } from './genotype/hail.nf'
 
 workflow {
     if (params.help) { usage(); System.exit(0) }
@@ -23,7 +20,7 @@ workflow {
     // --- Input Handling ---
     def job_config = getJobConfig(params.job, params.home_dir)
 
-    // Build input channel of tuples: [ val(meta), path(vcf) ]
+    // Build input channel of VCF tuples: [ val(id), path(vcf) ]
     def ch_vcf
 
     if (job_config.vcf_file) {
@@ -48,54 +45,49 @@ workflow {
         log.error "No valid input found for job: ${params.job}"
         System.exit(1)
     }
+}
 
-    if (params.mod == "all") {
-        // Common processing (Filtering)
-        // PROCESSOR handles tool selection internally for filtering
-        PROCESSOR(ch_vcf)
-        def ch_filtered_vcf = PROCESSOR.out.vcf.map{ meta, id, vcf -> tuple(meta, vcf) }
+workflow build_genotype_database {
+    // Common processing (Filtering)
+    // PROCESSOR handles tool selection internally for filtering
+    PROCESSOR(ch_vcf)
+    def ch_filtered_vcf = PROCESSOR.out.vcf.map{ meta, id, vcf -> tuple(meta, vcf) }
+    ASSESS(ch_filtered_vcf)
+    STATS(ch_filtered_vcf)
+    KINSHIP(ch_filtered_vcf)
+    POPULATION_STRUCTURE(ch_filtered_vcf)
+}
 
-        if (params.tool == 'hail') {
-            // Hail Workflow
-            HAIL_QC(ch_filtered_vcf)
-            HAIL_PCA(ch_filtered_vcf)
-            HAIL_KINSHIP(ch_filtered_vcf)
-            
-            // If phenotype is provided, run GWAS
-            if (params.pheno && params.trait) {
-                ch_pheno = Channel.fromPath(params.pheno)
-                ch_covar = params.covar ? Channel.fromPath(params.covar) : Channel.fromPath("NO_FILE").map{it -> file("NO_FILE")}
-                
-                HAIL_GWAS(ch_filtered_vcf, ch_pheno, ch_covar, params.trait)
-            }
-        } else {
-            ASSESS(ch_filtered_vcf)
-            STATS(ch_filtered_vcf)
-            KINSHIP(ch_filtered_vcf)
-            POPULATION_STRUCTURE(ch_filtered_vcf)
-        }
-    } else if (params.mod == "gwas") {
-        if (!params.pheno) { log.error "Missing --pheno"; System.exit(1) }
-        if (!params.trait) { log.error "Missing --trait"; System.exit(1) }
-        ch_pheno = Channel.fromPath(params.pheno)
-        
-        if (params.covar) {
-            ch_covar = Channel.fromPath(params.covar)
-        } else {
-            def no_covar = file("NO_FILE")
-            if (!no_covar.exists()) no_covar.text = ""
-            ch_covar = Channel.of(no_covar)
-        }
-        
-        // If using Hail, we might use raw VCF. If using PLINK, we might want processed VCF.
-        // For now, pass raw VCF.
-        GWAS(ch_vcf, ch_pheno, ch_covar)
-    } else if (params.mod == "assess") {
-        ASSESS(ch_vcf)
+workflow association_study {
+    if (!params.pheno) { log.error "Missing --pheno"; System.exit(1) }
+    if (!params.trait) { log.error "Missing --trait"; System.exit(1) }
+    ch_pheno = Channel.fromPath(params.pheno)
+    
+    if (params.covar) {
+        ch_covar = Channel.fromPath(params.covar)
     } else {
-        usage()
-        log.error "Unknown mod specified: ${params.mod}"
-        System.exit(1)
+        def no_covar = file("NO_FILE")
+        if (!no_covar.exists()) no_covar.text = ""
+        ch_covar = Channel.of(no_covar)
+    }
+    
+    // If using Hail, we might use raw VCF. If using PLINK, we might want processed VCF.
+    // For now, pass raw VCF.
+    GWAS(ch_vcf, ch_pheno, ch_covar)
+}
+
+workflow hail_platform {
+    // Hail Workflow
+    HAIL_QC(ch_filtered_vcf)
+    HAIL_PCA(ch_filtered_vcf)
+    HAIL_KINSHIP(ch_filtered_vcf)
+    
+    // If phenotype is provided, run GWAS
+    if (params.pheno && params.trait) {
+        ch_pheno = Channel.fromPath(params.pheno)
+        ch_covar = params.covar ? Channel.fromPath(params.covar) : Channel.fromPath("NO_FILE").map{it -> file("NO_FILE")}
+        
+        HAIL_GWAS(ch_filtered_vcf, ch_pheno, ch_covar, params.trait)
     }
 }
 
