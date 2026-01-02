@@ -268,7 +268,8 @@ workflow runFastCall3_workflow {
             // chromosomes += ["11","17","23","24","29","35","36","41","42"]
             // chromosomes += ["29","41"]
             // chromosomes += ["29","41"]
-            chromosomes += ["5","17"]
+            // chromosomes += ["5","17"]
+            chromosomes += ["5"]
         }
     }
     if (params.chr) {

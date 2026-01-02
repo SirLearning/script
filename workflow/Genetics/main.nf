@@ -10,8 +10,6 @@ include { annotate as ANNOTATE } from './genotype/annotate.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 include { GWAS } from './static/gwas/gwas.nf'
-
-// Hail specific modules
 include { HAIL } from './genotype/hail.nf'
 
 workflow {
@@ -45,6 +43,18 @@ workflow {
         log.error "No valid input found for job: ${params.job}"
         System.exit(1)
     }
+
+    // --- Main workflow execution ---
+    if (params.mod == 'all') {
+        build_genotype_database()
+    }
+
+    if (params.tool == 'hail') {
+        log.info "Using Hail platform for genotype processing"
+        hail_platform()
+    } else {
+        log.info "Using default genotype processing pipeline"
+    }
 }
 
 workflow build_genotype_database {
@@ -59,21 +69,7 @@ workflow build_genotype_database {
 }
 
 workflow association_study {
-    if (!params.pheno) { log.error "Missing --pheno"; System.exit(1) }
-    if (!params.trait) { log.error "Missing --trait"; System.exit(1) }
-    ch_pheno = Channel.fromPath(params.pheno)
     
-    if (params.covar) {
-        ch_covar = Channel.fromPath(params.covar)
-    } else {
-        def no_covar = file("NO_FILE")
-        if (!no_covar.exists()) no_covar.text = ""
-        ch_covar = Channel.of(no_covar)
-    }
-    
-    // If using Hail, we might use raw VCF. If using PLINK, we might want processed VCF.
-    // For now, pass raw VCF.
-    GWAS(ch_vcf, ch_pheno, ch_covar)
 }
 
 workflow hail_platform {
