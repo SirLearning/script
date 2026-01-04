@@ -25,7 +25,7 @@ workflow processor {
     
     // --- filtering steps ---
     log.info """\
-    Starting VCF filtering using standard parameters: 
+    Starting VCF filtering using standard parameters:
         MAF >= ${maf}
         MAC >= ${mac}
         Min Alleles = ${min_alleles}
@@ -33,11 +33,7 @@ workflow processor {
         Max Missing = ${max_missing}
     """
     // filter
-    if (params.tool == 'hail') {
-        filtered_vcf = filter_hail(vcf_in)
-    } else {
-        filtered_vcf = filter_vcftools_std(vcf_in)
-    }
+    filtered_vcf = filter_vcftools_std(vcf_in)
 
     // --- QC Stats ---
     stats_out = vcf_stats(filtered_vcf.vcf)
@@ -50,7 +46,6 @@ workflow processor {
     vcf = gz_vcf.vcf
     plink_bfile = plink_out.plink_bfile
     plink_ped  = plink_out.plink_ped
-    mt = mt_out.mt
 }
 
 process vcf_stats {
@@ -58,7 +53,7 @@ process vcf_stats {
     publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
 
     input:
-    tuple val(), val(id), path(vcf)
+    tuple val(id), path(vcf)
 
     output:
     tuple val(id), path("${id}.imiss"), path("${id}.lmiss"), path("${id}.het"), path("${id}.frq"), path("${id}.idepth"), path("${id}.ldepth.mean"), emit: stats
@@ -326,52 +321,3 @@ process arrange_wheat_chr_by_python {
     """
 }
 
-process filter_hail {
-    tag { meta.id ? "hail filter ${meta.id}" : 'hail filter' }
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-
-    input:
-    tuple val(meta), path(vcf), val(job_config)
-
-    output:
-    tuple val(meta), val("${meta.id}.hail.filtered"), path("${meta.id}.hail.filtered.vcf.gz"), emit: vcf
-
-    script:
-    def id = meta.id
-    def ref = params.reference_genome ?: ""
-    def ref_arg = ref ? "--reference ${ref}" : ""
-    """
-    python ${params.src_dir}/python/genetics/hail/filter.py \
-        --vcf ${vcf} \
-        --out ${id}.hail.filtered \
-        --maf ${maf} \
-        --mac ${mac} \
-        --min_alleles ${min_alleles} \
-        --max_alleles ${max_alleles} \
-        --max_missing ${max_missing} \
-        ${ref_arg}
-    
-    mv ${id}.hail.filtered.vcf.bgz ${id}.hail.filtered.vcf.gz
-    """
-}
-
-process vcf_to_mt_hail {
-    tag { meta.id ? "hail vcf2mt ${meta.id}" : 'hail vcf2mt' }
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-
-    input:
-    tuple val(meta), val(prefix), path(vcf)
-
-    output:
-    tuple val(meta), path("${prefix}.mt"), emit: mt
-
-    script:
-    def ref = params.reference_genome ?: ""
-    def ref_arg = ref ? "--reference ${ref}" : ""
-    """
-    python ${params.src_dir}/python/genetics/hail/vcf_to_mt.py \\
-        --vcf ${vcf} \\
-        --out ${prefix}.mt \\
-        ${ref_arg}
-    """
-}

@@ -1,5 +1,56 @@
 nextflow.enable.dsl=2
 
+process vcf_to_mt_hail {
+    tag { meta.id ? "hail vcf2mt ${meta.id}" : 'hail vcf2mt' }
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+
+    input:
+    tuple val(meta), val(prefix), path(vcf)
+
+    output:
+    tuple val(meta), path("${prefix}.mt"), emit: mt
+
+    script:
+    def ref = params.reference_genome ?: ""
+    def ref_arg = ref ? "--reference ${ref}" : ""
+    """
+    python ${params.src_dir}/python/genetics/hail/vcf_to_mt.py \\
+        --vcf ${vcf} \\
+        --out ${prefix}.mt \\
+        ${ref_arg}
+    """
+}
+
+process filter_hail {
+    tag { meta.id ? "hail filter ${meta.id}" : 'hail filter' }
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+
+    input:
+    tuple val(meta), path(vcf), val(job_config)
+
+    output:
+    tuple val(meta), val("${meta.id}.hail.filtered"), path("${meta.id}.hail.filtered.vcf.gz"), emit: vcf
+
+    script:
+    def id = meta.id
+    def ref = params.reference_genome ?: ""
+    def ref_arg = ref ? "--reference ${ref}" : ""
+    """
+    python ${params.src_dir}/python/genetics/hail/filter.py \
+        --vcf ${vcf} \
+        --out ${id}.hail.filtered \
+        --maf ${maf} \
+        --mac ${mac} \
+        --min_alleles ${min_alleles} \
+        --max_alleles ${max_alleles} \
+        --max_missing ${max_missing} \
+        ${ref_arg}
+    
+    mv ${id}.hail.filtered.vcf.bgz ${id}.hail.filtered.vcf.gz
+    """
+}
+
+
 process HAIL_QC {
     tag "hail qc ${meta.id}"
     container "${params.hail_container}"
