@@ -1,5 +1,19 @@
 nextflow.enable.dsl=2
 
+/**
+ * Genetics Genotype Processor Workflow
+ * 
+ * 该 workflow 主要负责 VCF 文件的标准化处理、过滤、质控 (QC) 以及格式转换。
+ * 主要步骤包括：
+ * 1. 使用 vcftools 进行标准参数过滤 (MAF, MAC, Alleles, Missingness)。
+ * 2. 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引，确保后续工具的兼容性和高效访问。
+ * 3. 生成 QC 统计数据并利用 R 脚本绘图。
+ * 4. 将 VCF 转换为 PLINK (bed/bim/fam, ped) 格式。
+ * 5. (可选) 转换为 Hail MatrixTable 格式。
+ * 
+ * 注意：所有的 gzip 压缩均采用 bgzip 格式，以支持 tabix 随机访问。
+ */
+
 // --- Filter Parameters ---
 // standard filter parameters (std)
 def maf = 0.05
@@ -11,18 +25,14 @@ def max_missing = 0.05
 def qual = 30
 def hwe_pval = 1e-6 // not sure if used, maybe not now
 
+
+
 workflow processor {
     take:
     // Expect a combined channel: [ val(), path(vcf), val(job_config) ]
     vcf_in
 
     main:
-    // --- format VCF ---
-    // Receive the full tuple and capture the single output channel directly
-    gz_vcf = format_vcf_bgzip_idx(filtered_vcf.vcf)
-    // Pass the resulting (, vcf.gz) tuples directly to PLINK
-    plink_out = format_vcf_plink(gz_vcf)
-    
     // --- filtering steps ---
     log.info """\
     Starting VCF filtering using standard parameters:
@@ -32,9 +42,17 @@ workflow processor {
         Max Alleles = ${max_alleles}
         Max Missing = ${max_missing}
     """
-    // filter
+    // 首先进行过滤
     filtered_vcf = filter_vcftools_std(vcf_in)
 
+    // --- format VCF ---
+    // 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引
+    // 所有的压缩方式统一为 bgzip，以确保 VCF 文件可以被 tabix 稳健地索引和随机访问
+    gz_vcf = format_vcf_bgzip_idx(filtered_vcf.vcf)
+    
+    // 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
+    plink_out = format_vcf_plink(gz_vcf)
+    
     // --- QC Stats ---
     stats_out = vcf_stats(filtered_vcf.vcf)
     plot_vcf_qc(stats_out.stats)
@@ -164,13 +182,15 @@ process format_vcf_bgzip_idx {
     set -euo pipefail
 
     in=${vcf}
-    out=${prefix}.vcf.bgz
+    out=${prefix}.vcf.gz
     echo "Processing VCF for work: ${.id}" >&2
 
+    # 检查输入是否已经是 gzipped。
+    # 为了确保 tabix 索引的稳健性，我们必须确保文件是使用 bgzip 压缩的。
     if [[ "\${in}" == *.vcf.gz ]]; then
         echo "Input VCF is already gzipped: \${in}" >&2
         in_base=\$(basename "\${in}")
-        # Avoid self-linking when names are identical
+        # 避免同名文件链接冲突
         if [[ "\${in_base}" != "\${out}" ]]; then
             ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
         fi
@@ -179,7 +199,9 @@ process format_vcf_bgzip_idx {
         bgzip -c "\${in}" > "\${out}"
     fi
 
-    # Try to create index; if it fails (e.g., not BGZF), re-compress and retry
+    # 尝试创建 tabix 索引。
+    # 如果失败（例如文件不是 BGZF 格式），则强制重新使用 bgzip 压缩并重试索引。
+    # 这种方式确保了 VCF 文件的稳健性，使其能够被后续工具（如 bcftools, plink）正确读取。
     if ! tabix -f -p vcf "\${out}"; then
         echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
         if [[ "\${in}" == *.vcf.gz ]]; then
