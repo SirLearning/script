@@ -22,7 +22,7 @@ process COLLECT_RESULTS {
     if ls ${params.outdir}/results/${params.trait}/**/RESULTS.tsv >/dev/null 2>&1; then
       head -n1 $(ls ${params.outdir}/results/${params.trait}/**/RESULTS.tsv | head -n1) > summary.tsv
       awk 'FNR>1' $(ls ${params.outdir}/results/${params.trait}/**/RESULTS.tsv) >> summary.tsv || true
-  elif ls ${params.outdir}/results/${params.trait}/**/plink.glm.linear >/dev/null 2>&1; then
+    elif ls ${params.outdir}/results/${params.trait}/**/plink.glm.linear >/dev/null 2>&1; then
       awk 'NR==1 || $0!~"^#"{print $3"\t"$1"\t"$4"\t"$12}' OFS='\t' $(ls ${params.outdir}/results/${params.trait}/**/plink.glm.linear) > summary.tsv || true
     elif ls ${params.outdir}/results/${params.trait}/**/plink.glm.logistic >/dev/null 2>&1; then
       awk 'NR==1 || $0!~"^#"{print $3"\t"$1"\t"$4"\t"$9}' OFS='\t' $(ls ${params.outdir}/results/${params.trait}/**/plink.glm.logistic) > summary.tsv || true

@@ -51,7 +51,7 @@ process filter_hail {
 }
 
 
-process HAIL_QC {
+process hail_qc {
     tag "hail qc ${meta.id}"
     container "${params.hail_container}"
     publishDir "${params.outdir}/genotype/stats/hail", mode: 'copy'
@@ -75,7 +75,7 @@ process HAIL_QC {
     """
 }
 
-process HAIL_KINSHIP {
+process hail_kinship {
     tag "hail kinship ${meta.id}"
     publishDir "${params.outdir}/genotype/kinship/hail", mode: 'copy'
 
@@ -101,7 +101,7 @@ process HAIL_KINSHIP {
     """
 }
 
-process HAIL_PCA {
+process hail_pca {
     tag "hail pca ${meta.id}"
     publishDir "${params.outdir}/genotype/population_structure/hail", mode: 'copy'
 
@@ -128,7 +128,7 @@ process HAIL_PCA {
     """
 }
 
-process HAIL_GWAS {
+process hail_normal_gwas {
     tag "hail gwas ${trait}"
     publishDir "${params.outdir}/gwas/hail", mode: 'copy'
 

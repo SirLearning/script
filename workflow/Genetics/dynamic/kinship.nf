@@ -2,7 +2,7 @@ nextflow.enable.dsl=2
 
 workflow kinship {
     take:
-    // Expect a combined channel: [ val(meta), path(vcf), val(job_config) ]
+    // Expect a combined channel: [ val(meta), path(vcf) ]
     vcf_in
 
     main:
@@ -26,17 +26,17 @@ workflow kinship {
 }
 
 process calculate_ibs {
-    tag { meta.id }
+    tag { id }
     publishDir "${params.output_dir}/${params.job}/genotype/kinship", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf), val(job_config)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("${meta.id}.mibs"), path("${meta.id}.mibs.id"), emit: ibs_data
+    tuple val(id), path("${id}.mibs"), path("${id}.mibs.id"), emit: ibs_data
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     # Calculate IBS distance matrix (square matrix)
     # --distance ibs: 1-IBS (distance)
@@ -51,18 +51,18 @@ process calculate_ibs {
 }
 
 process plot_ibs_boxplot {
-    tag { meta.id }
+    tag { id }
     publishDir "${params.output_dir}/${params.job}/genotype/kinship", mode: 'copy'
 
     input:
-    tuple val(meta), path(mibs), path(ids)
+    tuple val(id), path(mibs), path(ids)
     path group_file
 
     output:
-    path("${meta.id}.ibs_boxplot.pdf"), emit: plot
+    path("${id}.ibs_boxplot.pdf"), emit: plot
 
     script:
-    def prefix = meta.id
+    def prefix = id
     // 默认参照样本为 CS，可以通过 params 修改
     def ref_sample = params.ref_sample ?: "CS"
     """
@@ -76,17 +76,17 @@ process plot_ibs_boxplot {
 }
 
 process calculate_kinship {
-    tag { meta.id }
+    tag { id }
     publishDir "${params.output_dir}/${params.job}/genotype/kinship", mode: 'copy'
     
     input:
-    tuple val(meta), path(vcf), val(job_config)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("*.kinship.txt"), emit: kinship_matrix
+    tuple val(id), path("*.kinship.txt"), emit: kinship_matrix
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     # Use plink2 to calculate kinship (King-robust)
     plink2 \\

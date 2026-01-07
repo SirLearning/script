@@ -6,276 +6,173 @@ def pc_num = 5
 
 workflow stats {
     take:
-        ch_vcf // tuple val(meta), path(vcf)
+        ch_vcf // tuple val(id), path(vcf)
 
     main:
+        // 1. Convert VCF to PLINK binary format
         ch_bfiles = PLINK_FROM_VCF(ch_vcf)
+        
+        // 2. Calculate statistics
         ch_missing = PLINK_MISSING(ch_bfiles.bfiles)
         ch_freq = PLINK_FREQ(ch_bfiles.bfiles)
         ch_het = PLINK_HET(ch_bfiles.bfiles)
         ch_pca = PLINK_PCA(ch_bfiles.bfiles)
 
+        ch_pca_plot = Channel.empty()
         if (params.enable_pca_plot) {
-            // Try to locate optional metadata channel if provided; else use empty file
-            def md = params.sample_metadata ? file(params.sample_metadata) : file('')
-            ch_pca_plot = PLOT_PLINK_PCA(ch_pca.pca.map{ it -> tuple(it[0], it[1], it[2]) }, ch_pca.pca.map{ it -> it[3] }, ch_pca.pca.map{ it -> it[0] }, md)
+            def md = params.sample_metadata ? file(params.sample_metadata) : file('NO_METADATA')
+            ch_pca_plot = PLOT_PLINK_PCA(ch_pca.pca, md)
         }
 
+        ch_plots = Channel.empty()
         if (params.enable_simple_plots) {
             ch_plots = PLOT_PLINK_QC(ch_missing.missing, ch_freq.freq, ch_het.het)
         }
 
     emit:
-        bfiles: ch_bfiles.bfiles
-        missing: ch_missing.missing
-        freq: ch_freq.freq
-        het: ch_het.het
-        pca: ch_pca.pca
-        plots: params.enable_simple_plots ? ch_plots.qc_plots : Channel.empty()
-        pca_plot: params.enable_pca_plot ? ch_pca_plot.pca_plot : Channel.empty()
+        bfiles = ch_bfiles.bfiles
+        missing = ch_missing.missing
+        freq = ch_freq.freq
+        het = ch_het.het
+        pca = ch_pca.pca
+        plots = ch_plots
+        pca_plot = ch_pca_plot
 }
 
-process GENOTYPE_STATS {
-    tag { meta.id }
-    publishDir "${params.outdir}/genotype/stats", mode: 'copy'
+process PLINK_FROM_VCF {
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/plink", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("*.bcftools.stats"), emit: geno_stats
-    path "*.log"
-
-    when:
-    params.enable_genotype_stats
+    tuple val(id), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bfiles
 
     script:
-    def prefix = meta.id
-    """
-    echo "Generating genotype stats for ${vcf}" > ${prefix}.stats.log
-    bcftools stats -s - ${vcf} > ${prefix}.bcftools.stats 2>> ${prefix}.stats.log || true
-    """
-}
-
-/*
- * PLINK-based stats from VCF, aligned with note/00basic/03vcf_process.ipynb
- * Steps:
- *  - Convert VCF -> PLINK bed/bim/fam (chr-set default 42)
- *  - Missingness (imiss/lmiss)
- *  - MAF freq (.frq)
- *  - Heterozygosity (.het)
- *  - PCA (eigenvec/eigenval)
- *  - Optional quick plots (histograms) via inline R
- */
-
-process plink_stats {
-    tag { "plink stats for: ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats", mode: 'copy'
-
-    input:
-    tuple val(meta), path("${meta.id}.bed"), path("${meta.id}.bim"), path("${meta.id}.fam")
-
-    output:
-    path "*.log"
-
-    script:
-    def log = "${prefix}.plink_stats.log"
     """
     set -euo pipefail
-    plink --bfile ${meta.id} \\
-        --pca ${pc_num} \\
-        --out ${meta.id} \\
-        --threads ${task.cpus}.pca >> ${log} 2>&1
+    plink --vcf ${vcf} \\
+        --make-bed \\
+        --out ${id} \\
+        --allow-extra-chr \\
+        --chr-set 42 \\
+        --double-id \\
+        --threads ${task.cpus}
+    """
+}
 
-    plink --bfile ${meta.id} \\
-        --autosome-num 42 \\
-        --missing \\
-        --out ${meta.id}.missing >> ${log} 2>&1
+process PLINK_MISSING {
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/missing", mode: 'copy'
 
-    plink --bfile ${meta.id} \\
-        --autosome-num 42 \\
-        --freq \\
-        --out ${meta.id}.freq >> ${log} 2>&1
+    input:
+    tuple val(id), path(bed), path(bim), path(fam)
 
-    plink --bfile ${meta.id} \\
-        --het \\
-        --out ${meta.id}.het >> ${log} 2>&1
+    output:
+    tuple val(id), path("${id}.imiss"), path("${id}.lmiss"), emit: missing
+
+    script:
+    """
+    set -euo pipefail
+    plink --bfile ${id} --missing --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
+    """
+}
+
+process PLINK_FREQ {
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/freq", mode: 'copy'
+
+    input:
+    tuple val(id), path(bed), path(bim), path(fam)
+
+    output:
+    tuple val(id), path("${id}.frq"), emit: freq
+
+    script:
+    """
+    set -euo pipefail
+    plink --bfile ${id} --freq --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
+    """
+}
+
+process PLINK_HET {
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/het", mode: 'copy'
+
+    input:
+    tuple val(id), path(bed), path(bim), path(fam)
+
+    output:
+    tuple val(id), path("${id}.het"), emit: het
+
+    script:
+    """
+    set -euo pipefail
+    plink --bfile ${id} --het --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
+    """
+}
+
+process PLINK_PCA {
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/pca", mode: 'copy'
+
+    input:
+    tuple val(id), path(bed), path(bim), path(fam)
+
+    output:
+    tuple val(id), path("${id}.eigenvec"), path("${id}.eigenval"), emit: pca
+
+    script:
+    """
+    set -euo pipefail
+    plink --bfile ${id} --pca 5 --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
     """
 }
 
 process PLOT_PLINK_PCA {
-    tag { "plot plink pca ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plots", mode: 'copy'
-    cpus 1
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy'
 
     input:
-    tuple val(meta), path(eigenvec), path(eigenval)
-    val(meta2)
-    path(metadata)
+    tuple val(id), path(eigenvec), path(eigenval)
+    path metadata
 
     output:
-    tuple val(meta), path('*.pca_pc12.pdf'), emit: pca_plot
-    path "*.log"
-
-    when:
-    params.enable_pca_plot
+    tuple val(id), path("${id}.pca_plot.pdf"), emit: pca_plot
 
     script:
-    def prefix = meta.id ?: 'pca'
-    def log = "${prefix}.pca_plot.log"
-    def mdflag = metadata ? "--metadata ${metadata}" : ""
+    def md_arg = metadata.name != 'NO_METADATA' ? "--metadata ${metadata}" : ""
     """
     set -euo pipefail
-    echo "[PCA Plot] Generating PC1 vs PC2 plot" | tee ${log}
-    Rscript src/r/dumpnice/wrappers/plot_pca_from_eigenvec.R \
-        --eigenvec ${eigenvec} \
-        --eigenval ${eigenval} \
-        ${mdflag} \
-        --out-prefix ${prefix} >> ${log} 2>&1 || true
-    ls -1 *.pca_pc12.pdf >/dev/null 2>&1 || touch ${prefix}.pca_pc12.pdf
+    Rscript ${params.src_dir}/r/genetics/plot_pca.r \\
+        --eigenvec ${eigenvec} \\
+        --eigenval ${eigenval} \\
+        ${md_arg} \\
+        --output ${id}.pca_plot.pdf
     """
 }
 
 process PLOT_PLINK_QC {
-    tag { "plot qc ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/plots", mode: 'copy'
-    cpus 1
+    tag { id }
+    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy'
 
     input:
-    tuple val(meta), path(imiss), path(lmiss)
-    tuple val(meta2), path(frq)
-    tuple val(meta3), path(het)
+    tuple val(id), path(imiss), path(lmiss)
+    tuple val(id2), path(frq)
+    tuple val(id3), path(het)
 
     output:
-    tuple val(meta), path('imiss.pdf'), path('lmiss.pdf'), path('maf_distribution.pdf'), path('heterozygosity.pdf'), emit: qc_plots
-
-    when:
-    params.enable_simple_plots
+    tuple val(id), path("${id}.qc_plots.pdf"), emit: qc_plots
 
     script:
     """
     set -euo pipefail
-    R --vanilla <<'RSCRIPT'
-    indmiss <- read.table('${imiss}', header=TRUE)
-    snpmiss <- read.table('${lmiss}', header=TRUE)
-    maf_freq <- read.table('${frq}', header=TRUE)
-    het <- read.table('${het}', header=TRUE)
-
-    pdf('imiss.pdf')
-    hist(indmiss[[6]], main='Histogram individual missingness', xlab='Individual missingness')
-    dev.off()
-
-    pdf('lmiss.pdf')
-    hist(snpmiss[[5]], main='Histogram SNP missingness', xlab='SNP missingness')
-    dev.off()
-
-    pdf('maf_distribution.pdf')
-    hist(maf_freq[[5]], main='MAF distribution', xlab='MAF')
-    dev.off()
-
-    pdf('heterozygosity.pdf')
-    het$HET_RATE <- (het$N.NM. - het$O.HOM.) / het$N.NM.
-    hist(het$HET_RATE, xlab='Heterozygosity Rate', ylab='Frequency', main='Heterozygosity Rate')
-    dev.off()
-RSCRIPT
-    """
-}
-
-/*
- * DumpNice-driven PCA/MDS visualization processes
- * These processes invoke R scripts organized under src/r/dumpnice.
- * They expect precomputed inputs (e.g., PLINK eigenvec/eigenval/mds or QC tables)
- * staged in a directory provided by params.dumpnice_inputdir.
- * Enable each process via the corresponding boolean param.
- *
- * Example params:
- *  --dumpnice_inputdir /path/to/staged_inputs 
- *  --enable_dumpnice_pca2 true
- *  --enable_dumpnice_mds true
- *  --enable_dumpnice_env_pca false
- */
-
-process DUMPNICE_PCA2 {
-    tag { "dumpnice pca2 ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/pca", mode: 'copy'
-    errorStrategy 'retry'
-    maxRetries 1
-
-    input:
-    tuple val(meta), path(vcf)
-
-    output:
-    tuple val(meta), path('*.pdf'), emit: pca_plots
-    path "*.log"
-
-    when:
-    params.enable_dumpnice_pca2 && params.dumpnice_inputdir
-
-    script:
-    def inputdir = params.dumpnice_inputdir as String
-    def log = "${meta.id}.pca2.log"
-    """
-    set -euo pipefail
-    echo "[DumpNice PCA2] staging inputs from ${inputdir}" | tee ${log}
-    rsync -a "${inputdir}/" ./ || true
-    Rscript src/r/dumpnice/pca/09_PCA2.r >> ${log} 2>&1 || true
-    # ensure at least one artifact exists for publishing
-    ls -1 *.pdf >/dev/null 2>&1 || touch dumpnice_pca2.pdf
-    """
-}
-
-process DUMPNICE_MDS {
-    tag { "dumpnice mds ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/mds", mode: 'copy'
-    errorStrategy 'retry'
-    maxRetries 1
-
-    input:
-    tuple val(meta), path(vcf)
-
-    output:
-    tuple val(meta), path('*.pdf'), emit: mds_plots
-    path "*.log"
-
-    when:
-    params.enable_dumpnice_mds && params.dumpnice_inputdir
-
-    script:
-    def inputdir = params.dumpnice_inputdir as String
-    def log = "${meta.id}.mds.log"
-    """
-    set -euo pipefail
-    echo "[DumpNice MDS] staging inputs from ${inputdir}" | tee ${log}
-    rsync -a "${inputdir}/" ./ || true
-    Rscript src/r/dumpnice/utils/06_MDS.r >> ${log} 2>&1 || true
-    ls -1 *.pdf >/dev/null 2>&1 || touch dumpnice_mds.pdf
-    """
-}
-
-process DUMPNICE_ENV_PCA {
-    tag { "dumpnice env-pca ${meta.id}" }
-    publishDir "${params.outdir}/genotype/stats/env_pca", mode: 'copy'
-    errorStrategy 'retry'
-    maxRetries 1
-
-    input:
-    tuple val(meta), path(vcf)
-
-    output:
-    tuple val(meta), path('*.pdf'), emit: env_pca_plots
-    path "*.log"
-
-    when:
-    params.enable_dumpnice_env_pca && params.dumpnice_inputdir
-
-    script:
-    def inputdir = params.dumpnice_inputdir as String
-    def log = "${meta.id}.env_pca.log"
-    """
-    set -euo pipefail
-    echo "[DumpNice ENV PCA] staging inputs from ${inputdir}" | tee ${log}
-    rsync -a "${inputdir}/" ./ || true
-    Rscript src/r/dumpnice/pca/07_PCA.r >> ${log} 2>&1 || true
-    ls -1 *.pdf >/dev/null 2>&1 || touch dumpnice_env_pca.pdf
+    Rscript ${params.src_dir}/r/genetics/plink_qc_plot.r \\
+        --imiss ${imiss} \\
+        --lmiss ${lmiss} \\
+        --frq ${frq} \\
+        --het ${het} \\
+        --output ${id}.qc_plots.pdf
     """
 }

@@ -17,8 +17,8 @@ def getJavaSetupScript(javaVersion, javaLibDir) {
         throw new Exception("Unknown Java version: ${javaVersion}. Valid options: ${validVersions}")
     }
     
-	def javaLibDir = javaLibDir ?: "${params.user_dir}/lib/jvm"
-    def javaHome = "${javaLibDir}/${javaDir}"
+	def libDir = javaLibDir ?: "${params.user_dir}/lib/jvm"
+    def javaHome = "${libDir}/${javaDir}"
     
     return """
     # Switch to ${javaVersion} (${javaDir})
