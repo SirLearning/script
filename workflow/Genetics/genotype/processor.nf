@@ -9,7 +9,6 @@ nextflow.enable.dsl=2
  * 2. 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引，确保后续工具的兼容性和高效访问。
  * 3. 生成 QC 统计数据并利用 R 脚本绘图。
  * 4. 将 VCF 转换为 PLINK (bed/bim/fam, ped) 格式。
- * 5. (可选) 转换为 Hail MatrixTable 格式。
  * 
  * 注意：所有的 gzip 压缩均采用 bgzip 格式，以支持 tabix 随机访问。
  */
@@ -23,13 +22,11 @@ def max_alleles = 2
 def max_missing = 0.05
 // additional parameters can be added here
 def qual = 30
-def hwe_pval = 1e-6 // not sure if used, maybe not now
-
-
+def hwe_pval = 1e-6
 
 workflow processor {
     take:
-    // Expect a combined channel: [ val(), path(vcf), val(job_config) ]
+    // Expect a channel: [ val(id), path(vcf) ]
     vcf_in
 
     main:
@@ -42,23 +39,23 @@ workflow processor {
         Max Alleles = ${max_alleles}
         Max Missing = ${max_missing}
     """
-    // 首先进行过滤
+    
+    // 1. 首先进行过滤
+    // filter_vcftools_std expects [ id, vcf ]
     filtered_vcf = filter_vcftools_std(vcf_in)
 
-    // --- format VCF ---
-    // 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引
-    // 所有的压缩方式统一为 bgzip，以确保 VCF 文件可以被 tabix 稳健地索引和随机访问
+    // 2. 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引
+    // filtered_vcf.vcf emits [ id, prefix, vcf_path ]
     gz_vcf = format_vcf_bgzip_idx(filtered_vcf.vcf)
     
-    // 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
-    plink_out = format_vcf_plink(gz_vcf)
+    // 3. 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
+    // gz_vcf.vcf emits [ id, prefix, vcf_gz, tbi ]
+    plink_out = format_vcf_plink(gz_vcf.vcf)
     
-    // --- QC Stats ---
-    stats_out = vcf_stats(filtered_vcf.vcf)
+    // 4. QC Stats
+    // 使用过滤后的 VCF 进行统计
+    stats_out = vcf_stats(filtered_vcf.vcf.map{ id, prefix, vcf -> tuple(id, vcf) })
     plot_vcf_qc(stats_out.stats)
-
-    // --- Convert to MT ---
-    mt_out = vcf_to_mt_hail(filtered_vcf.vcf)
 
     emit:
     vcf = gz_vcf.vcf
@@ -117,10 +114,10 @@ process filter_vcftools_std {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(), path(vcf), val(job_config)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
+    tuple val(id), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
 
     script:
     """
@@ -129,7 +126,14 @@ process filter_vcftools_std {
     in="${vcf}"
     out="${id}.std.filtered"
 
-    vcftools --gzvcf "\${in}" \\
+    # 如果输入是压缩的，使用 --gzvcf
+    if [[ "\${in}" == *.gz ]] || [[ "\${in}" == *.bgz ]]; then
+        VCF_OPT="--gzvcf"
+    else
+        VCF_OPT="--vcf"
+    fi
+
+    vcftools \${VCF_OPT} "\${in}" \\
         --max-missing ${max_missing} \\
         --remove-indels \\
         --maf ${maf} \\
@@ -149,10 +153,10 @@ process filter_bcftools_std {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(), path(vcf), val(job_config)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
+    tuple val(id), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
 
     script:
     """
@@ -160,22 +164,21 @@ process filter_bcftools_std {
 
     bcftools view \\
         -m2 -M2 -v snps \\
-        -i 'MAF>=${maf} && AC>=${mac} && && F_MISSING<=${max_missing}' \\
+        -i 'MAF>=${maf} && AC>=${mac} && F_MISSING<=${max_missing}' \\
         -o ${id}.std.filtered.vcf \\
         ${vcf}
     """
 }
 
 process format_vcf_bgzip_idx {
-    tag { id ? "bgzip/tabix ${id}" : 'bgzip/tabix' }
-    // Use copy to keep files available for downstream processes (move would remove them before staging)
+    tag { prefix ? "bgzip/tabix ${prefix}" : 'bgzip/tabix' }
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(), val(prefix), path(vcf)
+    tuple val(id), val(prefix), path(vcf)
 
     output:
-    tuple val(), val(prefix), path("${prefix}.vcf.gz"), path("${prefix}.vcf.gz.tbi"), emit: vcf
+    tuple val(id), val(prefix), path("${prefix}.vcf.gz"), path("${prefix}.vcf.gz.tbi"), emit: vcf
 
     script:
     """
@@ -183,25 +186,18 @@ process format_vcf_bgzip_idx {
 
     in=${vcf}
     out=${prefix}.vcf.gz
-    echo "Processing VCF for work: ${.id}" >&2
 
     # 检查输入是否已经是 gzipped。
-    # 为了确保 tabix 索引的稳健性，我们必须确保文件是使用 bgzip 压缩的。
     if [[ "\${in}" == *.vcf.gz ]]; then
-        echo "Input VCF is already gzipped: \${in}" >&2
         in_base=\$(basename "\${in}")
-        # 避免同名文件链接冲突
         if [[ "\${in_base}" != "\${out}" ]]; then
             ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
         fi
     else
-        echo "Compressing VCF with bgzip: \${in} -> \${out}" >&2
         bgzip -c "\${in}" > "\${out}"
     fi
 
     # 尝试创建 tabix 索引。
-    # 如果失败（例如文件不是 BGZF 格式），则强制重新使用 bgzip 压缩并重试索引。
-    # 这种方式确保了 VCF 文件的稳健性，使其能够被后续工具（如 bcftools, plink）正确读取。
     if ! tabix -f -p vcf "\${out}"; then
         echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
         if [[ "\${in}" == *.vcf.gz ]]; then
@@ -216,16 +212,16 @@ process format_vcf_bgzip_idx {
 }
 
 process format_vcf_plink {
-    tag { id ? "plink ${id}" : 'plink' }
-    // Keep generated bed/bim/fam for further steps
+    tag { prefix ? "plink ${prefix}" : 'plink' }
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(), val(prefix), path(vcf), path(tbi)
+    tuple val(id), val(prefix), path(vcf), path(tbi)
 
     output:
-    tuple val(), path("${prefix}.bed"), path("${prefix}.bim"), path("${prefix}.fam"), emit: plink_bfile
+    tuple val(id), path("${prefix}.bed"), path("${prefix}.bim"), path("${prefix}.fam"), emit: plink_bfile
     path("${prefix}.ped"), emit: plink_ped
+
     script:
     """
     set -euo pipefail
@@ -258,12 +254,12 @@ process arrange_wheat_chr_by_awk {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(), path(input_file)
+    tuple val(id), path(input_file)
     path map_tsv
     tuple val(chrom_col), val(pos_col)
 
     output:
-    tuple val(), path("${input_file.baseName}.arr_chr.txt"), emit: vcf
+    tuple val(id), path("${input_file.baseName}.arr_chr.txt"), emit: vcf
 
     script:
     """
@@ -342,4 +338,3 @@ process arrange_wheat_chr_by_python {
         -p "${pos_col}"
     """
 }
-

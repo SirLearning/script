@@ -15,7 +15,7 @@ c_white  = "\033[0;37m";
 include { processor as PROCESSOR } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
-include { access as ASSESS } from './genotype/assess.nf'
+include { assess as ASSESS } from './genotype/assess.nf'
 include { annotate as ANNOTATE } from './genotype/annotate.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
@@ -97,23 +97,19 @@ summary['User']           = workflow.userName
 summary['Config Profile'] = workflow.profile
 summary['Home Dir']       = params.home_dir
 summary['Src Dir']        = params.src_dir
-summary['Module']         = params.mod
+summary['Run Mode']       = params.mod
 summary['Job ID']         = params.job
 summary['Tool']           = params.tool ?: 'plink'
 if(params.output_dir) summary['Output Dir'] = params.output_dir
 
 // --- Workflow ---
 workflow {
-    def ch_vcf = check_input.out.vcf
+    def input_out = check_input()
+    def ch_vcf = input_out.vcf
 
     // --- Main workflow execution ---
-    if (params.genotype_tool == 'hail') {
-        log.info "${c_purple}Using Hail platform for genotype processing${c_reset}"
-        hail_platform(ch_vcf)
-    } else {
-        log.info "${c_purple}Using default genotype processing pipeline${c_reset}"
-        build_genotype_database(ch_vcf)
-    }
+    log.info "${c_purple}Assessing genotype process tools${c_reset}"
+    assess_geno_tools(ch_vcf)
 }
 
 workflow check_input {
@@ -158,42 +154,36 @@ workflow check_input {
     vcf = ch_vcf
 }
 
-workflow build_genotype_database {
+workflow assess_geno_tools {
+    take:
+    ch_vcf
+
+    main:
+    def assess_out = ASSESS(ch_vcf)
+
+    emit:
+    qc_reports = assess_out.qc_reports
+}
+
+workflow build_geno_db {
     take:
     ch_vcf
 
     main:
     // Common processing (Filtering)
     PROCESSOR(ch_vcf)
-    def ch_filtered_vcf = PROCESSOR.out.vcf.map{ meta, id, vcf -> tuple(meta, vcf) }
-    ASSESS(ch_filtered_vcf)
-    STATS(ch_filtered_vcf)
-    KINSHIP(ch_filtered_vcf)
-    POPULATION_STRUCTURE(ch_filtered_vcf)
+    def ch_filtered_vcf = PROCESSOR.out.vcf.map{ id, prefix, vcf, tbi -> tuple(id, vcf) }
     
     emit:
     vcf = ch_filtered_vcf
 }
 
-workflow association_study {
+workflow build_pheno_db {
     // Placeholder
 }
 
-workflow hail_platform {
-    take:
-    ch_vcf
-
-    main:
-    // Hail Workflow
-    // Ensure these processes are properly imported or defined
-    HAIL(ch_vcf)
-    
-    if (params.pheno && params.trait) {
-        ch_pheno = Channel.fromPath(params.pheno)
-        ch_covar = params.covar ? Channel.fromPath(params.covar) : Channel.fromPath("NO_FILE").map{it -> file("NO_FILE")}
-        
-        HAIL_GWAS(ch_vcf, ch_pheno, ch_covar, params.trait)
-    }
+workflow association_study {
+    // Placeholder
 }
 
 // --- Completion Handler ---

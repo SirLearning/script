@@ -5,7 +5,6 @@ include { HAIL_PCA } from './hail_pca.nf'
 workflow population_structure {
     take:
     vcf_in
-    config
 
     main:
     
@@ -148,17 +147,17 @@ process run_geo_map {
 }
 
 process hail_export_plink {
-    tag "HailExportPLINK: ${meta.id}"
+    tag "HailExportPLINK: ${id}"
     publishDir "${params.outdir}/genotype/process", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("${meta.id}.bed"), path("${meta.id}.bim"), path("${meta.id}.fam"), emit: bed
+    tuple val(id), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bed
 
     script:
-    def prefix = meta.id
+    def prefix = id
     def ref = params.reference_genome ?: ""
     def ref_arg = ref ? "--reference ${ref}" : ""
     """
@@ -170,35 +169,35 @@ process hail_export_plink {
 }
 
 process vcf_to_plink {
-    tag "VCF2PLINK: ${meta.id}"
+    tag "VCF2PLINK: ${id}"
     
     input:
-    tuple val(meta), path(vcf)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("${meta.id}.bed"), path("${meta.id}.bim"), path("${meta.id}.fam"), emit: bed
+    tuple val(id), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bed
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     plink2 --vcf ${vcf} --make-bed --out ${prefix} --allow-extra-chr
     """
 }
 
 process run_admixture {
-    tag "Admixture: ${meta.id} K=${k}"
-    publishDir "${params.outdir}/genotype/population_structure/admixture/${meta.id}/K${k}", mode: 'copy'
+    tag "Admixture: ${id} K=${k}"
+    publishDir "${params.outdir}/genotype/population_structure/admixture/${id}/K${k}", mode: 'copy'
 
     input:
-    tuple val(meta), path(bed), path(bim), path(fam), val(k)
+    tuple val(id), path(bed), path(bim), path(fam), val(k)
 
     output:
-    tuple val(meta), path("*.Q"), emit: q_file
+    tuple val(id), path("*.Q"), emit: q_file
     path "*.P"
     path "*.log"
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     # Admixture requires .bed .bim .fam
     # It expects the input filename without extension
@@ -210,18 +209,18 @@ process run_admixture {
 }
 
 process plot_structure {
-    tag "PlotStructure: ${meta.id}"
+    tag "PlotStructure: ${id}"
     publishDir "${params.outdir}/genotype/population_structure/plots", mode: 'copy'
 
     input:
-    tuple val(meta), path(q_files)
+    tuple val(id), path(q_files)
 
     output:
     path "*.pdf"
     path "*.txt"
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     # Create a directory for Q files to pass to R script
     mkdir q_files
@@ -236,18 +235,18 @@ process plot_structure {
 }
 
 process run_allele_trend {
-    tag "AlleleTrend: ${meta.id}"
+    tag "AlleleTrend: ${id}"
     publishDir "${params.outdir}/genotype/population_structure/allele_trend", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(id), path(vcf)
     path metadata
 
     output:
     path "*.pdf"
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     # Convert VCF to 012 format
     vcftools --gzvcf ${vcf} --012 --out ${prefix}
@@ -263,18 +262,18 @@ process run_allele_trend {
 }
 
 process run_pca {
-    tag "PCA: ${meta.id}"
+    tag "PCA: ${id}"
     publishDir "${params.outdir}/genotype/population_structure", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf)
+    tuple val(id), path(vcf)
 
     output:
-    tuple val(meta), path("*.eigenvec"), emit: pca_results
+    tuple val(id), path("*.eigenvec"), emit: pca_results
     path "*.log"
 
     script:
-    def prefix = meta.id
+    def prefix = id
     """
     echo "Running PCA for population structure analysis on ${vcf}" > ${prefix}.log
 

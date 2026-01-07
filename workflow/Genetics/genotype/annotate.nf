@@ -15,21 +15,21 @@ workflow annotate {
 }
 
 process annotate_gene_vcf_bcftools {
-    tag { meta && meta.id ? "bcftools annotate ${meta.id}" : 'bcftools annotate' }
+    tag { id ? "bcftools annotate ${id}" : 'bcftools annotate' }
     publishDir 'output/annotate', mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf), val(job_config)
+    tuple val(id), path(vcf), val(job_config)
 
     output:
-    tuple val(meta) val("${meta.id}.annotated"), path("${meta.id}.annotated.vcf"), emit: vcf
+    tuple val(id), val("${id}.annotated"), path("${id}.annotated.vcf"), emit: vcf
 
     script:
     """
     set -euo pipefail
 
     in="${vcf}"
-    out="${meta.id}.annotated"
+    out="${id}.annotated"
 
     # Example annotation command, modify as needed
     bcftools annotate -a annotations.gff -c CHROM,FROM,TO,GENE -o "${out}.vcf" "${in}"
@@ -38,14 +38,14 @@ process annotate_gene_vcf_bcftools {
 }
 
 process prepare_tab_file {
-    tag { meta && meta.id ? "prepare tab file ${meta.id}" : 'prepare tab file' }
+    tag { id ? "prepare tab file ${id}" : 'prepare tab file' }
     publishDir 'output/annotate', mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf), val(job_config)
+    tuple val(id), path(vcf), val(job_config)
 
     output:
-    tuple val(meta) val("${meta.id}.annotations.tab"), path("${meta.id}.annotations.tab"), emit: tab
+    tuple val(id), val("${id}.annotations.tab"), path("${id}.annotations.tab"), emit: tab
 
     script:
     """
