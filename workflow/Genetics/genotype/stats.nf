@@ -1,8 +1,6 @@
 nextflow.enable.dsl=2
 
 // --- Genotype statistics workflow ---
-// Parameters
-def pc_num = 5
 
 workflow stats {
     take:
@@ -18,13 +16,13 @@ workflow stats {
         ch_het = PLINK_HET(ch_bfiles.bfiles)
         ch_pca = PLINK_PCA(ch_bfiles.bfiles)
 
-        ch_pca_plot = Channel.empty()
+        ch_pca_plot = channel.empty()
         if (params.enable_pca_plot) {
             def md = params.sample_metadata ? file(params.sample_metadata) : file('NO_METADATA')
             ch_pca_plot = PLOT_PLINK_PCA(ch_pca.pca, md)
         }
 
-        ch_plots = Channel.empty()
+        ch_plots = channel.empty()
         if (params.enable_simple_plots) {
             ch_plots = PLOT_PLINK_QC(ch_missing.missing, ch_freq.freq, ch_het.het)
         }
@@ -40,7 +38,7 @@ workflow stats {
 }
 
 process PLINK_FROM_VCF {
-    tag { id }
+    tag "${id}" 
     publishDir "${params.output_dir}/${params.job}/stats/plink", mode: 'copy'
 
     input:
@@ -63,7 +61,7 @@ process PLINK_FROM_VCF {
 }
 
 process PLINK_MISSING {
-    tag { id }
+    tag "${id}" 
     publishDir "${params.output_dir}/${params.job}/stats/missing", mode: 'copy'
 
     input:
@@ -80,7 +78,7 @@ process PLINK_MISSING {
 }
 
 process PLINK_FREQ {
-    tag { id }
+    tag "${id}" 
     publishDir "${params.output_dir}/${params.job}/stats/freq", mode: 'copy'
 
     input:
@@ -97,7 +95,7 @@ process PLINK_FREQ {
 }
 
 process PLINK_HET {
-    tag { id }
+    tag "${id}" 
     publishDir "${params.output_dir}/${params.job}/stats/het", mode: 'copy'
 
     input:
@@ -114,7 +112,7 @@ process PLINK_HET {
 }
 
 process PLINK_PCA {
-    tag { id }
+    tag "${id}"
     publishDir "${params.output_dir}/${params.job}/stats/pca", mode: 'copy'
 
     input:
@@ -131,7 +129,7 @@ process PLINK_PCA {
 }
 
 process PLOT_PLINK_PCA {
-    tag { id }
+    tag "${id}"
     publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy'
 
     input:
@@ -154,7 +152,7 @@ process PLOT_PLINK_PCA {
 }
 
 process PLOT_PLINK_QC {
-    tag { id }
+    tag "${id}"
     publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy'
 
     input:

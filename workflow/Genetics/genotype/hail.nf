@@ -1,14 +1,44 @@
 nextflow.enable.dsl=2
 
+workflow HAIL {
+    take:
+    // Expect a channel: [ val(id), path(vcf), val(job_config) ]
+    vcf_in
+
+    main:
+    // 1. Convert VCF to Hail MatrixTable
+    mt = vcf_to_mt_hail(vcf_in.map{ id, vcf, job_config -> tuple(id, id, vcf) })
+
+    // 2. Filter VCF using Hail
+    filtered_vcf = filter_hail(mt.mt.map{ id, mtx -> tuple(id, id + '.hail', mtx.path) }, vcf_in.map{ id, vcf, job_config -> job_config })
+
+    // 3. Hail QC
+    qc_stats = hail_qc(filtered_vcf.vcf)
+
+    // 4. Hail Kinship
+    kinship = hail_kinship(filtered_vcf.vcf)
+
+    // 5. Hail PCA
+    pca_results = hail_pca(filtered_vcf.vcf)
+
+    emit:
+    vcf = filtered_vcf.vcf
+    qc_stats = qc_stats.qc_stats
+    kinship = kinship.kinship
+    pca_scores = pca_results.scores
+    pca_loadings = pca_results.loadings
+    pca_eigenvalues = pca_results.eigenvalues
+}
+
 process vcf_to_mt_hail {
-    tag { meta.id ? "hail vcf2mt ${meta.id}" : 'hail vcf2mt' }
+    tag { id ? "hail vcf2mt ${id}" : 'hail vcf2mt' }
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(meta), val(prefix), path(vcf)
+    tuple val(id), val(prefix), path(vcf)
 
     output:
-    tuple val(meta), path("${prefix}.mt"), emit: mt
+    tuple val(id), path("${prefix}.mt"), emit: mt
 
     script:
     def ref = params.reference_genome ?: ""
@@ -22,25 +52,34 @@ process vcf_to_mt_hail {
 }
 
 process filter_hail {
-    tag { meta.id ? "hail filter ${meta.id}" : 'hail filter' }
+    tag { id ? "hail filter ${id}" : 'hail filter' }
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(meta), path(vcf), val(job_config)
+    tuple val(id), path(vcf), val(job_config)
 
     output:
-    tuple val(meta), val("${meta.id}.hail.filtered"), path("${meta.id}.hail.filtered.vcf.gz"), emit: vcf
+    tuple val(id), val("${id}.hail.filtered"), path("${id}.hail.filtered.vcf.gz"), emit: vcf
 
     script:
-    def id = meta.id
     def ref = params.reference_genome ?: ""
     def ref_arg = ref ? "--reference ${ref}" : ""
+    // --- Filter Parameters ---
+    // standard filter parameters (std)
+    def maf_val = params.maf ?: 0.05
+    def mac_val = params.mac ?: 2
+    def min_alleles = params.min_alleles ?: 2
+    def max_alleles = params.max_alleles ?: 2
+    def max_missing = params.max_missing ?: 0.05
+    // additional parameters can be added here
+    def qual = params.qual ?: 30
+    def hwe_pval =  params.hwe_pval ?: 1e-6
     """
     python ${params.src_dir}/python/genetics/hail/filter.py \
         --vcf ${vcf} \
         --out ${id}.hail.filtered \
-        --maf ${maf} \
-        --mac ${mac} \
+        --maf ${maf_val} \
+        --mac ${mac_val} \
         --min_alleles ${min_alleles} \
         --max_alleles ${max_alleles} \
         --max_missing ${max_missing} \

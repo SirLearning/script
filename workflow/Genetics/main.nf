@@ -1,16 +1,5 @@
 nextflow.enable.dsl=2
 
-// --- Colors ---
-c_reset  = "\033[0m";
-c_dim    = "\033[2m";
-c_black  = "\033[0;30m";
-c_green  = "\033[0;32m";
-c_yellow = "\033[0;33m";
-c_blue   = "\033[0;34m";
-c_purple = "\033[0;35m";
-c_cyan   = "\033[0;36m";
-c_white  = "\033[0;37m";
-
 // --- Include modules ---
 include { processor as PROCESSOR } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
@@ -21,13 +10,14 @@ include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 include { GWAS } from './static/gwas/gwas.nf'
 include { HAIL } from './genotype/hail.nf'
+include { getJobConfig } from './genotype/utils.nf'
 
 // --- Header ---
 def header() {
     return """
-    ${c_blue}=======================================================${c_reset}
-    ${c_green}      GENETIC PIPELINE (Static/Dynamic/Genotype)      ${c_reset}
-    ${c_blue}=======================================================${c_reset}
+    ${params.c_blue}=======================================================${params.c_reset}
+    ${params.c_green}      GENETIC PIPELINE (Static/Dynamic/Genotype)      ${params.c_reset}
+    ${params.c_blue}=======================================================${params.c_reset}
     """.stripIndent()
 }
 
@@ -56,51 +46,6 @@ def helpMessage() {
     """.stripIndent()
 }
 
-def getJobConfig(job, home_dir) {
-    def jobConfigs = [
-        "chr1": [
-            vcf_dir: "${params.home_dir}/00data/06vcf/01chr1"
-        ],
-        "test": [
-            vcf_dir: "${params.home_dir}/00data/06vcf/02test"
-        ],
-        "test_first": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.f1M.vcf"
-        ],
-        "test_middle": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.m1M.vcf"
-        ],
-        "test_last": [
-            vcf_file: "${params.home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
-        ],
-        "vmap4": [
-            vcf_dir: "${params.home_dir}/00data/06vcf/03vmap4"  // pending
-        ]
-    ]
-
-    if (!jobConfigs.containsKey(job)) {
-        log.error "Unknown job specified: ${job}"
-        System.exit(1)
-    }
-
-    return jobConfigs[job]
-}
-
-// --- Summary ---
-def summary = [:]
-summary['Pipeline Name']  = 'Genetics Pipeline'
-summary['Run Name']       = workflow.runName
-summary['Launch Dir']     = workflow.launchDir
-summary['Work Dir']       = workflow.workDir
-summary['Script Dir']     = workflow.projectDir
-summary['User']           = workflow.userName
-summary['Config Profile'] = workflow.profile
-summary['Home Dir']       = params.home_dir
-summary['Src Dir']        = params.src_dir
-summary['Run Mode']       = params.mod
-summary['Job ID']         = params.job
-summary['Tool']           = params.tool ?: 'plink'
-if(params.output_dir) summary['Output Dir'] = params.output_dir
 
 // --- Workflow ---
 workflow {
@@ -108,14 +53,21 @@ workflow {
     def ch_vcf = input_out.vcf
 
     // --- Main workflow execution ---
-    log.info "${c_purple}Assessing genotype process tools${c_reset}"
+    log.info "${params.c_purple}Assessing genotype process tools${params.c_reset}"
     assess_geno_tools(ch_vcf)
+
+    // --- Completion Handler ---
+    workflow.onComplete {
+        log.info "-\033[2m--------------------------------------------------\033[0m-"
+        log.info "Pipeline completed at: $workflow.complete"
+        log.info "Duration             : $workflow.duration"
+        log.info "Success              : $workflow.success"
+        log.info "Exit Status          : $workflow.exitStatus"
+        log.info "-\033[2m--------------------------------------------------\033[0m-"
+    }
 }
 
 workflow check_input {
-    take:
-    ch_vcf
-
     main:
     // Show help message
     if (params.help) {
@@ -124,25 +76,38 @@ workflow check_input {
     }
     // Print header and summary
     log.info header()
+    def summary = [:]
+    summary['Pipeline Name']  = 'Genetics Pipeline'
+    summary['Run Name']       = workflow.runName
+    summary['Launch Dir']     = workflow.launchDir
+    summary['Work Dir']       = workflow.workDir
+    summary['Script Dir']     = workflow.projectDir
+    summary['User']           = workflow.userName
+    summary['Config Profile'] = workflow.profile
+    summary['Home Dir']       = params.home_dir
+    summary['Src Dir']        = params.src_dir
+    summary['Run Mode']       = params.mod
+    summary['Job ID']         = params.job
+    summary['Tool']           = params.tool ?: 'plink'
+    if(params.output_dir) summary['Output Dir'] = params.output_dir
     log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
     log.info "-\033[2m--------------------------------------------------\033[0m-"
     // --- Input Handling ---
     def job_config = getJobConfig(params.job, params.home_dir)
     // Build input channel of VCF tuples: [ val(id), path(vcf) ]
-    def ch_vcf
     if (job_config.vcf_file) {
         def f = file(job_config.vcf_file)
-        log.info "${c_green}Using VCF file:${c_reset} ${f}"
+        log.info "${params.c_green}Using VCF file:${params.c_reset} ${f}"
         if (!f.exists()) {
             log.error "Mod VCF file not found: ${f}"
             exit 1
         }
         def id = f.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, '')
-        ch_vcf = Channel.of([ id, f ])
+        ch_vcf = channel.of([ id, f ])
     } else if (job_config.vcf_dir) {
         def pattern = "${job_config.vcf_dir}/*.{vcf,vcf.gz,vcf.bgz}"
-        log.info "${c_green}Using VCF dir:${c_reset} ${pattern}"
-        ch_vcf = Channel.fromPath(pattern, checkIfExists: true)
+        log.info "${params.c_green}Using VCF dir:${params.c_reset} ${pattern}"
+        ch_vcf = channel.fromPath(pattern, checkIfExists: true)
             .map { vcf -> [ vcf.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, ''), vcf ] }
     } else {
         helpMessage()
@@ -184,16 +149,6 @@ workflow build_pheno_db {
 
 workflow association_study {
     // Placeholder
-}
-
-// --- Completion Handler ---
-workflow.onComplete {
-    log.info "-\033[2m--------------------------------------------------\033[0m-"
-    log.info "Pipeline completed at: $workflow.complete"
-    log.info "Duration             : $workflow.duration"
-    log.info "Success              : $workflow.success"
-    log.info "Exit Status          : $workflow.exitStatus"
-    log.info "-\033[2m--------------------------------------------------\033[0m-"
 }
 
 

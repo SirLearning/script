@@ -1,38 +1,26 @@
 nextflow.enable.dsl=2
 
-include { HAIL_PCA } from './hail_pca.nf'
-
 workflow population_structure {
     take:
     vcf_in
 
     main:
     
-    plink_bed = Channel.empty()
-    pca_results = Channel.empty()
+    plink_bed = channel.empty()
+    pca_results = channel.empty()
 
-    if (params.tool == 'hail') {
-        // Hail PCA
-        HAIL_PCA(vcf_in)
-        pca_results = HAIL_PCA.out.scores
-        
-        // Hail Export to PLINK (with LD pruning) for Admixture
-        plink_bed = hail_export_plink(vcf_in).bed
-        
-    } else {
-        // Run PCA for Population Structure Analysis
-        pca_results = run_pca(vcf_in).pca_results
-        
-        // Run Admixture Analysis
-        // 1. Convert VCF to PLINK BED
-        plink_bed = vcf_to_plink(vcf_in).bed
-    }
+    // Run PCA for Population Structure Analysis
+    pca_results = run_pca(vcf_in).pca_results
+    
+    // Run Admixture Analysis
+    // 1. Convert VCF to PLINK BED
+    plink_bed = vcf_to_plink(vcf_in).bed
     
     // Common Admixture Pipeline
     // 2. Run Admixture for K=2 to K=10 (or params.max_k)
     // We create a channel of Ks
     def max_k = params.max_k ?: 5
-    k_range = Channel.from(2..max_k)
+    k_range = channel.from(2..max_k)
     
     // Combine bed files with K range
     admixture_input = plink_bed.combine(k_range)
@@ -49,7 +37,7 @@ workflow population_structure {
     
     // 4. Additional Visualizations (if metadata provided)
     if (params.metadata) {
-        metadata_ch = Channel.fromPath(params.metadata)
+        metadata_ch = channel.fromPath(params.metadata)
         
         // Allele Frequency Trend by Latitude
         run_allele_trend(vcf_in, metadata_ch)
@@ -61,7 +49,7 @@ workflow population_structure {
     // 5. XP-CLR Gene Analysis (Optional)
     // Requires params.xpclr_genes file: GeneName, Chr, Pos, Threshold(optional), Centromere(optional)
     if (params.xpclr_genes && params.xpclr_results_dir) {
-        gene_info = Channel.fromPath(params.xpclr_genes)
+        gene_info = channel.fromPath(params.xpclr_genes)
             .splitCsv(header: true, sep: '\t')
         
         // We need to find the corresponding XP-CLR output file for each gene
@@ -72,7 +60,7 @@ workflow population_structure {
     
     // 6. Sample Clustering based on Environmental Data (Optional)
     if (params.env_data) {
-        env_ch = Channel.fromPath(params.env_data)
+        env_ch = channel.fromPath(params.env_data)
         run_sample_cluster(env_ch)
     }
 
