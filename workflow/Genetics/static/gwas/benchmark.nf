@@ -35,12 +35,8 @@ params.python = params.python ?: 'python'
 // Default pythonpath: repo/src/python (relative to this file: ../../../src/python)
 params.pythonpath = params.pythonpath ?: null
 
-// Helper to resolve default PYTHONPATH if not provided
-def defaultPythonPath = new File("${baseDir}/../../../src/python").canonicalPath
-def PY_PATH = params.pythonpath ?: defaultPythonPath
-
 process BUILD_MANIFEST_FROM_DIR {
-	tag { "build-manifest" }
+	tag "build-manifest"
 	publishDir "${params.outdir}", mode: 'copy'
 
 	input:
@@ -64,7 +60,7 @@ process BUILD_MANIFEST_FROM_DIR {
 }
 
 process RUN_GWAS_BENCHMARK {
-	tag { "gwas-benchmark" }
+	tag "gwas-benchmark"
 	publishDir "${params.outdir}", mode: 'copy'
 	cpus 2
 	memory '4 GB'
@@ -81,6 +77,10 @@ process RUN_GWAS_BENCHMARK {
 	path "benchmark.log"
 
 	script:
+	// Helper to resolve default PYTHONPATH if not provided
+	// TODO: PY is not phenotype
+	def defaultPythonPath = new File("${baseDir}/../../../src/python").canonicalPath
+	def PY_PATH = params.pythonpath ?: defaultPythonPath
 	def truth = params.truth ? "--truth ${params.truth}" : ''
 	def tw = params.truth_window ? "--truth-window ${params.truth_window}" : ''
 	def topk = params.topk ? "--topk ${params.topk}" : ''
@@ -97,16 +97,16 @@ process RUN_GWAS_BENCHMARK {
 }
 
 workflow {
-	Channel
+	channel
 		.of(1)
 		.set { start }
 
-	ch_manifest = Channel.empty()
+	ch_manifest = channel.empty()
 
 	if (params.manifest) {
-		ch_manifest = Channel.fromPath(params.manifest)
+		ch_manifest = channel.fromPath(params.manifest)
 	} else if (params.methods_dir) {
-		def ch_opts = Channel.of(tuple(params.methods_dir as String, params.methods_glob as String))
+		def ch_opts = channel.of(tuple(params.methods_dir as String, params.methods_glob as String))
 		ch_manifest = BUILD_MANIFEST_FROM_DIR(ch_opts).manifest
 	} else {
 		log.error "Provide either --manifest or --methods_dir"

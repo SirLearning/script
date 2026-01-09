@@ -37,6 +37,36 @@ def getJavaSetupScript(javaVersion, javaLibDir) {
     """.stripIndent()
 }
 
+def getJobConfig(job, home_dir) {
+    def jobConfigs = [
+        "chr1": [
+            vcf_dir: "${home_dir}/00data/06vcf/01chr1"
+        ],
+        "test": [
+            vcf_dir: "${home_dir}/00data/06vcf/02test"
+        ],
+        "test_first": [
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.f1M.vcf"
+        ],
+        "test_middle": [
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.m1M.vcf"
+        ],
+        "test_last": [
+            vcf_file: "${home_dir}/00data/06vcf/02test/chr001.l1M.vcf"
+        ],
+        "vmap4": [
+            vcf_dir: "${home_dir}/00data/06vcf/03vmap4"  // pending
+        ]
+    ]
+
+    if (!jobConfigs.containsKey(job)) {
+        log.error "Unknown job specified: ${job}"
+        System.exit(1)
+    }
+
+    return jobConfigs[job]
+}
+
 def getServerPopulations(tbm_gen_server) {
     def serverPopulations = [
         "s115": ["S", "D", "A", "AB", "ABD", "WAP", "HZNU", "Nature"],

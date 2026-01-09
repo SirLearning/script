@@ -1,12 +1,42 @@
 nextflow.enable.dsl = 2
 
-include { HAIL_GWAS } from './hail_gwas.nf'
+include { format_vcf_plink } from '../../genotype/processor.nf'
 
 // Utilities
 def toCsvList(list) { list ? list.join(',') : '' }
 
+workflow GWAS {
+    take:
+    ch_vcf
+    ch_pheno
+    ch_covar
 
-process COMPUTE_PCA {
+    main:
+    // TODO: Ensure vcf_to_plink is included or defined
+    // ch_plink = vcf_to_plink(ch_vcf).plink
+    // For now, assuming VCF_TO_PLINK is defined elsewhere or will be renamed
+    ch_plink = format_vcf_plink(ch_vcf).plink
+    ch_eigen = compute_pca(ch_plink).eigen
+
+    // fam path for pheno/covar prep
+    ch_fam = ch_plink.map { bed,bim,fam -> fam }
+    ch_pcv = prepare_pheno_and_covar(ch_pheno, ch_covar, ch_fam, ch_eigen).pcv
+
+    // Pair genotype tuple with pheno/covar tuple (single combination)
+    ch_pair = ch_plink.combine(ch_pcv).map { pl, pcv ->
+        // pl is [bed,bim,fam], pcv is [pheno,covar]
+        tuple(pl[0], pl[1], pl[2], pcv[0], pcv[1])
+    }
+
+    ch_run1  = run_plink_glm(ch_pair)
+    ch_run2  = run_rmvp_or_gapit(ch_pair)
+    results = ch_run1.mix(ch_run2)
+
+    emit:
+    results
+}
+
+process compute_pca {
     tag "plink pca"
     publishDir params.outdir + '/run', mode: 'copy'
 
@@ -24,7 +54,7 @@ process COMPUTE_PCA {
     """
 }
 
-process PREPARE_PHENO_AND_COVAR {
+process prepare_pheno_and_covar {
     tag "prep pheno/covar"
     publishDir params.outdir + '/run', mode: 'copy'
 
@@ -32,7 +62,7 @@ process PREPARE_PHENO_AND_COVAR {
     path pheno
     val covar_path
     path fam
-    path eigen optional true
+    path eigen
 
     output:
     tuple path('pheno.txt'), path('covar.txt'), emit: pcv
@@ -44,50 +74,50 @@ process PREPARE_PHENO_AND_COVAR {
         """
         set -euo pipefail
         # Build PLINK pheno.txt with header: FID IID <trait>
-        awk -F'[\t,]' 'BEGIN{OFS="\t"}
+        awk -F'[\\t,]' 'BEGIN{OFS="\\t"}
             NR==1{
-                for(i=1;i<=NF;i++){h[tolower($i)]=i}
+                for(i=1;i<=NF;i++){h[tolower(\$i)]=i}
                 print "FID","IID","${trait}"; next
             }
             {
-                id=$h[tolower("${idcol}")]; tr=$h[tolower("${trait}")];
-                if(id>0 && tr>0){print $id,$id,$tr}
+                id=\$h[tolower("${idcol}")]; tr=\$h[tolower("${trait}")];
+                if(id>0 && tr>0){print \$id,\$id,\$tr}
             }
         ' ${pheno} > pheno.txt
 
         # Build covar.txt: either user covar (FID IID covs...) or PCs from eigenvec
         if [ -n "${covar_path}" ] && [ -s "${covar_path}" ]; then
-                    awk -F'[\t,]' 'BEGIN{OFS="\t"}
+            awk -F'[\\t,]' 'BEGIN{OFS="\\t"}
                 NR==1{
-                    for(i=1;i<=NF;i++){h[tolower($i)]=i; names[i]=$i}
+                    for(i=1;i<=NF;i++){h[tolower(\$i)]=i; names[i]=\$i}
                     # select covariate columns
-                            selc = split(tolower("${covnames}"), sel, /,/); n=0
-                            if(selc>0 && sel[1]!=""){
+                    selc = split(tolower("${covnames}"), sel, /,/); n=0
+                    if(selc>0 && sel[1]!=""){
                         for(i=1;i<=NF;i++){ for(j in sel){ if(tolower(names[i])==sel[j]){ pick[++n]=i } } }
                     } else {
                         for(i=1;i<=NF;i++){ if(tolower(names[i])!=tolower("${idcol}")) pick[++n]=i }
                     }
                     # header
-                    printf "FID\tIID"; for(i=1;i<=n;i++){ printf "\t%s", names[pick[i]] } printf "\n"; next
+                    printf "FID\\tIID"; for(i=1;i<=n;i++){ printf "\\t%s", names[pick[i]] } printf "\\n"; next
                 }
                 {
-                    id=h[tolower("${idcol}")]; if(id>0){ printf "%s\t%s", $id,$id; for(i=1;i<=n;i++){ printf "\t%s", $(pick[i]) } printf "\n" }
+                    id=h[tolower("${idcol}")]; if(id>0){ printf "%s\\t%s", \$id,\$id; for(i=1;i<=n;i++){ printf "\\t%s", \$(pick[i]) } printf "\\n" }
                 }
             ' ${covar_path} > covar.txt
         else
             if [ -s "${eigen}" ]; then
                 # eigenvec columns: FID IID PC1..PC10
-                awk 'BEGIN{OFS="\t"} {printf "%s\t%s", $1,$2; for(i=3;i<=12;i++){printf "\t%s", $i} printf "\n"}' geno.eigenvec > covar.txt
-                sed -i '1iFID\tIID\tPC1\tPC2\tPC3\tPC4\tPC5\tPC6\tPC7\tPC8\tPC9\tPC10' covar.txt
+                awk 'BEGIN{OFS="\\t"} {printf "%s\\t%s", \$1,\$2; for(i=3;i<=12;i++){printf "\\t%s", \$i} printf "\\n"}' geno.eigenvec > covar.txt
+                sed -i '1iFID\\tIID\\tPC1\\tPC2\\tPC3\\tPC4\\tPC5\\tPC6\\tPC7\\tPC8\\tPC9\\tPC10' covar.txt
             else
                 # minimal covar with only IDs
-                awk 'BEGIN{OFS="\t"} {print $1,$2}' geno.fam | sed '1iFID\tIID' > covar.txt
+                awk 'BEGIN{OFS="\\t"} {print \$1,\$2}' geno.fam | sed '1iFID\\tIID' > covar.txt
             fi
         fi
         """
 }
 
-process RUN_PLINK_GLM {
+process run_plink_glm {
     tag "plink glm ${params.trait}"
     publishDir params.outdir + "/results/${params.trait}/plink_glm", mode: 'copy'
 
@@ -110,7 +140,7 @@ process RUN_PLINK_GLM {
     """
 }
 
-process RUN_RMVP_OR_GAPIT {
+process run_rmvp_or_gapit {
     tag "${params.gwas_engine} ${params.trait}"
     publishDir params.outdir + "/results/${params.trait}/${params.gwas_engine}", mode: 'copy'
 
@@ -139,7 +169,7 @@ process RUN_RMVP_OR_GAPIT {
     """
 }
 
-process RUN_GWAS_GAPIT {
+process run_gwas_gapit {
     tag "GWAS GAPIT: ${meta.id}"
     publishDir "${params.outdir}/run/gapit", mode: 'copy'
 
@@ -167,7 +197,7 @@ process RUN_GWAS_GAPIT {
     """
 }
 
-process RUN_GWAS_PLINK {
+process run_gwas_plink {
     tag "GWAS PLINK: ${meta.id}"
     publishDir "${params.outdir}/run/plink", mode: 'copy'
 
@@ -205,42 +235,10 @@ process RUN_GWAS_PLINK {
     """
 }
 
-workflow GWAS {
-    take:
-    ch_vcf
-    ch_pheno
-    ch_covar
-
-    main:
-    if (params.tool == 'hail') {
-        HAIL_GWAS(ch_vcf, ch_pheno, ch_covar, params.trait)
-        results = HAIL_GWAS.out.results
-    } else {
-        ch_plink = VCF_TO_PLINK(ch_vcf).plink
-        ch_eigen = COMPUTE_PCA(ch_plink).eigen
-
-        // fam path for pheno/covar prep
-        ch_fam = ch_plink.map { bed,bim,fam -> fam }
-        ch_pcv = PREPARE_PHENO_AND_COVAR(ch_pheno, ch_covar, ch_fam, ch_eigen).pcv
-
-        // Pair genotype tuple with pheno/covar tuple (single combination)
-        ch_pair = ch_plink.combine(ch_pcv).map { pl, pcv ->
-            // pl is [bed,bim,fam], pcv is [pheno,covar]
-            tuple(pl[0], pl[1], pl[2], pcv[0], pcv[1])
-        }
-
-        ch_run1  = RUN_PLINK_GLM(ch_pair)
-        ch_run2  = RUN_RMVP_OR_GAPIT(ch_pair)
-        results = ch_run1.mix(ch_run2)
-    }
-
-    emit:
-    results
-}
-
 process plot_gwas {
-    tag { file("${res}").baseName }
+    tag "${res.baseName}"
     publishDir "${params.outdir}/post", mode: 'copy'
+
 
     input:
     path res
@@ -272,13 +270,13 @@ process plot_gwas {
       read.table(infile, header = TRUE, sep = "\t", stringsAsFactors = FALSE, comment.char = "")
     }, error = function(e) NULL)
 
-    ok <- !is.null(df) && all(c("CHR", "BP") %in% names(df)) && any(grepl("^P$|^P_BOLT|^P\.|^PVAL$", names(df)))
+    ok <- !is.null(df) && all(c("CHR", "BP") %in% names(df)) && any(grepl("^P\$|^P_BOLT|^P\\.|^PVAL\$", names(df)))
     if (isTRUE(ok)) {
       pcol <- intersect(c("P", "P_BOLT", "P.", "PVAL"), names(df))[1]
       # basic cleanup: ensure numeric
-      df$CHR <- as.integer(df$CHR)
-      df$BP  <- as.integer(df$BP)
-      df$SNP <- if ("SNP" %in% names(df)) df$SNP else sprintf("%s:%s", df$CHR, df$BP)
+      df\$CHR <- as.integer(df\$CHR)
+      df\$BP  <- as.integer(df\$BP)
+      df\$SNP <- if ("SNP" %in% names(df)) df\$SNP else sprintf("%s:%s", df\$CHR, df\$BP)
       df[[pcol]] <- suppressWarnings(as.numeric(df[[pcol]]))
 
       png(sprintf("%s.manhattan.png", base), width = 1400, height = 600)

@@ -13,17 +13,6 @@ nextflow.enable.dsl=2
  * 注意：所有的 gzip 压缩均采用 bgzip 格式，以支持 tabix 随机访问。
  */
 
-// --- Filter Parameters ---
-// standard filter parameters (std)
-def maf = 0.05
-def mac = 2
-def min_alleles = 2
-def max_alleles = 2
-def max_missing = 0.05
-// additional parameters can be added here
-def qual = 30
-def hwe_pval = 1e-6
-
 workflow processor {
     take:
     // Expect a channel: [ val(id), path(vcf) ]
@@ -33,11 +22,11 @@ workflow processor {
     // --- filtering steps ---
     log.info """\
     Starting VCF filtering using standard parameters:
-        MAF >= ${maf}
-        MAC >= ${mac}
-        Min Alleles = ${min_alleles}
-        Max Alleles = ${max_alleles}
-        Max Missing = ${max_missing}
+        MAF >= ${params.maf}
+        MAC >= ${params.mac}
+        Min Alleles = ${params.min_alleles}
+        Max Alleles = ${params.max_alleles}
+        Max Missing = ${params.max_missing}
     """
     
     // 1. 首先进行过滤
@@ -64,7 +53,7 @@ workflow processor {
 }
 
 process vcf_stats {
-    tag { id ? "vcf stats ${id}" : 'vcf stats' }
+    tag "${id}" ? "vcf stats ${id}" : 'vcf stats' 
     publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
 
     input:
@@ -86,7 +75,7 @@ process vcf_stats {
 }
 
 process plot_vcf_qc {
-    tag { id ? "plot qc ${id}" : 'plot qc' }
+    tag "${id}" ? "plot qc ${id}" : 'plot qc'
     publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
 
     input:
@@ -110,7 +99,7 @@ process plot_vcf_qc {
 }
 
 process filter_vcftools_std {
-    tag { id ? "vcftools filter ${id}" : 'vcftools filter' }
+    tag "${id}" ? "vcftools filter ${id}" : 'vcftools filter'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
@@ -134,12 +123,12 @@ process filter_vcftools_std {
     fi
 
     vcftools \${VCF_OPT} "\${in}" \\
-        --max-missing ${max_missing} \\
+        --max-missing ${params.max_missing} \\
         --remove-indels \\
-        --maf ${maf} \\
-        --min-alleles ${min_alleles} \\
-        --max-alleles ${max_alleles} \\
-        --mac ${mac} \\
+        --maf ${params.maf} \\
+        --min-alleles ${params.min_alleles} \\
+        --max-alleles ${params.max_alleles} \\
+        --mac ${params.mac} \\
         --recode \\
         --recode-INFO-all \\
         --out "\${out}"
@@ -149,7 +138,7 @@ process filter_vcftools_std {
 }
 
 process filter_bcftools_std {
-    tag { id ? "bcftools filter ${id}" : 'bcftools filter' }
+    tag "${id}" ? "bcftools filter ${id}" : 'bcftools filter'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
@@ -164,14 +153,14 @@ process filter_bcftools_std {
 
     bcftools view \\
         -m2 -M2 -v snps \\
-        -i 'MAF>=${maf} && AC>=${mac} && F_MISSING<=${max_missing}' \\
+        -i 'MAF>=${params.maf} && AC>=${params.mac} && F_MISSING<=${params.max_missing}' \\
         -o ${id}.std.filtered.vcf \\
         ${vcf}
     """
 }
 
 process format_vcf_bgzip_idx {
-    tag { prefix ? "bgzip/tabix ${prefix}" : 'bgzip/tabix' }
+    tag "${prefix}" ? "bgzip/tabix ${prefix}" : 'bgzip/tabix'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
@@ -212,7 +201,7 @@ process format_vcf_bgzip_idx {
 }
 
 process format_vcf_plink {
-    tag { prefix ? "plink ${prefix}" : 'plink' }
+    tag "${prefix}" ? "plink ${prefix}" : 'plink'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
@@ -250,7 +239,7 @@ process format_vcf_plink {
 
 // only for text files
 process arrange_wheat_chr_by_awk {
-    tag { id ? "arrange chrom pos awk ${id}" : 'arrange chrom pos awk' }
+    tag "${id}" ? "arrange chrom pos awk ${id}" : 'arrange chrom pos awk'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
@@ -317,7 +306,7 @@ process arrange_wheat_chr_by_awk {
 
 // only for text files
 process arrange_wheat_chr_by_python {
-    tag { id ? "arrange chrom pos ${id}" : 'arrange chrom pos' }
+    tag "${id}" ? "arrange chrom pos ${id}" : 'arrange chrom pos'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
