@@ -251,7 +251,7 @@ workflow runFastCall3_workflow {
             // chromosomes += ["7","13","38"]  // temporary remove some chr for finished job
             // chromosomes += ["38"]  // temporary remove some chr for finished job
             // chromosomes += ["20"]  // temporary remove some chr for finished job
-            chromosomes += []  // temporary remove some chr for finished job
+            chromosomes += ["14"]  // temporary remove some chr for finished job
         }
         if (job_config.b_pop && job_config.b_pop.size() > 0) {
             // chromosomes += ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
@@ -260,7 +260,7 @@ workflow runFastCall3_workflow {
             // chromosomes += ["9","10","15","21","22","27","33","39","40"]
             // chromosomes += ["10","27","40"]
             // chromosomes += ["3","27","33"]
-            chromosomes += ["33"]
+            chromosomes += []
         }
         if (job_config.d_pop && job_config.d_pop.size() > 0) {
             // chromosomes += ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
