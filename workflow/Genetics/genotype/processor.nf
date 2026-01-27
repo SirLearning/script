@@ -52,6 +52,24 @@ workflow processor {
     plink_ped  = plink_out.plink_ped
 }
 
+workflow plink_processor {
+    take:
+    // Expect a channel: [ val(id), path(vcf) ]
+    vcf_in
+
+    main:
+    // 1. 对输入的 VCF 进行 bgzip 压缩并建立 tabix 索引
+    gz_vcf = format_vcf_bgzip_idx(vcf_in)
+
+    // 2. 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
+    plink_out = format_vcf_plink(gz_vcf.vcf)
+
+    emit:
+    vcf = gz_vcf.vcf
+    plink_bfile = plink_out.plink_bfile
+    plink_ped  = plink_out.plink_ped
+}
+
 process vcf_stats {
     tag "${id}" ? "vcf stats ${id}" : 'vcf stats' 
     publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
