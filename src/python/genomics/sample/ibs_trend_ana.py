@@ -1,16 +1,21 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 import os
 
-# Configuration
-MATRIX_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs"
-ID_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs.id"
-GROUP_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/sample_group.txt"
-OUTPUT_FILE = "ab_ibs_trend_plot.png"
 
-def main():
+def ab_ibs_trend(
+    matrix_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs",
+    id_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs.id", 
+    group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_group.txt",
+    output_prefix="ab_ibs_trend_plot"
+):
+    # Map arguments to legacy variable names
+    MATRIX_FILE = matrix_file
+    ID_FILE = id_file
+    GROUP_FILE = group_file
+    OUTPUT_FILE = f"{output_prefix}.png"
+
     print("Starting AB IBS Trend Analysis...")
     
     # 1. Read IDs
@@ -316,7 +321,7 @@ def main():
                               col1='Mean_A', col2='Mean_AB', col3='Mean_Others',
                               labels=['Mean IBS (vs A)', 'Mean IBS (vs AB)', 'Mean IBS (vs Others)'],
                               title='IBS Trend (A -> AB -> Others)',
-                              filename='ab_ibs_trend_three_axis.png')
+                              filename=f'{output_prefix}_three_axis.png')
 
 if __name__ == "__main__":
-    main()
+    ab_ibs_trend()

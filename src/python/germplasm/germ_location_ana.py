@@ -131,7 +131,7 @@ def map_country_to_continent(country, mapping):
             
     return 'Unknown'
 
-def main():
+def ck_location():
     # 1. 定义文件路径
     home_dir = os.path.expanduser("/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208/germplasm")
     # home_dir = "/data/home/tusr1" # Explicit based on environment
@@ -758,5 +758,4 @@ def main():
     print(f"Nature (Total): {len(nature_continents)}")
     print(f"Sum: {len(vmap3_continents) + len(v4_unique_continents) + len(watkins_continents) + len(nature_continents)}")
 
-if __name__ == "__main__":
-    main()
+

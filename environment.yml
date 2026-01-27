@@ -1,0 +1,24 @@
+name: stats
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+dependencies:
+  - python=3.12
+  - openjdk=11  # Hail JDK requirement
+  - plink
+  - plink2
+  - samtools
+  - bcftools
+  - vcftools
+  - pip
+  - pip:
+      - hail   # Conda environment pip fine-grained installation
+      - -e .   # Editable install of your own python_script package
+
+# 1. can be created with:
+# conda env create -f environment.yml
+# 2. or update an existing environment with:
+# conda env update -f environment.yml

@@ -1,15 +1,22 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="bio_scripts",
+    name="python_script",
     version="0.1.0",
-    description="Bioinformatics analysis scripts and utilities",
+    description="Analysis scripts and utilities by dazheng",
     package_dir={"": "src/python"},
     packages=find_packages(where="src/python"),
     python_requires=">=3.8",
     install_requires=[
-        "pandas",
+        "cookiecutter",
+        "fastcluster",
+        "matplotlib",
         "numpy",
-        # Add other dependencies here
+        "pandas",
+        "PyYAML",
+        "scikit-learn",
+        "scipy",
+        "seaborn",
+        "upsetplot",
     ],
 )

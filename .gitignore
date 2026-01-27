@@ -9,9 +9,12 @@
 .Rhistory
 .RData
 .Ruserdata
+.lintr
 
 # for Python
 __pycache__/
+*.egg-info/
+/src/python/build/
 
 # for IDEs
 .idea/

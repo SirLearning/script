@@ -1,8 +1,8 @@
 nextflow.enable.dsl=2
 
-// --- Include modules ---
+// --- Include workflow modules ---
 include { processor as PROCESSOR } from './genotype/processor.nf'
-include { plink_processor as PLINK_PROCESSOR } from './genotype/plink_processor.nf'
+include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { assess as ASSESS } from './genotype/assess.nf'
@@ -11,6 +11,7 @@ include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 include { GWAS } from './static/gwas/gwas.nf'
 include { HAIL } from './genotype/hail.nf'
+// --- Include util functions ---
 include { getJobConfig } from './genotype/utils.nf'
 
 // --- Header ---

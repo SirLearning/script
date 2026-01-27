@@ -1,0 +1,35 @@
+name: stats-r
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/pytorch
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+dependencies:
+  - r-base=4.3.1
+  - python=3.12
+  - radian
+
+  # Data processing and general plotting (Tidyverse family)
+  - r-tidyverse
+  - r-data.table
+
+  # Bioinformatics specific packages
+  - r-vcfr          # For handling VCF files (for your FastCall project)
+  - r-adegenet      # Population genetics analysis
+
+  # Enhanced plotting (Publication Quality)
+  - r-ggpubr        # Simplified and beautiful plots
+  - r-pheatmap      # Essential for heatmaps
+  - r-ggrepel       # Solves label overlap issues
+  - r-patchwork     # Plot composition tool
+  - r-rcolorbrewer  # Classic color schemes
+
+  # Commonly used Bioconductor core tools
+  - bioconductor-biocmanager
+  - bioconductor-complexheatmap  # Powerful complex heatmaps
+  - bioconductor-deseq2          # Differential expression analysis (optional)
+
+  # Cross-language collaboration (optional)
+  - r-reticulate    # For calling Python scripts from R
+

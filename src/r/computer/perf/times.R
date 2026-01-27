@@ -21,7 +21,7 @@ userTime = c(176.303062000, 1381.087839000, 2152.393975000, 4085.091478000, 1283
 # logSysTime = log(sysTime)
 
 par(pin = c(4, 6))
-
+linters: with_defaults(line_length_linter = NULL)
 # # log mode
 # plot(logRealTime~sampleNum, type="b", bty="l",
 #      xlab="value of a", ylab="value of b", cex.lab = 1.5,
