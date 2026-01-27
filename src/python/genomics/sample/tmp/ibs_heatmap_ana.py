@@ -4,14 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
 import os
-
-# Try to import fastcluster to ensure efficient clustering
-try:
-    import fastcluster
-    print("Success: 'fastcluster' library detected. Clustering will be optimized.")
-except ImportError:
-    print("Warning: 'fastcluster' not found. Clustering large matrices will be very slow.")
-    print("Please install it: pip install fastcluster")
+import fastcluster
 
 # Settings
 FILE_PATHS = {
@@ -34,25 +27,25 @@ FILE_PATHS = {
 
 GROUP_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/sample_group.txt"
 
-# Group Color Palette
-GROUP_COLORS = {
-    'A': 'red',
-    'AB': 'orange',
-    'ABD': 'green',
-    'Watkins': 'blue',
-    'HZNU': 'purple',
-    'WAP': 'brown',
-    'Nature': 'cyan',
-    'Others': 'grey',
-    'S': 'pink',
-    'D': 'yellow'
-}
-
 def process_and_plot_heatmap(name, config):
     print(f"\nProcessing {name} IBS Matrix for Heatmap...")
     mat_file = config["matrix"]
     id_file = config["id"]
     out_prefix = config["output_prefix"]
+    
+    # Group Color Palette
+    GROUP_COLORS = {
+        'A': 'red',
+        'AB': 'orange',
+        'ABD': 'green',
+        'Watkins': 'blue',
+        'HZNU': 'purple',
+        'WAP': 'brown',
+        'Nature': 'cyan',
+        'Others': 'grey',
+        'S': 'pink',
+        'D': 'yellow'
+    }
     
     # 1. Read IDs
     print(f"Reading IDs from {id_file}...")

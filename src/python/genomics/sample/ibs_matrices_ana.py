@@ -5,65 +5,25 @@ import seaborn as sns
 import sys
 import os
 
-# Settings
-NORMAL_IBS_PREFIX = "normal_ibs"
-RAW_IBS_PREFIX = "raw_sample_ibs"
-
-FILE_PATHS = {
-    "Normal": {
-        "matrix": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.mibs",
-        "id": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.mibs.id",
-        "output_prefix": "normal_ibs"
-    },
-    "RawSample": {
-        "matrix": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_sample.mibs",
-        "id": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_sample.mibs.id",
-        "output_prefix": "raw_sample_ibs"
-    },
-    "RawMissingFilteredSample": {
-        "matrix": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs",
-        "id": "/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs.id",
-        "output_prefix": "raw_missing_filtered_ibs"
+def show_ibs(
+    tag="ibs_analysis",
+    matrix_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs",
+    id_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.ibs.raw_missing.mibs.id",
+    output_prefix="ibs_analysis",
+    group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_group.txt"
+):
+    file_config = {
+        "matrix": matrix_file,
+        "id": id_file,
+        "output_prefix": output_prefix
     }
-}
 
-GROUP_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/sample_group.txt"
+    # Run for both
+    process_and_plot(tag, file_config, group_file)
 
-# Defined Categories
-def classify_pair(g1, g2):
-    # Sort to ensure order independence
-    pair = sorted([g1, g2])
-    p1, p2 = pair[0], pair[1]
-    
-    # Specific groups
-    is_a_1 = (p1 == 'A')
-    is_ab_1 = (p1 == 'AB')
-    is_other_1 = not (is_a_1 or is_ab_1)
-    
-    is_a_2 = (p2 == 'A')
-    is_ab_2 = (p2 == 'AB')
-    is_other_2 = not (is_a_2 or is_ab_2)
-    
-    # Logic
-    if is_a_1 and is_a_2:
-        return "A-A"
-    if is_ab_1 and is_ab_2:
-        return "AB-AB"
-    if is_other_1 and is_other_2:
-        return "Others-Others"
-    
-    if is_a_1 and is_ab_2:
-        return "A-AB"
-    
-    if is_a_1 and is_other_2:
-        return "A-Others"
-    
-    if is_ab_1 and is_other_2:
-        return "AB-Others"
-        
-    return "Others-Others" # Fallback, though logic should cover all
+    print("\nAnalysis Complete.")
 
-def process_and_plot(name, config):
+def process_and_plot(name, config, group_file):
     print(f"\nProcessing {name} IBS Matrix...")
     mat_file = config["matrix"]
     id_file = config["id"]
@@ -88,11 +48,11 @@ def process_and_plot(name, config):
     print(f"Number of samples: {n_samples}")
 
     # 2. Read Groups
-    print(f"Reading Groups from {GROUP_FILE}...")
+    print(f"Reading Groups from {group_file}...")
     sample_to_group = {}
-    if os.path.exists(GROUP_FILE):
+    if os.path.exists(group_file):
         try:
-            df_group_file = pd.read_csv(GROUP_FILE, sep=r'\s+', header=None, names=['Sample', 'Group'])
+            df_group_file = pd.read_csv(group_file, sep=r'\s+', header=None, names=['Sample', 'Group'])
             # Creating a dictionary map
             # Deduplicate just in case
             df_group_file = df_group_file.drop_duplicates(subset=['Sample'])
@@ -342,9 +302,4 @@ def process_and_plot(name, config):
 
     plot_vertical_categories("distribution_split_categories")
 
-# Run for both
-process_and_plot("Normal IBS", FILE_PATHS["Normal"])
-process_and_plot("Raw Sample IBS", FILE_PATHS["RawSample"])
-process_and_plot("Raw Missing Filtered Sample IBS", FILE_PATHS["RawMissingFilteredSample"])
 
-print("\nAnalysis Complete.")
