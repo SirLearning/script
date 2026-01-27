@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 // --- Include modules ---
 include { processor as PROCESSOR } from './genotype/processor.nf'
+include { plink_processor as PLINK_PROCESSOR } from './genotype/plink_processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { assess as ASSESS } from './genotype/assess.nf'
