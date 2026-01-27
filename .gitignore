@@ -1,1 +1,15 @@
 /out/
+
+# for R
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# for Python
+__pycache__/
+
+# for IDEs
+.idea/
+.vscode/
+
