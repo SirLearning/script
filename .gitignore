@@ -1,4 +1,8 @@
+# for output files
 /out/
+
+# for mac
+.DS_Store
 
 # for R
 .Rproj.user
