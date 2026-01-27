@@ -1,6 +1,0 @@
-{
-    "nextflow.telemetry.enabled": true,
-    "git.ignoreLimitWarning": true,
-    "r.lsp.promptToInstall": false,
-    "python.defaultInterpreterPath": "/data/dazheng/miniconda3/envs/stats/bin/python"
-}
