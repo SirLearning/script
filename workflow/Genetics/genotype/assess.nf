@@ -17,7 +17,7 @@ workflow assess {
         bcftools_tags = bcftools_tags(prepared_vcf_ch)
         
         // Optional DumpNice plots
-        qc_plots = Channel.empty()
+        qc_plots = channel.empty()
         if (params.enable_dumpnice_vcf_assess) {
             qc_plots = dumpnice_vcf_qc_assess(prepared_vcf_ch)
         }
@@ -37,7 +37,7 @@ workflow assess {
 }
 
 process prepare_vcf_gz {
-    tag { id }
+    tag "prepare vcf gz: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
 
     input:
@@ -59,7 +59,7 @@ process prepare_vcf_gz {
 }
 
 process quick_count {
-    tag { id }
+    tag "quick count: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
 
     input:
@@ -77,8 +77,25 @@ process quick_count {
     """
 }
 
+process assess_missing_rates {
+    tag "assess missing rates: ${id}"
+    publishDir "${params.output_dir}/${params.job}/assess/missing_rates", mode: 'copy'
+
+    input:
+    tuple val(id), path(vcf)
+
+    output:
+    tuple val(id), path("${id}.missing_rates.tsv"), emit: missing_rates
+
+    script:
+    """
+    set -euo pipefail
+    plink2 --pfile ${id}.plink2 --missing --allow-extra-chr --out ${id} > ${id}.missing.log
+    """
+}
+
 process vcftools_stats {
-    tag { id }
+    tag "vcftools stats: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/vcftools", mode: 'copy'
 
     input:
@@ -105,7 +122,7 @@ process vcftools_stats {
 }
 
 process bcftools_tags {
-    tag { id }
+    tag "bcftools tags: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/bcftools", mode: 'copy'
 
     input:
@@ -127,7 +144,7 @@ process bcftools_tags {
 }
 
 process dumpnice_vcf_qc_assess {
-    tag { id }
+    tag "dumpnice vcf qc assess: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/qc", mode: 'copy'
 
     input:
