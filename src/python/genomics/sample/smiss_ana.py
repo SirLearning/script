@@ -119,3 +119,62 @@ def missing_vs_depth(
     print(high_miss_samples[['Taxa', 'F_MISS']].to_string(index=False))
 
 
+def calculate_missing_threshold(input_file, output_prefix):
+    """
+    Calculates missing rate threshold (Mean + 3SD), generates a distribution plot,
+    and prints the threshold to stdout for Nextflow capture.
+    Other logs are sent to stderr to avoid polluting stdout.
+    """
+    import sys
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    try:
+        df = pd.read_csv(input_file, sep=r'\s+')
+    except Exception as e:
+        sys.stderr.write(f"[Error] Failed to read {input_file}: {e}\n")
+        print("0.05", end="")
+        return
+
+    col = 'F_MISS'
+    if col not in df.columns:
+        sys.stderr.write(f"[Error] Column {col} not found in {input_file}\n")
+        print("0.05", end="")
+        return
+
+    # Stats
+    mean_val = df[col].mean()
+    std_val = df[col].std()
+    threshold = mean_val + 3 * std_val
+    
+    # Fallback if calculation fails (e.g. NaN)
+    if pd.isna(threshold):
+        threshold = 0.05
+    
+    # Plotting
+    try:
+        plt.figure(figsize=(10, 6))
+        sns.histplot(df[col], bins=50, kde=True, color='skyblue', edgecolor='black', alpha=0.7)
+        
+        plt.axvline(mean_val, color='blue', linestyle='--', label=f'Mean: {mean_val:.4f}')
+        plt.axvline(threshold, color='red', linestyle='-', linewidth=2, label=f'Threshold (+3SD): {threshold:.4f}')
+        
+        plt.title(f'Sample Missing Rate Distribution\nThreshold: {threshold:.4f}')
+        plt.xlabel('Missing Rate (F_MISS)')
+        plt.ylabel('Count')
+        plt.legend()
+        plt.grid(True, linestyle='--', alpha=0.3)
+        plt.tight_layout()
+        
+        plot_path = f"{output_prefix}.png"
+        plt.savefig(plot_path, dpi=300)
+        sys.stderr.write(f"[Info] Plot saved to {plot_path}\n")
+    except Exception as e:
+        sys.stderr.write(f"[Warning] Plotting failed: {e}\n")
+
+    # Critical: Output ONLY the numeric value to stdout without newline
+    print(f"{threshold:.5f}", end="")
+
+
+

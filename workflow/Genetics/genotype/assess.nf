@@ -6,57 +6,46 @@ include { getJavaSetupScript; getServerPopulations } from './utils.nf'
  * Variant assessment metrics using bcftools/vcftools
  */
 
-workflow assess {
+workflow plink_assess {
     take:
-        vcf_ch // [ id, vcf ]
+        smiss
+        vmiss
+        gcount
+        afreq
+        hardy
 
     main:
-        prepared_vcf_ch = prepare_vcf_gz(vcf_ch)
-        counts_ch = quick_count(prepared_vcf_ch)
-        vcftools_stats = vcftools_stats(prepared_vcf_ch)
-        bcftools_tags = bcftools_tags(prepared_vcf_ch)
-        
-        // Optional DumpNice plots
-        qc_plots = channel.empty()
-        if (params.enable_dumpnice_vcf_assess) {
-            qc_plots = dumpnice_vcf_qc_assess(prepared_vcf_ch)
-        }
-
+        // assess missing rate threshold
+        // 1. sample assessment
+        sample_missing = cpt_sample_missing(smiss)
     emit:
-        counts = counts_ch
-        maf_freq = vcftools_stats.maf_freq
-        hwe = vcftools_stats.hwe
-        miss_site = vcftools_stats.miss_site
-        miss_indv = vcftools_stats.miss_indv
-        depth_site = vcftools_stats.depth_site
-        depth_indv = vcftools_stats.depth_indv
-        site_qual = vcftools_stats.site_qual
-        maf_missing = bcftools_tags.maf_missing
-        gq_summary = bcftools_tags.gq_summary
-        qc_plots = qc_plots
+        missing_th = sample_missing.missing_th
 }
 
-process prepare_vcf_gz {
-    tag "prepare vcf gz: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
+// TODO: use python to perform assessment metrics
+process cpt_sample_missing {
+    tag "compute missing rate threshold: ${id}"
+    publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
+    conda 'stats'
 
     input:
-    tuple val(id), path(vcf)
+    tuple val(id), val(chr), path(smiss)
 
     output:
-    tuple val(id), path("${id}.prepared.vcf.gz"), emit: vcf
+    tuple val(id), stdout, emit: missing_th
+    tuple val(id), path("*.png"), emit: plots
 
     script:
     """
-    set -euo pipefail
-    if [[ "${vcf}" == *.gz ]] || [[ "${vcf}" == *.bgz ]]; then
-        ln -sf ${vcf} ${id}.prepared.vcf.gz
-    else
-        bgzip -c ${vcf} > ${id}.prepared.vcf.gz
-    fi
-    tabix -f -p vcf ${id}.prepared.vcf.gz
+    #!/usr/bin/env python
+    from python_script.genomics.sample.smiss_ana import calculate_missing_threshold
+
+    calculate_missing_threshold("${smiss}", "${chr}.missing_dist")
     """
 }
+
+
+
 
 process quick_count {
     tag "quick count: ${id}"
@@ -77,22 +66,6 @@ process quick_count {
     """
 }
 
-process assess_missing_rates {
-    tag "assess missing rates: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess/missing_rates", mode: 'copy'
-
-    input:
-    tuple val(id), path(vcf)
-
-    output:
-    tuple val(id), path("${id}.missing_rates.tsv"), emit: missing_rates
-
-    script:
-    """
-    set -euo pipefail
-    plink2 --pfile ${id}.plink2 --missing --allow-extra-chr --out ${id} > ${id}.missing.log
-    """
-}
 
 process vcftools_stats {
     tag "vcftools stats: ${id}"
@@ -109,7 +82,7 @@ process vcftools_stats {
     tuple val(id), path("${id}.ldepth.mean"), emit: depth_site
     tuple val(id), path("${id}.idepth"), emit: depth_indv
     tuple val(id), path("${id}.lqual"), emit: site_qual
-    path "*.log"
+    path "${id}.vcftools.log"
 
     script:
     """
@@ -121,9 +94,9 @@ process vcftools_stats {
     """
 }
 
-process bcftools_tags {
-    tag "bcftools tags: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess/bcftools", mode: 'copy'
+process bcftools_qc_assess {
+    tag "assess with bcftools: ${id}"
+    publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
 
     input:
     tuple val(id), path(vcf)

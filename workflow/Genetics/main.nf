@@ -1,11 +1,9 @@
 nextflow.enable.dsl=2
 
 // --- Include workflow modules ---
-include { processor as PROCESSOR } from './genotype/processor.nf'
 include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
-include { assess as ASSESS } from './genotype/assess.nf'
 include { annotate as ANNOTATE } from './genotype/annotate.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
@@ -13,6 +11,7 @@ include { GWAS } from './static/gwas/gwas.nf'
 include { HAIL } from './genotype/hail.nf'
 // --- Include util functions ---
 include { getJobConfig } from './genotype/utils.nf'
+include { getVcfIdFromPath } from './genotype/utils.nf'
 
 // --- Header ---
 def header() {
@@ -48,15 +47,14 @@ def helpMessage() {
     """.stripIndent()
 }
 
-
 // --- Workflow ---
 workflow {
     def input_out = check_input()
     def ch_vcf = input_out.vcf
 
     // --- Main workflow execution ---
-    log.info "${params.c_purple}Assessing genotype process tools${params.c_reset}"
-    assess_geno_tools(ch_vcf)
+    log.info "${params.c_purple}Process all vcf with plink / plink2 tools.${params.c_reset}"
+    def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
 
     // --- Completion Handler ---
     workflow.onComplete {
@@ -104,53 +102,40 @@ workflow check_input {
             log.error "Mod VCF file not found: ${f}"
             exit 1
         }
-        def id = f.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, '')
-        ch_vcf = channel.of([ id, f ])
+        def (id, chr) = getVcfIdFromPath(f)
+        ch_vcf = channel.of([ id, chr, f ])
     } else if (job_config.vcf_dir) {
         def pattern = "${job_config.vcf_dir}/*.{vcf,vcf.gz,vcf.bgz}"
         log.info "${params.c_green}Using VCF dir:${params.c_reset} ${pattern}"
         ch_vcf = channel.fromPath(pattern, checkIfExists: true)
-            .map { vcf -> [ vcf.baseName.replaceAll(/\.vcf(\.gz|\.bgz)?$/, ''), vcf ] }
+            .map { vcf ->
+            def (id, chr) = getVcfIdFromPath(vcf)
+            return [ id, chr, vcf ]
+            }
     } else {
         helpMessage()
         log.error "No valid input found for job: ${params.job}"
         exit 1
+    }
+    // Optional chr param filtering, can use multiple chromosomes separated by comma, like --chr 1,2,3
+    if (params.chr) {
+        def chr_filter = params.chr.toInteger()
+        log.info "${params.c_green}Filtering for chromosome:${params.c_reset} ${chr_filter}"
+        ch_vcf = ch_vcf.filter { vcf_tuple -> vcf_tuple[1] == chr_filter }
     }
 
     emit:
     vcf = ch_vcf
 }
 
-workflow assess_geno_tools {
+workflow vmap4_v1_plink {
     take:
     ch_vcf
 
     main:
-    def assess_out = ASSESS(ch_vcf)
+    def processor_out = PLINK_PROCESSOR(ch_vcf)
 
     emit:
-    qc_reports = assess_out.qc_reports
+    out = processor_out
 }
-
-workflow build_geno_db {
-    take:
-    ch_vcf
-
-    main:
-    // Common processing (Filtering)
-    PROCESSOR(ch_vcf)
-    def ch_filtered_vcf = PROCESSOR.out.vcf.map{ id, prefix, vcf, tbi -> tuple(id, vcf) }
-    
-    emit:
-    vcf = ch_filtered_vcf
-}
-
-workflow build_pheno_db {
-    // Placeholder
-}
-
-workflow association_study {
-    // Placeholder
-}
-
 
