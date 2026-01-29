@@ -276,7 +276,7 @@ workflow runFastCall3_workflow {
         }
     }
     if (params.chr) {
-        chromosomes = params.chr.split("|").collect { it.trim() }
+        chromosomes = params.chr.toString().tokenize("|").collect { it.trim() }
         log.info "Using single chromosome from --chr: ${chromosomes[0]}"
     }
     log.info "Pipeline setup completed. Processing ${chromosomes.size()} chromosomes: ${chromosomes.size() > 0 ? chromosomes[0] + '...' + chromosomes[-1] : 'none'}"
@@ -814,6 +814,13 @@ def getJobConfig(job, home_dir) {
             b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             chroms: []
+        ],
+        "rebuild": [
+            name: "rebuild",
+            a_pop: ["A", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            chroms: []
         ]
     ]
     
@@ -1035,6 +1042,10 @@ def getSoftwareConfig(home_dir, user_dir, tiger_jar, workshop_jar, samtools) {
 // TIGER jar configuration function
 def getTigerJarConfig(tigerJarPath, java_lib_dir) {
     def tiger_jar_versions = [
+        "TIGER_F3_2M_scan_20260129.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
         "TIGER_F3_20251121.jar": [
             java_version: "java17",
             app_name: "FastCall3"
