@@ -2,6 +2,8 @@ nextflow.enable.dsl=2
 
 include { plink_assess as PLINK_ASSESS } from './assess.nf'
 include { getTigerJarConfig } from './utils.nf'
+include { getPopDepTaxaBamFile_v1 } from './utils.nf'
+include { getRefV1ChrLength } from './utils.nf'
 
 /*
     Module: genotype/processor.nf
@@ -23,6 +25,10 @@ workflow plink_processor {
     // 3. make sample and variant basic information
     basic_info_out = mk_plink_basic_info(plink_out.pfile)
 
+    def pd_config = getTigerJarConfig("TIGER_PD_20260129.jar", params.home_dir)
+    ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
+    popdep_out = calc_population_depth(gz_vcf.vcf, ch_tiger_config)
+
     // 4. assess with plink
     assess_out = PLINK_ASSESS(
         basic_info_out.smiss, 
@@ -30,7 +36,8 @@ workflow plink_processor {
         basic_info_out.scount,
         basic_info_out.gcount,
         basic_info_out.afreq,
-        basic_info_out.hardy)
+        basic_info_out.hardy,
+        popdep_out.popdep)
 
     emit:
     vcf = gz_vcf.vcf
@@ -152,25 +159,49 @@ process mk_plink_basic_info {
     """
 }
 
-process prepare_popdepth {
+process calc_population_depth {
     tag "prepare popdepth: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-    conda 'run'
+    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.popdep.txt"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
+    conda 'tiger'
 
     input:
-    tuple val(id), val(chr), path(vcf)
+    tuple val(id), val(chr), path(vcf), path(tbi)
+    tuple path(tiger_jar), val(app_name), val(java_version)
 
     output:
-    tuple val(id), val(chr), path("${id}.popdepth.txt"), emit: popdepth
+    tuple val(id), val(chr), path("${id}.popdep.txt"), emit: popdep
 
     script:
+    def tb_file = getPopDepTaxaBamFile_v1(chr, params.home_dir)
+    def chr_length = getRefV1ChrLength(chr)
     """
-    set -euo pipefail
-    bcftools query -f '%CHROM\\t%POS\\t%INFO/DP\\n' ${vcf} > ${id}.popdepth.txt
+    echo "Starting population depth analysis for chromosome ${chr}..." > popdep_${chr}.log
+    echo "Using ${java_version} for ${app_name} process" >> popdep_${chr}.log
+    
+    echo "System resources before TIGER execution:" >> popdep_${chr}.log
+    echo "Memory: \$(free -h | grep Mem)" >> popdep_${chr}.log
+    echo "CPU cores (allocated): ${task.cpus}" >> popdep_${chr}.log
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> popdep_${chr}.log
+    echo "TIGER jar: ${tiger_jar}" >> popdep_${chr}.log
+
+    java -Xmx${task.memory.toGiga()}G -jar ${tiger_jar} \\
+        --app ${app_name} \\
+        --a ${tb_file} \\
+        --b ${chr} \\
+        --c ${chr_length} \\
+        --d samtools \\
+        --e ${task.cpus} \\
+        --f ${id}.popdep.txt.gz >> popdep_${chr}.log 2>&1
+    
+    gzip -d ${id}.popdep.txt.gz
+
+    echo "Population depth analysis completed for chromosome ${chr}." >> popdep_${chr}.log
     """
 }
 
 
+// -- old code --
 
 process vcf_stats {
     tag "${id}" ? "vcf stats ${id}" : 'vcf stats' 

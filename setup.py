@@ -6,7 +6,7 @@ setup(
     description="Analysis scripts and utilities by dazheng",
     package_dir={"": "src/python"},
     packages=find_packages(where="src/python"),
-    python_requires=">=3.8",
+    python_requires=">=3.12",
     install_requires=[
         "cookiecutter",
         "fastcluster",
@@ -18,5 +18,6 @@ setup(
         "scipy",
         "seaborn",
         "upsetplot",
+        "statsmodels",
     ],
 )
