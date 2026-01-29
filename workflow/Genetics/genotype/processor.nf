@@ -1,74 +1,176 @@
 nextflow.enable.dsl=2
 
-/**
- * Genetics Genotype Processor Workflow
- * 
- * 该 workflow 主要负责 VCF 文件的标准化处理、过滤、质控 (QC) 以及格式转换。
- * 主要步骤包括：
- * 1. 使用 vcftools 进行标准参数过滤 (MAF, MAC, Alleles, Missingness)。
- * 2. 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引，确保后续工具的兼容性和高效访问。
- * 3. 生成 QC 统计数据并利用 R 脚本绘图。
- * 4. 将 VCF 转换为 PLINK (bed/bim/fam, ped) 格式。
- * 
- * 注意：所有的 gzip 压缩均采用 bgzip 格式，以支持 tabix 随机访问。
- */
+include { plink_assess as PLINK_ASSESS } from './assess.nf'
+include { getTigerJarConfig } from './utils.nf'
 
-workflow processor {
-    take:
-    // Expect a channel: [ val(id), path(vcf) ]
-    vcf_in
-
-    main:
-    // --- filtering steps ---
-    log.info """\
-    Starting VCF filtering using standard parameters:
-        MAF >= ${params.maf}
-        MAC >= ${params.mac}
-        Min Alleles = ${params.min_alleles}
-        Max Alleles = ${params.max_alleles}
-        Max Missing = ${params.max_missing}
-    """
-    
-    // 1. 首先进行过滤
-    // filter_vcftools_std expects [ id, vcf ]
-    filtered_vcf = filter_vcftools_std(vcf_in)
-
-    // 2. 对过滤后的 VCF 进行 bgzip 压缩并建立 tabix 索引
-    // filtered_vcf.vcf emits [ id, prefix, vcf_path ]
-    gz_vcf = format_vcf_bgzip_idx(filtered_vcf.vcf)
-    
-    // 3. 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
-    // gz_vcf.vcf emits [ id, prefix, vcf_gz, tbi ]
-    plink_out = format_vcf_plink(gz_vcf.vcf)
-    
-    // 4. QC Stats
-    // 使用过滤后的 VCF 进行统计
-    stats_out = vcf_stats(filtered_vcf.vcf.map{ id, prefix, vcf -> tuple(id, vcf) })
-    plot_vcf_qc(stats_out.stats)
-
-    emit:
-    vcf = gz_vcf.vcf
-    plink_bfile = plink_out.plink_bfile
-    plink_ped  = plink_out.plink_ped
-}
+/*
+    Module: genotype/processor.nf
+    Description: Processes genotype VCF files, generating information, filtering, formatting, and QC statistics.
+*/
 
 workflow plink_processor {
     take:
-    // Expect a channel: [ val(id), path(vcf) ]
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
     vcf_in
 
     main:
-    // 1. 对输入的 VCF 进行 bgzip 压缩并建立 tabix 索引
+    // 1. bgzip + tabix (check and ensure)
     gz_vcf = format_vcf_bgzip_idx(vcf_in)
 
-    // 2. 将压缩索引后的 VCF 传递给 PLINK 进行格式转换
+    // 2. tranfer to PLINK format
     plink_out = format_vcf_plink(gz_vcf.vcf)
+
+    // 3. make sample and variant basic information
+    basic_info_out = mk_plink_basic_info(plink_out.pfile)
+
+    // 4. assess with plink
+    assess_out = PLINK_ASSESS(
+        basic_info_out.smiss, 
+        basic_info_out.vmiss,
+        basic_info_out.scount,
+        basic_info_out.gcount,
+        basic_info_out.afreq,
+        basic_info_out.hardy)
 
     emit:
     vcf = gz_vcf.vcf
-    plink_bfile = plink_out.plink_bfile
-    plink_ped  = plink_out.plink_ped
+    plink_bfile = plink_out.bfile
+    plink_pfile  = plink_out.pfile
 }
+
+
+process format_vcf_bgzip_idx {
+    tag "${chr}" ? "bgzip/tabix ${chr}" : 'bgzip/tabix'
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), path("${id}.vcf.gz"), path("${id}.vcf.gz.tbi"), emit: vcf
+
+    script:
+    """
+    set -euo pipefail
+
+    in=${vcf}
+    out=${id}.vcf.gz
+
+    if [[ "\${in}" == *.vcf.gz ]]; then
+        in_base=\$(basename "\${in}")
+        if [[ "\${in_base}" != "\${out}" ]]; then
+            ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
+        } else
+        bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
+    fi
+
+    if ! tabix -f -p vcf "\${out}"; then
+        echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
+        if [[ "\${in}" == *.vcf.gz ]]; then
+            gunzip -c "\${in}" | bgzip -c -@ ${task.cpus} > "\${out}.tmp"
+        else
+            bgzip -c -@ ${task.cpus} "\${in}" > "\${out}.tmp"
+        fi
+        mv -f "\${out}.tmp" "\${out}"
+        tabix -@ ${task.cpus} -f -p vcf "\${out}"
+    fi
+    """
+}
+
+
+process format_vcf_plink {
+    tag "${chr}" ? "plink ${chr}" : 'plink'
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(vcf), path(tbi)
+
+    output:
+    tuple val(id), val(chr), val("${id}.plink"), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bfile
+    tuple val(id), val(chr), val("${id}.plink2"), path("${id}.pgen"), path("${id}.psam"), path("${id}.pvar"), emit: pfile
+
+    script:
+    """
+    set -euo pipefail
+    if [[ ! -s ${vcf} ]]; then
+        echo "ERROR: VCF file missing or empty before PLINK: ${vcf}" >&2
+        ls -l >&2 || true
+        exit 201
+    fi
+
+    plink2_out=${id}.plink2
+    plink_out=${id}.plink
+
+    plink2 --vcf ${vcf} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --max-alleles 2 \\
+        --thread ${task.cpus} \\
+        --out \${plink2_out} > ${chr}.plk2.log 2>&1
+    
+    plink2 --pfile \${plink2_out} \\
+        --make-bed \\
+        --thread ${task.cpus} \\
+        --out \${plink_out} > ${chr}.plk.log 2>&1
+
+    """
+}
+
+process mk_plink_basic_info {
+    tag "make plink basic info: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{smiss,scount}"
+    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.info.smiss"), emit: smiss
+    tuple val(id), val(chr), path("${id}.info.vmiss"), emit: vmiss
+    tuple val(id), val(chr), path("${id}.info.scount"), emit: scount
+    tuple val(id), val(chr), path("${id}.info.gcount"), emit: gcount
+    tuple val(id), val(chr), path("${id}.info.afreq"), emit: afreq
+    tuple val(id), val(chr), path("${id}.info.hardy"), emit: hardy
+    tuple val(id), val(chr), path("${id}.info.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    plink2 --pfile ${pgen.baseName} \\
+        --allow-extra-chr \\
+        --missing \\
+        --sample-counts \\
+        --geno-counts \\
+        --freq \\   MAF
+        --hardy \\  heterozygosity
+        --threads ${task.cpus} \\
+        --out ${id}.info > ${chr}.info.log 2>&1
+    """
+}
+
+process prepare_popdepth {
+    tag "prepare popdepth: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+    conda 'run'
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), path("${id}.popdepth.txt"), emit: popdepth
+
+    script:
+    """
+    set -euo pipefail
+    bcftools query -f '%CHROM\\t%POS\\t%INFO/DP\\n' ${vcf} > ${id}.popdepth.txt
+    """
+}
+
+
 
 process vcf_stats {
     tag "${id}" ? "vcf stats ${id}" : 'vcf stats' 
@@ -177,83 +279,7 @@ process filter_bcftools_std {
     """
 }
 
-process format_vcf_bgzip_idx {
-    tag "${prefix}" ? "bgzip/tabix ${prefix}" : 'bgzip/tabix'
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
-    input:
-    tuple val(id), val(prefix), path(vcf)
-
-    output:
-    tuple val(id), val(prefix), path("${prefix}.vcf.gz"), path("${prefix}.vcf.gz.tbi"), emit: vcf
-
-    script:
-    """
-    set -euo pipefail
-
-    in=${vcf}
-    out=${prefix}.vcf.gz
-
-    # 检查输入是否已经是 gzipped。
-    if [[ "\${in}" == *.vcf.gz ]]; then
-        in_base=\$(basename "\${in}")
-        if [[ "\${in_base}" != "\${out}" ]]; then
-            ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
-        fi
-    else
-        bgzip -c "\${in}" > "\${out}"
-    fi
-
-    # 尝试创建 tabix 索引。
-    if ! tabix -f -p vcf "\${out}"; then
-        echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
-        if [[ "\${in}" == *.vcf.gz ]]; then
-            gunzip -c "\${in}" | bgzip -c > "\${out}.tmp"
-        else
-            bgzip -c "\${in}" > "\${out}.tmp"
-        fi
-        mv -f "\${out}.tmp" "\${out}"
-        tabix -f -p vcf "\${out}"
-    fi
-    """
-}
-
-process format_vcf_plink {
-    tag "${prefix}" ? "plink ${prefix}" : 'plink'
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-
-    input:
-    tuple val(id), val(prefix), path(vcf), path(tbi)
-
-    output:
-    tuple val(id), path("${prefix}.bed"), path("${prefix}.bim"), path("${prefix}.fam"), emit: plink_bfile
-    path("${prefix}.ped"), emit: plink_ped
-
-    script:
-    """
-    set -euo pipefail
-    if [[ ! -s ${vcf} ]]; then
-        echo "ERROR: VCF file missing or empty before PLINK: ${vcf}" >&2
-        ls -l >&2 || true
-        exit 201
-    fi
-
-    plink --vcf ${vcf} \\
-        --autosome-num 42 \\
-        --recode \\
-        --double-id \\
-        --allow-extra-chr \\
-        --out ${prefix} \\
-        --threads ${task.cpus}
-
-    plink \\
-        --file ${prefix}.ped \\
-        --make-bed \\
-        --chr-set 42 \\
-        --out ${prefix} \\
-        --threads ${task.cpus}
-    """
-}
 
 // only for text files
 process arrange_wheat_chr_by_awk {
