@@ -13,33 +13,45 @@ def missing_dist(
     # Use raw string for regex separator to avoid warnings
     df = pd.read_csv(input_file, sep=r'\s+')
 
+    # 2. 检查列名
+    # 样本缺失率文件 (.smiss) 中，缺失率列通常也是 'F_MISS'
     missing_col = 'F_MISS'
 
     # Calculate Statistics
     mean_val = df[missing_col].mean()
     median_val = df[missing_col].median()
+    print(f"Sample Missing Rate - Mean: {mean_val:.5f}, Median: {median_val:.5f}")
 
+    # 3. 绘图设置
     plt.figure(figsize=(10, 6))
 
+    # Style based on maf_dist.py (forestgreen for general distribution)
     sns.histplot(df[missing_col], bins=100, kde=False, color='forestgreen', edgecolor='none', alpha=0.8)
 
+    # 4. Add Vertical Lines (Thresholds & Stats)
+    # Thresholds 0.1 and 0.3
     plt.axvline(x=0.1, color='#c44e52', linestyle='--', linewidth=1.5, label='Threshold 0.1') # Red-ish
     plt.axvline(x=0.3, color='orange', linestyle='--', linewidth=1.5, label='Threshold 0.3')
 
+    # Stats
     plt.axvline(x=mean_val, color='black', linestyle='-', linewidth=1.5, label=f'Mean: {mean_val:.5f}')
     plt.axvline(x=median_val, color='purple', linestyle='-.', linewidth=1.5, label=f'Median: {median_val:.5f}')
 
+    # 5. 添加标题和标签
     plt.title('Distribution of Sample Missing Rate', fontsize=15)
     plt.xlabel('Missing Rate (F_MISS)', fontsize=12)
     plt.ylabel('Count of Samples', fontsize=12)
 
+    # Set X-axis range 0-1
     plt.xlim(0, 1.0)
 
+    # 6. Grid, Legend, Save
     plt.legend(loc='upper right')
     plt.grid(axis='y', linestyle='--', alpha=0.3)
     plt.tight_layout()
 
     plt.savefig(f'{output_prefix}.png', dpi=300)
+    print(f"Plot saved to {output_prefix}.png")
 
 def missing_vs_depth(
     depth_file="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/all.A.taxaBamMap.txt",
@@ -107,10 +119,7 @@ def missing_vs_depth(
     print(high_miss_samples[['Taxa', 'F_MISS']].to_string(index=False))
 
 
-def calculate_missing_threshold(
-    input_file, 
-    output_prefix
-):
+def calculate_missing_threshold(input_file, output_prefix):
     """
     Calculates missing rate threshold (Mean + 3SD), generates a distribution plot,
     and prints the threshold to stdout for Nextflow capture.
@@ -146,7 +155,7 @@ def calculate_missing_threshold(
     # Plotting
     try:
         plt.figure(figsize=(10, 6))
-        sns.histplot(df[col], bins=100, kde=True, color='forestgreen', edgecolor='black', alpha=0.7)
+        sns.histplot(df[col], bins=50, kde=True, color='skyblue', edgecolor='black', alpha=0.7)
         
         plt.axvline(mean_val, color='blue', linestyle='--', label=f'Mean: {mean_val:.4f}')
         plt.axvline(threshold, color='red', linestyle='-', linewidth=2, label=f'Threshold (+3SD): {threshold:.4f}')
@@ -163,10 +172,6 @@ def calculate_missing_threshold(
         sys.stderr.write(f"[Info] Plot saved to {plot_path}\n")
     except Exception as e:
         sys.stderr.write(f"[Warning] Plotting failed: {e}\n")
-
-    plt.figure(figsize=(10, 6))
-
-    plt.savefig(f'{output_prefix}.png', dpi=300)
 
     # Critical: Output ONLY the numeric value to stdout without newline
     print(f"{threshold:.5f}", end="")

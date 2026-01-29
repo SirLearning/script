@@ -22,7 +22,6 @@ workflow plink_assess {
         missing_th = sample_missing.missing_th
 }
 
-// TODO: use python to perform assessment metrics
 process cpt_sample_missing {
     tag "compute missing rate threshold: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
@@ -45,7 +44,7 @@ process cpt_sample_missing {
 }
 
 
-
+// -- old code --
 
 process quick_count {
     tag "quick count: ${id}"
