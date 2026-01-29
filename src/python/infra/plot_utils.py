@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 def combine_plots(
-    image1 = "/data/home/tusr1/git/script/out/raw_missing_filtered_ibs_distribution_linear.png",
-    image2 = "/data/home/tusr1/git/script/out/raw_missing_filtered_ibs_distribution_log.png",
-    output_file = "/data/home/tusr1/git/script/out/raw_missing_filtered_ibs_combined_dist.png"
+    image1 = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_var.png",
+    image2 = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_cv.png",
+    output_file = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_combined.png"
 ):
     # Settings
     images = [
@@ -13,7 +13,7 @@ def combine_plots(
     ]
 
     # Create a figure with subplots
-    fig, axes = plt.subplots(1, len(images), figsize=(6 * len(images), 4))
+    fig, axes = plt.subplots(1, len(images), figsize=(6 * len(images), 5))
 
     for ax, img_path in zip(axes, images):
         try:
@@ -28,3 +28,6 @@ def combine_plots(
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)
     print(f"Combined image saved to {output_file}")
+
+if __name__ == "__main__":
+    combine_plots()

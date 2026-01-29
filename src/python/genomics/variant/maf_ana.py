@@ -4,8 +4,8 @@ import seaborn as sns
 
 
 def maf_dist(
-    input_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.maf.afreq", 
-    output_prefix="maf_distribution"
+    input_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.maf.rm_germ_dup.afreq", 
+    output_prefix="maf_dist_rm_germ_dup"
 ):
     # 1. 读取 PLINK2 的频率文件
     # 使用 r'' (raw string) 来避免 SyntaxWarning: invalid escape sequence '\s'
@@ -50,7 +50,7 @@ def maf_dist(
         hist_color = '#4c72b0' # muted blue
         
         # Histogram
-        sns.histplot(df_sub['MAF'], bins=200, kde=False, color=hist_color, edgecolor='white', linewidth=0.1, alpha=0.8)
+        sns.histplot(df_sub['MAF'], bins=100, kde=False, color=hist_color, edgecolor='white', linewidth=0.1, alpha=0.8)
 
         # Vertical Lines - Thresholds
         plt.axvline(x=0.001, color='#55a868', linestyle='--', linewidth=1.5, label='Threshold 0.001') # green
@@ -140,3 +140,5 @@ def maf_dist(
     plt.savefig(filename_05, dpi=300)
     print(f"Plot saved to {filename_05}")
 
+if __name__ == "__main__":
+    maf_dist()
