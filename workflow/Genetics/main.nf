@@ -48,6 +48,7 @@ def helpMessage() {
         // 20260130.1
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
             --mod plink_test \
@@ -55,6 +56,7 @@ def helpMessage() {
         // 20260130.2 - run MAO=1 chr002 only
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
             --mod plink_process \
