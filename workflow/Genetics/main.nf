@@ -50,14 +50,14 @@ def helpMessage() {
             --home_dir /data/home/tusr1/01projects/vmap4 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod all \
+            --mod plink_test \
             --job test_plink
         // 20260130.2 - run MAO=1 chr002 only
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod all \
+            --mod plink_process \
             --job rebuild
     
     screen prefix commands:
@@ -80,8 +80,16 @@ workflow {
     def ch_vcf = input_out.vcf
     // --- Main workflow execution ---
     log.info "${params.c_purple}Process all vcf with plink / plink2 tools.${params.c_reset}"
-    // def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
-    def test_plink_out = TEST_PLINK(ch_vcf)
+    if (params.mod == 'plink_process') {
+        log.info "${params.c_yellow}Using PLINK PROCESS module.${params.c_reset}"
+        PLINK_PROCESSOR(ch_vcf)
+    } else if (params.mod == 'plink_test') {
+        log.info "${params.c_yellow}Using PLINK TEST module.${params.c_reset}"
+        TEST_PLINK(ch_vcf)
+    } else {
+        log.info "${params.c_yellow}Using default VMap4 v1 plink workflow module.${params.c_reset}"
+        def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
+    }
     // --- Completion Handler ---
     workflow.onComplete {
         log.info "-\033[2m--------------------------------------------------\033[0m-"
