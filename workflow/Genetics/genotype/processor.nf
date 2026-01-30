@@ -39,69 +39,6 @@ workflow test_plink {
     merged_pfile = merge_out.pfile
 }
 
-process subsampling_pfile_for_test {
-    tag "subsample pfile for test: ${id}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
-    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
-
-    input:
-    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
-    val thin_rate
-
-    output:
-    tuple val(id), val(chr), val("${id}.thin"), path("${id}.thin.pgen"), path("${id}.thin.psam"), path("${id}.thin.pvar"), emit: pfile
-    tuple val(id), val(chr), path("*.log"), emit: logs
-
-    script:
-    """
-    set -euo pipefail
-    exec > subsample_pfile_${id}.log 2>&1
-
-    plink2 --pfile ${prefix} \\
-        --thin ${thin_rate} \\
-        --seed \$(date +%s) \\
-        --make-pgen \\
-        --threads ${task.cpus} \\
-        --out ${id}.thin
-    """
-}
-
-process merge_subgenome_test_pfile {
-    tag "merge plink2 test subgenome pfile: ${subgenome}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
-    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
-
-    input:
-    // Receives lists of files/values grouped by subgenome
-    tuple val(subgenome), val(ids), val(chrs), val(prefixes), path(pgens), path(psams), path(pvars)
-
-    output:
-    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink"), path("${subgenome}_test.plink.bed"), path("${subgenome}_test.plink.bim"), path("${subgenome}_test.plink.fam"), emit: bfile
-    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink2"), path("${subgenome}_test.plink2.pgen"), path("${subgenome}_test.plink2.psam"), path("${subgenome}_test.plink2.pvar"), emit: pfile
-    tuple val(subgenome), path("*.log"), emit: logs
-
-    script:
-    """
-    set -euo pipefail
-    exec > merge_subgenome_test.${subgenome}.log 2>&1
-    
-    echo "${prefixes[1..-1].join('\n')}" > ${subgenome}.merge_list.txt
-    
-    plink2 --pfile ${prefixes[0]} \\
-        --pmerge-list ${subgenome}.merge_list.txt \\
-        --make-pgen \\
-        --threads ${task.cpus} \\
-        --out ${subgenome}_test.plink2
-
-    plink2 --pfile ${subgenome}_test.plink2 \\
-        --make-bed \\
-        --threads ${task.cpus} \\
-        --out ${subgenome}_test.plink
-    """
-}
-
 workflow plink_processor {
     take:
     // Expect a channel: [ val(id), val(chr), path(vcf) ]
@@ -152,7 +89,9 @@ workflow plink_preprocess {
 
 process format_vcf_bgzip_idx {
     tag "bgzip/tabix ${chr}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz.tbi"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda 'stats'
 
     input:
@@ -256,6 +195,69 @@ process format_vcf_plink {
             --thread ${task.cpus} \\
             --out \${plink_out}
     fi
+    """
+}
+
+process subsampling_pfile_for_test {
+    tag "subsample pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    val thin_rate
+
+    output:
+    tuple val(id), val(chr), val("${id}.thin"), path("${id}.thin.pgen"), path("${id}.thin.psam"), path("${id}.thin.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > subsample_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --thin ${thin_rate} \\
+        --seed \$(date +%s) \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.thin
+    """
+}
+
+process merge_subgenome_test_pfile {
+    tag "merge plink2 test subgenome pfile: ${subgenome}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    // Receives lists of files/values grouped by subgenome
+    tuple val(subgenome), val(ids), val(chrs), val(prefixes), path(pgens), path(psams), path(pvars)
+
+    output:
+    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink"), path("${subgenome}_test.plink.bed"), path("${subgenome}_test.plink.bim"), path("${subgenome}_test.plink.fam"), emit: bfile
+    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink2"), path("${subgenome}_test.plink2.pgen"), path("${subgenome}_test.plink2.psam"), path("${subgenome}_test.plink2.pvar"), emit: pfile
+    tuple val(subgenome), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > merge_subgenome_test.${subgenome}.log 2>&1
+    
+    echo "${prefixes[1..-1].join('\n')}" > ${subgenome}.merge_list.txt
+    
+    plink2 --pfile ${prefixes[0]} \\
+        --pmerge-list ${subgenome}.merge_list.txt \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${subgenome}_test.plink2
+
+    plink2 --pfile ${subgenome}_test.plink2 \\
+        --make-bed \\
+        --threads ${task.cpus} \\
+        --out ${subgenome}_test.plink
     """
 }
 
