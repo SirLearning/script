@@ -52,7 +52,7 @@ workflow plink_processor {
     basic_info_out = mk_plink_basic_info(preprocess_out.pfile)
 
     // 3. calculate population depth using TIGER
-    def pd_config = getTigerJarConfig("TIGER_PD_20260129.jar", params.home_dir)
+    def pd_config = getTigerJarConfig("TIGER_PD_20260130.jar", params.home_dir)
     ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
     popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
 
@@ -70,8 +70,6 @@ workflow plink_processor {
     vcf = preprocess_out.gz_vcf
     plink_bfile = preprocess_out.bfile
     plink_pfile  = preprocess_out.pfile
-    basic_info = basic_info_out
-    popdep = popdep_out.popdep
 }
 
 workflow plink_preprocess {
@@ -93,7 +91,7 @@ process format_vcf_bgzip {
     tag "bgzip ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -129,7 +127,7 @@ process format_vcf_bgzip_idx {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz.tbi"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -182,7 +180,7 @@ process format_vcf_plink {
     tag "format plink ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -221,10 +219,11 @@ process format_vcf_plink {
             exit 201
         fi
         plink2 --vcf ${vcf} \\
+            --chr-set 44 \\
             --allow-extra-chr \\
             --make-pgen \\
             --max-alleles 2 \\
-            --thread ${task.cpus} \\
+            --threads ${task.cpus} \\
             --out \${plink2_out}
     fi
     
@@ -236,7 +235,7 @@ process format_vcf_plink {
     else
         plink2 --pfile \${plink2_out} \\
             --make-bed \\
-            --thread ${task.cpus} \\
+            --threads ${task.cpus} \\
             --out \${plink_out}
     fi
     """
@@ -246,7 +245,7 @@ process subsampling_pfile_for_test {
     tag "subsample pfile for test: ${id}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
@@ -274,7 +273,7 @@ process merge_subgenome_test_pfile {
     tag "merge plink2 test subgenome pfile: ${subgenome}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     // Receives lists of files/values grouped by subgenome
@@ -310,7 +309,7 @@ process mk_plink_basic_info {
     publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{smiss,scount}"
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
-    conda 'stats'
+    conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
     tuple val(id), val(chr), path(pgen), path(psam), path(pvar)
@@ -343,7 +342,7 @@ process calc_population_depth {
     tag "prepare popdepth: ${chr}"
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.popdep.txt"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
-    conda 'tiger'
+    conda "${params.user_dir}/miniconda3/envs/tiger"
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -356,27 +355,33 @@ process calc_population_depth {
     def tb_file = getPopDepTaxaBamFile_v1(chr, params.home_dir)
     def chr_length = getRefV1ChrLength(chr)
     """
-    echo "Starting population depth analysis for chromosome ${chr}..." > popdep_${chr}.log
-    echo "Using ${java_version} for ${app_name} process" >> popdep_${chr}.log
+    set -euo pipefail
+    exec > popdep_${chr}.log 2>&1
+
+    echo "Starting population depth analysis for chromosome ${chr}..."
+    echo "Using ${java_version} for ${app_name} process"
+    echo "The environment java version is:"
+    which java
+    java -version
     
-    echo "System resources before TIGER execution:" >> popdep_${chr}.log
-    echo "Memory: \$(free -h | grep Mem)" >> popdep_${chr}.log
-    echo "CPU cores (allocated): ${task.cpus}" >> popdep_${chr}.log
-    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g" >> popdep_${chr}.log
-    echo "TIGER jar: ${tiger_jar}" >> popdep_${chr}.log
+    echo "System resources before TIGER execution:"
+    echo "Memory: \$(free -h | grep Mem)"
+    echo "CPU cores (allocated): ${task.cpus}"
+    echo "Java memory allocation (Xmx): ${task.memory.toGiga()}g"
+    echo "TIGER jar: ${tiger_jar}"
 
     java -Xmx${task.memory.toGiga()}G -jar ${tiger_jar} \\
-        --app ${app_name} \\
-        --a ${tb_file} \\
-        --b ${chr} \\
-        --c ${chr_length} \\
-        --d samtools \\
-        --e ${task.cpus} \\
-        --f ${id}.popdep.txt.gz >> popdep_${chr}.log 2>&1
+        -app ${app_name} \\
+        -a ${tb_file} \\
+        -b ${chr} \\
+        -c ${chr_length} \\
+        -d samtools \\
+        -e ${task.cpus} \\
+        -f ${id}.popdep.txt.gz
     
     gzip -d ${id}.popdep.txt.gz
 
-    echo "Population depth analysis completed for chromosome ${chr}." >> popdep_${chr}.log
+    echo "Population depth analysis completed for chromosome ${chr}."
     """
 }
 
