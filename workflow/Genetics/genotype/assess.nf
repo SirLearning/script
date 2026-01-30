@@ -25,21 +25,33 @@ workflow plink_assess {
 process cpt_sample_missing {
     tag "compute missing rate threshold: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/assess/threshold", mode: 'copy', pattern: "*.smiss_th.tsv"
+    publishDir "${params.output_dir}/${params.job}/assess/logs", mode: 'copy', pattern: "*.log"
     conda 'stats'
 
     input:
     tuple val(id), val(chr), path(smiss)
 
     output:
-    tuple val(id), stdout, emit: missing_th
+    tuple val(id), path("*.smiss_th.tsv"), emit: smiss_th
     tuple val(id), path("*.png"), emit: plots
+    tuple val(id), path("*.log"), emit: logs
 
     script:
     """
     #!/usr/bin/env python
-    from python_script.genomics.sample.smiss_ana import calculate_missing_threshold
+    import sys
+    
+    sys.stdout = open("${id}.smiss_ana.log", "w")
+    sys.stderr = sys.stdout
 
-    calculate_missing_threshold("${smiss}", "${chr}.missing_dist")
+    from python_script.genomics.sample.smiss_ana import calculate_missing_threshold, plot_missing_dist
+
+    print(f"Processing sample missing rate for ${id}...")
+    plot_missing_dist("${smiss}", "${chr}.missing_dist")
+    
+    print(f"Calculating threshold...")
+    calculate_missing_threshold("${smiss}", "${id}.smiss_th.tsv")
     """
 }
 

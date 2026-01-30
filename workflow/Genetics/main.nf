@@ -2,6 +2,7 @@ nextflow.enable.dsl=2
 
 // --- Include workflow modules ---
 include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
+include { test_plink as TEST_PLINK } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { stats as STATS } from './genotype/stats.nf'
 include { annotate as ANNOTATE } from './genotype/annotate.nf'
@@ -12,6 +13,7 @@ include { HAIL } from './genotype/hail.nf'
 // --- Include util functions ---
 include { getJobConfig } from './genotype/utils.nf'
 include { getVcfIdFromPath } from './genotype/utils.nf'
+include { getRefV1SubChr } from './genotype/utils.nf'
 
 // --- Header ---
 def header() {
@@ -51,11 +53,10 @@ def helpMessage() {
 workflow {
     def input_out = check_input()
     def ch_vcf = input_out.vcf
-
     // --- Main workflow execution ---
     log.info "${params.c_purple}Process all vcf with plink / plink2 tools.${params.c_reset}"
-    def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
-
+    // def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
+    def test_plink_out = TEST_PLINK(ch_vcf)
     // --- Completion Handler ---
     workflow.onComplete {
         log.info "-\033[2m--------------------------------------------------\033[0m-"
@@ -117,11 +118,20 @@ workflow check_input {
         log.error "No valid input found for job: ${params.job}"
         exit 1
     }
+    // chr filter for manual edit
+    def man_chr_filter = getRefV1SubChr("ALL")
+    // man_chr_filter -= ["0","43","44"] // Other chromosomes
+    // man_chr_filter -= ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"] // A genome
+    // man_chr_filter -= ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"] // B genome
+    // man_chr_filter -= ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"] // D genome
+    ch_vcf = ch_vcf.filter { vcf_tuple ->
+        vcf_tuple[1] in man_chr_filter
+    }
     // Optional chr param filtering, can use multiple chromosomes separated by comma, like --chr 1,2,3
     if (params.chr) {
-        def chr_filter = params.chr.toInteger()
-        log.info "${params.c_green}Filtering for chromosome:${params.c_reset} ${chr_filter}"
-        ch_vcf = ch_vcf.filter { vcf_tuple -> vcf_tuple[1] == chr_filter }
+        def chr_filter_list = params.chr.toString().split(',').collect { it.trim() }
+        log.info "${params.c_green}Filtering for chromosome(s):${params.c_reset} ${chr_filter_list}"
+        ch_vcf = ch_vcf.filter { vcf_tuple -> vcf_tuple[1].toString() in chr_filter_list }
     }
 
     emit:

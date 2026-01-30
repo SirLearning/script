@@ -107,42 +107,79 @@ def missing_vs_depth(
     print(high_miss_samples[['Taxa', 'F_MISS']].to_string(index=False))
 
 
-def calculate_missing_threshold(
-    input_file, 
-    output_prefix
-):
+def calculate_missing_threshold(input_file, output_file):
     """
-    Calculates missing rate threshold (Mean + 3SD), generates a distribution plot,
-    and prints the threshold to stdout for Nextflow capture.
-    Other logs are sent to stderr to avoid polluting stdout.
+    Calculates missing rate threshold (Mean + 3SD) and writes to a file (TSV).
+    The output file contains headers in the first row and values in the second row.
+    """
+    import sys
+    import pandas as pd
+    
+    threshold = 0.05 # Default
+    mean_val = 0.0
+    std_val = 0.0
+    
+    try:
+        df = pd.read_csv(input_file, sep=r'\s+')
+        col = 'F_MISS'
+        if col in df.columns:
+            # Stats
+            mean_val = df[col].mean()
+            std_val = df[col].std()
+            threshold = mean_val + 3 * std_val
+            
+            # Fallback if calculation results in NaN
+            if pd.isna(threshold):
+                threshold = 0.05
+        else:
+            sys.stderr.write(f"[Error] Column {col} not found in {input_file}\n")
+            
+    except Exception as e:
+        sys.stderr.write(f"[Error] Failed to read or process {input_file}: {e}\n")
+
+    # Output to file as requested: Header + Value
+    # We can perform the "map by column name" requirement by having the column name be descriptive
+    out_df = pd.DataFrame({
+        'missing_threshold': [threshold],
+        'mean_missing': [mean_val],
+        'std_missing': [std_val]
+    })
+    
+    try:
+        out_df.to_csv(output_file, sep='\t', index=False)
+        print(f"Thresholds saved to {output_file}")
+    except Exception as e:
+         sys.stderr.write(f"[Error] Failed to write to {output_file}: {e}\n")
+
+def plot_missing_dist(input_file, output_prefix):
+    """
+    Generates a distribution plot for missing rates.
+    Logs are sent to stderr.
     """
     import sys
     import pandas as pd
     import matplotlib.pyplot as plt
     import seaborn as sns
+    import numpy as np
 
     try:
         df = pd.read_csv(input_file, sep=r'\s+')
     except Exception as e:
         sys.stderr.write(f"[Error] Failed to read {input_file}: {e}\n")
-        print("0.05", end="")
         return
 
     col = 'F_MISS'
     if col not in df.columns:
         sys.stderr.write(f"[Error] Column {col} not found in {input_file}\n")
-        print("0.05", end="")
         return
 
-    # Stats
+    # Stats for validation and plotting lines
     mean_val = df[col].mean()
     std_val = df[col].std()
     threshold = mean_val + 3 * std_val
-    
-    # Fallback if calculation fails (e.g. NaN)
     if pd.isna(threshold):
         threshold = 0.05
-    
+
     # Plotting
     try:
         plt.figure(figsize=(10, 6))
@@ -164,12 +201,6 @@ def calculate_missing_threshold(
     except Exception as e:
         sys.stderr.write(f"[Warning] Plotting failed: {e}\n")
 
-    plt.figure(figsize=(10, 6))
-
-    plt.savefig(f'{output_prefix}.png', dpi=300)
-
-    # Critical: Output ONLY the numeric value to stdout without newline
-    print(f"{threshold:.5f}", end="")
 
 
 

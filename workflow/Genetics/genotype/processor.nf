@@ -10,24 +10,114 @@ include { getRefV1ChrLength } from './utils.nf'
     Description: Processes genotype VCF files, generating information, filtering, formatting, and QC statistics.
 */
 
+workflow test_plink {
+    take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+
+    main:
+    preprocess_out = plink_preprocess(vcf_in)
+
+    // subsample pfile for testing
+    def subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
+    // Map pfiles to include subgenome info
+    def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }.groupTuple(by: 0)
+
+    // Generate merge lists
+    merge_out = merge_subgenome_test_pfile(grouped_pfile)
+
+    emit:
+    vcf = preprocess_out.gz_vcf
+    merged_bfile = merge_out.bfile
+    merged_pfile = merge_out.pfile
+}
+
+process subsampling_pfile_for_test {
+    tag "subsample pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    val thin_rate
+
+    output:
+    tuple val(id), val(chr), val("${id}.thin"), path("${id}.thin.pgen"), path("${id}.thin.psam"), path("${id}.thin.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > subsample_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --thin ${thin_rate} \\
+        --seed \$(date +%s) \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.thin
+    """
+}
+
+process merge_subgenome_test_pfile {
+    tag "merge plink2 test subgenome pfile: ${subgenome}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    // Receives lists of files/values grouped by subgenome
+    tuple val(subgenome), val(ids), val(chrs), val(prefixes), path(pgens), path(psams), path(pvars)
+
+    output:
+    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink"), path("${subgenome}_test.plink.bed"), path("${subgenome}_test.plink.bim"), path("${subgenome}_test.plink.fam"), emit: bfile
+    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink2"), path("${subgenome}_test.plink2.pgen"), path("${subgenome}_test.plink2.psam"), path("${subgenome}_test.plink2.pvar"), emit: pfile
+    tuple val(subgenome), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > merge_subgenome_test.${subgenome}.log 2>&1
+    
+    echo "${prefixes[1..-1].join('\n')}" > ${subgenome}.merge_list.txt
+    
+    plink2 --pfile ${prefixes[0]} \\
+        --pmerge-list ${subgenome}.merge_list.txt \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${subgenome}_test.plink2
+
+    plink2 --pfile ${subgenome}_test.plink2 \\
+        --make-bed \\
+        --threads ${task.cpus} \\
+        --out ${subgenome}_test.plink
+    """
+}
+
 workflow plink_processor {
     take:
     // Expect a channel: [ val(id), val(chr), path(vcf) ]
     vcf_in
 
     main:
-    // 1. bgzip + tabix (check and ensure)
-    gz_vcf = format_vcf_bgzip_idx(vcf_in)
+    // 1. preprocess VCF to PLINK format
+    preprocess_out = plink_preprocess(vcf_in)
 
-    // 2. tranfer to PLINK format
-    plink_out = format_vcf_plink(gz_vcf.vcf)
+    // 2. make sample and variant basic information
+    basic_info_out = mk_plink_basic_info(preprocess_out.pfile)
 
-    // 3. make sample and variant basic information
-    basic_info_out = mk_plink_basic_info(plink_out.pfile)
-
+    // 3. calculate population depth using TIGER
     def pd_config = getTigerJarConfig("TIGER_PD_20260129.jar", params.home_dir)
     ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
-    popdep_out = calc_population_depth(gz_vcf.vcf, ch_tiger_config)
+    popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
 
     // 4. assess with plink
     assess_out = PLINK_ASSESS(
@@ -40,11 +130,25 @@ workflow plink_processor {
         popdep_out.popdep)
 
     emit:
-    vcf = gz_vcf.vcf
-    plink_bfile = plink_out.bfile
-    plink_pfile  = plink_out.pfile
+    vcf = preprocess_out.gz_vcf
+    plink_bfile = preprocess_out.bfile
+    plink_pfile  = preprocess_out.pfile
 }
 
+workflow plink_preprocess {
+    take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+
+    main:
+    gz_vcf = format_vcf_bgzip_idx(vcf_in)
+    plink_out = format_vcf_plink(gz_vcf.vcf)
+
+    emit:
+    gz_vcf = gz_vcf.vcf
+    bfile = plink_out.bfile
+    pfile = plink_out.pfile
+}
 
 process format_vcf_bgzip_idx {
     tag "${chr}" ? "bgzip/tabix ${chr}" : 'bgzip/tabix'
@@ -60,6 +164,7 @@ process format_vcf_bgzip_idx {
     script:
     """
     set -euo pipefail
+    exec > bgzip_tabix.${chr}.log 2>&1
 
     in=${vcf}
     out=${id}.vcf.gz
@@ -68,7 +173,7 @@ process format_vcf_bgzip_idx {
         in_base=\$(basename "\${in}")
         if [[ "\${in_base}" != "\${out}" ]]; then
             ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
-        } else
+        else
         bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
     fi
 
@@ -85,43 +190,67 @@ process format_vcf_bgzip_idx {
     """
 }
 
-
 process format_vcf_plink {
-    tag "${chr}" ? "plink ${chr}" : 'plink'
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
+    tag "${chr}" ? "format plink ${chr}" : 'plink'
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda 'stats'
 
     input:
     tuple val(id), val(chr), path(vcf), path(tbi)
 
     output:
-    tuple val(id), val(chr), val("${id}.plink"), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bfile
-    tuple val(id), val(chr), val("${id}.plink2"), path("${id}.pgen"), path("${id}.psam"), path("${id}.pvar"), emit: pfile
+    tuple val(id), val(chr), val("${id}.plink"), path("${id}.plink.bed"), path("${id}.plink.bim"), path("${id}.plink.fam"), emit: bfile
+    tuple val(id), val(chr), val("${id}.plink2"), path("${id}.plink2.pgen"), path("${id}.plink2.psam"), path("${id}.plink2.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
 
     script:
+    def out_dir = "${params.output_dir}/${params.job}/process"
     """
     set -euo pipefail
-    if [[ ! -s ${vcf} ]]; then
-        echo "ERROR: VCF file missing or empty before PLINK: ${vcf}" >&2
-        ls -l >&2 || true
-        exit 201
+    exec > format_plink.${chr}.log 2>&1
+    
+    plink2_out="${id}.plink2"
+    plink_out="${id}.plink"
+    
+    EXIST_PLINK1=false
+    EXIST_PLINK2=false
+    if [ -f "${out_dir}/${id}.bed" ] && [ -f "${out_dir}/${id}.bim" ] && [ -f "${out_dir}/${id}.fam" ]; then
+        EXIST_PLINK1=true
+    fi
+    if [ -f "${out_dir}/${id}.plink2.pgen" ] && [ -f "${out_dir}/${id}.plink2.psam" ] && [ -f "${out_dir}/${id}.plink2.pvar" ]; then
+        EXIST_PLINK2=true
     fi
 
-    plink2_out=${id}.plink2
-    plink_out=${id}.plink
-
-    plink2 --vcf ${vcf} \\
-        --allow-extra-chr \\
-        --make-pgen \\
-        --max-alleles 2 \\
-        --thread ${task.cpus} \\
-        --out \${plink2_out} > ${chr}.plk2.log 2>&1
+    if [ "\$EXIST_PLINK2" = true ]; then
+        echo "PLINK2 files for ${id} already exist in ${out_dir}, linking them..."
+        ln -sf "${out_dir}/${id}.plink2.pgen" ./
+        ln -sf "${out_dir}/${id}.plink2.psam" ./
+        ln -sf "${out_dir}/${id}.plink2.pvar" ./
+    else
+        if [[ ! -s ${vcf} ]]; then
+            echo "ERROR: VCF file missing or empty before PLINK: ${vcf}" >&2
+            exit 201
+        fi
+        plink2 --vcf ${vcf} \\
+            --allow-extra-chr \\
+            --make-pgen \\
+            --max-alleles 2 \\
+            --thread ${task.cpus} \\
+            --out \${plink2_out}
+    fi
     
-    plink2 --pfile \${plink2_out} \\
-        --make-bed \\
-        --thread ${task.cpus} \\
-        --out \${plink_out} > ${chr}.plk.log 2>&1
-
+    if [ "\$EXIST_PLINK1" = true ]; then
+        echo "PLINK1 files for ${id} already exist in ${out_dir}, linking them..."
+        ln -sf "${out_dir}/${id}.plink.bed" ./
+        ln -sf "${out_dir}/${id}.plink.bim" ./
+        ln -sf "${out_dir}/${id}.plink.fam" ./
+    else
+        plink2 --pfile \${plink2_out} \\
+            --make-bed \\
+            --thread ${task.cpus} \\
+            --out \${plink_out}
+    fi
     """
 }
 

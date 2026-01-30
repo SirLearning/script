@@ -57,6 +57,9 @@ def getJobConfig(job, home_dir) {
         ],
         "vmap4": [
             vcf_dir: "${home_dir}/00data/06vcf/03vmap4"  // pending
+        ],
+        "test_plink": [
+            vcf_dir: "/data1/dazheng_tusr1/vmap4.VCF.v1"
         ]
     ]
 
@@ -77,7 +80,8 @@ def getVcfIdFromPath(vcf_path) {
     // Check if it matches pattern chrNNN (e.g., chr001, chr012)
     def matcher = (tmp_id =~ /^chr(\d{3})$/)
     if (matcher.matches()) {
-        chromosome = matcher[0][1].toInteger()
+        // Convert to integer to strip leading zeros (001->1), then to string for type consistency
+        chromosome = matcher[0][1].toInteger().toString()
         return [tmp_id, chromosome]
     } else {
         log.error "VCF file name does not match expected pattern 'chrNNN.vcf' or 'chrNNN.vcf.gz': ${file_name}"
@@ -155,10 +159,10 @@ def getPopDepTaxaBamFile_v1(chr, home_dir) {
         "ALL": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt"
     ]
 
-    def groupA = ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
-    def groupB = ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
-    def groupD = ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
-    def groupOthers = ["0","43","44"]
+    def groupA = getRefV1SubChr("A")
+    def groupB = getRefV1SubChr("B")
+    def groupD = getRefV1SubChr("D")
+    def groupOthers = getRefV1SubChr("Others")
 
     def sub_genome
     if (groupA.contains(normalized)) {
@@ -174,6 +178,23 @@ def getPopDepTaxaBamFile_v1(chr, home_dir) {
     }
     def tb_file = subGenomeConfigs[sub_genome]
     return tb_file
+}
+
+def getRefV1SubChr(sub_genome) {
+    def subGenomeChrMap = [
+        "A": ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"],
+        "B": ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"],
+        "D": ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"],
+        "Others": ["0", "43", "44"],
+        "ALL": [
+            "0","1","2","3","4","5","6","7","8","9","10",
+            "11","12","13","14","15","16","17","18","19","20",
+            "21","22","23","24","25","26","27","28","29","30",
+            "31","32","33","34","35","36","37","38","39","40",
+            "41","42","43","44"
+            ]
+    ]
+    return subGenomeChrMap[sub_genome]
 }
 
 def getRefV1ChrLength(chr) {
