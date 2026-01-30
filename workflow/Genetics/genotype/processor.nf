@@ -119,7 +119,7 @@ process format_vcf_bgzip_idx {
         bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
     fi
 
-    if ! tabix -f -p vcf "\${out}"; then
+    if ! tabix -@ ${task.cpus} -f -p vcf "\${out}"; then
         echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
         if [[ "\${in}" == *.vcf.gz ]]; then
             gunzip -c "\${in}" | bgzip -c -@ ${task.cpus} > "\${out}.tmp"
