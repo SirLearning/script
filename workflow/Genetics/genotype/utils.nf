@@ -60,6 +60,9 @@ def getJobConfig(job, home_dir) {
         ],
         "test_plink": [
             vcf_dir: "/data1/dazheng_tusr1/vmap4.VCF.v1"
+        ],
+        "rebuild": [
+            vcf_file: "/data/home/tusr1/01projects/vmap4/04runScreens/rebuild/gen/VCF/chr002.vcf.gz"
         ]
     ]
 
