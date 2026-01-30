@@ -45,7 +45,15 @@ def helpMessage() {
 
     Examples:
         nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod all --job test
-        nextflow run /data/dazheng/git/script/workflow/Genetics/main.nf --home_dir /data/dazheng/01projects/vmap4 --src_dir /data/dazheng/git/script/src --output_dir /data/dazheng/01projects/vmap4/05ana.geno/01chr1.test --mod all --job test
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --src_dir /data/home/tusr1/git/script/src \
+            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+            --mod all \
+            --job test_plink
+    
+    screen prefix commands:
+        screen -dmS test_plink bash -c " cd /data1/dazheng_tusr1/01work && source ~/.bashrc && conda activate run && "
     """.stripIndent()
 }
 

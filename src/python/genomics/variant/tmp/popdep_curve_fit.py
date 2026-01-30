@@ -118,45 +118,45 @@ if diff_aic > 10:
 else:
     print("\nConclusion: Poisson model is sufficient.")
 
-# ==========================================
-# 4. Visualization 1: Mean-Variance Plot
-# ==========================================
-plt.figure(figsize=(10, 8))
+# # ==========================================
+# # 4. Visualization 1: Mean-Variance Plot
+# # ==========================================
+# plt.figure(figsize=(10, 8))
 
-# 1. Plot Background data
-# Filter for log scale safety
-plt_mask = (df_plot['Depth_Mean'] > 0) & (df_plot['Depth_Var'] > 0)
-plt.scatter(df_plot.loc[plt_mask, 'Depth_Mean'], 
-            df_plot.loc[plt_mask, 'Depth_Var'], 
-            alpha=0.2, s=10, color='gray', label='Observed Data (Sampled)')
+# # 1. Plot Background data
+# # Filter for log scale safety
+# plt_mask = (df_plot['Depth_Mean'] > 0) & (df_plot['Depth_Var'] > 0)
+# plt.scatter(df_plot.loc[plt_mask, 'Depth_Mean'], 
+#             df_plot.loc[plt_mask, 'Depth_Var'], 
+#             alpha=0.2, s=10, color='gray', label='Observed Data (Sampled)')
 
-# 2. Plot Highlight data
-if not df_highlight.empty:
-    hl_mask = (df_highlight['Depth_Mean'] > 0) & (df_highlight['Depth_Var'] > 0)
-    plt.scatter(df_highlight.loc[hl_mask, 'Depth_Mean'], 
-                df_highlight.loc[hl_mask, 'Depth_Var'], 
-                alpha=0.9, s=30, color='red', marker='X', edgecolors='white', linewidth=0.5, label='Highlight')
+# # 2. Plot Highlight data
+# if not df_highlight.empty:
+#     hl_mask = (df_highlight['Depth_Mean'] > 0) & (df_highlight['Depth_Var'] > 0)
+#     plt.scatter(df_highlight.loc[hl_mask, 'Depth_Mean'], 
+#                 df_highlight.loc[hl_mask, 'Depth_Var'], 
+#                 alpha=0.9, s=30, color='red', marker='X', edgecolors='white', linewidth=0.5, label='Highlight')
 
-# 3. Plot Fitted Lines
-x_range = np.linspace(df_valid['Depth_Mean'].min(), df_valid['Depth_Mean'].max(), 500)
-y_line_pois = x_range
-y_line_nb = nb_variance_function(x_range, phi_est)
+# # 3. Plot Fitted Lines
+# x_range = np.linspace(df_valid['Depth_Mean'].min(), df_valid['Depth_Mean'].max(), 500)
+# y_line_pois = x_range
+# y_line_nb = nb_variance_function(x_range, phi_est)
 
-plt.plot(x_range, y_line_pois, 'b--', linewidth=2, label='Poisson (Var = Mean)')
-plt.plot(x_range, y_line_nb, 'r-', linewidth=2, label=f'NB Fit (phi={phi_est:.4f})')
+# plt.plot(x_range, y_line_pois, 'b--', linewidth=2, label='Poisson (Var = Mean)')
+# plt.plot(x_range, y_line_nb, 'r-', linewidth=2, label=f'NB Fit (phi={phi_est:.4f})')
 
-plt.xscale('log')
-plt.yscale('log')
-plt.xlabel('Mean Depth (log scale)')
-plt.ylabel('Depth Variance (log scale)')
-plt.title(f'Mean-Variance Relationship\n(Comparison of Poisson vs Negative Binomial)')
-plt.legend()
-plt.grid(True, which="both", ls="-", alpha=0.2)
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.xlabel('Mean Depth (log scale)')
+# plt.ylabel('Depth Variance (log scale)')
+# plt.title(f'Mean-Variance Relationship\n(Comparison of Poisson vs Negative Binomial)')
+# plt.legend()
+# plt.grid(True, which="both", ls="-", alpha=0.2)
 
-filename_fit = f"{OUTPUT_PREFIX}mean_variance_fit.png"
-plt.savefig(filename_fit, dpi=300)
-print(f"Saved fit plot to {filename_fit}")
-plt.close()
+# filename_fit = f"{OUTPUT_PREFIX}mean_variance_fit.png"
+# plt.savefig(filename_fit, dpi=300)
+# print(f"Saved fit plot to {filename_fit}")
+# plt.close()
 
 # ==========================================
 # 5. Visualization 2: QQ Plot of Residuals
@@ -182,6 +182,14 @@ ax = plt.gca()
 sm.qqplot(resid_std, line='45', fit=True, ax=ax, alpha=0.1, markerfacecolor='teal', markeredgecolor='none')
 plt.title(f'QQ Plot of Residuals (NB Model Fit)\n(Variance vs Predicted Variance)')
 plt.grid(True, alpha=0.3)
+
+# Adjust xlim based on theoretical quantiles count
+# Since we are comparing to a Normal distribution (approx standard normal due to standardization)
+n_points = len(resid_std)
+# Calculate approximate bounds for theoretical quantiles
+# Using slightly wider probability range to ensure all points are included
+th_bound = abs(stats.norm.ppf(1 / (n_points + 1)))
+plt.xlim(-th_bound - 0.5, th_bound + 0.5)
 
 filename_qq = f"{OUTPUT_PREFIX}qq_plot_residuals.png"
 plt.savefig(filename_qq, dpi=300)
