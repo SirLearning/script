@@ -56,20 +56,22 @@ workflow plink_processor {
     ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
     popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
 
-    // 4. assess with plink
-    assess_out = PLINK_ASSESS(
-        basic_info_out.smiss, 
-        basic_info_out.vmiss,
-        basic_info_out.scount,
-        basic_info_out.gcount,
-        basic_info_out.afreq,
-        basic_info_out.hardy,
-        popdep_out.popdep)
+    // // 4. assess with plink
+    // assess_out = PLINK_ASSESS(
+    //     basic_info_out.smiss, 
+    //     basic_info_out.vmiss,
+    //     basic_info_out.scount,
+    //     basic_info_out.gcount,
+    //     basic_info_out.afreq,
+    //     basic_info_out.hardy,
+    //     popdep_out.popdep)
 
     emit:
     vcf = preprocess_out.gz_vcf
     plink_bfile = preprocess_out.bfile
     plink_pfile  = preprocess_out.pfile
+    basic_info = basic_info_out
+    popdep = popdep_out.popdep
 }
 
 workflow plink_preprocess {
@@ -78,13 +80,48 @@ workflow plink_preprocess {
     vcf_in
 
     main:
-    gz_vcf = format_vcf_bgzip_idx(vcf_in)
+    gz_vcf = format_vcf_bgzip(vcf_in)
     plink_out = format_vcf_plink(gz_vcf.vcf)
 
     emit:
     gz_vcf = gz_vcf.vcf
     bfile = plink_out.bfile
     pfile = plink_out.pfile
+}
+
+process format_vcf_bgzip {
+    tag "bgzip ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), path("${id}.vcf.gz"), emit: vcf
+
+    script:
+    """
+    set -euo pipefail
+    exec > bgzip.${chr}.log 2>&1
+
+    in=${vcf}
+    out=${id}.vcf.gz
+
+    if [[ "\${in}" == *.vcf.gz ]]; then
+        echo "Input VCF is already gzipped, linking or copying to output..."
+        in_base=\$(basename "\${in}")
+        if [[ "\${in_base}" != "\${out}" ]]; then
+            ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
+        fi
+    else
+        echo "Compressing VCF with bgzip..."
+        bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
+    fi
+
+    echo "BGZF compression completed for ${id}."
+    """
 }
 
 process format_vcf_bgzip_idx {
@@ -101,6 +138,7 @@ process format_vcf_bgzip_idx {
     tuple val(id), val(chr), path("${id}.vcf.gz"), path("${id}.vcf.gz.tbi"), emit: vcf
 
     script:
+    def tmp_dir = "${params.output_dir}/${params.job}/tmp"
     """
     set -euo pipefail
     exec > bgzip_tabix.${chr}.log 2>&1
@@ -119,15 +157,21 @@ process format_vcf_bgzip_idx {
         bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
     fi
 
-    if ! tabix -@ ${task.cpus} -f -p vcf "\${out}"; then
-        echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
-        if [[ "\${in}" == *.vcf.gz ]]; then
-            gunzip -c "\${in}" | bgzip -c -@ ${task.cpus} > "\${out}.tmp"
-        else
-            bgzip -c -@ ${task.cpus} "\${in}" > "\${out}.tmp"
+    if [ -f "${tmp_dir}/\${out}.tbi" ]; then
+        echo "Index file already exists for \${out}, skipping tabix indexing."
+        ln -sf "${tmp_dir}/\${out}.tbi" ./
+    else
+        echo "Indexing VCF with tabix..."
+        if ! tabix -@ ${task.cpus} -f -p vcf "\${out}"; then
+            echo "tabix failed on \${out}; ensuring BGZF compression and retrying" >&2
+            if [[ "\${in}" == *.vcf.gz ]]; then
+                gunzip -c "\${in}" | bgzip -c -@ ${task.cpus} > "\${out}.tmp"
+            else
+                bgzip -c -@ ${task.cpus} "\${in}" > "\${out}.tmp"
+            fi
+            mv -f "\${out}.tmp" "\${out}"
+            tabix -@ ${task.cpus} -f -p vcf "\${out}"
         fi
-        mv -f "\${out}.tmp" "\${out}"
-        tabix -@ ${task.cpus} -f -p vcf "\${out}"
     fi
 
     echo "BGZF compression and indexing completed for ${id}."
@@ -141,7 +185,7 @@ process format_vcf_plink {
     conda 'stats'
 
     input:
-    tuple val(id), val(chr), path(vcf), path(tbi)
+    tuple val(id), val(chr), path(vcf)
 
     output:
     tuple val(id), val(chr), val("${id}.plink"), path("${id}.plink.bed"), path("${id}.plink.bim"), path("${id}.plink.fam"), emit: bfile
@@ -149,7 +193,7 @@ process format_vcf_plink {
     tuple val(id), val(chr), path("*.log"), emit: logs
 
     script:
-    def out_dir = "${params.output_dir}/${params.job}/process"
+    def tmp_dir = "${params.output_dir}/${params.job}/tmp"
     """
     set -euo pipefail
     exec > format_plink.${chr}.log 2>&1
@@ -159,18 +203,18 @@ process format_vcf_plink {
     
     EXIST_PLINK1=false
     EXIST_PLINK2=false
-    if [ -f "${out_dir}/${id}.bed" ] && [ -f "${out_dir}/${id}.bim" ] && [ -f "${out_dir}/${id}.fam" ]; then
+    if [ -f "${tmp_dir}/${id}.bed" ] && [ -f "${tmp_dir}/${id}.bim" ] && [ -f "${tmp_dir}/${id}.fam" ]; then
         EXIST_PLINK1=true
     fi
-    if [ -f "${out_dir}/${id}.plink2.pgen" ] && [ -f "${out_dir}/${id}.plink2.psam" ] && [ -f "${out_dir}/${id}.plink2.pvar" ]; then
+    if [ -f "${tmp_dir}/${id}.plink2.pgen" ] && [ -f "${tmp_dir}/${id}.plink2.psam" ] && [ -f "${tmp_dir}/${id}.plink2.pvar" ]; then
         EXIST_PLINK2=true
     fi
 
     if [ "\$EXIST_PLINK2" = true ]; then
-        echo "PLINK2 files for ${id} already exist in ${out_dir}, linking them..."
-        ln -sf "${out_dir}/${id}.plink2.pgen" ./
-        ln -sf "${out_dir}/${id}.plink2.psam" ./
-        ln -sf "${out_dir}/${id}.plink2.pvar" ./
+        echo "PLINK2 files for ${id} already exist in ${tmp_dir}, linking them..."
+        ln -sf "${tmp_dir}/${id}.plink2.pgen" ./
+        ln -sf "${tmp_dir}/${id}.plink2.psam" ./
+        ln -sf "${tmp_dir}/${id}.plink2.pvar" ./
     else
         if [[ ! -s ${vcf} ]]; then
             echo "ERROR: VCF file missing or empty before PLINK: ${vcf}" >&2
@@ -185,10 +229,10 @@ process format_vcf_plink {
     fi
     
     if [ "\$EXIST_PLINK1" = true ]; then
-        echo "PLINK1 files for ${id} already exist in ${out_dir}, linking them..."
-        ln -sf "${out_dir}/${id}.plink.bed" ./
-        ln -sf "${out_dir}/${id}.plink.bim" ./
-        ln -sf "${out_dir}/${id}.plink.fam" ./
+        echo "PLINK1 files for ${id} already exist in ${tmp_dir}, linking them..."
+        ln -sf "${tmp_dir}/${id}.plink.bed" ./
+        ln -sf "${tmp_dir}/${id}.plink.bim" ./
+        ln -sf "${tmp_dir}/${id}.plink.fam" ./
     else
         plink2 --pfile \${plink2_out} \\
             --make-bed \\
@@ -302,7 +346,7 @@ process calc_population_depth {
     conda 'tiger'
 
     input:
-    tuple val(id), val(chr), path(vcf), path(tbi)
+    tuple val(id), val(chr), path(vcf)
     tuple path(tiger_jar), val(app_name), val(java_version)
 
     output:
