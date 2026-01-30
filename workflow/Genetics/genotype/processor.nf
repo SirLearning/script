@@ -151,7 +151,7 @@ workflow plink_preprocess {
 }
 
 process format_vcf_bgzip_idx {
-    tag "${chr}" ? "bgzip/tabix ${chr}" : 'bgzip/tabix'
+    tag "bgzip/tabix ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
     conda 'stats'
 
@@ -170,10 +170,13 @@ process format_vcf_bgzip_idx {
     out=${id}.vcf.gz
 
     if [[ "\${in}" == *.vcf.gz ]]; then
+        echo "Input VCF is already gzipped, linking or copying to output..."
         in_base=\$(basename "\${in}")
         if [[ "\${in_base}" != "\${out}" ]]; then
             ln -sf "\${in}" "\${out}" || cp -f "\${in}" "\${out}"
-        else
+        fi
+    else
+        echo "Compressing VCF with bgzip..."
         bgzip -c -@ ${task.cpus} "\${in}" > "\${out}"
     fi
 
@@ -187,11 +190,13 @@ process format_vcf_bgzip_idx {
         mv -f "\${out}.tmp" "\${out}"
         tabix -@ ${task.cpus} -f -p vcf "\${out}"
     fi
+
+    echo "BGZF compression and indexing completed for ${id}."
     """
 }
 
 process format_vcf_plink {
-    tag "${chr}" ? "format plink ${chr}" : 'plink'
+    tag "format plink ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda 'stats'
