@@ -312,7 +312,7 @@ process mk_plink_basic_info {
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
-    tuple val(id), val(chr), path(pgen), path(psam), path(pvar)
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
 
     output:
     tuple val(id), val(chr), path("${id}.info.smiss"), emit: smiss
@@ -326,13 +326,13 @@ process mk_plink_basic_info {
     script:
     """
     set -euo pipefail
-    plink2 --pfile ${pgen.baseName} \\
+    plink2 --pfile ${prefix} \\
         --allow-extra-chr \\
         --missing \\
         --sample-counts \\
         --geno-counts \\
-        --freq \\   MAF
-        --hardy \\  heterozygosity
+        --freq \\
+        --hardy \\
         --threads ${task.cpus} \\
         --out ${id}.info > ${chr}.info.log 2>&1
     """
