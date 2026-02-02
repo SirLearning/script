@@ -6,55 +6,6 @@ include { getJavaSetupScript; getServerPopulations } from './utils.nf'
  * Variant assessment metrics using bcftools/vcftools
  */
 
-workflow plink_assess {
-    take:
-        smiss
-        vmiss
-        gcount
-        afreq
-        hardy
-
-    main:
-        // assess missing rate threshold
-        // 1. sample assessment
-        sample_missing = cpt_sample_missing(smiss)
-    emit:
-        missing_th = sample_missing.missing_th
-}
-
-process cpt_sample_missing {
-    tag "compute missing rate threshold: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/assess/threshold", mode: 'copy', pattern: "*.smiss_th.tsv"
-    publishDir "${params.output_dir}/${params.job}/assess/logs", mode: 'copy', pattern: "*.log"
-    conda 'stats'
-
-    input:
-    tuple val(id), val(chr), path(smiss)
-
-    output:
-    tuple val(id), path("*.smiss_th.tsv"), emit: smiss_th
-    tuple val(id), path("*.png"), emit: plots
-    tuple val(id), path("*.log"), emit: logs
-
-    script:
-    """
-    #!/usr/bin/env python
-    import sys
-    
-    sys.stdout = open("${id}.smiss_ana.log", "w")
-    sys.stderr = sys.stdout
-
-    from python_script.genomics.sample.smiss_ana import calculate_missing_threshold, plot_missing_dist
-
-    print(f"Processing sample missing rate for ${id}...")
-    plot_missing_dist("${smiss}", "${chr}.missing_dist")
-    
-    print(f"Calculating threshold...")
-    calculate_missing_threshold("${smiss}", "${id}.smiss_th.tsv")
-    """
-}
-
 
 // -- old code --
 
@@ -78,32 +29,6 @@ process quick_count {
 }
 
 
-process vcftools_stats {
-    tag "vcftools stats: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess/vcftools", mode: 'copy'
-
-    input:
-    tuple val(id), path(vcf)
-
-    output:
-    tuple val(id), path("${id}.frq"), emit: maf_freq
-    tuple val(id), path("${id}.hwe"), emit: hwe
-    tuple val(id), path("${id}.lmiss"), emit: miss_site
-    tuple val(id), path("${id}.imiss"), emit: miss_indv
-    tuple val(id), path("${id}.ldepth.mean"), emit: depth_site
-    tuple val(id), path("${id}.idepth"), emit: depth_indv
-    tuple val(id), path("${id}.lqual"), emit: site_qual
-    path "${id}.vcftools.log"
-
-    script:
-    """
-    set -euo pipefail
-    vcftools --gzvcf ${vcf} \\
-        --freq --hardy --missing-site --missing-indv \\
-        --site-mean-depth --depth --site-quality \\
-        --out ${id} > ${id}.vcftools.log 2>&1 || true
-    """
-}
 
 process bcftools_qc_assess {
     tag "assess with bcftools: ${id}"

@@ -1,6 +1,5 @@
 nextflow.enable.dsl=2
 
-include { plink_assess as PLINK_ASSESS } from './assess.nf'
 include { getTigerJarConfig } from './utils.nf'
 include { getPopDepTaxaBamFile_v1 } from './utils.nf'
 include { getRefV1ChrLength } from './utils.nf'
@@ -56,20 +55,17 @@ workflow plink_processor {
     ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
     popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
 
-    // // 4. assess with plink
-    // assess_out = PLINK_ASSESS(
-    //     basic_info_out.smiss, 
-    //     basic_info_out.vmiss,
-    //     basic_info_out.scount,
-    //     basic_info_out.gcount,
-    //     basic_info_out.afreq,
-    //     basic_info_out.hardy,
-    //     popdep_out.popdep)
-
     emit:
     vcf = preprocess_out.gz_vcf
     plink_bfile = preprocess_out.bfile
     plink_pfile  = preprocess_out.pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    popdep = popdep_out.popdep
 }
 
 workflow plink_preprocess {
@@ -338,6 +334,42 @@ process mk_plink_basic_info {
     """
 }
 
+process mk_vcftools_basic_info {
+    tag "vcftools stats: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{imiss, idepth}"
+    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{frq,hwe,lmiss,ldepth.mean,lqual}"
+    publishDir "${params.output_dir}/${params.job}/assess/vcftools/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), path("${id}.frq"), emit: frq
+    tuple val(id), val(chr), path("${id}.hwe"), emit: hwe
+    tuple val(id), val(chr), path("${id}.lmiss"), emit: lmiss
+    tuple val(id), val(chr), path("${id}.imiss"), emit: imiss
+    tuple val(id), val(chr), path("${id}.ldepth.mean"), emit: ldepth_mean
+    tuple val(id), val(chr), path("${id}.idepth"), emit: idepth
+    tuple val(id), val(chr), path("${id}.lqual"), emit: lqual
+    path "${chr}.vcftools.log", emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.vcftools.log 2>&1
+
+    vcftools --gzvcf ${vcf} \\
+        --freq \\
+        --hardy \\
+        --missing-site \\
+        --missing-indv \\
+        --site-mean-depth \\
+        --depth \\
+        --site-quality \\
+        --out ${id}.vcftools
+    """
+}
+
 process calc_population_depth {
     tag "prepare popdepth: ${chr}"
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.popdep.txt"
@@ -388,51 +420,7 @@ process calc_population_depth {
 
 // -- old code --
 
-process vcf_stats {
-    tag "${id}" ? "vcf stats ${id}" : 'vcf stats' 
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
 
-    input:
-    tuple val(id), path(vcf)
-
-    output:
-    tuple val(id), path("${id}.imiss"), path("${id}.lmiss"), path("${id}.het"), path("${id}.frq"), path("${id}.idepth"), path("${id}.ldepth.mean"), emit: stats
-
-    script:
-    """
-    set -euo pipefail
-    vcftools --vcf ${vcf} --missing-indv --out ${id}
-    vcftools --vcf ${vcf} --missing-site --out ${id}
-    vcftools --vcf ${vcf} --het --out ${id}
-    vcftools --vcf ${vcf} --freq2 --out ${id}
-    vcftools --vcf ${vcf} --depth --out ${id}
-    vcftools --vcf ${vcf} --site-mean-depth --out ${id}
-    """
-}
-
-process plot_vcf_qc {
-    tag "${id}" ? "plot qc ${id}" : 'plot qc'
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
-
-    input:
-    tuple val(id), path(imiss), path(lmiss), path(het), path(frq), path(idepth), path(ldepth)
-
-    output:
-    path("${id}.qc_plots.pdf")
-
-    script:
-    """
-    set -euo pipefail
-    Rscript ${params.src_dir}/r/genetics/vcf_qc_plot.r \\
-        --imiss ${imiss} \\
-        --lmiss ${lmiss} \\
-        --het ${het} \\
-        --frq ${frq} \\
-        --depth ${idepth} \\
-        --site_depth ${ldepth} \\
-        --output ${id}.qc_plots.pdf
-    """
-}
 
 process filter_vcftools_std {
     tag "${id}" ? "vcftools filter ${id}" : 'vcftools filter'

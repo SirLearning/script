@@ -2,10 +2,9 @@ nextflow.enable.dsl=2
 
 // --- Include workflow modules ---
 include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
+include { plink_stats as PLINK_STATS } from './genotype/stats.nf'
 include { test_plink as TEST_PLINK } from './genotype/processor.nf'
 include { database as DATABASE } from './genotype/database.nf'
-include { stats as STATS } from './genotype/stats.nf'
-include { annotate as ANNOTATE } from './genotype/annotate.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
 include { GWAS } from './static/gwas/gwas.nf'
@@ -164,7 +163,7 @@ workflow check_input {
     }
     // Optional chr param filtering, can use multiple chromosomes separated by comma, like --chr 1,2,3
     if (params.chr) {
-        def chr_filter_list = params.chr.toString().split(',').collect { it.trim() }
+        def chr_filter_list = params.chr.toString().split(',').collect { chr -> chr.trim() }
         log.info "${params.c_green}Filtering for chromosome(s):${params.c_reset} ${chr_filter_list}"
         ch_vcf = ch_vcf.filter { vcf_tuple -> vcf_tuple[1].toString() in chr_filter_list }
     }
@@ -179,6 +178,15 @@ workflow vmap4_v1_plink {
 
     main:
     def processor_out = PLINK_PROCESSOR(ch_vcf)
+
+    stats_out = PLINK_STATS(
+        processor_out.smiss, 
+        processor_out.vmiss,
+        processor_out.scount,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.popdep)
 
     emit:
     out = processor_out
