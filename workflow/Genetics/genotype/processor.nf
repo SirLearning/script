@@ -3,6 +3,8 @@ nextflow.enable.dsl=2
 include { getTigerJarConfig } from './utils.nf'
 include { getPopDepTaxaBamFile_v1 } from './utils.nf'
 include { getRefV1ChrLength } from './utils.nf'
+include { getRefV1ChrName } from './utils.nf'
+include { getRefV1ChrOffset } from './utils.nf'
 
 /*
     Module: genotype/processor.nf
@@ -118,6 +120,20 @@ process format_vcf_bgzip {
     """
 }
 
+workflow arrange_merge_vcf {
+    take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+
+    main:
+    arrange_out = arrange_vcf_wheat_chr_by_awk(vcf_in)
+    arrange_ch = arrange_out.vcf.groupTuple(by: 2)
+    merge_out = merge_arranged_vcf(arrange_ch)
+
+    emit:
+    vcf = merge_out.vcf
+}
+
 process format_vcf_bgzip_idx {
     tag "bgzip/tabix ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
@@ -169,6 +185,70 @@ process format_vcf_bgzip_idx {
     fi
 
     echo "BGZF compression and indexing completed for ${id}."
+    """
+}
+
+process arrange_vcf_wheat_chr_by_awk {
+    tag "arrange chrom pos awk ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), val(getRefV1ChrName(chr)), path("${chr}.arr_chr.vcf.gz"), emit: vcf
+    path "arrange_chr_pos_${chr}.log", emit: log
+
+    script:
+    def chr_name = getRefV1ChrName(chr)
+    def chr_offset = getRefV1ChrOffset(chr)
+    """
+    set -euo pipefail
+    exec > arrange_chr_pos_${chr}.log 2>&1
+
+    echo "Arranging chromosome names and positions for ${chr}..."
+    bgzip -dc ${vcf} | awk -v new_chr="${chr_name}" -v offset=${chr_offset} '
+    BEGIN { OFS="\\t" }
+    /^##contig/ {
+        print \$0; next 
+    }
+    /^#/ { print \$0; next }
+    {
+        \$1 = new_chr;
+        \$2 = \$2 + offset;
+        print \$0;
+    }
+    ' | bgzip -c -@ ${task.cpus} > ${id}.arr_chr.vcf.gz
+
+    echo "Chromosome arrangement completed for ${chr}."
+    """
+}
+
+process merge_arranged_vcf {
+    tag "merge arranged vcf: ${chr_name}"
+    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(chr_name), val(ids), val(chrs), path(vcfs)
+
+    output:
+    tuple val(chr_name), path("${chr_name}.vcf.gz"), emit: vcf
+    path "merge_arranged_vcf_${chr_name}.log", emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > merge_arranged_vcf_${chr_name}.log 2>&1
+
+    echo "Merging arranged VCFs for ${chr_name}..."
+    ls ${vcfs.join(' ')} > ${chr_name}_vcf_list.txt
+
+    bcftools merge -m all -O z -o ${chr_name}.vcf.gz -l ${chr_name}_vcf_list.txt --threads ${task.cpus}
+
+    echo "VCF merging completed for ${chr_name}."
     """
 }
 
@@ -417,36 +497,33 @@ process calc_population_depth {
     """
 }
 
-
-// -- old code --
-
-
-
-process filter_vcftools_std {
+// v0 is rigid threshold filtering
+process filter_vcf_v0_vcftools {
     tag "${id}" ? "vcftools filter ${id}" : 'vcftools filter'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(id), path(vcf)
+    tuple val(id), val(chr), path(vcf)
 
     output:
-    tuple val(id), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
+    tuple val(id), val(chr), val("${id}.vcftools.flt.v0"), path("${id}.vcftools.flt.v0.vcf"), emit: vcf
 
     script:
     """
     set -euo pipefail
+    exec > vcftools_filter.${chr}.log 2>&1
 
     in="${vcf}"
-    out="${id}.std.filtered"
+    out="${id}.vcftools.flt.v0"
 
-    # 如果输入是压缩的，使用 --gzvcf
-    if [[ "\${in}" == *.gz ]] || [[ "\${in}" == *.bgz ]]; then
-        VCF_OPT="--gzvcf"
-    else
-        VCF_OPT="--vcf"
-    fi
+    echo "Filtering VCF with vcftools... Thresholds are:"
+    echo "removing indels"
+    echo "MAF>=${params.maf}, MAC>=${params.mac}"
+    echo "F_MISSING<=${params.max_missing}"
+    echo "Min alleles: ${params.min_alleles}, Max alleles: ${params.max_alleles}"
 
-    vcftools \${VCF_OPT} "\${in}" \\
+    echo "run with vcftools..."
+    vcftools --gzvcf \${in} \\
         --max-missing ${params.max_missing} \\
         --remove-indels \\
         --maf ${params.maf} \\
@@ -457,121 +534,41 @@ process filter_vcftools_std {
         --recode-INFO-all \\
         --out "\${out}"
 
+    echo "VCF filtering completed for ${id}."
     mv "\${out}.recode.vcf" "\${out}.vcf"
+    echo "Filtered and recoded VCF saved to \${out}.vcf"
     """
 }
 
-process filter_bcftools_std {
+process filter_vcf_v0_bcftools {
     tag "${id}" ? "bcftools filter ${id}" : 'bcftools filter'
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
 
     input:
-    tuple val(id), path(vcf)
+    tuple val(id), val(chr), path(vcf)
 
     output:
-    tuple val(id), val("${id}.std.filtered"), path("${id}.std.filtered.vcf"), emit: vcf
+    tuple val(id), val(chr), val("${id}.bcftools.flt.v0"), path("${id}.bcftools.flt.v0.vcf"), emit: vcf
 
     script:
     """
     set -euo pipefail
+    exec > bcftools_filter.${chr}.log 2>&1
 
+    in="${vcf}"
+    out="${id}.bcftools.flt.v0"
+
+    echo "Filtering VCF with bcftools..."
+    echo "thresholds: MAF>=${params.maf}, MAC>=${params.mac}, F_MISSING<=${params.max_missing}"
+
+    echo "run with bcftools..."
     bcftools view \\
         -m2 -M2 -v snps \\
         -i 'MAF>=${params.maf} && AC>=${params.mac} && F_MISSING<=${params.max_missing}' \\
-        -o ${id}.std.filtered.vcf \\
+        -o ${id}.bcftools.flt.v0.vcf \\
         ${vcf}
-    """
-}
-
-
-
-// only for text files
-process arrange_wheat_chr_by_awk {
-    tag "${id}" ? "arrange chrom pos awk ${id}" : 'arrange chrom pos awk'
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-
-    input:
-    tuple val(id), path(input_file)
-    path map_tsv
-    tuple val(chrom_col), val(pos_col)
-
-    output:
-    tuple val(id), path("${input_file.baseName}.arr_chr.txt"), emit: vcf
-
-    script:
-    """
-    # Process file using awk
-    awk -v c_arg="${chrom_col}" -v p_arg="${pos_col}" '
-    BEGIN { FS=OFS="\t" }
     
-    # Load mapping (File 1: map_tsv)
-    NR==FNR {
-        map_chrom[\$1] = \$2
-        map_offset[\$1] = \$3
-        next
-    }
-
-    # Process Header (File 2: input_file, Line 1)
-    FNR==1 {
-        print \$0
-        
-        c_idx = -1
-        p_idx = -1
-        
-        # Check if arguments are numeric (1-based index)
-        if (c_arg ~ /^[0-9]+\$/) c_idx = c_arg
-        if (p_arg ~ /^[0-9]+\$/) p_idx = p_arg
-        
-        # Check header names (overrides numeric if match found)
-        for (i=1; i<=NF; i++) {
-            if (\$i == c_arg) c_idx = i
-            if (\$i == p_arg) p_idx = i
-        }
-        
-        if (c_idx == -1 || p_idx == -1) {
-            print "Error: Columns " c_arg " or " p_arg " not found." > "/dev/stderr"
-            exit 1
-        }
-        next
-    }
-
-    # Process Data
-    {
-        # Skip empty lines
-        if (NF < 1) next
-
-        # Check if chromosome needs mapping
-        if (\$c_idx in map_chrom) {
-            old_chr = \$c_idx
-            \$c_idx = map_chrom[old_chr]
-            \$p_idx = \$p_idx + map_offset[old_chr]
-        }
-        print \$0
-    }
-    ' "${map_tsv}" "${input_file}" > "${input_file.baseName}.arr_chr.txt"
-    """
-}
-
-// only for text files
-process arrange_wheat_chr_by_python {
-    tag "${id}" ? "arrange chrom pos ${id}" : 'arrange chrom pos'
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy'
-
-    input:
-    tuple val(id), path(input_file)
-    path map_json
-    tuple val(chrom_col), val(pos_col)
-
-    output:
-    tuple val(id), path("${input_file.baseName}.arr_chr.txt"), emit: vcf
-
-    script:
-    """
-    python ${params.src_dir}/python/infra/utils/wheat_ref_v1.py \\
-        -m "${map_json}" \\
-        -i "${input_file}" \\
-        -o "${input_file.baseName}.arr_chr.txt" \\
-        -c "${chrom_col}" \\
-        -p "${pos_col}"
+    echo "VCF filtering completed for ${id}."
+    echo "Filtered VCF saved to ${id}.bcftools.flt.v0.vcf"
     """
 }
