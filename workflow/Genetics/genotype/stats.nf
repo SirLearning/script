@@ -37,6 +37,86 @@ workflow stats {
         pca_plot = ch_pca_plot
 }
 
+workflow plink_stats {
+    take:
+        smiss
+        vmiss
+        gcount
+        afreq
+        hardy
+
+    main:
+        def stats_out = sample_missing_stats(smiss)
+
+    emit:
+        bfiles = stats_out.bfiles
+        missing = stats_out.missing
+        freq = stats_out.freq
+        het = stats_out.het
+        pca = stats_out.pca
+        plots = stats_out.plots
+        pca_plot = stats_out.pca_plot
+}
+
+process sample_missing_stats {
+    tag "compute missing rate threshold: ${id}"
+    publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/assess/threshold", mode: 'copy', pattern: "*.smiss_th.tsv"
+    publishDir "${params.output_dir}/${params.job}/assess/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(smiss)
+
+    output:
+    tuple val(id), path("*.smiss_th.tsv"), emit: smiss_th
+    tuple val(id), path("*.png"), emit: plots
+    tuple val(id), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    
+    sys.stdout = open("${id}.smiss_ana.log", "w")
+    sys.stderr = sys.stdout
+
+    from python_script.genomics.sample.smiss_ana import calculate_missing_threshold, plot_missing_dist
+
+    print(f"Processing sample missing rate for ${id}...")
+    plot_missing_dist("${smiss}", "${chr}.missing_dist")
+    
+    print(f"Calculating threshold...")
+    calculate_missing_threshold("${smiss}", "${id}.smiss_th.tsv")
+    """
+}
+
+process vcftools_vcf_qc {
+    tag "${id}" ? "plot qc ${id}" : 'plot qc'
+    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
+
+    input:
+    tuple val(id), path(imiss), path(lmiss), path(het), path(frq), path(idepth), path(ldepth)
+
+    output:
+    path("${id}.qc_plots.pdf")
+
+    script:
+    """
+    set -euo pipefail
+    Rscript ${params.src_dir}/r/genetics/vcf_qc_plot.r \\
+        --imiss ${imiss} \\
+        --lmiss ${lmiss} \\
+        --het ${het} \\
+        --frq ${frq} \\
+        --depth ${idepth} \\
+        --site_depth ${ldepth} \\
+        --output ${id}.qc_plots.pdf
+    """
+}
+
+// --- old code ---
+
 process PLINK_FROM_VCF {
     tag "${id}" 
     publishDir "${params.output_dir}/${params.job}/stats/plink", mode: 'copy'

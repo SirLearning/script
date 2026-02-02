@@ -107,7 +107,10 @@ def missing_vs_depth(
     print(high_miss_samples[['Taxa', 'F_MISS']].to_string(index=False))
 
 
-def calculate_missing_threshold(input_file, output_file):
+def calculate_missing_threshold(
+    input_file, 
+    output_file
+):
     """
     Calculates missing rate threshold (Mean + 3SD) and writes to a file (TSV).
     The output file contains headers in the first row and values in the second row.
@@ -151,7 +154,10 @@ def calculate_missing_threshold(input_file, output_file):
     except Exception as e:
          sys.stderr.write(f"[Error] Failed to write to {output_file}: {e}\n")
 
-def plot_missing_dist(input_file, output_prefix):
+def plot_missing_dist(
+    input_file, 
+    output_prefix
+):
     """
     Generates a distribution plot for missing rates.
     Logs are sent to stderr.
@@ -162,19 +168,15 @@ def plot_missing_dist(input_file, output_prefix):
     import seaborn as sns
     import numpy as np
 
-    try:
-        df = pd.read_csv(input_file, sep=r'\s+')
-    except Exception as e:
-        sys.stderr.write(f"[Error] Failed to read {input_file}: {e}\n")
-        return
+    df = pd.read_csv(input_file, sep=r'\s+')
 
     col = 'F_MISS'
-    if col not in df.columns:
-        sys.stderr.write(f"[Error] Column {col} not found in {input_file}\n")
-        return
 
     # Stats for validation and plotting lines
     mean_val = df[col].mean()
+    median_val = df[col].median()
+    
+    # Calculate threshold
     std_val = df[col].std()
     threshold = mean_val + 3 * std_val
     if pd.isna(threshold):

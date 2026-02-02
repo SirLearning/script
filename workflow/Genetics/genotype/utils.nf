@@ -37,6 +37,58 @@ def getJavaSetupScript(javaVersion, javaLibDir) {
     """.stripIndent()
 }
 
+def getSoftwareConfig(home_dir, user_dir, tiger_jar, workshop_jar, samtools) {
+
+    def java_lib_dir = "${user_dir}/lib/jvm"
+
+    def resolved_tiger_jar = "${home_dir}/lib/${tiger_jar}"
+    def resolved_workshop_jar = "${home_dir}/lib/${workshop_jar}"
+
+    def tiger_jar_config = getTigerJarConfig(resolved_tiger_jar, java_lib_dir)
+    def workshop_jar_config = getWorkshopJarConfig(resolved_workshop_jar, java_lib_dir)
+    def samtools_config = getSamtoolsConfig(samtools)
+    
+    return [
+        tiger_jar_config: tiger_jar_config,
+        workshop_jar_config: workshop_jar_config,
+        samtools_config: samtools_config
+    ]
+}
+
+def getWorkshopJarConfig(workshopJarPath, java_lib_dir) {
+    return [
+        path: workshopJarPath,
+        java_version: "java21",
+        java_lib_dir: java_lib_dir
+    ]
+}
+
+def getSamtoolsConfig(samtoolsPath) {
+    return [
+        path: samtoolsPath
+    ]
+}
+
+def validatePaths(pathMap) {
+    def errors = []
+    def isValid = true
+    
+    pathMap.each { name, path ->
+        if (!path) {
+            errors << "${name} is not specified"
+            isValid = false
+        } else {
+            def pathFile = file(path)
+            if (!pathFile.exists()) {
+                errors << "${name} does not exist: ${path}"
+                isValid = false
+            }
+        }
+    }
+    
+    return [isValid: isValid, errors: errors]
+}
+
 // Get job-specific configuration
 def getJobConfig(job, home_dir) {
     def jobConfigs = [
@@ -72,6 +124,202 @@ def getJobConfig(job, home_dir) {
     }
 
     return jobConfigs[job]
+}
+
+def getCallingJobConfig(job, home_dir) {
+    def jobConfigs = [
+        "chr1": [
+            name: "chr1",
+            a_pop: ["A"],
+            b_pop: [],
+            d_pop: [],
+            chroms: ["1"]
+        ],
+        "test": [
+            name: "test",
+            a_pop: ["test"],
+            b_pop: ["test"],
+            d_pop: ["test"],
+            chroms: []
+        ],
+        "test_chr1": [
+            name: "test_chr1",
+            a_pop: ["test_chr1"],
+            b_pop: ["test_chr1"],
+            d_pop: ["test_chr1"],
+            chroms: []
+        ],
+        "test_chr12": [
+            name: "test_chr12",
+            a_pop: ["test_chr12"],
+            b_pop: [],
+            d_pop: [],
+            chroms: ["1", "2"]
+        ],
+        "all": [
+            name: "all",
+            a_pop: ["A", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            chroms: []
+        ],
+        "rebuild": [
+            name: "rebuild",
+            a_pop: ["A", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
+            chroms: []
+        ]
+    ]
+    
+    if (jobConfigs.containsKey(job)) {
+        return jobConfigs[job]
+    } else {
+        log.error "Unknown job configuration: ${job}"
+        log.error "Available jobs: ${jobConfigs.keySet().join(', ')}"
+        exit 1
+    }
+}
+
+// Population configuration function
+def getPopulationConfig(pop, home_dir) {
+    def popConfigs = [
+        "chr1": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/A",
+            depth_dir: "${home_dir}/00data/04depth/01A"
+        ],
+        "test": [
+            bam_dir: "${home_dir}/01testData/02bam/01test",
+            depth_dir: "${home_dir}/01testData/04depth/01test"
+        ],
+        "test_chr1": [
+            bam_dir: "${home_dir}/01testData/02bam/02test1chr",
+            depth_dir: "${home_dir}/01testData/04depth/01test"
+        ],
+        "test_chr12": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/A",
+            depth_dir: "${home_dir}/00data/04depth/09test12"
+        ],
+        "A": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/A",
+            depth_dir: "${home_dir}/00data/04depth/01A"
+        ],
+        "AB": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/AB",
+            depth_dir: "${home_dir}/00data/04depth/02AB"
+        ],
+        "ABD": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/ABD",
+            depth_dir: "${home_dir}/00data/04depth/03ABD"
+        ],
+        "D": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/D",
+            depth_dir: "${home_dir}/00data/04depth/04D"
+        ],
+        "HZNU": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/HZNU",
+            depth_dir: "${home_dir}/00data/04depth/05HZNU"
+        ],
+        "Nature": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/Nature",
+            depth_dir: "${home_dir}/00data/04depth/06Nature"
+        ],
+        "S": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/S",
+            depth_dir: "${home_dir}/00data/04depth/07S"
+        ],
+        "WAP": [
+            bam_dir: "${home_dir}/00data/02bam/bam1/ABD",
+            depth_dir: "${home_dir}/00data/04depth/08WAP"
+        ],
+        "w115": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/115",
+            depth_dir: "${home_dir}/00data/02bam/bam2/115"
+        ],
+        "w203": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/203",
+            depth_dir: "${home_dir}/00data/02bam/bam2/203"
+        ],
+        "w204": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/204",
+            depth_dir: "${home_dir}/00data/02bam/bam2/204"
+        ],
+        "w243": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/243",
+            depth_dir: "${home_dir}/00data/02bam/bam2/243"
+        ],
+        "w66": [
+            bam_dir: "${home_dir}/00data/02bam/bam2/66",
+            depth_dir: "${home_dir}/00data/02bam/bam2/66"
+        ],
+    ]
+    
+    if (!popConfigs.containsKey(pop)) {
+        // log.error "Unknown population configuration: ${pop}"
+        def validPops = popConfigs.keySet().join(", ")
+        throw new Exception("Unknown population: ${pop}. Valid options: ${validPops}")
+    }
+
+    def config = popConfigs[pop]
+    
+    return tuple(pop, config.depth_dir, config.bam_dir)
+}
+
+def getChrConfig(chr, home_dir, sub_genome_tbm) {
+    // Normalize possible prefixes like 'chr1' -> '1'
+    def normalized = chr.toString().replaceFirst(/^chr/, '')
+
+    def subGenomeConfigs = [
+        "A": [
+            chromosome: chr,
+            reference: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.gzi"
+        ],
+        "B": [
+            chromosome: chr,
+            reference: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz.gzi"
+        ],
+        "D": [
+            chromosome: chr,
+            reference: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz.gzi"
+        ],
+        "ALL": [
+            chromosome: chr,
+            reference: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
+            fai_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.fai",
+            gzi_idx: "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz.gzi"
+        ]
+    ]
+
+    def groupA = ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
+    def groupB = ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
+    def groupD = ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
+    def groupOthers = ["0","43","44"]
+
+    def sub_genome
+    if (groupA.contains(normalized)) {
+        sub_genome = "A"
+    } else if (groupB.contains(normalized)) {
+        sub_genome = "B"
+    } else if (groupD.contains(normalized)) {
+        sub_genome = "D"
+    } else if (groupOthers.contains(normalized)) {
+        sub_genome = "ALL"
+    } else {
+        throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
+    }
+    def config = subGenomeConfigs[sub_genome]
+    def ref = file(config.reference)
+    def fai = file(config.fai_idx)
+    def gzi = file(config.gzi_idx)
+    def tbm_file = file(sub_genome_tbm[sub_genome])
+
+    return tuple(config.chromosome, ref, fai, gzi, tbm_file)
 }
 
 def getVcfIdFromPath(vcf_path) {
