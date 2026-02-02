@@ -1,61 +1,27 @@
 nextflow.enable.dsl=2
 
 // --- Genotype statistics workflow ---
-
-workflow stats {
-    take:
-        ch_vcf // tuple val(id), path(vcf)
-
-    main:
-        // 1. Convert VCF to PLINK binary format
-        ch_bfiles = PLINK_FROM_VCF(ch_vcf)
-        
-        // 2. Calculate statistics
-        ch_missing = PLINK_MISSING(ch_bfiles.bfiles)
-        ch_freq = PLINK_FREQ(ch_bfiles.bfiles)
-        ch_het = PLINK_HET(ch_bfiles.bfiles)
-        ch_pca = PLINK_PCA(ch_bfiles.bfiles)
-
-        ch_pca_plot = channel.empty()
-        if (params.enable_pca_plot) {
-            def md = params.sample_metadata ? file(params.sample_metadata) : file('NO_METADATA')
-            ch_pca_plot = PLOT_PLINK_PCA(ch_pca.pca, md)
-        }
-
-        ch_plots = channel.empty()
-        if (params.enable_simple_plots) {
-            ch_plots = PLOT_PLINK_QC(ch_missing.missing, ch_freq.freq, ch_het.het)
-        }
-
-    emit:
-        bfiles = ch_bfiles.bfiles
-        missing = ch_missing.missing
-        freq = ch_freq.freq
-        het = ch_het.het
-        pca = ch_pca.pca
-        plots = ch_plots
-        pca_plot = ch_pca_plot
-}
-
 workflow plink_stats {
     take:
-        smiss
-        vmiss
-        gcount
-        afreq
-        hardy
+    // Expect a channel: [ val(id), path(smiss) ]
+    smiss
+    vmiss
+    gcount
+    afreq
+    hardy
+    popdep
 
     main:
-        def stats_out = sample_missing_stats(smiss)
+    def stats_out = sample_missing_stats(smiss)
 
     emit:
-        bfiles = stats_out.bfiles
-        missing = stats_out.missing
-        freq = stats_out.freq
-        het = stats_out.het
-        pca = stats_out.pca
-        plots = stats_out.plots
-        pca_plot = stats_out.pca_plot
+    bfiles = stats_out.bfiles
+    missing = stats_out.missing
+    freq = stats_out.freq
+    het = stats_out.het
+    pca = stats_out.pca
+    plots = stats_out.plots
+    pca_plot = stats_out.pca_plot
 }
 
 process sample_missing_stats {
@@ -91,107 +57,7 @@ process sample_missing_stats {
     """
 }
 
-process vcftools_vcf_qc {
-    tag "${id}" ? "plot qc ${id}" : 'plot qc'
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
-
-    input:
-    tuple val(id), path(imiss), path(lmiss), path(het), path(frq), path(idepth), path(ldepth)
-
-    output:
-    path("${id}.qc_plots.pdf")
-
-    script:
-    """
-    set -euo pipefail
-    Rscript ${params.src_dir}/r/genetics/vcf_qc_plot.r \\
-        --imiss ${imiss} \\
-        --lmiss ${lmiss} \\
-        --het ${het} \\
-        --frq ${frq} \\
-        --depth ${idepth} \\
-        --site_depth ${ldepth} \\
-        --output ${id}.qc_plots.pdf
-    """
-}
-
-// --- old code ---
-
-process PLINK_FROM_VCF {
-    tag "${id}" 
-    publishDir "${params.output_dir}/${params.job}/stats/plink", mode: 'copy'
-
-    input:
-    tuple val(id), path(vcf)
-
-    output:
-    tuple val(id), path("${id}.bed"), path("${id}.bim"), path("${id}.fam"), emit: bfiles
-
-    script:
-    """
-    set -euo pipefail
-    plink --vcf ${vcf} \\
-        --make-bed \\
-        --out ${id} \\
-        --allow-extra-chr \\
-        --chr-set 42 \\
-        --double-id \\
-        --threads ${task.cpus}
-    """
-}
-
-process PLINK_MISSING {
-    tag "${id}" 
-    publishDir "${params.output_dir}/${params.job}/stats/missing", mode: 'copy'
-
-    input:
-    tuple val(id), path(bed), path(bim), path(fam)
-
-    output:
-    tuple val(id), path("${id}.imiss"), path("${id}.lmiss"), emit: missing
-
-    script:
-    """
-    set -euo pipefail
-    plink --bfile ${id} --missing --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
-    """
-}
-
-process PLINK_FREQ {
-    tag "${id}" 
-    publishDir "${params.output_dir}/${params.job}/stats/freq", mode: 'copy'
-
-    input:
-    tuple val(id), path(bed), path(bim), path(fam)
-
-    output:
-    tuple val(id), path("${id}.frq"), emit: freq
-
-    script:
-    """
-    set -euo pipefail
-    plink --bfile ${id} --freq --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
-    """
-}
-
-process PLINK_HET {
-    tag "${id}" 
-    publishDir "${params.output_dir}/${params.job}/stats/het", mode: 'copy'
-
-    input:
-    tuple val(id), path(bed), path(bim), path(fam)
-
-    output:
-    tuple val(id), path("${id}.het"), emit: het
-
-    script:
-    """
-    set -euo pipefail
-    plink --bfile ${id} --het --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
-    """
-}
-
-process PLINK_PCA {
+process plink_pca {
     tag "${id}"
     publishDir "${params.output_dir}/${params.job}/stats/pca", mode: 'copy'
 
@@ -204,7 +70,7 @@ process PLINK_PCA {
     script:
     """
     set -euo pipefail
-    plink --bfile ${id} --pca 5 --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
+    plink --bfile ${id} --pca ${params.pc_num} --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
     """
 }
 
@@ -231,26 +97,27 @@ process PLOT_PLINK_PCA {
     """
 }
 
-process PLOT_PLINK_QC {
-    tag "${id}"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy'
+process vcftools_vcf_qc_r {
+    tag "${id}" ? "plot qc ${id}" : 'plot qc'
+    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy'
 
     input:
-    tuple val(id), path(imiss), path(lmiss)
-    tuple val(id2), path(frq)
-    tuple val(id3), path(het)
+    tuple val(id), path(imiss), path(lmiss), path(het), path(frq), path(idepth), path(ldepth)
 
     output:
-    tuple val(id), path("${id}.qc_plots.pdf"), emit: qc_plots
+    path("${id}.qc_plots.pdf")
 
     script:
     """
     set -euo pipefail
-    Rscript ${params.src_dir}/r/genetics/plink_qc_plot.r \\
+    Rscript ${params.src_dir}/r/genetics/vcf_qc_plot.r \\
         --imiss ${imiss} \\
         --lmiss ${lmiss} \\
-        --frq ${frq} \\
         --het ${het} \\
-        --output ${id}.qc_plots.pdf
+        --frq ${frq} \\
+        --depth ${idepth} \\
+        --site_depth ${ldepth} \\
+        --output ${id}.qc_plots.png
     """
 }
+

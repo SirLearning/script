@@ -140,5 +140,73 @@ def maf_dist(
     plt.savefig(filename_05, dpi=300)
     print(f"Plot saved to {filename_05}")
 
+def plot_allele_frequency(
+    input_file,
+    output_prefix="maf_distribution"
+):
+    """
+    Plots histogram of Minor Allele Frequency (MAF) from .frq file.
+    Input: .frq file (VCFtools output)
+    Output: MAF Distribution Histogram
+    """
+    print(f"[Info] Processing Allele Frequency: {input_file}")
+    try:
+        # .frq file often has variable columns if not biallelic
+        # We try to read it assuming it can be parsed by whitespace
+        # VCFtools .frq header: CHROM POS N_ALLELES N_CHR {ALLELE:FREQ}
+        
+        # We read as python engine to be more robust? No, standard C is faster.
+        # Let's inspect columns after read.
+        df = pd.read_csv(input_file, sep=r'\s+', low_memory=False)
+        
+        # Verify if we have enough columns. 
+        # Usually first 4 are: CHROM, POS, N_ALLELES, N_CHR
+        # Columns 5 (index 4) and 6 (index 5) should be Allele1:Freq1, Allele2:Freq2
+        
+        if df.shape[1] < 6:
+            print("[Warning] .frq file has fewer than 6 columns. May not be biallelic or standard format.")
+            return
+
+        def parse_maf(val):
+            if isinstance(val, str) and ':' in val:
+                try:
+                    return float(val.split(':')[1])
+                except ValueError:
+                    return np.nan
+            return np.nan
+
+        # Extract frequencies from column index 4 and 5 (5th and 6th columns)
+        # Using iloc to be index-based rather than name-based, as names are {ALLELE:FREQ}
+        freq1 = df.iloc[:, 4].apply(parse_maf)
+        freq2 = df.iloc[:, 5].apply(parse_maf)
+        
+        # Calculate MAF: min(freq1, freq2)
+        # We combine them and take row-wise min
+        freqs = pd.concat([freq1, freq2], axis=1)
+        maf = freqs.min(axis=1)
+        
+        # Drop NAs
+        maf = maf.dropna()
+        
+        if len(maf) == 0:
+            print("[Error] No valid MAF data found.")
+            return
+
+        plt.figure(figsize=(10, 8))
+        sns.histplot(x=maf, binwidth=0.01, color="orange", edgecolor="black", kde=False)
+        plt.title("Minor Allele Frequency (MAF) Distribution")
+        plt.xlabel("MAF")
+        plt.ylabel("Count")
+        
+        outfile = f"{output_prefix}.png"
+        plt.tight_layout()
+        plt.savefig(outfile, dpi=300)
+        plt.close()
+        print(f"[Success] Plot saved to {outfile}")
+
+    except Exception as e:
+        print(f"[Error] Failed to plot allele frequency: {e}")
+
+
 if __name__ == "__main__":
     maf_dist()

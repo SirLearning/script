@@ -178,8 +178,7 @@ workflow vmap4_v1_plink {
 
     main:
     def processor_out = PLINK_PROCESSOR(ch_vcf)
-
-    stats_out = PLINK_STATS(
+    def stats_out = PLINK_STATS(
         processor_out.smiss, 
         processor_out.vmiss,
         processor_out.scount,
@@ -187,6 +186,7 @@ workflow vmap4_v1_plink {
         processor_out.afreq,
         processor_out.hardy,
         processor_out.popdep)
+    
 
     emit:
     out = processor_out
