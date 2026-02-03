@@ -1,3 +1,4 @@
+from ast import arg
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
@@ -191,9 +192,6 @@ def plot_regression_comparison(
     print(f"Saved plot to {filename}")
     plt.close()
 
-if __name__ == "__main__":
-    combine_plots()
-
 
 def plot_stacked_distribution(
     data, 
@@ -365,3 +363,78 @@ def plot_joint_regression(
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved plot to {filename}")
     plt.close()
+
+
+def plot_mean_variance_fit(
+    x_data,
+    y_data,
+    x_line,
+    y_line_poisson,
+    y_line_nb,
+    phi_est,
+    filename,
+    title='Mean-Variance Relationship',
+    x_label='Mean Depth (log)',
+    y_label='Depth Variance (log)',
+    sample_size=50000
+):
+    """
+    Plots Mean vs Variance with fitted Poisson and Negative Binomial lines.
+    """
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    plt.figure(figsize=(10, 8))
+    
+    # Downsample for scatter
+    if len(x_data) > sample_size:
+        # Combine to sample rows
+        temp_df = pd.DataFrame({'Mean': x_data, 'Var': y_data})
+        temp_df = temp_df.sample(n=sample_size, random_state=42)
+        plt.scatter(temp_df['Mean'], temp_df['Var'], 
+                    alpha=0.2, s=10, color='gray', label='Observed (Sampled)')
+    else:
+        plt.scatter(x_data, y_data, 
+                    alpha=0.2, s=10, color='gray', label='Observed')
+    
+    # Lines
+    plt.plot(x_line, y_line_poisson, 'b--', linewidth=2, label='Poisson')
+    plt.plot(x_line, y_line_nb, 'r-', linewidth=2, label=f'NB Fit (phi={phi_est:.4f})')
+    
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    print(f"Saved fit plot: {filename}")
+    plt.close()
+
+def plot_qq_residuals(
+    residuals,
+    filename,
+    title="QQ Plot of Standardized Residuals"
+):
+    """
+    Plots a QQ plot of residuals using statsmodels.
+    """
+    import matplotlib.pyplot as plt
+    import statsmodels.api as sm
+
+    plt.figure(figsize=(8, 6))
+    sm.qqplot(residuals, line='45', fit=True)
+    plt.title(title)
+    
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    print(f"Saved QQ plot: {filename}")
+    plt.close()
+
+
+if __name__ == "__main__":
+    combine_plots(arg[1], arg[2], arg[3])
+    

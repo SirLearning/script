@@ -1,14 +1,10 @@
+from infra.file_utils import load_df_from_space_sep
 import pandas as pd
 import sys
 import os
-
-# Add src/python to path if needed to find infra
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_python_dir = os.path.abspath(os.path.join(current_dir, "../../../"))
-if src_python_dir not in sys.path:
-    sys.path.append(src_python_dir)
-
+# Add src/python methods
 from infra.plot_utils import plot_distribution_with_stats
+from infra.threshold_utils import save_thresholds
 
 def analyze_smiss_distribution(
     input_file, 
@@ -24,12 +20,8 @@ def analyze_smiss_distribution(
 
     try:
         # 1. Read Data
-        df = pd.read_csv(input_file, sep=r'\s+')
-        col = 'F_MISS'
-        
-        if col not in df.columns:
-            print(f"[Error] Column '{col}' not found in {input_file}. Columns: {df.columns}")
-            return
+        df = load_smiss(input_file)
+        col = 'Missing_Rate'
 
         # 2. Statistics
         mean_val = df[col].mean()
@@ -68,13 +60,12 @@ def analyze_smiss_distribution(
         
         # 5. Save Threshold to File
         threshold_file = f"{output_prefix}.threshold.tsv"
-        out_df = pd.DataFrame({
-            'missing_threshold': [calc_threshold],
-            'mean_missing': [mean_val],
-            'std_missing': [std_val]
-        })
-        out_df.to_csv(threshold_file, sep='\t', index=False)
-        print(f"[Info] Thresholds saved to {threshold_file}")
+        stats_data = {
+            'missing_threshold': calc_threshold,
+            'mean_missing': mean_val,
+            'std_missing': std_val
+        }
+        save_thresholds(stats_data, threshold_file)
 
     except Exception as e:
         print(f"[Error] Failed to analyze missing rate: {e}")
@@ -113,6 +104,24 @@ def analyze_imiss_distribution(
         
     except Exception as e:
         print(f"[Error] Failed to plot individual missingness: {e}")
+
+
+def load_smiss(missing_file):
+    df_missing = load_df_from_space_sep(missing_file)
+    # Handle IID header variations
+    if '#IID' in df_missing.columns:
+        iid_col = '#IID'
+    elif 'IID' in df_missing.columns:
+        iid_col = 'IID'
+    else:
+        print(f"Error: Missing IID column in smiss. Found: {df_missing.columns}")
+        return
+    missing_col = 'F_MISS'
+    if missing_col not in df_missing.columns:
+        print(f"Error: Missing '{missing_col}' in smiss. Found: {df_missing.columns}")
+        return None
+    return df_missing[[iid_col, missing_col]].rename(columns={iid_col: 'Sample', missing_col: 'Missing_Rate'})
+
 
 if __name__ == "__main__":
     # Example usage

@@ -3,9 +3,107 @@ import numpy as np
 import os
 import sys
 
+def save_df_to_tsv(df, output_file, float_format='%.4f'):
+    """
+    Saves a Pandas DataFrame to a TSV file.
+    Automatically creates parent directories.
+    """
+    try:
+        if df is None:
+            print(f"[Warning] DataFrame is None, skipping save to {output_file}")
+            return
+
+        # Ensure parent directory exists
+        parent_dir = os.path.dirname(output_file)
+        if parent_dir and not os.path.exists(parent_dir):
+            os.makedirs(parent_dir)
+            
+        df.to_csv(output_file, sep='\t', index=False, float_format=float_format)
+        print(f"[Info] Saved data to {output_file}")
+    except Exception as e:
+        print(f"[Error] Failed to save to {output_file}: {e}")
+
+
+def save_sample_df_to_tsv(
+    df, 
+    output_file, 
+    sample_col='Sample', 
+    float_format='%.4f'
+):
+    """
+    Saves a DataFrame to a TSV file with 'Sample' column guaranteed to be first.
+    """
+    if df is None or df.empty:
+        print(f"[Warning] No data to save to {output_file}")
+        return
+
+    # Ensure sample_col is first if it exists
+    if sample_col in df.columns:
+        cols = [sample_col] + [c for c in df.columns if c != sample_col]
+        df = df[cols]
+    
+    save_df_to_tsv(df, output_file, float_format)
+
+
+def load_df_from_tsv(input_file):
+    """
+    Reads a TSV file into a DataFrame.
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    try:
+        return pd.read_csv(input_file, sep='\t')
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
+def load_df_from_csv(input_file):
+    """
+    Reads a CSV file into a DataFrame.
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    try:
+        return pd.read_csv(input_file)
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
+def load_df_from_space_sep(input_file):
+    """
+    Reads a space-separated file into a DataFrame.
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    try:
+        return pd.read_csv(input_file, sep=r'\s+')
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
+def load_df_from_space_sep_no_header(input_file, col_names):
+    """
+    Reads a space-separated file without header into a DataFrame.
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    try:
+        return pd.read_csv(input_file, sep=r'\s+', header=None, names=col_names)
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
 def verify_file_integrity(
     target_file=None, 
-    reference_file=DEFAULT_REF_MD5, 
+    reference_file=None, 
     output_pass_file=None
 ):
     """

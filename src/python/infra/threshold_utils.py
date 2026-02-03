@@ -1,5 +1,4 @@
-from turtle import pd
-
+import pandas as pd
 
 def save_thresholds(stats_dict, output_file):
     """
@@ -15,3 +14,20 @@ def save_thresholds(stats_dict, output_file):
         print(f"Thresholds saved to {output_file}")
     except Exception as e:
         print(f"[Error] Failed to save thresholds: {e}")
+        
+def load_thresholds(input_file):
+    """
+    Loads thresholds/stats from a TSV file into a dictionary.
+    """
+    try:
+        df = pd.read_csv(input_file, sep='\t')
+        if df.empty:
+            print(f"[Warning] No data found in {input_file}")
+            return {}
+        # Convert first row to dictionary
+        stats_dict = df.iloc[0].to_dict()
+        return stats_dict
+    except Exception as e:
+        print(f"[Error] Failed to load thresholds: {e}")
+        return {}
+
