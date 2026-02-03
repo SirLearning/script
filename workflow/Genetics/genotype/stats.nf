@@ -57,6 +57,34 @@ process sample_missing_stats {
     """
 }
 
+process sample_het_stats {
+    tag "compute heterozygosity rate: ${id}"
+    publishDir "${params.output_dir}/${params.job}/assess/het", mode: 'copy', pattern: "*.het_stats.tsv"
+    publishDir "${params.output_dir}/${params.job}/assess/logs", mode: 'copy', pattern: "*.log"
+    conda 'stats'
+
+    input:
+    tuple val(id), val(chr), path(het)
+
+    output:
+    tuple val(id), path("${id}.het_stats.tsv"), emit: het_stats
+    tuple val(id), path("${id}.het_ana.log"), emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    
+    sys.stdout = open("${id}.het_ana.log", "w")
+    sys.stderr = sys.stdout
+
+    from python_script.genomics.sample.het_ana import compute_het_stats
+
+    print(f"Processing heterozygosity rate for ${id}...")
+    compute_het_stats("${het}", "${id}.het_stats.tsv")
+    """
+}
+
 process plink_pca {
     tag "${id}"
     publishDir "${params.output_dir}/${params.job}/stats/pca", mode: 'copy'

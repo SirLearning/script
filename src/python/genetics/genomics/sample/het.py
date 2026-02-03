@@ -1,3 +1,5 @@
+from genetics.genomics.sample.smiss import load_smiss
+from infra.file_utils import load_df_from_space_sep, load_df_from_tsv, save_df_to_tsv
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,11 +15,7 @@ def load_scount_data(scount_file):
     Returns DataFrame with columns ['Sample', 'Het_Rate'] and stats dictionary.
     """
     print(f"Reading .scount data from {scount_file}...")
-    try:
-        df_het = pd.read_csv(scount_file, sep=r'\s+')
-    except Exception as e:
-        print(f"[Error] Failed to read scount file: {e}")
-        return None, None
+    df_het = load_df_from_space_sep(scount_file)
 
     required_cols = ['HOM_REF_CT', 'HET_SNP_CT', 'HOM_ALT_SNP_CT']
     # Check for IID column
@@ -43,6 +41,11 @@ def load_scount_data(scount_file):
     
     df_het['Het_Rate'] = df_het['HET_SNP_CT'] / df_het['Total_Called']
     
+    save_df_to_tsv(
+        df=df_het[['Sample', 'Het_Rate']],
+        output_file=scount_file.replace('.scount', '.het_rates.tsv')
+    )
+    
     # Stats
     mean_het = df_het['Het_Rate'].mean()
     median_het = df_het['Het_Rate'].median()
@@ -56,38 +59,10 @@ def load_scount_data(scount_file):
     
     return df_het[['Sample', 'Het_Rate']], stats
 
-def load_smiss_data(smiss_file):
-    """
-    Reads PLINK .smiss file.
-    Returns DataFrame with columns ['Sample', 'Missing_Rate'].
-    """
-    print(f"Reading .smiss data from {smiss_file}...")
-    try:
-        df_mid = pd.read_csv(smiss_file, sep=r'\s+')
-    except Exception as e:
-        print(f"[Error] Failed to read smiss file: {e}")
-        return None
-
-    # Normalizing columns
-    if '#IID' in df_mid.columns:
-        df_mid = df_mid.rename(columns={'#IID': 'Sample'})
-    elif 'IID' in df_mid.columns:
-        df_mid = df_mid.rename(columns={'IID': 'Sample'})
-    else:
-        print(f"[Error] Missing IID column in smiss. Found: {df_mid.columns}")
-        return None
-
-    if 'F_MISS' in df_mid.columns:
-        df_mid = df_mid.rename(columns={'F_MISS': 'Missing_Rate'})
-    else:
-        print(f"[Error] Missing F_MISS column in smiss. Found: {df_mid.columns}")
-        return None
-        
-    return df_mid[['Sample', 'Missing_Rate']]
-
 
 def run_heterozygosity_analysis(
-    scount_file, 
+    scount_file,
+    het_tsv,
     smiss_file, 
     output_prefix
 ):
@@ -95,10 +70,20 @@ def run_heterozygosity_analysis(
     Main orchestrator for heterozygosity analysis.
     """
     # 1. Load Data
-    df_het, het_stats = load_scount_data(scount_file)
-    if df_het is None: return
+    print("Loading Heterozygosity and Missing Rate data...")
+    if het_tsv and os.path.exists(het_tsv):
+        print(f"Loading precomputed heterozygosity from {het_tsv}...")
+        df_het = load_df_from_tsv(het_tsv, sep='\t')
+        het_stats = {
+            'Mean_Het': df_het['Het_Rate'].mean(),
+            'Median_Het': df_het['Het_Rate'].median(),
+            'Std_Het': df_het['Het_Rate'].std()
+        }
+    else:
+        df_het, het_stats = load_scount_data(scount_file)
+        if df_het is None: return
 
-    df_miss = load_smiss_data(smiss_file)
+    df_miss = load_smiss(smiss_file)
     if df_miss is None: return
 
     print(f"Heterozygosity - Mean: {het_stats['Mean_Het']:.4f}, Median: {het_stats['Median_Het']:.4f}")

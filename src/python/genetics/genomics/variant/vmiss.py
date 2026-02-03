@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+# Add src/python methods
+from infra.file_utils import load_df_from_space_sep
 
 def plot_variant_missingness_distribution_plink(
     input_file = "/data1/dazheng_tusr1/vmap4.VCF.v1/check_missing.vmiss",
@@ -69,3 +71,30 @@ def plot_site_missingness_vcftools(
         print(f"[Success] Plot saved to {outfile}")
     except Exception as e:
         print(f"[Error] Failed to plot site missingness: {e}")
+
+
+def load_vmiss(filepath):
+    """
+    Loads variant missingness file (PLINK .vmiss format).
+    Extracts Position from ID column if 'Position' column doesn't exist but ID does (e.g. 2-952).
+    """
+    print(f"[Info] Loading VMISS: {filepath}")
+    df = load_df_from_space_sep(filepath)
+    if df is None: return None
+
+    # Clean header (remove #)
+    df.columns = [c.replace('#', '') for c in df.columns]
+
+    if 'Position' not in df.columns:
+        if 'ID' in df.columns:
+            # Try to extract position from 'ID' column (e.g., 'Chr-Pos')
+            # Assuming ID format: Chr-Pos-...
+            try:
+                df['Position'] = df['ID'].str.split('-').str[1].astype(int)
+            except Exception:
+                print("[Warning] Could not extract Position from ID column. Merging might fail if 'Position' is missing.")
+        else:
+             print("[Error] VMISS file lacks 'Position' or 'ID' column.")
+
+    return df
+
