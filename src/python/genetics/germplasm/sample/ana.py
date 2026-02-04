@@ -2,9 +2,8 @@ import os
 import argparse
 import pandas as pd
 import numpy as np
-from infra.utils import load_df_generic, save_df_to_tsv, load_df_from_space_sep_no_header
+from infra.utils import load_df_generic, save_df_to_tsv
 from genetics.germplasm import process_subgroup_as, process_subgroup_hznu, process_subgroup_nature, process_subgroup_v4, process_subgroup_vmap3, process_subgroup_watkins
-
 
 # ==============================================================================
 # Helper Classes & Functions
@@ -126,65 +125,12 @@ def map_country_to_continent(country, mapping):
             return v
     return 'Unknown'
 
+
 # ==============================================================================
-# Feature 1: Group Annotation
-# ==============================================================================
-
-def run_group_annotation(
-    input_file,
-    group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_groups.txt"
-) -> pd.DataFrame:
-    print(f"[Info] Running Group Annotation...")
-    print(f"  Input: {input_file}")
-    print(f"  Group File: {group_file}")
-    
-    # Load Input
-    df = load_df_generic(input_file)
-    if df is None:
-        print("[Error] Failed to load input file.")
-        return None
-
-    # Load Groups
-    # sample_group.py used load_df_from_space_sep_no_header assuming headers aren't there
-    # But let's be robust
-    df_group = load_df_from_space_sep_no_header(group_file, ['Sample', 'Group'])
-    
-    if df_group is not None:
-        # Check if input has 'Sample' or 'Taxa'
-        join_col = 'Sample'
-        if 'Sample' not in df.columns and 'Taxa' in df.columns:
-             join_col = 'Taxa'
-        if join_col not in df.columns: # fallback if index
-             print(f"[Warning] Could not find join column (Sample/Taxa) in input. Using first column.")
-             join_col = df.columns[0]
-
-        # Rename group file column to match if needed, but it is fixed as [Sample, Group]
-        # So we merge left on join_col = Sample
-        
-        merged = pd.merge(df, df_group, left_on=join_col, right_on='Sample', how='left')
-        merged['Group'] = merged['Group'].fillna('Unknown')
-        
-        # Cleanup: If we joined on Taxa, we might have duplicate Sample column now
-        if join_col != 'Sample':
-            merged = merged.drop(columns=['Sample']) 
-        
-        # Generate output filename
-        if input_file.lower().endswith(('.tsv', '.csv', '.txt')):
-             out_path = input_file.rsplit('.', 1)[0] + '.grouped.tsv'
-        else:
-             out_path = input_file + '.grouped.tsv'
-
-        save_df_to_tsv(merged, out_path)
-        
-        return merged
-    else:
-        print("[Error] Failed to load group file.")
-        return None
-# ==============================================================================
-# Feature 2: Deduplication Analysis
+# Feature 1: Deduplication Analysis
 # ==============================================================================
 
-def run_dedup_analysis(
+def ana_duplication(
     taxa_bam_dir="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap", 
     db_dir="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208",
     output_prefix="sample.dedup"
@@ -288,10 +234,10 @@ def run_dedup_analysis(
 
 
 # ==============================================================================
-# Feature 3: Location Annotation
+# Feature 2: Location Analysis
 # ==============================================================================
 
-def run_location_analysis(
+def ana_location(
     input_file,
     output_prefix,
     db_dir="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208"
@@ -320,15 +266,21 @@ def run_location_analysis(
     else:
         print(f"[Warning] No country/provenance column found. Skipping direct mapping.")
         
-    # Validation against VMap3/Watkins (Optional, if DB_DIR provided)
-    if db_dir:
-        # TODO: Implement cross-referencing logic if needed?
-        # The prompt says "based on existing data... add location".
-        # The existing script just validated V4 vs Vmap3. 
-        # Here we likely just want to apply the mapping rules to the input file.
-        pass
-        
-    save_df_to_tsv(df, output_prefix)
+    # Save Result
+    # User requested separate analysis file. To allow annotation later, we should save 
+    # at least the Join Key + The Mapped Data.
+    # Assuming input_file has 'Taxa' or 'Sample'
+    
+    # We will save the full dataframe as the result for now, 
+    # making it consistent with how it was in sample_anno.py
+    
+    if output_prefix.lower().endswith(('.tsv', '.csv', '.txt')):
+             final_out = output_prefix
+    else:
+             final_out = output_prefix + '.location.tsv'
+             
+    save_df_to_tsv(df, final_out)
+    print(f"[Info] Location analysis result saved to {final_out}")
 
 
 # ==============================================================================
@@ -336,43 +288,28 @@ def run_location_analysis(
 # ==============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Germplasm Annotation Toolkit")
+    parser = argparse.ArgumentParser(description="Germplasm Analysis Toolkit")
     subparsers = parser.add_subparsers(dest='command', help='Sub-command help')
 
-    # 1. Group
-    p_group = subparsers.add_parser('group', help='Add Group Info to Samples')
-    p_group.add_argument('-i', '--input', required=True, help='Input Sample File')
-    p_group.add_argument('--group-file', default='/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208/germplasm/sample_groups.txt', help='Path to Group File') 
-    # Note: I'm not sure where sample_groups.txt really is, user code had "data/germplasm/sample_groups.txt" relative, but repeated code has absolute paths.
-    # I'll default to relative but user can override.
-    p_group.add_argument('-o', '--out', default='annotated_groups.tsv', help='Output file')
-
-    # 2. Dedup
+    # 1. Dedup
     p_dedup = subparsers.add_parser('dedup', help='Run Deduplication Analysis Pipeline')
     p_dedup.add_argument('--taxa-bam-dir', default="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap", help='Taxa Bam Map Directory')
     p_dedup.add_argument('--db-dir', default="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208", help='Database Root Directory')
     p_dedup.add_argument('--out-prefix', default='germplasm.dedup', help='Output files prefix')
 
-    # 3. Location
-    p_location = subparsers.add_parser('location', help='Add Continent Info to Samples')
+    # 2. Location
+    p_location = subparsers.add_parser('location', help='Run Location Analysis')
     p_location.add_argument('-i', '--input', required=True, help='Input Sample File')
-    p_location.add_argument('--db-dir', help='Optional DB dir for cross-referencing')
-    p_location.add_argument('-o', '--out', default='annotated_location.tsv', help='Output file')
+    p_location.add_argument('--db-dir', help='Optional DB dir')
+    p_location.add_argument('-o', '--out', default='germplasm.location.tsv', help='Output file')
 
     args = parser.parse_args()
 
-    if args.command == 'group':
-        # Fix default path if not absolute
-        if args.group_file == "data/germplasm/sample_groups.txt" and not os.path.exists(args.group_file):
-             # Try to anticipate where it might be relative to script? No, rely on user to run from root or provide path
-             pass
-        run_group_annotation(args.input, args.group_file, args.out)
-        
-    elif args.command == 'dedup':
-        run_dedup_analysis(args.taxa_bam_dir, args.db_dir, args.out_prefix)
+    if args.command == 'dedup':
+        ana_duplication(args.taxa_bam_dir, args.db_dir, args.out_prefix)
         
     elif args.command == 'location':
-        run_location_analysis(args.input, args.out, args.db_dir)
+        ana_location(args.input, args.out, args.db_dir)
         
     else:
         parser.print_help()

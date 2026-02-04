@@ -121,6 +121,20 @@ def load_df_from_tsv(input_file):
         return None
 
 
+def load_df_from_tsv_no_header(input_file, col_names):
+    """
+    Reads a TSV file without header into a DataFrame.
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    try:
+        return pd.read_csv(input_file, sep='\t', header=None, names=col_names)
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
 def load_df_from_csv(input_file):
     """
     Reads a CSV file into a DataFrame.

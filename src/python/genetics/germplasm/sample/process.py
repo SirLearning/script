@@ -1,7 +1,92 @@
 import os
 import pandas as pd
 import numpy as np
-from infra.utils import load_df_from_excel, load_df_from_space_sep_no_header
+from infra.utils import load_df_from_excel, load_df_from_space_sep_no_header, load_df_from_tsv, load_df_from_tsv_no_header
+
+# --- Sub-function to load taxaBamMap files to sample format ---
+def load_df_from_tbm_no_header(input_file):
+    """
+    Loads a taxaBamMap file into a DataFrame.
+    Assumes no header: Taxa, Coverage, [BAMs...]
+    Returns: DataFrame with columns [Sample, Coverage, Bam_Path(list)]
+    """
+    print(f"[Info] Loading taxaBamMap: {input_file}")
+    col_names = None  # Let it infer columns
+    df = load_df_from_tsv_no_header(input_file, col_names)
+    if df is None or df.empty:
+        return None
+    
+    # Ensure at least 2 columns: Taxa and Coverage
+    if df.shape[1] < 2:
+        print(f"[Warning] taxaBamMap file has fewer than 2 columns.")
+        return None
+    
+    # Rename first two columns. User requested 'Sample' for the first column.
+    df = df.rename(columns={0: 'Sample', 1: 'Coverage'})
+    
+    # Coerce Coverage to numeric
+    df['Coverage'] = pd.to_numeric(df['Coverage'], errors='coerce').fillna(0)
+    
+    # Collect columns 2+ into a single Bam_Path column (list)
+    bam_cols = [c for c in df.columns if isinstance(c, int) and c >= 2]
+    
+    if bam_cols:
+        df['Bam_Path'] = df[bam_cols].apply(
+            lambda row: [str(x) for x in row if pd.notna(x) and str(x).strip() != ''], 
+            axis=1
+        )
+        df = df.drop(columns=bam_cols)
+    else:
+        df['Bam_Path'] = [[] for _ in range(len(df))]
+    
+    return df
+
+
+def load_df_from_tbm(input_file):
+    """
+    Wrapper to load taxaBamMap file, handling header if present.
+    Returns: DataFrame with columns [Sample, Coverage, Bam_Path(list)]
+    """
+    print(f"[Info] Loading taxaBamMap with header check: {input_file}")
+    # First try with header
+    df = load_df_from_tsv(input_file)
+    if df is not None and not df.empty and 'Taxa' in df.columns and 'Coverage' in df.columns:
+        # Rename columns
+        df = df.rename(columns={'Taxa': 'Sample'})
+        df = df.rename(columns={'Coverage-Of-All-Bams': 'Coverage'})
+        
+        # Coerce Coverage to numeric
+        df['Coverage'] = pd.to_numeric(df['Coverage'], errors='coerce').fillna(0)
+        
+        # Collect BAM columns
+        bam_cols = [c for c in df.columns if c not in ['Sample', 'Coverage']]
+        if bam_cols:
+            df['Bam_Path'] = df[bam_cols].apply(
+                lambda row: [str(x) for x in row if pd.notna(x) and str(x).strip() != ''], 
+                axis=1
+            )
+            df = df.drop(columns=bam_cols)
+        else:
+            df['Bam_Path'] = [[] for _ in range(len(df))]
+        
+        return df
+    else:
+        # Fallback to no-header loading
+        return load_df_from_tbm_no_header(input_file)    
+
+
+def load_df_from_plink2(input_file):
+    """
+    Loads a PLINK2 generated file (e.g., .scount) into a DataFrame.
+    """
+    print(f"[Info] Loading PLINK2 file: {input_file}")
+    df = load_df_from_tsv(input_file)
+    if df is None or df.empty:
+        return None
+    # Rename columns
+    df = df.rename(columns={'#IID': 'Sample'})
+    return df
+
 
 # --- Sub-function to read taxa list files ---
 def read_taxa_list(directory, filename):
