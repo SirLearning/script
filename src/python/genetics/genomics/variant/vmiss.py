@@ -1,45 +1,36 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-# Add src/python methods
-from infra.file_utils import load_df_from_space_sep
+import os
+from infra.utils.io import load_df_from_space_sep, save_df_to_tsv
+from infra.utils.graph import plot_distribution_with_stats
 
 def plot_variant_missingness_distribution_plink(
-    input_file = "/data1/dazheng_tusr1/vmap4.VCF.v1/check_missing.vmiss",
+    input_file="/data1/dazheng_tusr1/vmap4.VCF.v1/check_missing.vmiss",
     output_prefix="variant_missingness"
 ):
     """
     Plots the distribution of variant missing rates from a .vmiss file.
-    Input: .vmiss file
-    Output: Histogram plot
+    Input: Suffix .vmiss (from plink --missing)
     """
-    import pandas as pd
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    # 1. 读取数据 (注意：PLINK2的文件通常以 # 开头，read_csv会自动处理或需指定 sep)
-    # 如果是空格分隔，使用 sep='\s+'
-    df = pd.read_csv(input_file, sep='\s+')
+    # 1. Load Data
+    df = load_vmiss(input_file)
+    if df is None: return
 
-    # 2. 检查列名，PLINK2 经常在第一列前加 '#'
-    # 我们需要的是 'F_MISS' 这一列
-    missing_col = 'F_MISS'
+    # 2. Save Intermediate Data
+    save_file = f"{output_prefix}.tsv"
+    save_df_to_tsv(df, save_file)
 
-    # 3. 绘图设置
-    plt.figure(figsize=(10, 6))
-    sns.histplot(df[missing_col], bins=50, kde=False, color='skyblue', edgecolor='black')
-
-    # 4. 添加标题和标签
-    plt.title('Distribution of Variant Missing Rate', fontsize=15)
-    plt.xlabel('Missing Rate (F_MISS)', fontsize=12)
-    plt.ylabel('Count of Variants', fontsize=12)
-
-    # 5. 可选：添加一条红线表示常用的阈值（如 0.1）
-    plt.axvline(x=0.1, color='red', linestyle='--', label='Threshold = 0.1')
-    plt.legend()
-
-    plt.grid(axis='y', alpha=0.3)
-    plt.savefig('missing_rate_distribution.png')
-    print("Plot saved to missing_rate_distribution.png")
+    # 3. Plot
+    # Column 'F_MISS' is standard from load_vmiss
+    plot_distribution_with_stats(
+        data=df,
+        col='F_MISS',
+        title='Distribution of Variant Missing Rate',
+        filename=f"{output_prefix}.png",
+        x_label='Missing Rate (F_MISS)',
+        y_label='Count of Variants',
+        bins=50,
+        color='skyblue',
+        thresholds=[{'value': 0.1, 'label': 'Threshold = 0.1', 'color': 'red', 'linestyle': '--'}]
+    )
 
 
 def plot_site_missingness_vcftools(
@@ -48,29 +39,33 @@ def plot_site_missingness_vcftools(
 ):
     """
     Plots histogram of Site Missingness from .lmiss file.
-    Input: .lmiss file
-    Output: Histogram plot
+    Input: .lmiss file (from vcftools --missing-site)
     """
     print(f"[Info] Processing Site Missingness: {input_file}")
-    try:
-        df = pd.read_csv(input_file, sep=r'\s+')
-        if 'F_MISS' not in df.columns:
-            print(f"[Error] 'F_MISS' column not found in {input_file}")
-            return
+    
+    # 1. Load Data
+    df = load_df_from_space_sep(input_file)
+    if df is None: return
+    
+    if 'F_MISS' not in df.columns:
+        print(f"[Error] 'F_MISS' column not found in {input_file}")
+        return
 
-        plt.figure(figsize=(10, 8))
-        sns.histplot(data=df, x='F_MISS', binwidth=0.01, color="forestgreen", edgecolor="black", kde=False)
-        plt.title("Site Missingness")
-        plt.xlabel("Fraction of Missing Data")
-        plt.ylabel("Count")
-        
-        outfile = f"{output_prefix}.png"
-        plt.tight_layout()
-        plt.savefig(outfile, dpi=300)
-        plt.close()
-        print(f"[Success] Plot saved to {outfile}")
-    except Exception as e:
-        print(f"[Error] Failed to plot site missingness: {e}")
+    # 2. Save Intermediate Data
+    save_file = f"{output_prefix}.tsv"
+    save_df_to_tsv(df, save_file)
+
+    # 3. Plot
+    plot_distribution_with_stats(
+        data=df,
+        col='F_MISS',
+        title='Site Missingness',
+        filename=f"{output_prefix}.png",
+        x_label='Fraction of Missing Data',
+        y_label='Count',
+        bins=100, # Approximate equivalent to binwidth=0.01 for 0-1 range
+        color='forestgreen'
+    )
 
 
 def load_vmiss(filepath):
@@ -83,18 +78,19 @@ def load_vmiss(filepath):
     if df is None: return None
 
     # Clean header (remove #)
-    df.columns = [c.replace('#', '') for c in df.columns]
+    df.columns = [c.replace('#', '') if isinstance(c, str) else c for c in df.columns]
 
     if 'Position' not in df.columns:
         if 'ID' in df.columns:
             # Try to extract position from 'ID' column (e.g., 'Chr-Pos')
             # Assuming ID format: Chr-Pos-...
             try:
-                df['Position'] = df['ID'].str.split('-').str[1].astype(int)
+                df['Position'] = df['ID'].astype(str).str.split('-').str[1].astype(int)
             except Exception:
-                print("[Warning] Could not extract Position from ID column. Merging might fail if 'Position' is missing.")
+                print("[Warning] Could not extract Position from ID column.")
         else:
-             print("[Error] VMISS file lacks 'Position' or 'ID' column.")
+             pass # Columns might just be CHROM POS etc.
 
     return df
+
 

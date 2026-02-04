@@ -1,33 +1,81 @@
-from ast import arg
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import seaborn as sns
+import numpy as np
+import pandas as pd
+import sys
+
 
 def combine_plots(
-    image1 = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_var.png",
-    image2 = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_cv.png",
-    output_file = "/data/home/tusr1/git/script/out/site_depth_variant_reg_log_mean_vs_log_combined.png"
+    images,
+    output_file = "/data/home/tusr1/git/script/out/combined_plot.png",
+    orientation = 'horizontal'
 ):
-    # Settings
-    images = [
-        image1,
-        image2
-    ]
-
-    # Create a figure with subplots
-    fig, axes = plt.subplots(1, len(images), figsize=(6 * len(images), 5))
-
-    for ax, img_path in zip(axes, images):
+    """
+    Combines multiple images into a single figure.
+    orientation: 'horizontal' or 'vertical'
+    """
+    # 1. Pre-load images and calculate aspect ratio
+    loaded_imgs = []
+    aspect_ratio = 1.2 # Default backup ratio (width / height)
+    ratio_determined = False
+    
+    for img_path in images:
         try:
             img = mpimg.imread(img_path)
+            loaded_imgs.append(img)
+            
+            # Use the first valid image to determine uniform aspect ratio
+            if not ratio_determined:
+                h, w = img.shape[:2]
+                aspect_ratio = w / h
+                ratio_determined = True
+        except Exception as e:
+            print(f"Error loading {img_path}: {e}")
+            loaded_imgs.append(None)
+
+    if not any(loaded_imgs):
+        print("No valid images to combine.")
+        return
+
+    n_images = len(images)
+    
+    # 2. Dynamic Figure Configuration
+    if orientation == 'horizontal':
+        rows = 1
+        cols = n_images
+        # Fix height, scale width to maintain aspect ratio
+        plot_height = 5
+        plot_width = plot_height * aspect_ratio * n_images
+    else: # vertical
+        rows = n_images
+        cols = 1
+        # Fix width, scale height to maintain aspect ratio
+        plot_width = 6
+        # w / h = aspect_ratio  =>  h = w / aspect_ratio
+        img_height = plot_width / aspect_ratio
+        plot_height = img_height * n_images
+
+    # Create figure
+    fig, axes = plt.subplots(rows, cols, figsize=(plot_width, plot_height))
+
+    # Ensure axes is iterable even for a single image
+    if n_images == 1:
+        axes = [axes]
+    elif isinstance(axes, np.ndarray):
+        axes = axes.flatten()
+
+    for ax, img in zip(axes, loaded_imgs):
+        if img is not None:
             ax.imshow(img)
             ax.axis('off')  # Hide axis
-        except FileNotFoundError:
-            print(f"Error: File not found {img_path}")
+        else:
             ax.text(0.5, 0.5, 'Image Not Found', ha='center', va='center')
             ax.axis('off')
 
     plt.tight_layout()
     plt.savefig(output_file, dpi=300)
+    plt.close(fig)
     print(f"Combined image saved to {output_file}")
 
 
@@ -435,6 +483,140 @@ def plot_qq_residuals(
     plt.close()
 
 
+def plot_bar_chart(
+    names,
+    values,
+    title,
+    ylabel,
+    filename,
+    ylim=(0.0, 1.05),
+    color="#1f77b4",
+    figsize=(10, 5)
+):
+    """
+    Plots a simple bar chart with value labels on top.
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import os
+    
+    # Create directory if needed (defensive)
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.bar(names, values, color=color, alpha=0.8)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    if ylim:
+        ax.set_ylim(ylim)
+        
+    # Add text labels
+    for i, v in enumerate(values):
+        ax.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom', fontsize=9)
+        
+    fig.tight_layout()
+    fig.savefig(filename, dpi=150)
+    print(f"Saved bar chart: {filename}")
+    plt.close(fig)
+
+
+def plot_gwas_qq(
+    expected,
+    observed,
+    title,
+    filename,
+    xlabel="Expected -log10(P)",
+    ylabel="Observed -log10(P)",
+    figsize=(6, 6)
+):
+    """
+    Plots a GWAS QQ plot (Expected vs Observed -log10 P-values).
+    """
+    import matplotlib.pyplot as plt
+    import os
+    
+     # Create directory if needed
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.scatter(expected, observed, s=6, alpha=0.6)
+    
+    # Diagonal line
+    # Determine limit based on max value in both arrays
+    lim = max(expected.max(), observed.max())
+    ax.plot([0, lim], [0, lim], color='red', lw=1)
+    
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    
+    fig.tight_layout()
+    fig.savefig(filename, dpi=160)
+    print(f"Saved GWAS QQ plot: {filename}")
+    plt.close(fig)
+
+
+def plot_correlation_with_regression(
+    data, x_col, y_col, 
+    title, filename, 
+    x_label=None, y_label=None,
+    color='gray', line_color='red'
+):
+    """
+    Plots a scatter plot with linear regression line and statistics (slope, intercept, R^2).
+    """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    if x_label is None: x_label = x_col
+    if y_label is None: y_label = y_col
+
+    clean_data = data[[x_col, y_col]].dropna()
+    x = clean_data[x_col]
+    y = clean_data[y_col]
+
+    if len(x) < 2:
+        print(f"[Warning] Not enough data points to plot regression for {x_col} vs {y_col}")
+        return
+
+    slope, intercept = np.polyfit(x, y, 1)
+    r_squared = np.corrcoef(x, y)[0, 1] ** 2
+
+    plt.figure(figsize=(10, 6))
+    sns.regplot(
+        x=x_col, y=y_col, data=data,
+        scatter_kws={'alpha':0.4, 's':10, 'color': color},
+        line_kws={'color': line_color, 'label': 'Linear Regression'}
+    )
+
+    stats_text = f'$y = {slope:.4f}x + {intercept:.4f}$\n$R^2 = {r_squared:.4f}$'
+    plt.text(
+        0.5, 0.9, stats_text,
+        transform=plt.gca().transAxes, 
+        fontsize=12, color='darkred',
+        bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', boxstyle='round')
+    )
+
+    plt.title(title, fontsize=15)
+    plt.xlabel(x_label, fontsize=12)
+    plt.ylabel(y_label, fontsize=12)
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.5)
+    
+    plt.tight_layout()
+    plt.savefig(filename, dpi=300)
+    print(f"Plot saved to {filename}")
+
+
 if __name__ == "__main__":
-    combine_plots(arg[1], arg[2], arg[3])
+    if len(sys.argv) >= 4:
+        combine_plots([sys.argv[1], sys.argv[2]], sys.argv[3])
+    else:
+        print("Usage: python graph.py <image1> <image2> <output_file>")
     

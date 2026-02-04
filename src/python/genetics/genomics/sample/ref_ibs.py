@@ -1,13 +1,8 @@
-from germplasm.sample_group import integrate_group_info
+from germplasm import integrate_group_info
+from genetics.genomics.sample import load_smiss
+from infra.utils import plot_stacked_distribution, plot_joint_regression, load_df_from_space_sep, save_sample_df_to_tsv
 import pandas as pd
-import sys
-import os
 import seaborn as sns
-# Add src/python methods
-from genetics.genomics.sample.smiss import load_smiss
-from infra.plot_utils import plot_stacked_distribution, plot_joint_regression
-from infra.file_utils import load_df_from_space_sep_no_header, save_sample_df_to_tsv, load_sample_df_from_tsv
-from infra.file_utils import load_df_from_space_sep
 
 def load_and_calculate_ibs(scount_file):
     """

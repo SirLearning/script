@@ -1,7 +1,6 @@
-
-from turtle import pd
 import pandas as pd
-import matplotlib.pyplot as plt
+from infra.utils.io import load_df_generic, save_df_to_tsv
+from infra.utils.graph import plot_distribution_with_stats, plot_correlation_with_regression
 
 def plot_individual_depth(
     input_file,
@@ -13,90 +12,89 @@ def plot_individual_depth(
     Output: Histogram plot
     """
     print(f"[Info] Processing Individual Depth: {input_file}")
-    try:
-        df = pd.read_csv(input_file, sep=r'\s+')
-        if 'MEAN_DEPTH' not in df.columns:
-            print(f"[Error] 'MEAN_DEPTH' column not found in {input_file}")
-            return
+    df = load_df_generic(input_file)
+    if df is None: return
 
-        plt.figure(figsize=(10, 8))
-        sns.histplot(data=df, x='MEAN_DEPTH', binwidth=1, color="firebrick", edgecolor="black", kde=False)
-        plt.title("Individual Mean Depth")
-        plt.xlabel("Mean Depth")
-        plt.ylabel("Count")
-        
-        outfile = f"{output_prefix}.png"
-        plt.tight_layout()
-        plt.savefig(outfile, dpi=300)
-        plt.close()
-        print(f"[Success] Plot saved to {outfile}")
-    except Exception as e:
-        print(f"[Error] Failed to plot individual depth: {e}")
+    if 'MEAN_DEPTH' not in df.columns:
+        print(f"[Error] 'MEAN_DEPTH' column not found in {input_file}")
+        return
+    
+    # Save processed data
+    save_df_to_tsv(df, f"{output_prefix}.tsv")
 
+    # Use shared plotting
+    plot_distribution_with_stats(
+        data=df, col='MEAN_DEPTH',
+        title="Individual Mean Depth",
+        filename=f"{output_prefix}.png",
+        x_label="Mean Depth", y_label="Count",
+        color="firebrick", bins=50 # Approximate binwidth=1 for typical depth range 0-50
+    )
 
 def missing_vs_depth(
     depth_file="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/all.A.taxaBamMap.txt",
     miss_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.missing.smiss",
     output_prefix="depth_vs_missing"
 ):
-    # 1. 读取数据
-    # 深度数据：注意第一列叫 Taxa
-    df_depth = pd.read_csv(depth_file, sep='\t')
-    # 缺失率数据：注意第一列叫 #IID
-    df_miss = pd.read_csv(miss_file, sep='\s+')
+    # 1. Read Data
+    df_depth = load_df_generic(depth_file)
+    df_miss = load_df_generic(miss_file)
+    
+    if df_depth is None or df_miss is None: 
+        print("[Error] Failed to load input files.")
+        return
 
-    # 2. 合并数据
-    # left_on 指第一个表的 ID 列，right_on 指第二个表的 ID 列
-    # 这会自动处理顺序不一致的问题，只有 ID 完全相同的行才会被合并
-    merged = pd.merge(df_depth, df_miss, left_on='Taxa', right_on='#IID')
+    # 2. Merge Data
+    # Automatically handles left_on/right_on if columns exist
+    if 'Taxa' in df_depth.columns and '#IID' in df_miss.columns:
+        merged = pd.merge(df_depth, df_miss, left_on='Taxa', right_on='#IID')
+    elif 'Taxa' in df_depth.columns and 'INDV' in df_miss.columns:
+        merged = pd.merge(df_depth, df_miss, left_on='Taxa', right_on='INDV')
+    else:
+        # Blind merge if columns not standard, or raise error. 
+        # But for this specific script, we expect specific columns based on original code.
+        # Original code: left_on='Taxa', right_on='#IID'
+        if 'Taxa' in df_depth.columns and '#IID' in df_miss.columns:
+             merged = pd.merge(df_depth, df_miss, left_on='Taxa', right_on='#IID')
+        else:
+             print("[Error] Columns 'Taxa' (depth) or '#IID' (miss) not found.")
+             print(f"Depth Cols: {df_depth.columns}")
+             print(f"Miss Cols: {df_miss.columns}")
+             return
 
-    # 3. 打印检查
-    print(f"深度文件样本数: {len(df_depth)}")
-    print(f"缺失率文件样本数: {len(df_miss)}")
-    print(f"成功匹配的样本数: {len(merged)}")
+    # 3. Print Stats
+    print(f"Depth samples: {len(df_depth)}")
+    print(f"Missing samples: {len(df_miss)}")
+    print(f"Merged samples: {len(merged)}")
 
-    # 计算并打印平均深度
-    mean_depth = df_depth['Coverage-Of-All-Bams'].mean()
-    print(f"所有样本的平均测序深度: {mean_depth:.4f}")
+    if 'Coverage-Of-All-Bams' in df_depth.columns:
+        mean_depth = df_depth['Coverage-Of-All-Bams'].mean()
+        print(f"Mean Coverage (All): {mean_depth:.4f}")
+    
+    # Save merged data
+    save_df_to_tsv(merged, f"{output_prefix}_data.tsv")
 
-    # 4. 回归分析与绘图
-    # 计算回归参数
-    clean_data = merged.dropna(subset=['Coverage-Of-All-Bams', 'F_MISS'])
-    x = clean_data['Coverage-Of-All-Bams']
-    y = clean_data['F_MISS']
-    slope, intercept = np.polyfit(x, y, 1)
-    r_squared = np.corrcoef(x, y)[0, 1] ** 2
+    # 4. Regression Plot
+    if 'Coverage-Of-All-Bams' in merged.columns and 'F_MISS' in merged.columns:
+        plot_correlation_with_regression(
+            data=merged,
+            x_col='Coverage-Of-All-Bams', y_col='F_MISS',
+            title='Correlation: Sequencing Depth vs. Missing Rate',
+            filename=f'{output_prefix}.png',
+            x_label='Coverage (X)', y_label='Missing Rate (F_MISS)',
+            color='gray', line_color='red'
+        )
+        
+        # 5. Filter & Print Outliers
+        high_depth = merged[merged['Coverage-Of-All-Bams'] > 20]
+        print(f"\n========= Samples with Coverage > 20 (Count: {len(high_depth)}) =========")
+        print(high_depth[['Taxa', 'F_MISS']].to_string(index=False))
 
-    plt.figure(figsize=(10, 6))
-    # 使用 regplot 自动计算回归线 $y = ax + b$
-    sns.regplot(x='Coverage-Of-All-Bams', y='F_MISS', data=merged, 
-                scatter_kws={'alpha':0.4, 's':10, 'color':'gray'}, 
-                line_kws={'color':'red', 'label':'Linear Regression'})
+        high_miss = merged[merged['F_MISS'] > 0.8]
+        print(f"\n========= Samples with Missing Rate > 0.8 (Count: {len(high_miss)}) =========")
+        print(high_miss[['Taxa', 'F_MISS']].to_string(index=False))
+    else:
+        print("[Error] Creating plot: Required columns 'Coverage-Of-All-Bams' or 'F_MISS' missing.")
 
-    # 标注方程和R方 (坐标 0.5, 0.9 表示在图上方中间位置)
-    plt.text(0.5, 0.9, f'$y = {slope:.4f}x + {intercept:.4f}$\n$R^2 = {r_squared:.4f}$', 
-            transform=plt.gca().transAxes, fontsize=12, color='darkred',
-            bbox=dict(facecolor='white', alpha=0.8, edgecolor='gray', boxstyle='round'))
-
-    plt.title('Correlation: Sequencing Depth vs. Missing Rate')
-    plt.xlabel('Coverage (X)')
-    plt.ylabel('Missing Rate (F_MISS)')
-    plt.ylim(0, 1)
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.5)
-    plt.savefig(f'{output_prefix}.png')
-    print(f"Plot saved to {output_prefix}.png")
-
-    # 5. 打印深度大于 20 的样本名
-    high_depth_samples = merged[merged['Coverage-Of-All-Bams'] > 20]
-    print(f"\n========= Samples with Coverage > 20 (Count: {len(high_depth_samples)}) =========")
-    # 打印 Taxa 和 F_MISS 两列
-    print(high_depth_samples[['Taxa', 'F_MISS']].to_string(index=False))
-
-    # 6. 打印缺失率高于 0.8 的样本名
-    high_miss_samples = merged[merged['F_MISS'] > 0.8]
-    print(f"\n========= Samples with Missing Rate > 0.8 (Count: {len(high_miss_samples)}) =========")
-    # 打印 Taxa 和 F_MISS 两列
-    print(high_miss_samples[['Taxa', 'F_MISS']].to_string(index=False))
 
 

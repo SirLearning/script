@@ -1,8 +1,7 @@
 from . import wheat
-from .plot_utils import *
-from .threshold_utils import *
+from . import utils
 
 __all__ = [
     "wheat",
-    "combine_plots",
+    "utils",
 ]

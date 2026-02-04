@@ -1,26 +1,14 @@
+from germplasm import integrate_group_info
+from genetics.genomics.sample import load_smiss
+from infra.utils import plot_joint_regression
 import os
-import sys
 import re
 import argparse
 import subprocess
 import concurrent.futures
-from germplasm.sample_group import integrate_group_info
 import pandas as pd
 import seaborn as sns
 from tqdm import tqdm
-
-# Ensure src/python is in path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_python_dir = os.path.abspath(os.path.join(current_dir, "../../../.."))
-if src_python_dir not in sys.path:
-    sys.path.insert(0, src_python_dir)
-
-from infra.plot_utils import plot_joint_regression
-# Try relative import if running as module, otherwise absolute
-try:
-    from .smiss import load_smiss
-except ImportError:
-    from genetics.genomics.sample.smiss import load_smiss
 
 def parse_bam_map_file(input_file):
     """

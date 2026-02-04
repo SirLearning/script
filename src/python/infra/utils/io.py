@@ -2,6 +2,68 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import gzip
+import re
+from typing import Dict, Optional, Iterable
+
+
+def _open(path: str):
+    """
+    Helper to open normal or gzip files.
+    """
+    if path.endswith('.gz'):
+        return gzip.open(path, 'rt')
+    return open(path, 'rt')
+
+def detect_delimiter(first_line: str) -> Optional[str]:
+    """
+    Detects delimiter (tab, comma) from string content.
+    """
+    if '\t' in first_line:
+        return '\t'
+    if ',' in first_line:
+        return ','
+    # Multiple spaces -> treat as whitespace
+    if re.search(r"\s{2,}", first_line):
+        return None  # pandas will handle delim=None for delim_whitespace
+    return '\t'  # fallback
+
+def load_df_generic(input_file, header='infer', col_names=None):
+    """
+    Reads a file into a DataFrame, auto-detecting delimiter (TSV/CSV/GZ).
+    """
+    if not os.path.exists(input_file):
+        print(f"[Warning] File not found: {input_file}")
+        return None
+    
+    try:
+        # Detect delimiter from header
+        with _open(input_file) as f:
+            first_line = f.readline()
+        
+        sep = detect_delimiter(first_line)
+        
+        # Determine engine/options
+        # compression='infer' works for .gz automatically
+        # delim_whitespace=True if sep is None
+        
+        if sep is None:
+            return pd.read_csv(input_file, sep=r'\s+', header=header, names=col_names, compression='infer')
+        else:
+            return pd.read_csv(input_file, sep=sep, header=header, names=col_names, compression='infer')
+            
+    except Exception as e:
+        print(f"[Error] Failed to read {input_file}: {e}")
+        return None
+
+
+def load_df_from_excel(path, sheet_name=0, header=0):
+    try:
+        return pd.read_excel(path, sheet_name=sheet_name, header=header)
+    except Exception as e:
+        print(f"[Warning] Error reading {path} sheet {sheet_name}: {e}")
+        return pd.DataFrame()
+
 
 def save_df_to_tsv(df, output_file, float_format='%.4f'):
     """
@@ -99,6 +161,38 @@ def load_df_from_space_sep_no_header(input_file, col_names):
     except Exception as e:
         print(f"[Error] Failed to read {input_file}: {e}")
         return None
+
+
+def save_thresholds(stats_dict, output_file):
+    """
+    Saves thresholds/stats to a TSV file.
+    Format:
+    Header1\tHeader2...
+    Value1\tValue2...
+    """
+    try:
+        # Create DataFrame for easy TSV writing
+        df = pd.DataFrame([stats_dict])
+        df.to_csv(output_file, sep='\t', index=False)
+        print(f"Thresholds saved to {output_file}")
+    except Exception as e:
+        print(f"[Error] Failed to save thresholds: {e}")
+        
+def load_thresholds(input_file):
+    """
+    Loads thresholds/stats from a TSV file into a dictionary.
+    """
+    try:
+        df = pd.read_csv(input_file, sep='\t')
+        if df.empty:
+            print(f"[Warning] No data found in {input_file}")
+            return {}
+        # Convert first row to dictionary
+        stats_dict = df.iloc[0].to_dict()
+        return stats_dict
+    except Exception as e:
+        print(f"[Error] Failed to load thresholds: {e}")
+        return {}
 
 
 def verify_file_integrity(
