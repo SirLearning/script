@@ -90,6 +90,7 @@ process format_vcf_bgzip {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'symlink', pattern: "*.vcf.gz"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -140,6 +141,7 @@ process format_vcf_bgzip_idx {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz.tbi"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -192,6 +194,8 @@ process arrange_vcf_wheat_chr_by_awk {
     tag "arrange chrom pos awk ${chr}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -230,6 +234,7 @@ process merge_arranged_vcf {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.vcf.gz"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(chr_name), val(ids), val(chrs), path(vcfs)
@@ -257,6 +262,7 @@ process format_vcf_plink {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -322,6 +328,7 @@ process subsampling_pfile_for_test {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
@@ -350,6 +357,7 @@ process merge_subgenome_test_pfile {
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
     publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     // Receives lists of files/values grouped by subgenome
@@ -386,7 +394,8 @@ process mk_plink_basic_info {
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
-
+    label 'cpus_32'
+    
     input:
     tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
 
@@ -419,6 +428,8 @@ process mk_vcftools_basic_info {
     publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{imiss, idepth}"
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{frq,hwe,lmiss,ldepth.mean,lqual}"
     publishDir "${params.output_dir}/${params.job}/assess/vcftools/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)
@@ -455,6 +466,7 @@ process calc_population_depth {
     publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.popdep.txt"
     publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/tiger"
+    label 'cpus_32'
 
     input:
     tuple val(id), val(chr), path(vcf)

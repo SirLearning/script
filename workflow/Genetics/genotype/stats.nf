@@ -27,7 +27,7 @@ workflow plink_stats {
 process sample_missing_stats {
     tag "compute missing rate threshold: ${id}"
     publishDir "${params.output_dir}/${params.job}/assess/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/assess/threshold", mode: 'copy', pattern: "*.smiss_th.tsv"
+    publishDir "${params.output_dir}/${params.job}/assess/thresholds", mode: 'copy', pattern: "*.smiss_th.tsv"
     publishDir "${params.output_dir}/${params.job}/assess/logs", mode: 'copy', pattern: "*.log"
     conda 'stats'
 
@@ -98,7 +98,14 @@ process plink_pca {
     script:
     """
     set -euo pipefail
-    plink --bfile ${id} --pca ${params.pc_num} --out ${id} --allow-extra-chr --chr-set 42 --threads ${task.cpus}
+    exec > ${id}.plink_pca.log 2>&1
+
+    plink --bfile ${id} \\
+        --pca ${params.pc_num} \\
+        --out ${id} \\
+        --allow-extra-chr \\
+        --chr-set 42 \\
+        --threads ${task.cpus}
     """
 }
 

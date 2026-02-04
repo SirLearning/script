@@ -1,9 +1,15 @@
-from infra.utils import load_df_from_space_sep, save_thresholds, plot_distribution_with_stats
+from genetics.germplasm.sample.process import load_df_from_plink2
+from infra.utils.io import load_df_from_tsv, save_df_to_tsv, load_thresholds, save_thresholds
+from infra.utils.graph import plot_distribution_with_stats
 import pandas as pd
+import os
+import argparse
 
-def analyze_smiss_distribution(
+def plot_smiss_dist(
     input_file, 
     output_prefix,
+    tsv_file=None,
+    th_tsv_file=None,
     use_fixed_thresholds=True
 ):
     """
@@ -14,16 +20,45 @@ def analyze_smiss_distribution(
     print(f"[Info] Processing Missing Rate Analysis: {input_file}")
 
     try:
-        # 1. Read Data
-        df = load_smiss(input_file)
-        col = 'Missing_Rate'
+        # Load Data
+        if tsv_file and os.path.exists(tsv_file):
+            print(f"Loading precomputed missing rates from {tsv_file}...")
+            df = load_df_from_tsv(tsv_file)
+        else:
+            # 1. Read Data
+            df = load_df_from_plink2(input_file)
+            if df is None: return
+            # Save intermediate
+            save_df_to_tsv(df[['Sample', 'F_MISS']], f"{output_prefix}.missing_rates.tsv")
+            
+        col = 'F_MISS'
 
-        # 2. Statistics
-        mean_val = df[col].mean()
-        median_val = df[col].median()
-        std_val = df[col].std()
+        # 2. Statistics & Thresholds
+        if th_tsv_file and os.path.exists(th_tsv_file):
+             print(f"Loading precomputed thresholds from {th_tsv_file}...")
+             thresholds_data = load_thresholds(th_tsv_file)
+             mean_val = thresholds_data.get('mean_missing', df[col].mean())
+             median_val = df[col].median() # Recalculate median usually fast enough, or could save it
+             std_val = thresholds_data.get('std_missing', df[col].std())
+             calc_threshold = thresholds_data.get('missing_threshold', mean_val + 3 * std_val)
+        else:
+            mean_val = df[col].mean()
+            median_val = df[col].median()
+            std_val = df[col].std()
+            calc_threshold = mean_val + 3 * std_val
+            if pd.isna(calc_threshold):
+                calc_threshold = 0.05
+            
+            # Save Threshold to File
+            threshold_file = f"{output_prefix}.threshold.tsv"
+            stats_data = {
+                'missing_threshold': calc_threshold,
+                'mean_missing': mean_val,
+                'std_missing': std_val
+            }
+            save_thresholds(stats_data, threshold_file)
         
-        # 3. Determine Thresholds
+        # 3. Determine Thresholds for Plotting
         thresholds_to_plot = []
         
         # Method A: Fixed Thresholds (from original missing_dist)
@@ -53,20 +88,15 @@ def analyze_smiss_distribution(
             xlim=(0, 1.0) if use_fixed_thresholds else None # Use fixed xlim for standard missing plot
         )
         
-        # 5. Save Threshold to File
-        threshold_file = f"{output_prefix}.threshold.tsv"
-        stats_data = {
-            'missing_threshold': calc_threshold,
-            'mean_missing': mean_val,
-            'std_missing': std_val
-        }
-        save_thresholds(stats_data, threshold_file)
+        # 5. Save Threshold (Already done above if calculating, redundant if loading but safe)
+        # threshold_file = f"{output_prefix}.threshold.tsv"
+        # ... logic moved up ...
 
     except Exception as e:
         print(f"[Error] Failed to analyze missing rate: {e}")
 
 
-def analyze_imiss_distribution(
+def plot_imiss_dist(
     input_file,
     output_prefix="ind_missingness"
 ):
@@ -75,7 +105,7 @@ def analyze_imiss_distribution(
     """
     print(f"[Info] Processing Individual Missingness: {input_file}")
     try:
-        df = pd.read_csv(input_file, sep=r'\s+')
+        df = load_df_from_plink2(input_file)
         col = 'F_MISS'
         if col not in df.columns:
             print(f"[Error] '{col}' column not found in {input_file}")
@@ -99,26 +129,39 @@ def analyze_imiss_distribution(
         
     except Exception as e:
         print(f"[Error] Failed to plot individual missingness: {e}")
+        
 
+def main():
+    parser = argparse.ArgumentParser(description="Missing Rate Analysis (.smiss, .imiss)")
+    subparsers = parser.add_subparsers(dest='command', help='Analysis Type')
 
-def load_smiss(missing_file):
-    df_missing = load_df_from_space_sep(missing_file)
-    # Handle IID header variations
-    if '#IID' in df_missing.columns:
-        iid_col = '#IID'
-    elif 'IID' in df_missing.columns:
-        iid_col = 'IID'
+    # 1. Sample Missing
+    p_smiss = subparsers.add_parser('smiss', help='Analyze Sample Missing Rate')
+    p_smiss.add_argument("-i", "--input", required=True, help="Input .smiss file")
+    p_smiss.add_argument("-o", "--output_prefix", default="sample_missing_rate_analysis", help="Output prefix")
+    p_smiss.add_argument("-d", "--data", dest="tsv_file", help="Precomputed data TSV file")
+    p_smiss.add_argument("-th", "--thresholds", dest="th_tsv_file", help="Precomputed thresholds TSV file")
+    p_smiss.add_argument("--fixed_thresholds", action='store_true', default=True, help="Use fixed thresholds (0.1, 0.3)")
+
+    # 2. Individual Missing
+    p_imiss = subparsers.add_parser('imiss', help='Analyze Individual Missingness')
+    p_imiss.add_argument("-i", "--input", required=True, help="Input .imiss file")
+    p_imiss.add_argument("-o", "--output_prefix", default="ind_missingness", help="Output prefix")
+
+    args = parser.parse_args()
+
+    if args.command == 'smiss':
+        plot_smiss_dist(
+            args.input, 
+            args.output_prefix, 
+            args.tsv_file, 
+            args.th_tsv_file, 
+            args.fixed_thresholds
+        )
+    elif args.command == 'imiss':
+        plot_imiss_dist(args.input, args.output_prefix)
     else:
-        print(f"Error: Missing IID column in smiss. Found: {df_missing.columns}")
-        return
-    missing_col = 'F_MISS'
-    if missing_col not in df_missing.columns:
-        print(f"Error: Missing '{missing_col}' in smiss. Found: {df_missing.columns}")
-        return None
-    return df_missing[[iid_col, missing_col]].rename(columns={iid_col: 'Sample', missing_col: 'Missing_Rate'})
-
+        parser.print_help()
 
 if __name__ == "__main__":
-    # Example usage
-    SMISS_FILE = "/data1/dazheng_tusr1/vmap4.VCF.v1/check_missing.smiss"
-    analyze_smiss_distribution(SMISS_FILE, "sample_missing_rate_distribution", use_fixed_thresholds=True)
+    main()
