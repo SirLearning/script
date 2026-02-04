@@ -1,5 +1,5 @@
 from turtle import pd
-from infra.file_utils import load_df_from_space_sep_no_header
+from infra.utils import load_df_from_space_sep_no_header
 
 
 def integrate_group_info(

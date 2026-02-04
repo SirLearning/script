@@ -1,5 +1,5 @@
-import os
-import sys
+from genetics.genomics.variant import load_mq, load_vmiss
+from infra.utils import load_df_from_space_sep, plot_distribution_with_stats, plot_regression_comparison, plot_mean_variance_fit, plot_qq_residuals
 import argparse
 import numpy as np
 import pandas as pd
@@ -8,11 +8,6 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy import stats
 import statsmodels.api as sm
-# Custom utilities
-from genetics.genomics.variant.mq import load_mq
-from genetics.genomics.variant.vmiss import load_vmiss
-from infra.file_utils import load_df_from_space_sep, load_df_from_space_sep_no_header
-from infra.plot_utils import plot_distribution_with_stats, plot_regression_comparison, plot_mean_variance_fit, plot_qq_residuals
 
 # ==================================================================================
 # Data Loading Helpers

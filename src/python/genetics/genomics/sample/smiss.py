@@ -1,10 +1,5 @@
-from infra.file_utils import load_df_from_space_sep
+from infra.utils import load_df_from_space_sep, save_thresholds, plot_distribution_with_stats
 import pandas as pd
-import sys
-import os
-# Add src/python methods
-from infra.plot_utils import plot_distribution_with_stats
-from infra.threshold_utils import save_thresholds
 
 def analyze_smiss_distribution(
     input_file, 

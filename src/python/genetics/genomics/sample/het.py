@@ -1,13 +1,11 @@
 from genetics.genomics.sample.smiss import load_smiss
-from infra.file_utils import load_df_from_space_sep, load_df_from_tsv, save_df_to_tsv
+from infra.utils.io import load_df_from_space_sep, load_df_from_tsv, save_df_to_tsv, save_thresholds
+from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import sys
 import os
-from infra.plot_utils import plot_distribution_with_stats, plot_regression_comparison
-from infra.threshold_utils import save_thresholds
 
 def load_scount_data(scount_file):
     """

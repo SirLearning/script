@@ -1,18 +1,11 @@
+from genetics.genomics.sample import load_smiss
+from infra.utils import load_df_from_space_sep_no_header
 import os
-import sys
 import argparse
 import pandas as pd
-import numpy as np
 
-# Ensure src/python is in path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-src_python_dir = os.path.abspath(os.path.join(current_dir, "../../../.."))
-if src_python_dir not in sys.path:
-    sys.path.insert(0, src_python_dir)
 
-from infra.file_utils import load_df_from_space_sep_no_header
-from genetics.genomics.sample.smiss import load_smiss
-
+# -- infrastructure for MQ analysis --
 def load_mq(filepath):
     """
     Loads Mapping Quality file.
