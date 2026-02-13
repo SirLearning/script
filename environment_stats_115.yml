@@ -8,6 +8,7 @@ dependencies:
   # compilers
   - gxx_linux-64
   - gcc_linux-64
+  - gfortran_linux-64
   # code languages
   - python=3.12
   - openjdk=11  # Hail JDK requirement
