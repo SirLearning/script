@@ -6,11 +6,5 @@ setup(
     description="Analysis scripts and utilities by dazheng",
     package_dir={"": "src/python"},
     packages=find_packages(where="src/python"),
-    python_requires=">=3.12",
-    install_requires=[
-        "cookiecutter",
-        "fastcluster",
-        "PyYAML",
-        "upsetplot"
-    ],
+    python_requires=">=3.12"
 )
