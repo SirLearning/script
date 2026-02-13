@@ -12,7 +12,7 @@ setup(
         "fastcluster",
         "matplotlib",
         # "numpy",
-        "pandas",
+        # "pandas",
         "PyYAML",
         "scikit-learn",
         "scipy",

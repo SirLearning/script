@@ -16,6 +16,7 @@ dependencies:
   - vcftools
   - bedtools
   - numpy
+  - pandas
   - pip
   - pip:
       - hail   # Conda environment pip fine-grained installation
