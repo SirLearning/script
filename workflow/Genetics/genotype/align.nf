@@ -252,12 +252,15 @@ process cp_bams_based_on_usb_size {
     tuple val(dir_names), val(dir_paths)
 
     output:
-    path "usb_transfer_log.txt"
+    path "usb_transfer.txt"
 
     script:
     """
     #!/usr/bin/env python3
     import sys
+    sys.stdout = open("cp_bams.log", "w")
+    sys.stderr = sys.stdout # f2
+
     from infra.server.cp import run_copy_process
 
     bams_str = "${bams}"
@@ -272,12 +275,14 @@ process cp_bams_based_on_usb_size {
     files = bams + bais + md5s
 
     usb_dirs_str = "${dir_paths}"
+    # Remove brackets if present (Nextflow might stringify list as [a, b])
+    usb_dirs_str = usb_dirs_str.replace('[', '').replace(']', '').replace(',', ' ')
     usb_dirs = usb_dirs_str.split()
 
-    log_file = "usb_transfer_log.txt"
+    transfer_file = "usb_transfer.txt"
     threads = int("${task.cpus}")
 
     print(f"Running copy process for bams with {threads} threads...")
-    run_copy_process(files, usb_dirs, log_file, threads)
+    run_copy_process(files, usb_dirs, transfer_file, threads)
     """
 }
