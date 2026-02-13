@@ -9,3 +9,7 @@ dependencies:
   - nextflow>=23.04.4
   - screen
 
+# 1. can be created with:
+# conda env create -f environment_run.yml
+# 2. or update an existing environment with:
+# conda env update -f environment_run.yml

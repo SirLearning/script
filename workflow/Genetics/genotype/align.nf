@@ -3,6 +3,10 @@
 nextflow.enable.dsl=2
 
 
+workflow {
+    files_ch = channel.fromPath
+}
+
 process ck_md5sum_wtk_fq {
     tag "ck_fq_md5_${id}"
     publishDir "results/fastq_md5sums", mode: 'copy'
@@ -190,5 +194,35 @@ process ct_depth_with_mosdepth {
         -n ${prefix} \\
         ${input_bam}
     echo "Coverage depth calculated and saved as ${prefix}.mosdepth.*"
+    """
+}
+
+process cp_based_on_usb_size {
+    tag "cp_files_${id}"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), path(files), val(usb_dirs)
+
+    output:
+    path "usb_transfer_log_${id}.txt"
+
+    script:
+    """
+    #!/usr/bin/env python3
+    import sys
+    from infra.server.cp import run_copy_process
+
+    files_str = "${files}"
+    files = files_str.split()
+    
+    usb_dirs_str = "${usb_dirs}"
+    usb_dirs = usb_dirs_str.split()
+
+    log_file = "usb_transfer_log_${id}.txt"
+    threads = int("${task.cpus}")
+
+    print(f"Running copy process for ID ${id} with {threads} threads...")
+    run_copy_process(files, usb_dirs, log_file, threads)
     """
 }
