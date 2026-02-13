@@ -32,27 +32,43 @@ def copy_file_task(task):
             os.makedirs(dst_dir, exist_ok=True)
             
         print(f"Copying {src} ({size/1024/1024:.2f} MB) -> {dst}")
-        subprocess.run(["cp", "-ax", src, dst], check=True)
+        # Use -L to dereference symlinks (copy content, not link) because USB drives (exFAT/FAT32) usually don't support symlinks.
+        subprocess.run(["cp", "-L", src, dst], check=True)
         return (src, dst, size, "SUCCESS")
     except Exception as e:
         print(f"Failed to copy {src} to {dst}: {e}")
         return (src, dst, size, f"FAILED: {str(e)}")
 
+def get_group_size(item):
+    """Returns size of a file or total size of a list of files."""
+    if isinstance(item, str):
+        return get_file_size(item)
+    elif isinstance(item, (list, tuple)):
+        return sum(get_end_file_size(f) for f in item)
+    return 0
+
+def get_end_file_size(f):
+    """Helper to get size of individual file"""
+    if os.path.exists(f):
+        return get_file_size(f)
+    print(f"Warning: File not found {f}")
+    return 0
+
 def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
     """
     Distribute files to USB drives based on available space.
+    'files' can be a list of file paths (strs) or a list of groups (lists of strs).
     Returns: (tasks_list, failed_list)
     """
-    # 1. Gather file sizes
-    file_sizes = []
-    for f in files:
-        if os.path.exists(f):
-            file_sizes.append((f, get_file_size(f)))
-        else:
-            print(f"Warning: File not found {f}")
+    # 1. Gather sizes
+    items_with_size = []
+    for item in files:
+        size = get_group_size(item)
+        if size > 0:
+            items_with_size.append((item, size))
 
     # 2. Sort by size descending
-    file_sizes.sort(key=lambda x: x[1], reverse=True)
+    items_with_size.sort(key=lambda x: x[1], reverse=True)
 
     # 3. Allocate files to drives (Logically)
     # We maintain a 'virtual' free space tracker to avoid race conditions
@@ -61,29 +77,46 @@ def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
         if os.path.exists(d):
             drive_free_space[d] = get_available_space(d)
         else:
-             print(f"Warning: USB dir not found {d}")
+            # Try to create if it's a subdirectory on a mount
+            # But get_available_space checks usage of path. 
+            # If path doesn't exist, we check parent? 
+            # For simplicity, assume usb_dirs are valid mount points or exist.
+            # If user passes /mnt/usb/s115 and s115 doesn't exist, shutil.disk_usage might fail or work on parent?
+            # disk_usage works on the partition of the path.
+            # But we need it to exist to get usage?
+            if not os.path.exists(d):
+                try:
+                    os.makedirs(d, exist_ok=True)
+                    drive_free_space[d] = get_available_space(d)
+                except:
+                    print(f"Warning: USB dir not found/creatable {d}")
+            else:
+                drive_free_space[d] = get_available_space(d)
 
     copy_tasks = [] #(src, dst, size)
     failed_assignments = []
 
-    for file_path, size in file_sizes:
+    for item, size in items_with_size:
         assigned = False
         for drive in usb_dirs:
             if drive not in drive_free_space: continue
             
             # Use safety margin
             if drive_free_space[drive] > (size + safety_margin_mb * 1024 * 1024):
-                dest_path = os.path.join(drive, os.path.basename(file_path))
-                copy_tasks.append((file_path, dest_path, size))
-                
                 # Update virtual free space
                 drive_free_space[drive] -= size
                 assigned = True
+
+                # Generate tasks
+                sub_files = [item] if isinstance(item, str) else item
+                for f in sub_files:
+                    dest_path = os.path.join(drive, os.path.basename(f))
+                    copy_tasks.append((f, dest_path, get_file_size(f)))
                 break
         
         if not assigned:
-            failed_assignments.append((file_path, size))
-            print(f"ERROR: No space for {file_path} ({size/1024/1024:.2f} MB)")
+            failed_assignments.append((str(item), size))
+            print(f"ERROR: No space for item ({size/1024/1024:.2f} MB)")
             
     return copy_tasks, failed_assignments
 
