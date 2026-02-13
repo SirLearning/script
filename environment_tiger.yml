@@ -12,3 +12,7 @@ dependencies:
   - samtools>=1.21
   - bcftools>=1.21
 
+# 1. can be created with:
+# conda env create -f environment_tiger.yml
+# 2. or update an existing environment with:
+# conda env update -f environment_tiger.yml

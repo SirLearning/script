@@ -21,6 +21,6 @@ dependencies:
       - -e .   # Editable install of your own python_script package
 
 # 1. can be created with:
-# conda env create -f environment.yml
+# conda env create -f environment_stats.yml
 # 2. or update an existing environment with:
-# conda env update -f environment.yml
+# conda env update -f environment_stats.yml
