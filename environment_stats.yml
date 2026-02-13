@@ -4,9 +4,21 @@ channels:
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+  - defaults
 dependencies:
+
+  # compilers
+  - gxx_linux-64
+  - gcc_linux-64
+  - gfortran_linux-64
+  - cmake
+  - pkg-config
+
+  # code languages environment
   - python=3.12
   - openjdk=11  # Hail JDK requirement
+
+  # bioinformatics tools
   - seqkit
   - fastqc
   - plink
@@ -15,10 +27,29 @@ dependencies:
   - bcftools
   - vcftools
   - bedtools
+
+  # math libraries
+  - hdf5
+  - h5py
+
+  # complex environment solving python packages
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - statsmodels
+  - scanpy
+  - fastcluster
+  - PyYAML
+
   # pip packages
   - pip
   - pip:
       - hail   # Conda environment pip fine-grained installation
+      - cookiecutter
+      - upsetplot
       - -e .   # Editable install of your own python_script package
 
 # 1. can be created with:
