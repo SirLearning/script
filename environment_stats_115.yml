@@ -20,14 +20,15 @@ dependencies:
   - bcftools
   - vcftools
   - bedtools
+  # complex environment solving python packages
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - matplotlib
   # pip packages
   - pip
   - pip:
-      - numpy
-      - pandas
-      - scipy
-      - scikit-learn
-      - matplotlib
       - hail   # Conda environment pip fine-grained installation
       - -e .   # Editable install of your own python_script package
 
