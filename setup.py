@@ -10,12 +10,7 @@ setup(
     install_requires=[
         "cookiecutter",
         "fastcluster",
-        "matplotlib",
-        "numpy",
-        "pandas",
         "PyYAML",
-        "scikit-learn",
-        "scipy",
         "seaborn",
         "upsetplot",
         "statsmodels",
