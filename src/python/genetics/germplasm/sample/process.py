@@ -75,42 +75,19 @@ def load_df_from_tbm(input_file):
         return load_df_from_tbm_no_header(input_file)    
 
 
-def load_df_from_plink2(input_file):
-    """
-    Loads a PLINK2 generated file (e.g., .scount) into a DataFrame.
-    """
-    print(f"[Info] Loading PLINK2 file: {input_file}")
-    df = load_df_from_tsv(input_file)
-    if df is None or df.empty:
-        return None
-    # Rename columns
-    df = df.rename(columns={'#IID': 'Sample'})
-    return df
-
-
 # --- Sub-function to read taxa list files ---
 def read_taxa_list(directory, filename):
     """
-    Reads taxaBamMap file and returns a dictionary of {taxa: coverage}.
+    Reads taxaBamMap file and returns a dictionary of {Sample: Coverage}.
+    Uses load_df_from_tbm to handle diverse formats.
     """
     path = os.path.join(directory, filename)
-    # Using load_df_from_space_sep_no_header with col_names=None to infer integer columns
-    df = load_df_from_space_sep_no_header(path, col_names=None)
+    df = load_df_from_tbm(path)
     
     if df is None or df.empty:
         return {}
         
-    try:
-        if df.shape[1] < 2:
-            print(f"[Warning] {filename} has fewer than 2 columns.")
-            return {}
-            
-        ids = df.iloc[:, 0].astype(str)
-        coverages = pd.to_numeric(df.iloc[:, 1], errors='coerce').fillna(0)
-        return dict(zip(ids, coverages))
-    except Exception as e:
-        print(f"[Error] parsing {filename}: {e}")
-        return {}
+    return dict(zip(df['Sample'], df['Coverage']))
 
 # --- Sub-functions adapted from repeat_germ_ana.py ---
 def process_subgroup_vmap3(
@@ -192,7 +169,7 @@ def process_subgroup_vmap3(
         t_map = read_taxa_list(taxa_dir, fn)
         for t, cov in t_map.items():
             path = taxa_to_bampath.get(t)
-            common = {'Taxa': t, 'Group': sub, 'Coverage': cov}
+            common = {'Sample': t, 'Group': sub, 'Coverage': cov}
             
             # Logic 1: NotInBamDB
             if not path:
@@ -242,7 +219,7 @@ def process_subgroup_v4(db_dir, taxa_dir):
         t_cl = t.strip()
         row = v4_lookup.get(t_cl)
         if not row and t_cl.endswith('A'): row = v4_lookup.get(t_cl[:-1])
-        common = {'Taxa': t, 'Group': 'WAP', 'Coverage': cov}
+        common = {'Sample': t, 'Group': 'WAP', 'Coverage': cov}
         if row:
             results.append({**common, 'Accession': row.get('Accessions'), 'Chinese_name': row.get('ChineseName')})
         else:
@@ -275,7 +252,7 @@ def process_subgroup_watkins(db_dir, taxa_dir):
             
     results, missing = [], []
     for t, cov in t_map.items():
-        common = {'Taxa': t, 'Group': 'Watkins', 'Coverage': cov}
+        common = {'Sample': t, 'Group': 'Watkins', 'Coverage': cov}
         exp = run_map.get(t)
         if not exp:
             missing.append({**common, 'Reason': 'NotInRunSheet'})
@@ -302,7 +279,7 @@ def process_subgroup_nature(db_dir, taxa_dir):
     
     results, missing = [], []
     for t, cov in t_map.items():
-        common = {'Taxa': t, 'Group': 'Nature', 'Coverage': cov}
+        common = {'Sample': t, 'Group': 'Nature', 'Coverage': cov}
         donor = wgs_to_donor.get(t)
         if donor:
             if str(donor).strip() in valid_donors:
@@ -311,10 +288,10 @@ def process_subgroup_nature(db_dir, taxa_dir):
         else: missing.append({**common, 'Reason': 'NotInSampleExcel'})
     return results, missing
 
-def process_subgroup_hznu(taxa_dir):
+def process_subgroup_hznu(db_dir, taxa_dir):
     print("  Processing HZNU Group...")
     t_map = read_taxa_list(taxa_dir, 'HZNU.taxaBamMap.txt')
-    return [{'Taxa': t, 'Accession': t, 'Chinese_name': None, 'Group': 'HZNU', 'Coverage': cov} for t, cov in t_map.items()], []
+    return [{'Sample': t, 'Accession': t, 'Chinese_name': None, 'Group': 'HZNU', 'Coverage': cov} for t, cov in t_map.items()], []
 
 def process_subgroup_as(db_dir, taxa_dir):
     print("  Processing A&S Group...")
@@ -330,7 +307,7 @@ def process_subgroup_as(db_dir, taxa_dir):
         for t, cov in t_map.items():
             t_cl = t.replace('_', '')
             acc = lookup.get(t_cl, lookup.get(t))
-            common = {'Taxa': t, 'Group': sub, 'Coverage': cov}
+            common = {'Sample': t, 'Group': sub, 'Coverage': cov}
             if acc:
                     results.append({**common, 'Accession': acc, 'Chinese_name': None})
             else: missing.append({**common, 'Reason': 'NotInASGenome'})

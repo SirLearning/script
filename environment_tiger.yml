@@ -8,6 +8,7 @@ channels:
 dependencies:
   - python=3.12
   - openjdk=17
+  - bwa-mem2
   - samtools>=1.21
   - bcftools>=1.21
 

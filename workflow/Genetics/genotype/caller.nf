@@ -11,47 +11,6 @@ include { getCallingJobConfig; getPopulationConfig; getChrConfig; getSoftwareCon
  * version: 1.0
  */
 
-// --- Required Parameters ---
-// 1. directory
-params.home_dir = null
-params.user_dir = null
-params.output_dir = null
-// 2. work specific
-params.job = null
-params.mod = null   // includes "full", "disc_only", "blib_only", "scan_only", "from_disc", "from_blib"
-params.server = null  // server name
-
-// --- Optional parameters ---
-// 1. directory
-params.ing_dir = null
-params.vlib_dir = null
-params.gen_dir = null
-// 3. software settings
-params.tiger_jar = "TIGER_F3_20251121.jar"
-params.workshop_jar = "Workshop.jar"
-params.samtools = "samtools"
-// 4. single chromosome selector
-params.chr = null
-// 5. generate taxa-BAM mapping file on the server name input
-params.gen_tbm = null  // server name for taxaBamMap generation
-
-// --- software specific parameters ---
-// FastCall3 disc parameters
-params.disc_min_MQ = 30
-params.disc_min_BQ = 20
-params.disc_min_DC = 2
-params.disc_min_DR = 0.2
-params.disc_max_DR = 3
-params.disc_HoR = 0.8
-params.disc_HeR = 0.35
-params.disc_TDR = 0.2
-// FastCall3 blib parameters
-params.blib_MAO = 2
-// FastCall3 scan parameters
-params.scan_min_MQ = 30
-params.scan_min_BQ = 20
-params.scan_error_rate = 0.05
-
 // --- help info ---
 params.help = false
 
@@ -144,7 +103,7 @@ def helpMessage() {
             --mod {full, from_blib, scan_only, scan2} \
             {--gen_tbm 1} \
             {--chr 1|2} \
-            {--tiger_jar TIGER_F3_20251016.jar} \
+            {--tiger_jar TIGER_F3_20251016.jar}
         // blib MAO=1 rebuild
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/caller.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
@@ -158,6 +117,14 @@ def helpMessage() {
             --chr 2 \
             --blib_MAO 1 \
             --tiger_jar TIGER_F3_2M_scan_20260129.jar
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/caller.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
+            --output_dir /data/home/tusr1/01projects/vmap4/04runScreens \
+            --server s243 \
+            --job all \
+            --mod scan2 \
+            --chr 32
     
     screen prefix commands:
         // run_A_disc
@@ -170,6 +137,21 @@ def helpMessage() {
         cd /data/home/tusr1/01projects/vmap4/04runScreens/02run && \
         source ~/.bashrc && conda activate run && \
         "
+        screen -dmS all bash -c "\
+        cd /data/home/tusr1/01projects/vmap4/04runScreens/06run.32 && \
+        source ~/.bashrc && conda activate run && \
+        "
+    screen -dmS all bash -c "\
+        cd /data/home/tusr1/01projects/vmap4/04runScreens/06run.32 && \
+        source ~/.bashrc && conda activate run && \
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/caller.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
+            --output_dir /data/home/tusr1/01projects/vmap4/04runScreens \
+            --server s243 \
+            --job all \
+            --mod from_blib \
+            --chr 32"
     """.stripIndent()
 }
 
@@ -451,7 +433,7 @@ workflow run_FastCall3 {
         def blib_chr_config_lib_ch = load_lib_files(
             vlib_dir_resolved,
             chr_config_ch
-        ).blib_chr_config_lib_ch
+        ).ch_lib
         scan_results = fastcall3_scan(
             blib_chr_config_lib_ch,
             tiger_jar_input,
@@ -463,7 +445,7 @@ workflow run_FastCall3 {
         def blib_chr_config_lib_ch = load_lib_files(
             vlib_dir_resolved,
             chr_config_ch
-        ).blib_chr_config_lib_ch
+        ).ch_lib
         scan_results = fastcall3_scan2(
             blib_chr_config_lib_ch,
             tiger_jar_input,
@@ -510,13 +492,9 @@ workflow load_lib_files {
             }
         }
         .filter { f -> f != null }
-    if (!blib_chr_config_lib_ch) {
-        log.error "No .lib.gz file found for chromosome: ${chr_config_ch.chr} in ${blib_dir}"
-        exit 1
-    }
     
     emit:
-    blib_chr_config_lib_ch
+    ch_lib = blib_chr_config_lib_ch
 }
 
 
@@ -550,7 +528,7 @@ process prepareTaxaBamMap {
     memory '16g'
     cpus 4
     publishDir "${params.home_dir}/00data/05taxaBamMap", mode: 'copy'
-    conda '${params.user_dir}/miniconda3/envs/dbone'
+    conda "${params.user_dir}/miniconda3/envs/dbone"
     
     input:
     tuple path(workshop_jar), val(java_version), val(java_lib_dir)
@@ -616,7 +594,8 @@ process concatTaxaBamMap {
 process fastcall3_disc {
     tag "disc_${chromosome}"
     publishDir("${params.output_dir}/${params.job}/ing", mode: 'copy', overwrite: true)
-    conda '${params.user_dir}/miniconda3/envs/tiger'
+    conda "${params.user_dir}/miniconda3/envs/tiger"
+    label 'fastcall3_disc'
     
     input:
     tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map)
@@ -670,8 +649,9 @@ process fastcall3_disc {
 process fastcall3_blib {
     tag "blib_${chromosome}"
     publishDir("${params.output_dir}/${params.job}/vLib", mode: 'copy', overwrite: true)
-    conda '${params.user_dir}/miniconda3/envs/tiger'
-    
+    conda "${params.user_dir}/miniconda3/envs/tiger"
+    label 'fastcall3_blib'
+
     input:
     tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
@@ -737,8 +717,9 @@ process fastcall3_blib {
 process fastcall3_scan {
     tag "scan_${chromosome}"
     publishDir("${params.output_dir}/${params.job}/gen", mode: 'move', overwrite: false)
-    conda '${params.user_dir}/miniconda3/envs/tiger'
-    
+    conda "${params.user_dir}/miniconda3/envs/tiger"
+    label 'fastcall3_scan'
+
     input:
     tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
@@ -802,7 +783,8 @@ process fastcall3_scan {
 process fastcall3_scan2 {
     tag "scan2_${chromosome}"
     publishDir("${params.output_dir}/${params.job}/gen", mode: 'move', overwrite: false)
-    conda '${params.user_dir}/miniconda3/envs/tiger'
+    conda "${params.user_dir}/miniconda3/envs/tiger"
+    label 'fastcall3_scan2'
     
     input:
     tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file)

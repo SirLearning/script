@@ -1,11 +1,11 @@
-from genetics.germplasm.sample.process import load_df_from_plink2
+from .sample_utils import load_df_from_plink2
 from infra.utils.io import load_df_from_tsv, save_df_to_tsv, load_thresholds, save_thresholds
 from infra.utils.graph import plot_distribution_with_stats
 import pandas as pd
 import os
 import argparse
 
-def plot_smiss_dist(
+def ana_sample_missing(
     input_file, 
     output_prefix,
     tsv_file=None,
@@ -29,7 +29,7 @@ def plot_smiss_dist(
             df = load_df_from_plink2(input_file)
             if df is None: return
             # Save intermediate
-            save_df_to_tsv(df[['Sample', 'F_MISS']], f"{output_prefix}.missing_rates.tsv")
+            save_df_to_tsv(df[['Sample', 'F_MISS']], f"{output_prefix}.rate.info.tsv")
             
         col = 'F_MISS'
 
@@ -50,7 +50,7 @@ def plot_smiss_dist(
                 calc_threshold = 0.05
             
             # Save Threshold to File
-            threshold_file = f"{output_prefix}.threshold.tsv"
+            threshold_file = f"{output_prefix}.th.tsv"
             stats_data = {
                 'missing_threshold': calc_threshold,
                 'mean_missing': mean_val,
@@ -78,13 +78,13 @@ def plot_smiss_dist(
             data=df,
             col=col,
             title='Distribution of Sample Missing Rate',
-            filename=f"{output_prefix}.png",
+            filename=f"{output_prefix}.dist.png",
             mean_val=mean_val,
             median_val=median_val,
             std_val=std_val,
             thresholds=thresholds_to_plot,
             x_label='Missing Rate (F_MISS)',
-            color='forestgreen',
+            # color='forestgreen',
             xlim=(0, 1.0) if use_fixed_thresholds else None # Use fixed xlim for standard missing plot
         )
         
@@ -151,7 +151,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'smiss':
-        plot_smiss_dist(
+        ana_sample_missing(
             args.input, 
             args.output_prefix, 
             args.tsv_file, 

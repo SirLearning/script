@@ -1,6 +1,8 @@
 import hail as hl
 import argparse
 import os
+import sys
+import inspect
 
 def run_export_plink(vcf_path, output_prefix, prune=True, r2=0.1, reference=None):
     hl.init(default_reference=reference if reference else 'GRCh37', log=f'{output_prefix}.hail.log')

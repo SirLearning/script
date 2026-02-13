@@ -1,13 +1,14 @@
 import os
 import pandas as pd
-from infra.utils.io import load_df_from_tsv, save_df_to_tsv
-from infra.utils.graph import plot_distribution_with_stats, plot_correlation_with_regression
-from genetics.germplasm.sample import load_df_from_tbm, load_df_from_plink2
+from infra.utils.io import load_df_from_tsv, save_df_to_tsv, save_thresholds
+from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison
+from genetics.germplasm.sample import load_df_from_tbm
+from .sample_utils import load_df_from_plink2
 
 def coverage_dist(
     input_file="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/all.A.taxaBamMap.txt",
-    tsv_file=None,
-    output_prefix="sample.coverage"
+    output_prefix="sample.coverage",
+    tsv_file=None
 ):
     """
     Plots histogram of Individual Mean Coverage from .idepth file.
@@ -23,23 +24,50 @@ def coverage_dist(
         # extract Sample and Coverage columns
         df_coverage = df[['Sample', 'Coverage']].copy()
         # Save processed data
-        save_df_to_tsv(df_coverage, f"{output_prefix}.tsv")
+        save_df_to_tsv(df_coverage, f"{output_prefix}.info.tsv")
+
+    # get coverage thresholds
+    mean_cov = df_coverage['Coverage'].mean()
+    median_cov = df_coverage['Coverage'].median()
+    std_cov = df_coverage['Coverage'].std()
+    cov_threshold = mean_cov + 3 * std_cov
+    # save thresholds
+    threshold_file = f"{output_prefix}.th.tsv"
+    stats_data = {
+        'coverage_threshold': cov_threshold,
+        'mean_coverage': mean_cov,
+        'std_coverage': std_cov
+    }
+    save_thresholds(stats_data, threshold_file)
+    print(f"[Info] Coverage Mean: {mean_cov:.4f}, Std: {std_cov:.4f}, Threshold (Mean-3SD): {cov_threshold:.4f}")
+    
+    threshold_to_plot = {
+        'value': cov_threshold,
+        'label': f'Threshold (+3SD) = {cov_threshold:.2f}',
+        'color': 'purple',
+        'linestyle': '-'
+    }
 
     # Use shared plotting
     plot_distribution_with_stats(
-        data=df_coverage, col='Coverage',
+        data=df_coverage, 
+        col='Coverage',
         title="Individual Mean Coverage",
-        filename=f"{output_prefix}.png",
-        x_label="Mean Coverage", y_label="Count",
-        color="firebrick", bins=50 # Approximate binwidth=1 for typical depth range 0-50
+        filename=f"{output_prefix}.dist.png",
+        x_label="Coverage", 
+        y_label="Count",
+        mean_val=mean_cov, 
+        median_val=median_cov,
+        std_val=std_cov,
+        thresholds=[threshold_to_plot]
     )
     
 
 def reg_missing_coverage(
     depth_file="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/all.A.taxaBamMap.txt",
     miss_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.missing.smiss",
-    tsv_file=None,
-    output_prefix="sample.coverage_vs_missing"
+    output_prefix="sample.coverage_vs_missing",
+    tsv_file=None
 ):
     if tsv_file and os.path.exists(tsv_file):
         merged = load_df_from_tsv(tsv_file)
@@ -67,17 +95,19 @@ def reg_missing_coverage(
             mean_coverage = df_coverage['Coverage'].mean()
             print(f"Mean Coverage (All): {mean_coverage:.4f}")
         # Save merged data
-        save_df_to_tsv(merged, f"{output_prefix}_data.tsv")
+        save_df_to_tsv(merged, f"{output_prefix}.miss.info.tsv")
 
     # 4. Regression Plot
     if 'Coverage' in merged.columns and 'F_MISS' in merged.columns:
-        plot_correlation_with_regression(
-            data=merged,
-            x_col='Coverage', y_col='F_MISS',
-            title='Correlation: Sequencing Coverage vs. Missing Rate',
-            filename=f'{output_prefix}.png',
-            x_label='Coverage (X)', y_label='Missing Rate (F_MISS)',
-            color='gray', line_color='red'
+        plot_regression_comparison(
+            df=merged,
+            x_col='Coverage',
+            y_col='F_MISS',
+            x_label='Coverage',
+            y_label='Missing Rate (F_MISS)',
+            y_lim=(0, 1),
+            filename=f"{output_prefix}.reg_vs_miss.png",
+            title="Missing Rate vs Coverage"
         )
         
         # 5. Filter & Print Outliers

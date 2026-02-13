@@ -1,14 +1,15 @@
+from .variant_utils import load_df_from_plink_variant
 import numpy as np
 import pandas as pd
 from infra.utils.io import load_df_from_space_sep, save_df_to_tsv, save_thresholds
 from infra.utils.graph import plot_distribution_with_stats
 
-def maf_dist(
+def ana_minor_allele_frequency(
     input_file="/data1/dazheng_tusr1/vmap4.VCF.v1/chr002.maf.rm_germ_dup.afreq", 
     output_prefix="maf_dist_rm_germ_dup"
 ):
     # 1. Read Data
-    df = load_df_from_space_sep(input_file)
+    df = load_df_from_plink_variant(input_file)
     if df is None: return
 
     # 2. Calculate MAF
@@ -23,7 +24,7 @@ def maf_dist(
              return
 
     # 3. Save Calculated Data
-    save_df_to_tsv(df, f"{output_prefix}_data.tsv")
+    save_df_to_tsv(df, f"{output_prefix}.info.tsv")
 
     # 4. Calculate Stats & Save
     df_sub = df[df['MAF'] <= 0.01].copy()
@@ -37,7 +38,7 @@ def maf_dist(
         'Global_Mean_MAF': mean_maf_all,
         'Global_Median_MAF': median_maf_all
     }
-    save_thresholds(stats_dict, f"{output_prefix}_stats.tsv")
+    save_thresholds(stats_dict, f"{output_prefix}.th.tsv")
     print(stats_dict)
 
     # 5. Plotting
@@ -52,9 +53,9 @@ def maf_dist(
     plot_distribution_with_stats(
         data=df_sub, col='MAF',
         title='Distribution of Minor Allele Frequency (0-0.01) - Linear Scale',
-        filename=f"{output_prefix}_0.01_linear.png",
+        filename=f"{output_prefix}.dist.0.01.linear.png",
         x_label='MAF', y_label='Count of Variants',
-        bins=100, color='#4c72b0',
+        bins=100,
         mean_val=mean_maf_all, median_val=median_maf_all,
         thresholds=thresh_lines,
         xlim=(0, 0.01)
@@ -64,9 +65,9 @@ def maf_dist(
     plot_distribution_with_stats(
         data=df_sub, col='MAF',
         title='Distribution of Minor Allele Frequency (0-0.01) - Log Scale',
-        filename=f"{output_prefix}_0.01_log.png",
+        filename=f"{output_prefix}.dist.0.01.log.png",
         x_label='MAF', y_label='Count of Variants',
-        bins=100, color='#4c72b0',
+        bins=100,
         log_scale=True,
         mean_val=mean_maf_all, median_val=median_maf_all,
         thresholds=thresh_lines,
@@ -77,9 +78,9 @@ def maf_dist(
     plot_distribution_with_stats(
         data=df, col='MAF',
         title='Distribution of Minor Allele Frequency (0-0.5) - Log Scale',
-        filename=f"{output_prefix}_0.5_log.png",
+        filename=f"{output_prefix}.dist.0.5.log.png",
         x_label='MAF', y_label='Count of Variants (Log Scale)',
-        bins=500, color='forestgreen',
+        bins=500,
         log_scale=True,
         mean_val=mean_maf_all, median_val=median_maf_all,
         xlim=(0, 0.5)
@@ -90,9 +91,9 @@ def maf_dist(
     plot_distribution_with_stats(
         data=df_sub_05, col='MAF',
         title='Distribution of Minor Allele Frequency (0-0.05)',
-        filename=f"{output_prefix}_0.05_linear.png",
+        filename=f"{output_prefix}.dist.0.05.linear.png",
         x_label='MAF', y_label='Count of Variants',
-        bins=200, color='forestgreen',
+        bins=200,
         mean_val=mean_maf_all, median_val=median_maf_all,
         thresholds=[{'value': 0.01, 'label': 'Threshold 0.01', 'color': 'red', 'linestyle': '--'}],
         xlim=(0, 0.05)
@@ -147,7 +148,7 @@ def plot_allele_frequency(
             title='Minor Allele Frequency (MAF) Distribution',
             filename=f"{output_prefix}.png",
             x_label='MAF', y_label='Count',
-            bins=100, color='orange'
+            bins=100
         )
 
     except Exception as e:
@@ -155,4 +156,4 @@ def plot_allele_frequency(
 
 
 if __name__ == "__main__":
-    maf_dist()
+    ana_minor_allele_frequency()

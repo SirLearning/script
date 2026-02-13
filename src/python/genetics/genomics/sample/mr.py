@@ -1,8 +1,9 @@
-from genetics.germplasm import integrate_group_info
 from genetics.germplasm.sample.anno import anno_group
-from genetics.germplasm.sample.process import load_df_from_plink2, load_df_from_tbm
+from genetics.germplasm.sample.process import load_df_from_tbm
+from .sample_utils import load_df_from_plink2
 from infra.utils import plot_joint_regression
 from infra.utils.io import load_df_from_tsv, save_df_to_tsv
+from infra.utils.graph import plot_stacked_distribution
 import os
 import re
 import argparse
@@ -11,6 +12,7 @@ import concurrent.futures
 import pandas as pd
 import seaborn as sns
 from tqdm import tqdm
+
 
 
 def load_df_from_idxstats(idxstats_file):
@@ -208,9 +210,9 @@ def calculate_mapping_rate_flagstat(input_file, output_file, threads=32):
 def reg_missing_idx_mapping(
     mapping_file, 
     smiss_file, 
+    output_prefix="missing_vs_mapping",
     group_file=None, 
-    tsv_file=None,
-    output_prefix="missing_vs_mapping"
+    tsv_file=None
 ):
     print("Processing Missing Rate vs Mapping Rate Analysis...")
 
@@ -235,9 +237,12 @@ def reg_missing_idx_mapping(
             print("Error: No intersecting samples found between mapping file and smiss file.")
             return
         # 4. Integrate Group Info
-        df_merged = anno_group(df_merged, group_file) if group_file else df_merged['Group'] = 'Unknown'
+        if group_file:
+            df_merged = anno_group(df_merged, group_file)  
+        else:
+            df_merged['Group'] = 'Unknown'
         # 5. Save merged data
-        save_file = f"{output_prefix}.data.tsv"
+        save_file = f"{output_prefix}.miss.group.info.tsv"
         print(f"Saving merged data to {save_file}...")
         save_df_to_tsv(df_merged, save_file)
         
@@ -248,14 +253,24 @@ def reg_missing_idx_mapping(
     # Set style
     sns.set_theme(style="ticks")
     
+    plot_stacked_distribution(
+        df=df_merged,
+        col='Mapping_Rate_Pct',
+        group_col='Group',
+        x_label='Mapping Rate (%)',
+        y_label='Number of Samples',
+        title='Mapping Rate Distribution',
+        filename=f"{output_prefix}.dist.png"
+    )
+    
     plot_joint_regression(
         df=df_merged, 
         x_col='Mapping_Rate_Pct', 
-        y_col='Missing_Rate',
+        y_col='F_MISS',
         group_col='Group',
         x_label='Mapping Rate (%)', 
-        y_label='Missing Rate (F_MISS)', 
-        filename=f"{output_prefix}_reg_miss_vs_map.png",
+        y_label='Missing Rate (%)', 
+        filename=f"{output_prefix}.reg_vs_miss.png",
         title='Missing Rate vs Mapping Rate'
     )
                          

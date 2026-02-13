@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import scanpy as sc
 import os
 import sys
 import gzip
@@ -176,6 +177,21 @@ def load_df_from_space_sep_no_header(input_file, col_names):
         print(f"[Error] Failed to read {input_file}: {e}")
         return None
 
+
+def load_adata_from_plink_raw(raw_file):
+    """
+    Loads PLINK .raw file into an AnnData object.
+    """
+    df = pd.read_csv(raw_file, sep='\s+')
+    
+    # Extract sample info (ID, FID, etc.) and genotype data
+    genotypes = df.iloc[:, 6:].values  # Assuming first 6 columns are sample info
+    adata = sc.AnnData(X=genotypes.astype(float))
+    adata.obs_names = df['IID'].astype(str)  # Use IID as index
+    
+    return adata
+    
+    
 
 def save_thresholds(stats_dict, output_file):
     """

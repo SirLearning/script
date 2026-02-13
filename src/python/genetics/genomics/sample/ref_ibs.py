@@ -1,6 +1,6 @@
-from genetics.genomics.sample.mr import load_df_from_idxstats
-from genetics.germplasm.sample.anno import anno_group
-from genetics.germplasm.sample.process import load_df_from_plink2
+from .mr import load_df_from_idxstats
+from genetics.germplasm.sample import anno_group
+from .sample_utils import load_df_from_plink2
 from infra.utils import plot_stacked_distribution, plot_joint_regression
 from infra.utils.io import load_df_from_tsv, save_df_to_tsv
 import pandas as pd
@@ -63,7 +63,7 @@ def ana_ref_ibs(
         print(f"Reading .smiss data from {missing_file}...")
         df_missing = load_df_from_plink2(missing_file)
         if df_missing is None: return
-        
+
         # 3. Merge
         print("Merging IBS and Missing Rate data...")
         df_merged = pd.merge(df_ibs, df_missing, on='Sample', how='inner')
@@ -74,7 +74,7 @@ def ana_ref_ibs(
              df_merged = anno_group(df_merged, group_file) # Use anno_group logic
         
         # 5. Save
-        save_file = f"{output_prefix}.data.tsv"
+        save_file = f"{output_prefix}.info.tsv"
         print(f"Saving merged data to {save_file}...")
         save_df_to_tsv(df_merged, save_file)
 
@@ -94,22 +94,22 @@ def ana_ref_ibs(
     print("Generating Distribution Plots...")
     
     plot_stacked_distribution(
-        data=df_merged, 
+        df=df_merged, 
         col='IBS_Ref', 
         group_col='Group',
-        title="Distribution of IBS with Reference", 
-        filename=f"{output_prefix}_dist_ibs.png",
+        title="Distribution of IBS with Reference",
+        filename=f"{output_prefix}.dist.png",
         mean_val=mean_ibs, 
         median_val=median_ibs,
         x_label="IBS with Reference Genome"
     )
 
     plot_stacked_distribution(
-        data=df_merged, 
+        df=df_merged, 
         col='IBS_Ref', 
         group_col='Group',
         title="Distribution of IBS with Reference (Log Scale)", 
-        filename=f"{output_prefix}_dist_ibs_log.png", 
+        filename=f"{output_prefix}.dist_log.png", 
         mean_val=mean_ibs, 
         median_val=median_ibs,
         x_label="IBS with Reference Genome",
@@ -123,12 +123,12 @@ def ana_ref_ibs(
     
     plot_joint_regression(
         df=df_merged, 
-        x_col='F_MISS', 
-        y_col='IBS_Ref', 
+        x_col='IBS_Ref', 
+        y_col='F_MISS', 
         group_col='Group',
-        x_label='Missing Rate', 
-        y_label='IBS with Reference Genome', 
-        filename=f"{output_prefix}_reg_miss_vs_ibs.png"
+        x_label='IBS with Reference Genome', 
+        y_label='Missing Rate', 
+        filename=f"{output_prefix}.reg_vs_miss.png"
     )
 
     print("Analysis Complete.")
@@ -168,7 +168,7 @@ def ref_ibs_vs_mapping(
             df_merged = anno_group(df_merged, group_file)
         
         # 5. Save
-        save_file = f"{output_prefix}.ref_ibs.mapping.tsv"
+        save_file = f"{output_prefix}.map.info.tsv"
         print(f"Saving merged data to {save_file}...")
         save_df_to_tsv(df_merged, save_file)
         
@@ -180,19 +180,17 @@ def ref_ibs_vs_mapping(
     sns.set_theme(style="ticks")
     
     # 5. Plot
-    output_filename = f"{output_prefix}_reg_ref_ibs_vs_map.png"
+    output_filename = f"{output_prefix}.reg_vs_map.png"
     plot_joint_regression(
         df=df_merged, 
-        x_col='Mapping_Rate_Pct', 
-        y_col='IBS_Ref', 
+        x_col='IBS_Ref', 
+        y_col='Mapping_Rate_Pct', 
         group_col='Group',
-        x_label='Mapping Rate (%)', 
-        y_label='IBS with Reference Genome', 
+        x_label='IBS with Reference Genome', 
+        y_label='Mapping Rate (%)', 
         filename=output_filename,
         title='Correlation: Reference IBS vs Mapping Rate'
     )
-        
-        
         
         
 def main():
