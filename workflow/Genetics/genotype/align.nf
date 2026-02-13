@@ -20,7 +20,8 @@ def helpMessage() {
             --user_dir /data/home/tuser1 \
             --output_dir /data/home/tuser1 \
             --bams_dir /data/home/tuser1/01bam \
-            --usb_mnt_dir /mnt "
+            --usb_mnt_dir /mnt \
+            --server s115 "
     """
 }
 
@@ -29,25 +30,17 @@ workflow {
         def id = bam.baseName.replace(".rmdup.bam", "")
         def bai = file("${bam}.bai")
         def md5 = file("${bam}.md5")
-        [id, bam, bai, md5]
+        [params.server, id, bam, bai, md5]
     }
 
     // Transpose list of lists to tuple of lists to match process input
-    files = files_ch.collect(flat: false).map { list ->
-        if (!list) return tuple([], [], [], [])
-        def t = list.transpose()
-        tuple(t[0], t[1], t[2], t[3])
-    }
+    files = files_ch.groupTuple(by: 0)
 
     usb_dirs_list = ["usb", "usb-2", "usb-3"]
     dirs = channel.from(usb_dirs_list).map { dir -> 
         def dir_path = file("${params.usb_mnt_dir}/${dir}")
-        [dir, dir_path]
-    }.collect(flat: false).map { list ->
-        if (!list) return tuple([], [])
-        def t = list.transpose()
-        tuple(t[0], t[1])
-    }
+        [params.server, dir, dir_path]
+    }.groupTuple(by: 0)
 
     _cp_out = cp_bams_based_on_usb_size(files, dirs)
 }
@@ -248,8 +241,8 @@ process cp_bams_based_on_usb_size {
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
-    tuple val(bam_ids), path(bams), path(bai_files), path(md5_files)
-    tuple val(dir_names), val(dir_paths)
+    tuple val(server), val(bam_ids), path(bams), path(bai_files), path(md5_files)
+    tuple val(server1), val(dir_names), val(dir_paths)
 
     output:
     path "usb_transfer.txt"
@@ -272,12 +265,26 @@ process cp_bams_based_on_usb_size {
     md5s_str = "${md5_files}"
     md5s = md5s_str.split()
     
-    files = bams + bais + md5s
+    # Group files (bam, bai, md5) together
+    files = []
+    # groupTuple preserves alignment of list elements
+    for i in range(len(bams)):
+        group = [bams[i], bais[i], md5s[i]]
+        files.append(group)
 
     usb_dirs_str = "${dir_paths}"
-    # Remove brackets if present (Nextflow might stringify list as [a, b])
+    # Remove brackets if present
     usb_dirs_str = usb_dirs_str.replace('[', '').replace(']', '').replace(',', ' ')
-    usb_dirs = usb_dirs_str.split()
+    usb_dirs_list = usb_dirs_str.split()
+    
+    # Append server subdir to paths
+    import os
+    server_name = "${server1}"
+    usb_dirs = []
+    for d in usb_dirs_list:
+        path = os.path.join(d, server_name)
+        # Create subdir if not exists (handled in cp.py sort of, but good to be explicit or leave to cp.py logic)
+        usb_dirs.append(path)
 
     transfer_file = "usb_transfer.txt"
     threads = int("${task.cpus}")
