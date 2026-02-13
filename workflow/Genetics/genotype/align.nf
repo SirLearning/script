@@ -2,9 +2,24 @@
 
 nextflow.enable.dsl=2
 
+params.bams_dir = "data/bams"
+params.reference_genome = "data/reference/genome.fa"
+params.usb_mnt_dir = "/mnt"
 
 workflow {
-    files_ch = channel.fromPath
+    files_ch = channel.fromPath(params.bams_dir + "/CRR*.rmdup.bam", type: 'file').map { bam -> 
+        def id = bam.baseName.replace(".rmdup.bam", "")
+        def bai = file("${bam}.bai")
+        def md5 = file("${bam}.md5")
+        tuple(id, bam, bai, md5)
+    }
+    files = files_ch.collect()
+    usb_dirs_ch = channel.fromPath(params.usb_mnt_dir + "/*", type: 'dir').map { dir -> 
+        def id = dir.baseName
+        tuple(id, dir)
+    }
+    usb_dirs = usb_dirs_ch.collect()
+    cp_out = cp_based_on_usb_size(files, usb_dirs)
 }
 
 process ck_md5sum_wtk_fq {
@@ -197,12 +212,13 @@ process ct_depth_with_mosdepth {
     """
 }
 
-process cp_based_on_usb_size {
+process cp_bams_based_on_usb_size {
     tag "cp_files_${id}"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
-    tuple val(id), path(files), val(usb_dirs)
+    tuple val(bam_ids), path(files)
+    tuple val(id), val(usb_dirs)
 
     output:
     path "usb_transfer_log_${id}.txt"
