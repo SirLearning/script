@@ -11,7 +11,7 @@ setup(
         "cookiecutter",
         "fastcluster",
         "matplotlib",
-        "numpy",
+        # "numpy",
         "pandas",
         "PyYAML",
         "scikit-learn",
