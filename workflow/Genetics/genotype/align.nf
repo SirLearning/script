@@ -16,11 +16,11 @@ def helpMessage() {
     screen -dmS cp_115 bash -c "\
         cd /data/home/tuser1/run && \
         source ~/.bashrc && conda activate run && \
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/align.nf \
+        nextflow run /data/home/tuser1/git/script/workflow/Genetics/genotype/align.nf \
             --user_dir /data/home/tuser1 \
             --output_dir /data/home/tuser1 \
             --bams_dir /data/home/tuser1/01bam \
-            --usb_mnt_dir /mnt
+            --usb_mnt_dir /mnt "
     """
 }
 
@@ -33,7 +33,7 @@ workflow {
     }
 
     // Transpose list of lists to tuple of lists to match process input
-    files = files_ch.collect().map { list ->
+    files = files_ch.collect(flat: false).map { list ->
         if (!list) return tuple([], [], [], [])
         def t = list.transpose()
         tuple(t[0], t[1], t[2], t[3])
@@ -43,7 +43,7 @@ workflow {
     dirs = channel.from(usb_dirs_list).map { dir -> 
         def dir_path = file("${params.usb_mnt_dir}/${dir}")
         [dir, dir_path]
-    }.collect().map { list ->
+    }.collect(flat: false).map { list ->
         if (!list) return tuple([], [])
         def t = list.transpose()
         tuple(t[0], t[1])
