@@ -6,20 +6,50 @@ params.bams_dir = "data/bams"
 params.reference_genome = "data/reference/genome.fa"
 params.usb_mnt_dir = "/mnt"
 
+def helpMessage() {
+    log.info """
+    Usage: nextflow run align.nf [options]
+
+    Options:
+
+    Example:
+    screen -dmS cp_115 bash -c "\
+        cd /data/home/tuser1/run && \
+        source ~/.bashrc && conda activate run && \
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/align.nf \
+            --user_dir /data/home/tuser1 \
+            --output_dir /data/home/tuser1 \
+            --bams_dir /data/home/tuser1/01bam \
+            --usb_mnt_dir /mnt
+    """
+}
+
 workflow {
     files_ch = channel.fromPath(params.bams_dir + "/CRR*.rmdup.bam", type: 'file').map { bam -> 
         def id = bam.baseName.replace(".rmdup.bam", "")
         def bai = file("${bam}.bai")
         def md5 = file("${bam}.md5")
-        tuple(id, bam, bai, md5)
+        [id, bam, bai, md5]
     }
-    files = files_ch.collect()
-    usb_dirs_ch = channel.fromPath(params.usb_mnt_dir + "/*", type: 'dir').map { dir -> 
-        def id = dir.baseName
-        tuple(id, dir)
+
+    // Transpose list of lists to tuple of lists to match process input
+    files = files_ch.collect().map { list ->
+        if (!list) return tuple([], [], [], [])
+        def t = list.transpose()
+        tuple(t[0], t[1], t[2], t[3])
     }
-    usb_dirs = usb_dirs_ch.collect()
-    cp_out = cp_based_on_usb_size(files, usb_dirs)
+
+    usb_dirs_list = ["usb", "usb-2", "usb-3"]
+    dirs = channel.from(usb_dirs_list).map { dir -> 
+        def dir_path = file("${params.usb_mnt_dir}/${dir}")
+        [dir, dir_path]
+    }.collect().map { list ->
+        if (!list) return tuple([], [])
+        def t = list.transpose()
+        tuple(t[0], t[1])
+    }
+
+    _cp_out = cp_bams_based_on_usb_size(files, dirs)
 }
 
 process ck_md5sum_wtk_fq {
@@ -213,15 +243,16 @@ process ct_depth_with_mosdepth {
 }
 
 process cp_bams_based_on_usb_size {
-    tag "cp_files_${id}"
+    tag "cp_bams"
+    publishDir "${params.output_dir}/logs", mode: 'copy'
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
-    tuple val(bam_ids), path(files)
-    tuple val(id), val(usb_dirs)
+    tuple val(bam_ids), path(bams), path(bai_files), path(md5_files)
+    tuple val(dir_names), val(dir_paths)
 
     output:
-    path "usb_transfer_log_${id}.txt"
+    path "usb_transfer_log.txt"
 
     script:
     """
@@ -229,16 +260,24 @@ process cp_bams_based_on_usb_size {
     import sys
     from infra.server.cp import run_copy_process
 
-    files_str = "${files}"
-    files = files_str.split()
+    bams_str = "${bams}"
+    bams = bams_str.split()
+
+    bais_str = "${bai_files}"
+    bais = bais_str.split()
+
+    md5s_str = "${md5_files}"
+    md5s = md5s_str.split()
     
-    usb_dirs_str = "${usb_dirs}"
+    files = bams + bais + md5s
+
+    usb_dirs_str = "${dir_paths}"
     usb_dirs = usb_dirs_str.split()
 
-    log_file = "usb_transfer_log_${id}.txt"
+    log_file = "usb_transfer_log.txt"
     threads = int("${task.cpus}")
 
-    print(f"Running copy process for ID ${id} with {threads} threads...")
+    print(f"Running copy process for bams with {threads} threads...")
     run_copy_process(files, usb_dirs, log_file, threads)
     """
 }
