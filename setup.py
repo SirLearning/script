@@ -11,9 +11,6 @@ setup(
         "cookiecutter",
         "fastcluster",
         "PyYAML",
-        "seaborn",
-        "upsetplot",
-        "statsmodels",
-        "scanpy"
+        "upsetplot"
     ],
 )
