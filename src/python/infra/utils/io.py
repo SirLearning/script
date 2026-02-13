@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import scanpy as sc
+# import scanpy as sc
 import os
 import sys
 import gzip
@@ -185,6 +185,12 @@ def load_adata_from_plink_raw(raw_file):
     df = pd.read_csv(raw_file, sep='\s+')
     
     # Extract sample info (ID, FID, etc.) and genotype data
+    try:
+        import scanpy as sc
+    except ImportError:
+        sys.stderr.write("Error: ScanPy is not installed.\n")
+        return None
+
     genotypes = df.iloc[:, 6:].values  # Assuming first 6 columns are sample info
     adata = sc.AnnData(X=genotypes.astype(float))
     adata.obs_names = df['IID'].astype(str)  # Use IID as index
