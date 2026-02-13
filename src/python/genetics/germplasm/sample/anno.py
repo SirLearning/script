@@ -1,5 +1,7 @@
 import os
 import argparse
+from .ana import ana_duplication
+from infra.utils.io import load_df_from_tsv
 import pandas as pd
 from infra.utils import load_df_generic, save_df_to_tsv, load_df_from_space_sep_no_header
 
@@ -8,18 +10,12 @@ from infra.utils import load_df_generic, save_df_to_tsv, load_df_from_space_sep_
 # ==============================================================================
 
 def anno_group(
-    input_file,
-    group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_groups.txt"
+    df,
+    group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_groups.txt",
+    output_prefix=None
 ) -> pd.DataFrame:
     print(f"[Info] Running Group Annotation...")
-    print(f"  Input: {input_file}")
     print(f"  Group File: {group_file}")
-    
-    # Load Input
-    df = load_df_generic(input_file)
-    if df is None:
-        print("[Error] Failed to load input file.")
-        return None
 
     # Load Groups
     df_group = load_df_from_space_sep_no_header(group_file, ['Sample', 'Group'])
@@ -27,11 +23,6 @@ def anno_group(
     if df_group is not None:
         # Check if input has 'Sample' or 'Taxa'
         join_col = 'Sample'
-        if 'Sample' not in df.columns and 'Taxa' in df.columns:
-             join_col = 'Taxa'
-        if join_col not in df.columns: # fallback if index
-             print(f"[Warning] Could not find join column (Sample/Taxa) in input. Using first column.")
-             join_col = df.columns[0]
 
         # Rename group file column to match if needed, but it is fixed as [Sample, Group]
         # So we merge left on join_col = Sample
@@ -44,10 +35,10 @@ def anno_group(
             merged = merged.drop(columns=['Sample']) 
         
         # Generate output filename
-        if input_file.lower().endswith(('.tsv', '.csv', '.txt')):
-             out_path = input_file.rsplit('.', 1)[0] + '.grouped.tsv'
+        if output_prefix is not None:
+             out_path = output_prefix + '.grouped.tsv'
         else:
-             out_path = input_file + '.grouped.tsv'
+             out_path = 'sample.grouped.tsv'
 
         save_df_to_tsv(merged, out_path)
         
@@ -60,42 +51,47 @@ def anno_group(
 # Feature 2: Duplication Annotation (Consumer of sample_ana.run_dedup_analysis)
 # ==============================================================================
 
-def anno_duplication(
-    input_file,
-    dedup_result_file
+def gen_anno_duplication(
+    df,
+    taxa_bam_dir="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap", 
+    db_dir="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208",
+    output_prefix="sample.dedup"
 ):
-    print(f"[Info] Running Duplication Annotation...")
-    print(f"  Input: {input_file}")
-    print(f"  Dedup Result File: {dedup_result_file}")
-    
-    df = load_df_generic(input_file)
-    if df is None: return
+    ana_duplication(
+        taxa_bam_dir=taxa_bam_dir,
+        db_dir=db_dir,
+        output_prefix=output_prefix
+    )
+    return anno_duplication(
+        df=df,
+        dup_file=output_prefix + '.summary.tsv',
+        output_prefix=output_prefix
+    )
 
-    df_dedup = load_df_generic(dedup_result_file)
+def anno_duplication(
+    df,
+    dup_file=None,
+    output_prefix=None
+) -> pd.DataFrame:
+    print(f"[Info] Running Duplication Annotation...")
+    
+    df_dedup = load_df_from_tsv(dup_file)
     if df_dedup is None: return
     
-    # Dedup result usually has 'Taxa' as identifier
-    # We try to join input on 'Taxa' or 'Sample' against 'Taxa' in dedup file
-    
-    join_col_in = 'Taxa'
-    if 'Taxa' not in df.columns and 'Sample' in df.columns:
-        join_col_in = 'Sample'
-    
-    # Fallback
+    join_col_in = 'Sample'
     if join_col_in not in df.columns:
         # Try finding a column that looks like ID
         join_col_in = df.columns[0]
         
-    join_col_dedup = 'Taxa'
-    if 'Taxa' not in df_dedup.columns:
-        # Maybe Sample?
-        if 'Sample' in df_dedup.columns: join_col_dedup = 'Sample'
+    join_col_dedup = 'Sample'
+    if join_col_dedup not in df_dedup.columns:
+        if 'Taxa' in df_dedup.columns: join_col_dedup = 'Taxa'
         else: join_col_dedup = df_dedup.columns[0]
 
     print(f"  Merging on Input[{join_col_in}] == Dedup[{join_col_dedup}]")
     
     # Columns to bring in: Dup_Group_ID, Is_Duplicate, Clean_CN, Clean_Acc
-    cols_to_add = ['Dup_Group_ID', 'Is_Duplicate', 'Clean_CN', 'Clean_Acc']
+    cols_to_add = ['Dup_Group_ID', 'Dup_Removed', 'Dup_Status', 'Clean_CN', 'Clean_Acc']
     # Filter to existing
     cols_to_add = [c for c in cols_to_add if c in df_dedup.columns]
     
@@ -109,13 +105,12 @@ def anno_duplication(
         merged = merged.drop(columns=[join_col_dedup])
 
     # Generate output
-    if input_file.lower().endswith(('.tsv', '.csv', '.txt')):
-             out_path = input_file.rsplit('.', 1)[0] + '.dedup_anno.tsv'
-    else:
-             out_path = input_file + '.dedup_anno.tsv'
+    out_path = output_prefix + '.dedup_anno.tsv'
              
     save_df_to_tsv(merged, out_path)
     print(f"[Info] Annotation saved to {out_path}")
+    
+    return merged
 
 
 # ==============================================================================
@@ -137,15 +132,15 @@ def anno_location(
     if df_loc is None: return
     
     # Similar join logic
-    join_col_in = 'Taxa'
-    if 'Taxa' not in df.columns and 'Sample' in df.columns:
-        join_col_in = 'Sample'
+    join_col_in = 'Sample'
+    if join_col_in not in df.columns and 'Taxa' in df.columns:
+        join_col_in = 'Taxa'
     if join_col_in not in df.columns: join_col_in = df.columns[0]
     
-    join_col_loc = 'Taxa'
+    join_col_loc = 'Sample'
     # Try finding matching column in loc file
     if join_col_loc not in df_loc.columns:
-        if 'Sample' in df_loc.columns: join_col_loc = 'Sample'
+        if 'Taxa' in df_loc.columns: join_col_loc = 'Taxa'
         else: join_col_loc = df_loc.columns[0]
         
     print(f"  Merging on Input[{join_col_in}] == Location[{join_col_loc}]")

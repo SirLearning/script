@@ -19,5 +19,6 @@ setup(
         "seaborn",
         "upsetplot",
         "statsmodels",
+        "scanpy"
     ],
 )

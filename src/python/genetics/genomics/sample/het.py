@@ -1,5 +1,5 @@
-from genetics.germplasm.sample.process import load_df_from_plink2
-from infra.utils.io import load_df_from_space_sep, load_df_from_tsv, load_thresholds, save_df_to_tsv, save_thresholds
+from .sample_utils import load_df_from_plink2
+from infra.utils.io import load_df_from_tsv, load_thresholds, save_df_to_tsv, save_thresholds
 from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ def load_scount_data(
 
     if not all(col in df_het.columns for col in required_cols):
         print(f"[Error] Missing genotype count columns. Found: {df_het.columns}")
-        return None, None
+        return None
 
     # Calculate Heterozygosity Rate
     df_het['Total_Called'] = df_het['HOM_REF_CT'] + df_het['HET_SNP_CT'] + df_het['HOM_ALT_SNP_CT']
@@ -31,7 +31,7 @@ def load_scount_data(
     
     save_df_to_tsv(
         df=df_het[['Sample', 'Het_Rate']],
-        output_file=f"{output_prefix}.het_rates.tsv"
+        output_file=f"{output_prefix}.rate.info.tsv"
     )
     
     return df_het[['Sample', 'Het_Rate']]
@@ -76,7 +76,7 @@ def ana_heterozygosity(
         thresholds = het_stats.copy()
         thresholds['Upper_Threshold_3SD'] = het_stats['Mean_Het'] + 3 * het_stats['Std_Het']
         thresholds['Lower_Threshold_3SD'] = max(0, het_stats['Mean_Het'] - 3 * het_stats['Std_Het'])
-        save_thresholds(thresholds, f"{output_prefix}.thresholds.tsv")
+        save_thresholds(thresholds, f"{output_prefix}.th.tsv")
 
     # 4. Plots
     # 4.1 Het Distribution
@@ -84,11 +84,10 @@ def ana_heterozygosity(
         data=df_merged,
         col='Het_Rate',
         title="Distribution of Sample Heterozygosity",
-        filename=f"{output_prefix}_dist_het.png",
+        filename=f"{output_prefix}.dist.png",
         mean_val=thresholds['Mean_Het'],
         median_val=thresholds['Median_Het'],
-        x_label="Sample Heterozygosity Rate",
-        color='forestgreen'
+        x_label="Sample Heterozygosity Rate"
     )
     
     # 4.2 Het Distribution (Log)
@@ -96,12 +95,11 @@ def ana_heterozygosity(
         data=df_merged,
         col='Het_Rate',
         title="Distribution of Sample Heterozygosity (Log Scale)",
-        filename=f"{output_prefix}_dist_het_log.png",
+        filename=f"{output_prefix}.dist_log.png",
         mean_val=thresholds['Mean_Het'],
         median_val=thresholds['Median_Het'],
         x_label="Sample Heterozygosity Rate",
-        log_scale=True,
-        color='forestgreen'
+        log_scale=True
     )
     
     # 4.3 Regression: Missing vs Het
@@ -111,7 +109,7 @@ def ana_heterozygosity(
         y_col='Het_Rate',
         x_label='Missing Rate',
         y_label='Heterozygosity Rate',
-        filename=f"{output_prefix}_reg_miss_vs_het.png",
+        filename=f"{output_prefix}.reg_vs_het.png",
         title="Heterozygosity vs Missing Rate"
     )
 

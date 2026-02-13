@@ -1,11 +1,9 @@
-from .smiss import *
+from .miss import *
 from .ref_ibs import *
-from .coverage import *
+from .cov import *
 from .mr import *
+from .het import *
+from .sample_utils import load_df_from_plink2
 
 __all__ = []
-__all__.extend(smiss.__all__)
-__all__.extend(ref_ibs.__all__)
-__all__.extend(coverage.__all__)
-__all__.extend(mr.__all__)
 

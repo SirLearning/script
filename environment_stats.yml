@@ -7,11 +7,14 @@ channels:
 dependencies:
   - python=3.12
   - openjdk=11  # Hail JDK requirement
+  - seqkit
+  - fastqc
   - plink
   - plink2
   - samtools
   - bcftools
   - vcftools
+  - bedtools
   - pip
   - pip:
       - hail   # Conda environment pip fine-grained installation

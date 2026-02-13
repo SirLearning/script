@@ -41,10 +41,9 @@ def getSoftwareConfig(home_dir, user_dir, tiger_jar, workshop_jar, samtools) {
 
     def java_lib_dir = "${user_dir}/lib/jvm"
 
-    def resolved_tiger_jar = "${home_dir}/lib/${tiger_jar}"
     def resolved_workshop_jar = "${home_dir}/lib/${workshop_jar}"
 
-    def tiger_jar_config = getTigerJarConfig(resolved_tiger_jar, java_lib_dir)
+    def tiger_jar_config = getTigerJarConfig(tiger_jar, home_dir)
     def workshop_jar_config = getWorkshopJarConfig(resolved_workshop_jar, java_lib_dir)
     def samtools_config = getSamtoolsConfig(samtools)
     
@@ -398,6 +397,37 @@ def getTigerJarConfig(tiger_jar_name, home_dir) {
         app_name: config.app_name,
         java_version: config.java_version
     ]
+}
+
+def getTaxaBamMapFile_v1(chr, home_dir) {
+    def normalized = chr.toString().replaceFirst(/^chr/, '')
+
+    def subGenomeConfigs = [
+        "A": "${home_dir}/00data/05taxaBamMap/all.A.taxaBamMap.txt",
+        "B": "${home_dir}/00data/05taxaBamMap/all.B.taxaBamMap.txt",
+        "D": "${home_dir}/00data/05taxaBamMap/all.D.taxaBamMap.txt",
+        "ALL": "${home_dir}/00data/05taxaBamMap/all.ALL.taxaBamMap.txt"
+    ]
+
+    def groupA = getRefV1SubChr("A")
+    def groupB = getRefV1SubChr("B")
+    def groupD = getRefV1SubChr("D")
+    def groupOthers = getRefV1SubChr("Others")
+
+    def sub_genome
+    if (groupA.contains(normalized)) {
+        sub_genome = "A"
+    } else if (groupB.contains(normalized)) {
+        sub_genome = "B"
+    } else if (groupD.contains(normalized)) {
+        sub_genome = "D"
+    } else if (groupOthers.contains(normalized)) {
+        sub_genome = "ALL"
+    } else {
+        throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
+    }
+    def tbm_file = subGenomeConfigs[sub_genome]
+    return tbm_file
 }
 
 def getPopDepTaxaBamFile_v1(chr, home_dir) {

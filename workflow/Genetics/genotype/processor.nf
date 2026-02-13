@@ -11,16 +11,33 @@ include { getRefV1ChrOffset } from './utils.nf'
     Description: Processes genotype VCF files, generating information, filtering, formatting, and QC statistics.
 */
 
-workflow test_plink {
+workflow test_plink_processor {
     take:
     // Expect a channel: [ val(id), val(chr), path(vcf) ]
     vcf_in
 
     main:
+    // preprocess VCF to PLINK format
     preprocess_out = plink_preprocess(vcf_in)
 
-    // subsample pfile for testing
-    def subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
+    if (params.process_dir) {
+        log.info "${params.c_green}Subsample VCFs in dir:${params.c_reset} ${params.process_dir}"
+        pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.thin"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        subsampling_out = [
+            pfile: pfiles
+        ]
+    } else {
+        log.info "${params.c_green}No process_dir specified, subsampling VCFs normally.${params.c_reset}"
+        // subsample pfile for testing
+        subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
+    }
+
     // Map pfiles to include subgenome info
     def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
         def subgenome = "Others"
@@ -31,13 +48,61 @@ workflow test_plink {
         return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
     }.groupTuple(by: 0)
 
-    // Generate merge lists
-    merge_out = merge_subgenome_test_pfile(grouped_pfile)
+    if (params.process_dir) {
+        log.info "${params.c_green}Subsampled pfiles in dir:${params.c_reset} ${params.process_dir}"
+        merge_out = grouped_pfile.multiMap { subgenome, _ids, _chrs, _prefixes, _pgens, _psams, _pvars ->
+            def out_prefix = "${params.process_dir}/${subgenome}_test"
+            def bed = file("${out_prefix}.plink.bed")
+            def bim = file("${out_prefix}.plink.bim")
+            def fam = file("${out_prefix}.plink.fam")
+            def pgen = file("${out_prefix}.plink2.pgen")
+            def psam = file("${out_prefix}.plink2.psam")
+            def pvar = file("${out_prefix}.plink2.pvar")
+            def merge_pfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink2", pgen, psam, pvar ]
+            def merge_bfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink", bed, bim, fam ]
+            bfile: merge_bfiles
+            pfile: merge_pfiles
+        }
+    } else {
+        // Generate merge lists
+        merge_out = merge_subgenome_test_pfile(grouped_pfile)
+    }
+
+    // merge_out = merge_subgenome_test_pfile(grouped_pfile)
+
+    // make sample and variant basic information
+    if (params.process_dir) {
+        log.info "${params.c_green}Making basic info from pfiles in dir:${params.c_reset} ${params.process_dir}"
+        basic_info_out = merge_out.pfile.multiMap { subgenome, sub_prefix, prefix, pgen, psam, pvar ->
+            def smiss = file("${params.process_dir}/sample/${subgenome}.info.smiss")
+            def vmiss = file("${params.process_dir}/variant/${subgenome}.info.vmiss")
+            def scount = file("${params.process_dir}/sample/${subgenome}.info.scount")
+            def gcount = file("${params.process_dir}/variant/${subgenome}.info.gcount")
+            def afreq = file("${params.process_dir}/variant/${subgenome}.info.afreq")
+            def hardy = file("${params.process_dir}/variant/${subgenome}.info.hardy")
+            smiss: [ subgenome, sub_prefix, smiss ]
+            vmiss: [ subgenome, sub_prefix, vmiss ]
+            scount: [ subgenome, sub_prefix, scount ]
+            gcount: [ subgenome, sub_prefix, gcount ]
+            afreq: [ subgenome, sub_prefix, afreq ]
+            hardy: [ subgenome, sub_prefix, hardy ]
+        }
+    } else {
+        log.info "${params.c_green}Making basic info normally.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+    }
+    
 
     emit:
     vcf = preprocess_out.gz_vcf
     merged_bfile = merge_out.bfile
     merged_pfile = merge_out.pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
 }
 
 workflow plink_processor {
@@ -50,12 +115,36 @@ workflow plink_processor {
     preprocess_out = plink_preprocess(vcf_in)
 
     // 2. make sample and variant basic information
-    basic_info_out = mk_plink_basic_info(preprocess_out.pfile)
+    if (params.process_dir) {
+        log.info "${params.c_green}Making basic info from pfiles in dir:${params.c_reset} ${params.process_dir}"
+        basic_info_out = preprocess_out.pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def smiss = file("${params.process_dir}/sample/${id}.info.smiss")
+            def vmiss = file("${params.process_dir}/variant/${id}.info.vmiss")
+            def scount = file("${params.process_dir}/sample/${id}.info.scount")
+            def gcount = file("${params.process_dir}/variant/${id}.info.gcount")
+            def afreq = file("${params.process_dir}/variant/${id}.info.afreq")
+            def hardy = file("${params.process_dir}/variant/${id}.info.hardy")
+            smiss: [ id, chr, smiss ]
+            vmiss: [ id, chr, vmiss ]
+            scount: [ id, chr, scount ]
+            gcount: [ id, chr, gcount ]
+            afreq: [ id, chr, afreq ]
+            hardy: [ id, chr, hardy ]
+        }
+        popdep_out = preprocess_out.gz_vcf.multiMap { id, chr, _vcf ->
+            def popdep = file("${params.process_dir}/variant/${id}.popdep.txt")
+            popdep: [ id, chr, popdep ]
+        }
+    } else {
+        log.info "${params.c_green}Making basic info normally.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info(preprocess_out.pfile)
 
-    // 3. calculate population depth using TIGER
-    def pd_config = getTigerJarConfig("TIGER_PD_20260130.jar", params.home_dir)
-    ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
-    popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
+        // 3. calculate population depth using TIGER
+        def pd_config = getTigerJarConfig("TIGER_PD_20260130.jar", params.home_dir)
+        ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
+        popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
+    }
+
 
     emit:
     vcf = preprocess_out.gz_vcf
@@ -76,13 +165,65 @@ workflow plink_preprocess {
     vcf_in
 
     main:
-    gz_vcf = format_vcf_bgzip(vcf_in)
-    plink_out = format_vcf_plink(gz_vcf.vcf)
+    if (params.process_dir) {
+        log.info "${params.c_green}Processed VCFs in dir:${params.c_reset} ${params.process_dir}"
+        vcf = vcf_in.map { id, chr, _vcf ->
+            def out_vcf = file("${params.process_dir}/${id}.vcf.gz")
+            return [ id, chr, out_vcf ]
+        }
+        pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        bfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink"
+            def bed = file("${prefix}.bed")
+            def bim = file("${prefix}.bim")
+            def fam = file("${prefix}.fam")
+            return [ id, chr, prefix, bed, bim, fam ]
+        }
+        gz_vcf = [ vcf: vcf ]
+        plink_out = [
+            bfile: bfiles,
+            pfile: pfiles
+        ]
+    } else {
+        gz_vcf = format_vcf_bgzip(vcf_in)
+        plink_out = format_vcf_plink(gz_vcf.vcf)
+    }
 
     emit:
     gz_vcf = gz_vcf.vcf
     bfile = plink_out.bfile
     pfile = plink_out.pfile
+}
+
+workflow vcf_arrange_merge {
+    take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+
+    main:
+    arrange_out = arrange_vcf_wheat_chr_by_awk(vcf_in)
+    arrange_ch = arrange_out.vcf.groupTuple(by: 2)
+    merge_out = merge_arranged_vcf(arrange_ch)
+
+    emit:
+    vcf = merge_out.vcf
+}
+
+workflow vcf_bcftools_filter {
+    take:
+    vcf_in
+
+    main:
+    filter_out = filter_vcf_v0_bcftools(vcf_in)
+
+    emit:
+    vcf = filter_out.vcf
 }
 
 process format_vcf_bgzip {
@@ -119,20 +260,6 @@ process format_vcf_bgzip {
 
     echo "BGZF compression completed for ${id}."
     """
-}
-
-workflow arrange_merge_vcf {
-    take:
-    // Expect a channel: [ val(id), val(chr), path(vcf) ]
-    vcf_in
-
-    main:
-    arrange_out = arrange_vcf_wheat_chr_by_awk(vcf_in)
-    arrange_ch = arrange_out.vcf.groupTuple(by: 2)
-    merge_out = merge_arranged_vcf(arrange_ch)
-
-    emit:
-    vcf = merge_out.vcf
 }
 
 process format_vcf_bgzip_idx {
@@ -187,6 +314,35 @@ process format_vcf_bgzip_idx {
     fi
 
     echo "BGZF compression and indexing completed for ${id}."
+    """
+}
+
+process arrange_sample_info {
+    tag "arrange sample info: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/sample_info", mode: 'copy', pattern: "*.sample_info.tsv"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), path(vcf)
+
+    output:
+    tuple val(id), val(chr), path("${id}.sample_info.tsv"), emit: sample_info
+    path "${id}.sample_info.log", emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    
+    sys.stdout = open("${id}.sample_info.log", "w")
+    sys.stderr = sys.stdout
+
+    from python_script.genomics.germplasm.sample.ana import ana_sample_info
+
+    print(f"Processing sample information for ${id}...")
+    ana_sample_info("${vcf}", "${id}.sample_info.tsv")
     """
 }
 
@@ -283,7 +439,7 @@ process format_vcf_plink {
     
     EXIST_PLINK1=false
     EXIST_PLINK2=false
-    if [ -f "${tmp_dir}/${id}.bed" ] && [ -f "${tmp_dir}/${id}.bim" ] && [ -f "${tmp_dir}/${id}.fam" ]; then
+    if [ -f "${tmp_dir}/${id}.plink.bed" ] && [ -f "${tmp_dir}/${id}.plink.bim" ] && [ -f "${tmp_dir}/${id}.plink.fam" ]; then
         EXIST_PLINK1=true
     fi
     if [ -f "${tmp_dir}/${id}.plink2.pgen" ] && [ -f "${tmp_dir}/${id}.plink2.psam" ] && [ -f "${tmp_dir}/${id}.plink2.pvar" ]; then
@@ -364,8 +520,8 @@ process merge_subgenome_test_pfile {
     tuple val(subgenome), val(ids), val(chrs), val(prefixes), path(pgens), path(psams), path(pvars)
 
     output:
-    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink"), path("${subgenome}_test.plink.bed"), path("${subgenome}_test.plink.bim"), path("${subgenome}_test.plink.fam"), emit: bfile
-    tuple val(subgenome), val(chrs), val("${subgenome}_test.plink2"), path("${subgenome}_test.plink2.pgen"), path("${subgenome}_test.plink2.psam"), path("${subgenome}_test.plink2.pvar"), emit: pfile
+    tuple val(subgenome), val("sub_${subgenome}"), val("${subgenome}_test.plink"), path("${subgenome}_test.plink.bed"), path("${subgenome}_test.plink.bim"), path("${subgenome}_test.plink.fam"), emit: bfile
+    tuple val(subgenome), val("sub_${subgenome}"), val("${subgenome}_test.plink2"), path("${subgenome}_test.plink2.pgen"), path("${subgenome}_test.plink2.psam"), path("${subgenome}_test.plink2.pvar"), emit: pfile
     tuple val(subgenome), path("*.log"), emit: logs
 
     script:
@@ -509,6 +665,168 @@ process calc_population_depth {
     """
 }
 
+process filter_sample_plink {
+    tag "plink sample filter ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/filters", mode: 'copy', pattern: "*.{id}"
+
+    input:
+    tuple val(id), val(chr), path(prefix), path(pgen), path(psam), path(pvar)
+    tuple val(id2), val(chr2), val(mind_th), path(dedup_id)
+
+    output:
+    tuple val(id), val(chr), val("${id}.filter.s"), path("${id}.filter.s.id"), emit: filter_s
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > plink_sample_filter.${chr}.log 2>&1
+
+    echo "Filtering PLINK samples..."
+    echo "Threshold: duplicate germplasm samples, F_MISSING<=${mind_th}"
+
+    prefix_out="${id}.filter.s"
+
+    plink2 --pfile ${prefix} \\
+        --mind ${mind_th} \\
+        --remove ${dedup_id} \\
+        --threads ${task.cpus} \\
+        --out "\${prefix_out}"
+    
+    if [ -f "\${prefix_out}.mindrem.id" ]; then
+        cat "\${prefix_out}.mindrem.id" > "\${prefix_out}.id"
+    fi
+
+    cat ${dedup_id} >> "\${prefix_out}.id"
+
+    echo "PLINK sample filtering completed for ${id}."
+    """
+}
+
+process filter_sample_after_variant_plink {
+    tag "plink sample filter after variant ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/filters", mode: 'copy', pattern: "*.{id}"
+
+    input:
+    tuple val(id), val(chr), path(prefix), path(pgen), path(psam), path(pvar)
+    tuple val(id2), val(chr2), val(filter_v_prefix), path(filter_in), path(filter_out)
+    tuple val(mind_th), path(dedup_id)
+
+    output:
+    tuple val(id), val(chr), val("${id}.filter.v.s"), path("${id}.filter.v.s.id"), emit: filter_v_s
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > plink_sample_filter_after_variant.${chr}.log 2>&1
+
+    echo "Filtering PLINK samples after variant filtering..."
+    echo "Removing samples in ${filter_v_prefix}"
+
+    prefix_out="${id}.filter.v.s"
+
+    plink2 --pfile ${prefix} \\
+        --mind ${mind_th} \\
+        --remove ${dedup_id} \\
+        --extract ${filter_in} \\
+        --threads ${task.cpus} \\
+        --out "\${prefix_out}"
+
+    if [ -f "\${prefix_out}.mindrem.id" ]; then
+        cat "\${prefix_out}.mindrem.id" > "\${prefix_out}.id"
+    fi
+
+    cat ${dedup_id} >> "\${prefix_out}.id"
+
+    echo "PLINK sample filtering after variant filtering completed for ${chr}."
+    """
+}
+
+process filter_variant_plink {
+    tag "plink filter ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/filters", mode: 'copy', pattern: "*.{in,out}"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(maf_th), val(mac_th), val(geno_th), val(ld_th)
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.filter.v"), path("${id}.filter.v.in"), path("${id}.filter.v.out"), emit: filter_v
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink_filter.log 2>&1
+
+    echo "Filtering PLINK files..."
+    echo "Thresholds: MAF>=${maf_th}, MAC>=${mac_th}, F_GENO>=${geno_th}, LD r2<=${ld_th}"
+
+    prefix_out="${id}.filter.v"
+
+    plink2 --pfile ${prefix} \\
+        --maf ${maf_th} \\
+        --mac ${mac_th} \\
+        --geno ${geno_th} \\
+        --indep-pairwise 50 5 ${ld_th} \\
+        --threads ${task.cpus} \\
+        --out "\${prefix_out}"
+
+    cp "\${prefix_out}.prune.in" "\${prefix_out}.in"
+    cp "\${prefix_out}.prune.out" "\${prefix_out}.out"
+
+    echo "PLINK filtering completed for ${chr}."
+    """
+}
+
+process filter_variant_after_sample_plink {
+    tag "plink var filter after sample ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/filters", mode: 'copy', pattern: "*.{in,out}"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(maf_th), val(mac_th), val(geno_th), val(ld_th)
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    tuple val(id2), val(chr2), val(filter_s_prefix), path(filter_id)
+
+    output:
+    tuple val(id), val(chr), val("${id}.filter.s.v"), path("${id}.filter.s.v.in"), path("${id}.filter.s.v.out"), emit: filter_s_v
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink_var_filter_after_sample.log 2>&1
+
+    echo "Filtering PLINK variants after sample filtering..."
+    echo "Thresholds: remove samples in ${filter_s_prefix}, MAF>=${maf_th}, MAC>=${mac_th}, F_GENO>=${geno_th}, LD r2<=${ld_th}"
+
+    prefix_out="${id}.filter.s.v"
+
+    plink2 --pfile ${prefix} \\
+        --remove ${filter_id} \\
+        --maf ${maf_th} \\
+        --mac ${mac_th} \\
+        --geno ${geno_th} \\
+        --indep-pairwise 50 5 ${ld_th} \\
+        --threads ${task.cpus} \\
+        --out "\${prefix_out}"
+
+    cp "\${prefix_out}.prune.in" "\${prefix_out}.in"
+    cp "\${prefix_out}.prune.out" "\${prefix_out}.out"
+
+    echo "PLINK variant filtering after sample filtering completed for ${chr}."
+    """
+}
+
 // v0 is rigid threshold filtering
 process filter_vcf_v0_vcftools {
     tag "${id}" ? "vcftools filter ${id}" : 'vcftools filter'
@@ -546,7 +864,7 @@ process filter_vcf_v0_vcftools {
         --recode-INFO-all \\
         --out "\${out}"
 
-    echo "VCF filtering completed for ${id}."
+    echo "VCF filtering completed for ${chr}."
     mv "\${out}.recode.vcf" "\${out}.vcf"
     echo "Filtered and recoded VCF saved to \${out}.vcf"
     """
@@ -580,7 +898,7 @@ process filter_vcf_v0_bcftools {
         -o ${id}.bcftools.flt.v0.vcf \\
         ${vcf}
     
-    echo "VCF filtering completed for ${id}."
+    echo "VCF filtering completed for ${chr}."
     echo "Filtered VCF saved to ${id}.bcftools.flt.v0.vcf"
     """
 }

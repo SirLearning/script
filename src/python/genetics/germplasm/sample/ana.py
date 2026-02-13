@@ -1,9 +1,7 @@
-import os
-import argparse
 import pandas as pd
 import numpy as np
 from infra.utils import load_df_generic, save_df_to_tsv
-from genetics.germplasm import process_subgroup_as, process_subgroup_hznu, process_subgroup_nature, process_subgroup_v4, process_subgroup_vmap3, process_subgroup_watkins
+from .process import process_subgroup_as, process_subgroup_hznu, process_subgroup_nature, process_subgroup_v4, process_subgroup_vmap3, process_subgroup_watkins
 
 # ==============================================================================
 # Helper Classes & Functions
@@ -149,7 +147,10 @@ def ana_duplication(
     all_miss = []
     
     for f in data_funcs:
-        r, m = f()
+        r, m = f(
+            db_dir=DB_DIR,
+            taxa_dir=TAXA_DIR
+            )
         all_res.extend(r)
         all_miss.extend(m)
         
@@ -158,7 +159,7 @@ def ana_duplication(
     
     if all_miss:
         df_miss = pd.DataFrame(all_miss)
-        miss_file = output_prefix + '.missing.tsv'
+        miss_file = output_prefix + '.missing.info.tsv'
         save_df_to_tsv(df_miss, miss_file)
         print(f"[Info] Missing taxa report saved to {miss_file}")
     
@@ -210,20 +211,30 @@ def ana_duplication(
     grouped = df.groupby('Dup_Group_ID')
     to_remove = []
     
+    # Initialize Dup_Status
+    df['Dup_Status'] = 'Unique'
+    
     for _, group in grouped:
         if len(group) > 1:
             sorted_g = group.sort_values('Coverage', ascending=False)
             # Keep first (max coverage), remove rest
-            to_remove.extend(sorted_g.index[1:].tolist())
+            keepers = sorted_g.index[0]
+            removers = sorted_g.index[1:].tolist()
             
-    df['Is_Duplicate'] = df.index.isin(to_remove)
+            to_remove.extend(removers)
+            
+            # Update Status
+            df.loc[keepers, 'Dup_Status'] = 'Kept_Representative'
+            df.loc[removers, 'Dup_Status'] = 'Removed_Duplicate'
+            
+    df['Dup_Removed'] = df.index.isin(to_remove)
     
     # Save Outputs
-    summary_file = output_prefix + '.summary.tsv'
+    summary_file = output_prefix + '.checked.info.tsv'
     save_df_to_tsv(df, summary_file)
     
-    qc_file = output_prefix + '.qc.tsv'
-    qc_ids = df.loc[to_remove, 'Taxa']
+    qc_file = output_prefix + '.rm.th.tsv'
+    qc_ids = df.loc[to_remove, 'Sample']
     if not qc_ids.empty:
         qc_ids.to_csv(qc_file, index=False, header=False)
         print(f"[Info] QC deduplication list saved to {qc_file}")
@@ -245,6 +256,11 @@ def ana_location(
     print("[Info] Running Location Analysis...")
     df = load_df_generic(input_file)
     if df is None: return
+
+    # Standardize 'Taxa' to 'Sample'
+    if 'Taxa' in df.columns:
+        print("[Info] Renaming 'Taxa' to 'Sample'")
+        df = df.rename(columns={'Taxa': 'Sample'})
 
     # Check mapping columns
     clean_country = None
@@ -275,9 +291,9 @@ def ana_location(
     # making it consistent with how it was in sample_anno.py
     
     if output_prefix.lower().endswith(('.tsv', '.csv', '.txt')):
-             final_out = output_prefix
+        final_out = output_prefix
     else:
-             final_out = output_prefix + '.location.tsv'
+        final_out = output_prefix + '.location.tsv'
              
     save_df_to_tsv(df, final_out)
     print(f"[Info] Location analysis result saved to {final_out}")
@@ -287,32 +303,6 @@ def ana_location(
 # CLI
 # ==============================================================================
 
-def main():
-    parser = argparse.ArgumentParser(description="Germplasm Analysis Toolkit")
-    subparsers = parser.add_subparsers(dest='command', help='Sub-command help')
-
-    # 1. Dedup
-    p_dedup = subparsers.add_parser('dedup', help='Run Deduplication Analysis Pipeline')
-    p_dedup.add_argument('--taxa-bam-dir', default="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap", help='Taxa Bam Map Directory')
-    p_dedup.add_argument('--db-dir', default="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208", help='Database Root Directory')
-    p_dedup.add_argument('--out-prefix', default='germplasm.dedup', help='Output files prefix')
-
-    # 2. Location
-    p_location = subparsers.add_parser('location', help='Run Location Analysis')
-    p_location.add_argument('-i', '--input', required=True, help='Input Sample File')
-    p_location.add_argument('--db-dir', help='Optional DB dir')
-    p_location.add_argument('-o', '--out', default='germplasm.location.tsv', help='Output file')
-
-    args = parser.parse_args()
-
-    if args.command == 'dedup':
-        ana_duplication(args.taxa_bam_dir, args.db_dir, args.out_prefix)
-        
-    elif args.command == 'location':
-        ana_location(args.input, args.out, args.db_dir)
-        
-    else:
-        parser.print_help()
-
 if __name__ == "__main__":
-    main()
+    ana_duplication()
+    # ana_location()

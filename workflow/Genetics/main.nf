@@ -3,7 +3,8 @@ nextflow.enable.dsl=2
 // --- Include workflow modules ---
 include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
 include { plink_stats as PLINK_STATS } from './genotype/stats.nf'
-include { test_plink as TEST_PLINK } from './genotype/processor.nf'
+include { test_plink_processor as TEST_PLINK_PROCESSOR } from './genotype/processor.nf'
+include { test_plink_stats as TEST_PLINK_STATS } from './genotype/stats.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from './dynamic/ps.nf'
@@ -50,7 +51,7 @@ def helpMessage() {
             --user_dir /data/home/tusr1 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod plink_test \
+            --mod test_plink \
             --job test_plink
         // 20260130.2 - run MAO=1 chr002 only
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
@@ -58,13 +59,35 @@ def helpMessage() {
             --user_dir /data/home/tusr1 \
             --src_dir /data/home/tusr1/git/script/src \
             --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod plink_process \
+            --mod v1_plink \
+            --job rebuild
+        // 20260205.1
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
+            --src_dir /data/home/tusr1/git/script/src \
+            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process \
+            --mod test_plink \
+            --job test_plink
+        // 20260209.1
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
+            --src_dir /data/home/tusr1/git/script/src \
+            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/rebuild/process \
+            --mod v1_plink \
             --job rebuild
     
     screen prefix commands:
         // test_plink
         screen -dmS test_plink bash -c "\
-        cd /data1/dazheng_tusr1/01work && \
+        cd /data1/dazheng_tusr1/01projects/vmap4/01plink_test/01run && \
+        source ~/.bashrc && conda activate run && \
+        "
+        screen -dmS test_plink bash -c "\
+        cd /data1/dazheng_tusr1/01projects/vmap4/01plink_test/02run && \
         source ~/.bashrc && conda activate run && \
         "
         // rebuild
@@ -81,24 +104,14 @@ workflow {
     def ch_vcf = input_out.vcf
     // --- Main workflow execution ---
     log.info "${params.c_purple}Process all vcf with plink / plink2 tools.${params.c_reset}"
-    if (params.mod == 'plink_process') {
+    if (params.mod == 'v1_plink') {
         log.info "${params.c_yellow}Using PLINK PROCESS module.${params.c_reset}"
-        PLINK_PROCESSOR(ch_vcf)
-    } else if (params.mod == 'plink_test') {
+        vmap4_v1_plink(ch_vcf)
+    } else if (params.mod == 'test_plink') {
         log.info "${params.c_yellow}Using PLINK TEST module.${params.c_reset}"
-        TEST_PLINK(ch_vcf)
+        test_plink(ch_vcf)
     } else {
-        log.info "${params.c_yellow}Using default VMap4 v1 plink workflow module.${params.c_reset}"
-        def vmap4_v1_plink_out = vmap4_v1_plink(ch_vcf)
-    }
-    // --- Completion Handler ---
-    workflow.onComplete {
-        log.info "-\033[2m--------------------------------------------------\033[0m-"
-        log.info "Pipeline completed at: $workflow.complete"
-        log.info "Duration             : $workflow.duration"
-        log.info "Success              : $workflow.success"
-        log.info "Exit Status          : $workflow.exitStatus"
-        log.info "-\033[2m--------------------------------------------------\033[0m-"
+        log.info "${params.c_yellow}No workflow module was chosen.${params.c_reset}"
     }
 }
 
@@ -156,6 +169,7 @@ workflow check_input {
     def man_chr_filter = getRefV1SubChr("ALL")
     // man_chr_filter -= ["0","43","44"] // Other chromosomes
     // man_chr_filter -= ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"] // A genome
+    man_chr_filter -= ["32"] // A genome
     // man_chr_filter -= ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"] // B genome
     // man_chr_filter -= ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"] // D genome
     ch_vcf = ch_vcf.filter { vcf_tuple ->
@@ -172,23 +186,40 @@ workflow check_input {
     vcf = ch_vcf
 }
 
+workflow test_plink {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_PLINK_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.smiss, 
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
+    
+
+    // emit:
+}
+
 workflow vmap4_v1_plink {
     take:
     ch_vcf
 
     main:
     def processor_out = PLINK_PROCESSOR(ch_vcf)
-    def stats_out = PLINK_STATS(
+    PLINK_STATS(
         processor_out.smiss, 
-        processor_out.vmiss,
         processor_out.scount,
+        processor_out.vmiss,
         processor_out.gcount,
         processor_out.afreq,
         processor_out.hardy,
         processor_out.popdep)
     
+    // emit:
 
-    emit:
-    out = processor_out
 }
 
