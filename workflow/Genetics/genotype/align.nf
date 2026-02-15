@@ -21,7 +21,8 @@ def helpMessage() {
             --output_dir /data/home/tuser1 \
             --bams_dir /data/home/tuser1/01bam \
             --usb_mnt_dir /mnt \
-            --server s115 "
+            --server s115 \
+            -resume "
     """
 }
 
