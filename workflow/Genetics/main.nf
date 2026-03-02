@@ -169,7 +169,6 @@ workflow check_input {
     def man_chr_filter = getRefV1SubChr("ALL")
     // man_chr_filter -= ["0","43","44"] // Other chromosomes
     // man_chr_filter -= ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"] // A genome
-    man_chr_filter -= ["32"] // A genome
     // man_chr_filter -= ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"] // B genome
     // man_chr_filter -= ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"] // D genome
     ch_vcf = ch_vcf.filter { vcf_tuple ->

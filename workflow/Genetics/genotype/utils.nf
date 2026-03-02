@@ -125,7 +125,7 @@ def getJobConfig(job, home_dir) {
     return jobConfigs[job]
 }
 
-def getCallingJobConfig(job, home_dir) {
+def getCallingJobConfig(job) {
     def jobConfigs = [
         "chr1": [
             name: "chr1",

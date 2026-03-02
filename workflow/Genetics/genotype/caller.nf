@@ -195,7 +195,7 @@ workflow run_FastCall3 {
     def vlib_dir_resolved = (params.vlib_dir ?: "${output_path}/vLib").toString().replaceAll(/\/+/, "/")
     def gen_dir_resolved  = (params.gen_dir  ?: "${output_path}/gen").toString().replaceAll(/\/+/, "/")
     // 2. work specific config
-    def job_config = getCallingJobConfig(params.job, params.home_dir)
+    def job_config = getCallingJobConfig(params.job)
     // Resolve and configure TIGER jar automatically
     def software_config = getSoftwareConfig(params.home_dir, params.user_dir, params.tiger_jar, params.workshop_jar, params.samtools)
     // create software input tuple
