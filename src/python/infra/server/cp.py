@@ -22,9 +22,9 @@ def get_file_size(path):
 def copy_file_task(task):
     """
     Task to copy a single file. (Helper for ThreadPoolExecutor)
-    task: tuple of (src, dst, size)
+    task: tuple of (src, dst, size, md5_dst)
     """
-    src, dst, size = task
+    src, dst, size, md5_dst = task
     try:
         # Check if file already exists at destination with same size
         if os.path.exists(dst):
@@ -32,7 +32,7 @@ def copy_file_task(task):
             # Allow small variance or exact match. For strictness use exact match.
             if dst_size == size:
                 print(f"Skipping {src} -> {dst} (Already exists)")
-                return (src, dst, size, "SKIPPED")
+                return (src, dst, size, "SKIPPED", md5_dst)
             else:
                  print(f"Overwriting {src} -> {dst} (Size mismatch: {dst_size} vs {size})")
 
@@ -44,10 +44,10 @@ def copy_file_task(task):
         print(f"Copying {src} ({size/1024/1024:.2f} MB) -> {dst}")
         # Use -L to dereference symlinks (copy content, not link) because USB drives (exFAT/FAT32) usually don't support symlinks.
         subprocess.run(["cp", "-L", src, dst], check=True)
-        return (src, dst, size, "SUCCESS")
+        return (src, dst, size, "SUCCESS", md5_dst)
     except Exception as e:
         print(f"Failed to copy {src} to {dst}: {e}")
-        return (src, dst, size, f"FAILED: {str(e)}")
+        return (src, dst, size, f"FAILED: {str(e)}", md5_dst)
 
 def get_group_size(item):
     """Returns size of a file or total size of a list of files."""
@@ -96,7 +96,7 @@ def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
             else:
                 drive_free_space[d] = get_available_space(d)
 
-    copy_tasks = [] #(src, dst, size)
+    copy_tasks = [] #(src, dst, size, md5_dst)
     failed_assignments = []
     
     # 3b. Check for existing files first to prevent duplicates across drives
@@ -148,9 +148,13 @@ def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
             # so the copy logic can say "SKIPPED".
             # We do NOT deduct availability from 'drive_free_space' because it's already consuming that space.
             
+            md5_src = next((f for f in sub_files if str(f).endswith(".md5")), None)
+            md5_dst = os.path.join(found_drive, os.path.basename(md5_src)) if md5_src else ""
+
             for f in sub_files:
                 dest_path = os.path.join(found_drive, os.path.basename(f))
-                copy_tasks.append((f, dest_path, get_file_size(f)))
+                task_md5_dst = md5_dst if str(f).endswith(".bam") else ""
+                copy_tasks.append((f, dest_path, get_file_size(f), task_md5_dst))
                 
         else:
             # Not found anywhere. Needs allocation.
@@ -171,9 +175,13 @@ def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
 
                 # Generate tasks
                 sub_files = [item] if isinstance(item, str) else item
+                md5_src = next((f for f in sub_files if str(f).endswith(".md5")), None)
+                md5_dst = os.path.join(drive, os.path.basename(md5_src)) if md5_src else ""
+
                 for f in sub_files:
                     dest_path = os.path.join(drive, os.path.basename(f))
-                    copy_tasks.append((f, dest_path, get_file_size(f)))
+                    task_md5_dst = md5_dst if str(f).endswith(".bam") else ""
+                    copy_tasks.append((f, dest_path, get_file_size(f), task_md5_dst))
                 break
         
         if not assigned:
@@ -182,7 +190,7 @@ def distribute_files_to_usbs(files, usb_dirs, safety_margin_mb=100):
             
     return copy_tasks, failed_assignments
 
-def run_copy_process(files, usb_dirs, log_file, threads=1):
+def run_copy_process(files, usb_dirs, log_file, threads=1, copied_manifest_file="copied_manifest.tsv"):
     """
     Main function to run the copy process.
     """
@@ -217,7 +225,13 @@ def run_copy_process(files, usb_dirs, log_file, threads=1):
     # Note: If process killed, this part is not reached, hence missing log file.
     # But because we added "SKIPPED" check in copy_file_task, re-running will be fast.
     with open(log_file, "w") as log:
-        for src, dst, size, status in results:
-            log.write(f"{src}\t{dst}\t{size}\t{status}\n")
+        for src, dst, size, status, md5_dst in results:
+            log.write(f"{src}\t{dst}\t{size}\t{status}\t{md5_dst}\n")
         for src, size in failed_assignments:
             log.write(f"{src}\tFAILED_NO_SPACE\t{size}\tFAILED\n")
+
+    with open(copied_manifest_file, "w") as manifest:
+        # bam_in_usb\tmd5_in_usb
+        for src, dst, size, status, md5_dst in results:
+            if str(dst).endswith(".bam") and md5_dst and not str(status).startswith("FAILED"):
+                manifest.write(f"{dst}\t{md5_dst}\n")

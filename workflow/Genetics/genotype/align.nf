@@ -44,10 +44,11 @@ workflow {
     }.groupTuple(by: 0)
 
     _cp_out = cp_bams_based_on_usb_size(files, dirs)
+    ck_md5_wtk(_cp_out.copied_manifest)
 }
 
-process ck_md5sum_wtk_fq {
-    tag "ck_fq_md5_${id}"
+process ct_md5_wtk_fq {
+    tag "ct_fq_md5_${id}"
     publishDir "results/fastq_md5sums", mode: 'copy'
 
     input:
@@ -61,7 +62,7 @@ process ck_md5sum_wtk_fq {
     r2_file = file("${dir}/${id}_r2.fastq.gz").get()
     """
     set -euo pipefail
-    exec > ck_fq_md5_${id}.log 2>&1
+    exec > ct_fq_md5_${id}.log 2>&1
 
     echo "Checking MD5 sums for ${dir}..."
     md5sum ${f1_file} ${r2_file} > ${id}.md5
@@ -69,8 +70,8 @@ process ck_md5sum_wtk_fq {
     """
 }
 
-process ck_md5sum_wtk_bam {
-    tag "ck_bam_md5_${id}"
+process ct_md5_wtk_bam {
+    tag "ct_bam_md5_${id}"
     publishDir "results/bam_md5sums", mode: 'copy'
 
     input:
@@ -82,11 +83,56 @@ process ck_md5sum_wtk_bam {
     script:
     """
     set -euo pipefail
-    exec > ck_bam_md5_${id}.log 2>&1
+    exec > ct_bam_md5_${id}.log 2>&1
 
     echo "Checking MD5 sum for BAM file ${bam_file}..."
     md5sum ${bam_file} > ${bam_file}.md5
     echo "MD5 sum for BAM file ${bam_file} saved to ${bam_file}.md5"
+    """
+}
+
+process ck_md5_wtk {
+    tag "ck_md5_${server}"
+    publishDir "${params.output_dir}/logs", mode: 'copy'
+
+    input:
+    tuple val(server), path(copied_manifest)
+
+    output:
+    path "${server}_md5_check.txt"
+
+    script:
+    """
+    set -euo pipefail
+    exec > ck_md5_${server}.log 2>&1
+
+    echo "Checking copied BAM files using manifest ${copied_manifest}..."
+    : > ${server}_md5_check.txt
+
+    while IFS=$'\t' read -r bam_file md5_file; do
+        [[ -z "\$bam_file" ]] && continue
+        [[ -z "\$md5_file" ]] && continue
+
+        if [[ ! -f "\$bam_file" ]]; then
+            echo -e "\$bam_file\tMISSING_BAM\tFAIL" >> ${server}_md5_check.txt
+            continue
+        fi
+        if [[ ! -f "\$md5_file" ]]; then
+            echo -e "\$bam_file\tMISSING_MD5\tFAIL" >> ${server}_md5_check.txt
+            continue
+        fi
+
+        expected_md5=\$(awk 'NR==1 {print \$1}' "\$md5_file")
+        actual_md5=\$(md5sum "\$bam_file" | awk '{print \$1}')
+
+        if [[ "\$expected_md5" == "\$actual_md5" ]]; then
+            echo -e "\$bam_file\t\$md5_file\tPASS" >> ${server}_md5_check.txt
+        else
+            echo -e "\$bam_file\t\$md5_file\tFAIL" >> ${server}_md5_check.txt
+        fi
+    done < ${copied_manifest}
+
+    echo "MD5 check results saved to ${server}_md5_check.txt"
     """
 }
 
@@ -246,7 +292,9 @@ process cp_bams_based_on_usb_size {
     tuple val(server1), val(dir_names), val(dir_paths)
 
     output:
-    path "usb_transfer.txt"
+    path "usb_transfer.txt", emit: transfer_log
+    tuple val(server1), path("copied_manifest.tsv"), emit: copied_manifest
+
 
     script:
     """
@@ -288,9 +336,10 @@ process cp_bams_based_on_usb_size {
         usb_dirs.append(path)
 
     transfer_file = "usb_transfer.txt"
+    copied_manifest_file = "copied_manifest.tsv"
     threads = int("${task.cpus}")
 
     print(f"Running copy process for bams with {threads} threads...")
-    run_copy_process(files, usb_dirs, transfer_file, threads)
+    run_copy_process(files, usb_dirs, transfer_file, threads, copied_manifest_file)
     """
 }
