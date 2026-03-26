@@ -975,6 +975,54 @@ def plot_slope_chart(
     plt.close()
 
 
+def plot_scatter_with_outliers(
+    data, x_col, y_col, outlier_col,
+    title, filename,
+    xlabel=None, ylabel=None,
+    color_normal='royalblue', color_outlier='red',
+    alpha=0.5, s=25,
+    figure_size=(10,8)
+):
+    """
+    Plots a scatter plot separating normal and outlier points.
+    
+    Args:
+        data: pandas DataFrame
+        x_col: string, column name for X axis
+        y_col: string, column name for Y axis
+        outlier_col: string, boolean column indicating outliers (True=outlier)
+        title: string, plot title
+        filename: string, output file path
+        xlabel: string, label for X axis (defaults to x_col)
+        ylabel: string, label for Y axis (defaults to y_col)
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.set_style("white")
+    
+    plt.figure(figsize=figure_size)
+    
+    normal_pts = data[~data[outlier_col]]
+    outlier_pts = data[data[outlier_col]]
+
+    plt.scatter(normal_pts[x_col], normal_pts[y_col], s=s, alpha=alpha, label='Normal', color=color_normal)
+    plt.scatter(outlier_pts[x_col], outlier_pts[y_col], s=s, alpha=alpha, color=color_outlier, label='Outlier')
+    
+    plt.xlabel(xlabel if xlabel else x_col, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(ylabel if ylabel else y_col, fontsize=Y_LABEL_FONT_SIZE)
+    plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.legend(loc='best', fontsize=LEGEND_FONT_SIZE)
+    
+    import os
+    parent_dir = os.path.dirname(filename)
+    if parent_dir and not os.path.exists(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
+        
+    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Saved scatter plot with outliers to {filename}")
+
+
 if __name__ == "__main__":
     if len(sys.argv) >= 4:
         combine_plots([sys.argv[1], sys.argv[2]], sys.argv[3])

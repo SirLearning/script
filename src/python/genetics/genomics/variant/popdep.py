@@ -1,10 +1,11 @@
 from .variant_utils import load_df_from_plink_variant
 from genetics.genomics.variant.mq import load_mq_data
-from infra.utils.io import load_df_from_space_sep
-from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison, plot_mean_variance_fit, plot_qq_residuals
+from infra.utils.io import load_df_from_space_sep, save_df_to_tsv
+from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison, plot_mean_variance_fit, plot_qq_residuals, plot_scatter_with_outliers
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.stats import chi2
 
 # ==================================================================================
 # Data Loading Helpers
@@ -160,3 +161,71 @@ def ana_popdep_missing_reg(
             filename=f"{output_prefix}.reg_{y_col}_vs_{x_col}.png",
             title=f"{y_label} vs {x_label}"
         )
+
+# ==================================================================================
+# Analysis 3: Mahalanobis Distance for Variant Depth Distribution
+# ==================================================================================
+
+def ana_popdep_mahalanobis(popdep_file, output_prefix, threshold_p_value=0.99):
+    """
+    Calculates Mahalanobis distance for variant depth distribution (Log_Depth_Mean vs Log_Depth_CV),
+    sets an outlier threshold, saves the result, and plots it.
+    """
+    print(f"[Info] Running Mahalanobis distance analysis on: {popdep_file}")
+    df = load_popdep_data(popdep_file)
+    if df is None: return
+
+    # Filter out missing/zero variants to perform log transform safely
+    df_valid = df[(df['Depth_Mean'] > 0) & (df['Depth_CV'] > 0)].copy()
+    if df_valid.empty:
+        print("[Error] No valid data for Mahalanobis calculation.")
+        return
+
+    df_valid['Log_Depth_Mean'] = np.log(df_valid['Depth_Mean'])
+    df_valid['Log_Depth_CV'] = np.log(df_valid['Depth_CV'])
+    
+    data = df_valid[['Log_Depth_Mean', 'Log_Depth_CV']].values
+    
+    # Fast vectorized Mahalanobis calculation
+    mean_vec = np.mean(data, axis=0)
+    cov_matrix = np.cov(data, rowvar=False)
+    
+    try:
+        inv_cov_matrix = np.linalg.inv(cov_matrix)
+    except np.linalg.LinAlgError:
+        print("[Error] Covariance matrix is singular, cannot calculate Mahalanobis distance.")
+        return
+
+    diff = data - mean_vec
+    # Vectorized computation: Mahalanobis squared distance
+    mahalanobis_sq = np.sum(np.dot(diff, inv_cov_matrix) * diff, axis=1)
+    
+    df_valid['Mahalanobis_Sq'] = mahalanobis_sq
+    df_valid['Mahalanobis'] = np.sqrt(mahalanobis_sq)
+
+    # Threshold based on Chi-Square distribution (df=2)
+    threshold = chi2.ppf(threshold_p_value, df=2)
+    df_valid['Outlier'] = df_valid['Mahalanobis_Sq'] > threshold
+
+    # Save to file
+    out_file = f"{output_prefix}.info.tsv"
+    out_df = df_valid[['Position', 'Depth_Mean', 'Depth_SD', 'Depth_CV', 'Mahalanobis', 'Mahalanobis_Sq', 'Outlier']]
+    save_df_to_tsv(out_df, out_file)
+
+    # Plot
+    plot_file = f"{output_prefix}.mahalanobis.png"
+    plot_scatter_with_outliers(
+        data=df_valid,
+        x_col='Log_Depth_Mean',
+        y_col='Log_Depth_CV',
+        outlier_col='Outlier',
+        title=f'Mahalanobis Distance Outlier Detection (p={threshold_p_value})',
+        filename=plot_file,
+        xlabel='Log Depth Mean',
+        ylabel='Log Depth CV',
+        color_normal='blue',
+        color_outlier='red',
+        s=2
+    )
+
+
