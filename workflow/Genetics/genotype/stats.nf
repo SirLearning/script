@@ -72,6 +72,7 @@ workflow plink_stats {
     def vmiss_out = variant_missing_stats(vmiss)
     def maf_out = variant_maf_stats(afreq)
     // def popdep_stats_out = variant_popdep_stats(popdep, vmiss)
+    def popdep_maha_out = variant_popdep_mahalanobis(popdep)
 
     // emit:
 }
@@ -137,6 +138,36 @@ process variant_maf_stats {
 
     """
 }
+
+process variant_popdep_mahalanobis {
+    tag "variant popdep mahalanobis: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: "copy", pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: "copy", pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: "copy", pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(popdep)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.popdep_mahalanobis.log", "w")
+    sys.stderr = sys.stdout 
+
+    from genetics.genomics.variant.popdep import ana_popdep_mahalanobis
+
+    print(f"Processing population depth Mahalanobis distance for ${chr}...")
+    ana_popdep_mahalanobis("${popdep}", "${id}.variant.mahalanobis")
+    """
+}
+
 
 process variant_popdep_stats {
     tag "variant popdep stats: ${chr}"
