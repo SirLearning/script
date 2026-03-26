@@ -5,6 +5,7 @@ nextflow.enable.dsl=2
 params.bams_dir = "data/bams"
 params.reference_genome = "data/reference/genome.fa"
 params.usb_mnt_dir = "/mnt"
+params.usb_dirs = "usb,usb-2,usb-3"
 
 def helpMessage() {
     log.info """
@@ -22,6 +23,7 @@ def helpMessage() {
             --bams_dir /data/home/tuser1/01bam \
             --usb_mnt_dir /mnt \
             --server s115 \
+            --usb_dirs usb,usb-2,usb-3 \
             -resume "
     """
 }
@@ -37,7 +39,7 @@ workflow {
     // Transpose list of lists to tuple of lists to match process input
     files = files_ch.groupTuple(by: 0)
 
-    usb_dirs_list = ["usb", "usb-2", "usb-3"]
+    usb_dirs_list = params.usb_dirs.split(',')
     dirs = channel.from(usb_dirs_list).map { dir -> 
         def dir_path = file("${params.usb_mnt_dir}/${dir}")
         [params.server, dir, dir_path]
