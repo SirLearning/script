@@ -25,6 +25,17 @@ def helpMessage() {
             --server s115 \
             --usb_dirs usb,usb-2,usb-3 \
             -resume "
+    screen -dmS cp_204 bash -c "\
+        cd /data/home/tusr1/01projects/vmap4/06transfer.watkins/01run && \
+        source ~/.bashrc && conda activate run && \
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/genotype/align.nf \
+            --user_dir /data/home/tusr1 \
+            --output_dir /data/home/tusr1/01projects/vmap4/06transfer.watkins \
+            --bams_dir /data1/dazheng_tusr1/204 \
+            --usb_mnt_dir /mnt \
+            --server s243 \
+            --usb_dirs usb,usb-2,usb-3 \
+            -resume "
     """
 }
 
