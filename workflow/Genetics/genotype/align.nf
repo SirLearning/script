@@ -122,7 +122,7 @@ process ck_md5_wtk {
     echo "Checking copied BAM files using manifest ${copied_manifest}..."
     : > ${server}_md5_check.txt
 
-    while IFS=$'\t' read -r bam_file md5_file; do
+    while IFS=\$'\\t' read -r bam_file md5_file; do
         [[ -z "\$bam_file" ]] && continue
         [[ -z "\$md5_file" ]] && continue
 
