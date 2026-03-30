@@ -57,7 +57,31 @@ workflow {
     }.groupTuple(by: 0)
 
     _cp_out = cp_bams_based_on_usb_size(files, dirs)
-    ck_md5_wtk(_cp_out.copied_manifest)
+    
+    // 把 manifest 文件解析成单个的检查任务 channel
+    md5_check_ch = _cp_out.copied_manifest.flatMap { server, manifest ->
+        manifest.readLines().collect { line ->
+            def cols = line.split('\t')
+            if (cols.size() >= 3) {
+                def bam_file = cols[0].trim()
+                def bai_file = cols[1].trim()
+                def md5_file = cols[2].trim()
+                def bam_id = new File(bam_file).getName()
+                return [server, bam_id, bam_file, bai_file, md5_file]
+            } else if (cols.size() == 2) {
+                def bam_file = cols[0].trim()
+                def md5_file = cols[1].trim()
+                def bam_id = new File(bam_file).getName()
+                return [server, bam_id, bam_file, "MISSING_BAI", md5_file]
+            }
+            return null
+        }.findAll { it != null }
+    }
+
+    individual_checks_ch = ck_md5_wtk(md5_check_ch)
+
+    // 将检查完的单独结果收集并重新按 Server 拼回一张总表
+    collect_md5_results( individual_checks_ch.groupTuple(by: 0) )
 }
 
 process ct_md5_wtk_fq {
@@ -105,47 +129,54 @@ process ct_md5_wtk_bam {
 }
 
 process ck_md5_wtk {
-    tag "ck_md5_${server}"
+    tag "ck_md5_${bam_id}"
+
+    input:
+    tuple val(server), val(bam_id), val(bam_file), val(bai_file), val(md5_file)
+
+    output:
+    tuple val(server), path("${bam_id}_md5_check.txt")
+
+    script:
+    """
+    set -euo pipefail
+    exec > ck_md5_${bam_id}.log 2>&1
+    
+    # 【重点】这里使用 val 而不是 path 获取文件路径，为了防止 Nextflow 将 USB 中几十G的 BAM 文件“多此一举”复制回本地工作目录
+    if [[ ! -f "${bam_file}" ]]; then
+        echo -e "${bam_file}\tMISSING_BAM\tFAIL" > "${bam_id}_md5_check.txt"
+        exit 0
+    fi
+    if [[ ! -f "${md5_file}" ]]; then
+        echo -e "${bam_file}\tMISSING_MD5\tFAIL" > "${bam_id}_md5_check.txt"
+        exit 0
+    fi
+
+    expected_md5=\$(awk 'NR==1 {print \$1}' "${md5_file}")
+    actual_md5=\$(md5sum "${bam_file}" | awk '{print \$1}')
+
+    if [[ "\$expected_md5" == "\$actual_md5" ]]; then
+        echo -e "${bam_file}\t${md5_file}\tPASS" > "${bam_id}_md5_check.txt"
+    else
+        echo -e "${bam_file}\t${md5_file}\tFAIL" > "${bam_id}_md5_check.txt"
+    fi
+    """
+}
+
+process collect_md5_results {
+    tag "collect_${server}"
     publishDir "${params.output_dir}/logs", mode: 'copy'
 
     input:
-    tuple val(server), path(copied_manifest)
+    tuple val(server), path(check_files)
 
     output:
     path "${server}_md5_check.txt"
 
     script:
     """
-    set -euo pipefail
-    exec > ck_md5_${server}.log 2>&1
-
-    echo "Checking copied BAM files using manifest ${copied_manifest}..."
-    : > ${server}_md5_check.txt
-
-    while IFS=\$'\\t' read -r bam_file md5_file; do
-        [[ -z "\$bam_file" ]] && continue
-        [[ -z "\$md5_file" ]] && continue
-
-        if [[ ! -f "\$bam_file" ]]; then
-            echo -e "\$bam_file\tMISSING_BAM\tFAIL" >> ${server}_md5_check.txt
-            continue
-        fi
-        if [[ ! -f "\$md5_file" ]]; then
-            echo -e "\$bam_file\tMISSING_MD5\tFAIL" >> ${server}_md5_check.txt
-            continue
-        fi
-
-        expected_md5=\$(awk 'NR==1 {print \$1}' "\$md5_file")
-        actual_md5=\$(md5sum "\$bam_file" | awk '{print \$1}')
-
-        if [[ "\$expected_md5" == "\$actual_md5" ]]; then
-            echo -e "\$bam_file\t\$md5_file\tPASS" >> ${server}_md5_check.txt
-        else
-            echo -e "\$bam_file\t\$md5_file\tFAIL" >> ${server}_md5_check.txt
-        fi
-    done < ${copied_manifest}
-
-    echo "MD5 check results saved to ${server}_md5_check.txt"
+    cat ${check_files} > ${server}_md5_check.txt
+    echo "MD5 check results collected and saved to ${server}_md5_check.txt"
     """
 }
 
@@ -299,6 +330,7 @@ process cp_bams_based_on_usb_size {
     tag "cp_bams"
     publishDir "${params.output_dir}/logs", mode: 'copy'
     conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
 
     input:
     tuple val(server), val(bam_ids), path(bams), path(bai_files), path(md5_files)
