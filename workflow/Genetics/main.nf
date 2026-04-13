@@ -4,6 +4,7 @@ nextflow.enable.dsl=2
 include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
 include { plink_stats as PLINK_STATS } from './genotype/stats.nf'
 include { test_plink_processor as TEST_PLINK_PROCESSOR } from './genotype/processor.nf'
+include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from './genotype/processor.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from './genotype/stats.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
@@ -79,6 +80,16 @@ def helpMessage() {
             --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/rebuild/process \
             --mod v1_plink \
             --job rebuild
+        // 20260401.1
+        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
+            --home_dir /data/home/tusr1/01projects/vmap4 \
+            --user_dir /data/home/tusr1 \
+            --src_dir /data/home/tusr1/git/script/src \
+            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process \
+            --camp /data1/dazheng_tusr1/vmap4.VCF.v1/camp_vmap4_map.tsv \
+            --mod test_plink_camp \
+            --job test_plink
     
     screen prefix commands:
         // test_plink
@@ -110,6 +121,10 @@ workflow {
     } else if (params.mod == 'test_plink') {
         log.info "${params.c_yellow}Using PLINK TEST module.${params.c_reset}"
         test_plink(ch_vcf)
+    } else if (params.mod == 'test_plink_camp') {
+        log.info "${params.c_yellow}Using PLINK TEST CAMP module.${params.c_reset}"
+        camp_vmap4_map_tsv = file(params.camp)
+        test_plink_camp(ch_vcf, camp_vmap4_map_tsv)
     } else {
         log.info "${params.c_yellow}No workflow module was chosen.${params.c_reset}"
     }
@@ -201,6 +216,25 @@ workflow test_plink {
     
 
     // emit:
+}
+
+workflow test_plink_camp {
+    take:
+    ch_vcf
+    camp_vmap4_map_tsv
+
+    main:
+    def processor_out = TEST_PLINK_CAMP_PROCESSOR(ch_vcf, camp_vmap4_map_tsv)
+    TEST_PLINK_STATS(
+        processor_out.smiss, 
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
+    
+    // emit:
+
 }
 
 workflow vmap4_v1_plink {
