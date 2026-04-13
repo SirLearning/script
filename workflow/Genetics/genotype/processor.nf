@@ -105,6 +105,82 @@ workflow test_plink_processor {
     hardy = basic_info_out.hardy
 }
 
+workflow test_plink_camp {
+   take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+    camp_vmap4_map_tsv
+
+    main:
+    // preprocess VCF to PLINK format
+    preprocess_out = plink_preprocess(vcf_in)
+
+    if (params.process_dir) {
+        log.info "${params.c_green}Subsample VCFs in dir:${params.c_reset} ${params.process_dir}"
+        pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.thin"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        subsampling_out = [
+            pfile: pfiles
+        ]
+    } else {
+        log.info "${params.c_green}No process_dir specified, subsampling VCFs normally.${params.c_reset}"
+        // subsample pfile for testing
+        subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
+    }
+
+    // Map pfiles to include subgenome info
+    def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }.groupTuple(by: 0)
+
+    if (params.process_dir) {
+        log.info "${params.c_green}Subsampled pfiles in dir:${params.c_reset} ${params.process_dir}"
+        merge_out = grouped_pfile.multiMap { subgenome, _ids, _chrs, _prefixes, _pgens, _psams, _pvars ->
+            def out_prefix = "${params.process_dir}/${subgenome}_test"
+            def bed = file("${out_prefix}.plink.bed")
+            def bim = file("${out_prefix}.plink.bim")
+            def fam = file("${out_prefix}.plink.fam")
+            def pgen = file("${out_prefix}.plink2.pgen")
+            def psam = file("${out_prefix}.plink2.psam")
+            def pvar = file("${out_prefix}.plink2.pvar")
+            def merge_pfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink2", pgen, psam, pvar ]
+            def merge_bfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink", bed, bim, fam ]
+            bfile: merge_bfiles
+            pfile: merge_pfiles
+        }
+    } else {
+        // Generate merge lists
+        merge_out = merge_subgenome_test_pfile(grouped_pfile)
+    }
+
+    // merge_out = merge_subgenome_test_pfile(grouped_pfile)
+
+    // make sample and variant basic information
+    basic_info_out = mk_plink_basic_info_camp_pop_with_filter(merge_out.pfile, camp_vmap4_map_tsv)
+    
+
+    emit:
+    vcf = preprocess_out.gz_vcf
+    merged_bfile = merge_out.bfile
+    merged_pfile = merge_out.pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+} 
+
 workflow plink_processor {
     take:
     // Expect a channel: [ val(id), val(chr), path(vcf) ]
@@ -541,6 +617,98 @@ process merge_subgenome_test_pfile {
         --make-bed \\
         --threads ${task.cpus} \\
         --out ${subgenome}_test.plink
+    """
+}
+
+process mk_plink_basic_info_camp_pop_with_filter {
+    tag "make plink basic info for camp pop: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{smiss,scount}"
+    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+    
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    path camp_vmap4_map_tsv
+
+    output:
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.smiss"), emit: smiss
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.vmiss"), emit: vmiss
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.scount"), emit: scount
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.gcount"), emit: gcount
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.afreq"), emit: afreq
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.hardy"), emit: hardy
+    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.camp.filter.info.log 2>&1
+
+    # Extract sample IDs from column 2 (Bams) and column 3 (Bams-2), skipping the header
+    awk -F'\\t' 'NR>1 {
+        if(\$2 != "") print \$2;
+        if(NF>=3 && \$3 != "") print \$3;
+    }' ${camp_vmap4_map_tsv} > camp_pop.id
+
+    plink2 --pfile ${prefix} \\
+        --keep camp_pop.id \\
+        --allow-extra-chr \\
+        --geno 0.1 \\
+        --maf 0.01 \\
+        --missing \\
+        --sample-counts \\
+        --geno-counts \\
+        --freq \\
+        --hardy \\
+        --threads ${task.cpus} \\
+        --out ${id}.camp.filter.info
+    """
+}
+
+process mk_plink_basic_info_camp_pop {
+    tag "make plink basic info for camp pop: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{smiss,scount}"
+    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
+    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+    
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    path camp_vmap4_map_tsv
+
+    output:
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.smiss"), emit: smiss
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.vmiss"), emit: vmiss
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.scount"), emit: scount
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.gcount"), emit: gcount
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.afreq"), emit: afreq
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.hardy"), emit: hardy
+    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.camp.info.log 2>&1
+
+    # Extract sample IDs from column 2 (Bams) and column 3 (Bams-2), skipping the header
+    awk -F'\\t' 'NR>1 {
+        if(\$2 != "") print \$2;
+        if(NF>=3 && \$3 != "") print \$3;
+    }' ${camp_vmap4_map_tsv} > camp_pop.id
+
+    plink2 --pfile ${prefix} \\
+        --keep camp_pop.id \\
+        --allow-extra-chr \\
+        --missing \\
+        --sample-counts \\
+        --geno-counts \\
+        --freq \\
+        --hardy \\
+        --threads ${task.cpus} \\
+        --out ${id}.camp.info
     """
 }
 

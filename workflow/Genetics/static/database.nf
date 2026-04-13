@@ -1,5 +1,16 @@
 nextflow.enable.dsl = 2
 
+workflow PHENOTYPE {
+    take:
+    ch_pheno
+
+    main:
+    out = PHENO_PROCESS(ch_pheno)
+
+    emit:
+    out.pheno
+}
+
 process PHENO_PROCESS {
     tag "phenotype process ${params.trait}"
     publishDir params.outdir + "/phenotype", mode: 'copy'
@@ -20,11 +31,11 @@ process PHENO_PROCESS {
     def trait = params.trait
     def envcol = params.envcol ?: ''
     def repcol = params.repcol ?: ''
-    def fixed  = params.fixed_effects ?: ''
+    def fixed = params.fixed_effects ?: ''
     def random = params.random_effects ?: ''
     def effect = (params.pheno_effect ?: 'raw').toString().toUpperCase()
-    def use_blue = (params.use_blue ?: (effect=='BLUE'))
-    def use_blup = (params.use_blup ?: (effect=='BLUP'))
+    def use_blue = (params.use_blue ?: (effect == 'BLUE'))
+    def use_blup = (params.use_blup ?: (effect == 'BLUP'))
     def scriptPath = "${projectDir}/src/r/gwas/phenotype_process.R"
     """
     set -euo pipefail
@@ -36,32 +47,42 @@ process PHENO_PROCESS {
       --repcol "${repcol}" \
       --fixed "${fixed}" \
       --random "${random}" \
-      $( [ "${use_blue}" = "true" ] && echo "--blue" ) \
-      $( [ "${use_blup}" = "true" ] && echo "--blup" ) \
+      ${use_blue} [ "${use_blup}" = "true" ] && echo "--blue" ) \
+      ${effect} [ "${pheno}" = "true" ] && echo "--blup" ) \
       --outdir .
 
     # choose processed phenotype for GWAS
-    case "${effect}" in
+    case "${pheno}" in
       BLUE)
         if [ -s blue.tsv ]; then cp blue.tsv pheno_processed.tsv; else cp ${pheno} pheno_processed.tsv; fi
         ;;
       BLUP)
-        if [ -s blup.tsv ]; then cp blup.tsv pheno_processed.tsv; else cp ${pheno} pheno_processed.tsv; fi
+        if [ -s blup.tsv ]; then cp blup.tsv pheno_processed.tsv; else cp  pheno_processed.tsv; fi
         ;;
       *)
-        cp ${pheno} pheno_processed.tsv
+        cp  pheno_processed.tsv
         ;;
     esac
     """
 }
 
-workflow PHENOTYPE {
-    take:
-    ch_pheno
+process import_gadm_to_dbone_windows {
+    tag "import GADM to DBOne in windows"
+    publishDir params.outdir + "/dbone_windows", mode: 'copy'
 
-    main:
-    out = PHENO_PROCESS(ch_pheno)
+    input:
+    path gadm
 
-    emit:
-    out.pheno
+    output:
+    path 'gadm_windows.tsv'
+
+    script:
+    """
+    cmd /c "
+        set STAGE1_SAMPLE_UID_MAX=3&& 
+        set RUN_STAGE2=1&& 
+        set STAGE2_BACKGROUND=1&& 
+        set STAGE2_LOG_FILE=D:\\Zheng\\Documents\\2_NBS\\Java\\DBone\\logs\\gadm_stage2_bg.log&& 
+        D:\\Zheng\\Documents\\2_NBS\\Java\\DBone\\src\\main\\shell\\gadm_deploy_two_stage_windows.cmd postgres dbone localhost 5432"
+    """
 }

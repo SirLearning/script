@@ -5,12 +5,19 @@ channels:
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
 dependencies:
+  # compilers
   - python=3.12
   - openjdk=21
+
+  # bioinformatics tools
   - samtools>=1.21
   - bcftools>=1.21
+
+  # gadm tools
+  - gdal
 
 # 1. can be created with:
 # conda env create -f environment_dbone.yml
 # 2. or update an existing environment with:
 # conda env update -f environment_dbone.yml
+
