@@ -1,6 +1,6 @@
 nextflow.enable.dsl=2
 
-include { getTigerJarConfig } from './utils.nf'
+include { getTigerJarConfig; hasMergedSubgenomeTestPfiles; listMergedSubgenomeTestPfileTuples; listMergedSubgenomeTestBfileTuples } from './utils.nf'
 include { getPopDepTaxaBamFile_v1 } from './utils.nf'
 include { getRefV1ChrLength } from './utils.nf'
 include { getRefV1ChrName } from './utils.nf'
@@ -17,92 +17,86 @@ workflow test_plink_processor {
     vcf_in
 
     main:
-    // preprocess VCF to PLINK format
-    preprocess_out = plink_preprocess(vcf_in)
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
 
-    if (params.process_dir) {
-        log.info "${params.c_green}Subsample VCFs in dir:${params.c_reset} ${params.process_dir}"
-        pfiles = vcf_in.map { id, chr, _vcf ->
-            def prefix = "${params.process_dir}/${id}.thin"
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip per-chr thin + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info(merge_pfile)
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else if (params.process_dir) {
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${params.process_dir}"
+        source_pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
             def pgen = file("${prefix}.pgen")
             def psam = file("${prefix}.psam")
             def pvar = file("${prefix}.pvar")
             return [ id, chr, prefix, pgen, psam, pvar ]
         }
-        subsampling_out = [
-            pfile: pfiles
-        ]
+        subsampling_out = subsampling_pfile_for_test(source_pfiles, params.thin_rate)
+
+        // Map pfiles to include subgenome info
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
+
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        log.info "${params.c_green}Making basic info normally.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
     } else {
+        // preprocess VCF to PLINK format
+        preprocess_out = plink_preprocess(vcf_in)
         log.info "${params.c_green}No process_dir specified, subsampling VCFs normally.${params.c_reset}"
         // subsample pfile for testing
         subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
-    }
 
-    // Map pfiles to include subgenome info
-    def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
-        def subgenome = "Others"
-        def c = chr.toString()
-        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
-        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
-        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
-        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
-    }.groupTuple(by: 0)
+        // Map pfiles to include subgenome info
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
 
-    if (params.process_dir) {
-        log.info "${params.c_green}Subsampled pfiles in dir:${params.c_reset} ${params.process_dir}"
-        merge_out = grouped_pfile.multiMap { subgenome, _ids, _chrs, _prefixes, _pgens, _psams, _pvars ->
-            def out_prefix = "${params.process_dir}/${subgenome}_test"
-            def bed = file("${out_prefix}.plink.bed")
-            def bim = file("${out_prefix}.plink.bim")
-            def fam = file("${out_prefix}.plink.fam")
-            def pgen = file("${out_prefix}.plink2.pgen")
-            def psam = file("${out_prefix}.plink2.psam")
-            def pvar = file("${out_prefix}.plink2.pvar")
-            def merge_pfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink2", pgen, psam, pvar ]
-            def merge_bfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink", bed, bim, fam ]
-            bfile: merge_bfiles
-            pfile: merge_pfiles
-        }
-    } else {
-        // Generate merge lists
-        merge_out = merge_subgenome_test_pfile(grouped_pfile)
-    }
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
 
-    // merge_out = merge_subgenome_test_pfile(grouped_pfile)
-
-    // make sample and variant basic information
-    if (params.process_dir) {
-        log.info "${params.c_green}Making basic info from pfiles in dir:${params.c_reset} ${params.process_dir}"
-        basic_info_out = merge_out.pfile.multiMap { subgenome, sub_prefix, prefix, pgen, psam, pvar ->
-            def smiss = file("${params.process_dir}/sample/${subgenome}.info.smiss")
-            def vmiss = file("${params.process_dir}/variant/${subgenome}.info.vmiss")
-            def scount = file("${params.process_dir}/sample/${subgenome}.info.scount")
-            def gcount = file("${params.process_dir}/variant/${subgenome}.info.gcount")
-            def afreq = file("${params.process_dir}/variant/${subgenome}.info.afreq")
-            def hardy = file("${params.process_dir}/variant/${subgenome}.info.hardy")
-            smiss: [ subgenome, sub_prefix, smiss ]
-            vmiss: [ subgenome, sub_prefix, vmiss ]
-            scount: [ subgenome, sub_prefix, scount ]
-            gcount: [ subgenome, sub_prefix, gcount ]
-            afreq: [ subgenome, sub_prefix, afreq ]
-            hardy: [ subgenome, sub_prefix, hardy ]
-        }
-    } else {
         log.info "${params.c_green}Making basic info normally.${params.c_reset}"
         basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
     }
-    
 
     emit:
-    vcf = preprocess_out.gz_vcf
-    merged_bfile = merge_out.bfile
-    merged_pfile = merge_out.pfile
+    vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
     smiss = basic_info_out.smiss
     vmiss = basic_info_out.vmiss
     scount = basic_info_out.scount
     gcount = basic_info_out.gcount
     afreq = basic_info_out.afreq
     hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
 }
 
 workflow test_plink_camp {
@@ -112,74 +106,164 @@ workflow test_plink_camp {
     camp_vmap4_map_tsv
 
     main:
-    // preprocess VCF to PLINK format
-    preprocess_out = plink_preprocess(vcf_in)
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
 
-    if (params.process_dir) {
-        log.info "${params.c_green}Subsample VCFs in dir:${params.c_reset} ${params.process_dir}"
-        pfiles = vcf_in.map { id, chr, _vcf ->
-            def prefix = "${params.process_dir}/${id}.thin"
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip per-chr thin + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        log.info "${params.c_green}Making basic info (CAMP) from reused merged pfiles.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info_camp_pop_with_filter(merge_pfile, camp_vmap4_map_tsv)
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else if (params.process_dir) {
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${params.process_dir}"
+        source_pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
             def pgen = file("${prefix}.pgen")
             def psam = file("${prefix}.psam")
             def pvar = file("${prefix}.pvar")
             return [ id, chr, prefix, pgen, psam, pvar ]
         }
-        subsampling_out = [
-            pfile: pfiles
-        ]
+        subsampling_out = subsampling_pfile_for_test(source_pfiles, params.thin_rate)
+
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
+
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        basic_info_out = mk_plink_basic_info_camp_pop_with_filter(merge_out.pfile, camp_vmap4_map_tsv)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
     } else {
+        preprocess_out = plink_preprocess(vcf_in)
         log.info "${params.c_green}No process_dir specified, subsampling VCFs normally.${params.c_reset}"
-        // subsample pfile for testing
         subsampling_out = subsampling_pfile_for_test(preprocess_out.pfile, params.thin_rate)
+
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
+
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+
+        basic_info_out = mk_plink_basic_info_camp_pop_with_filter(merge_out.pfile, camp_vmap4_map_tsv)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
     }
-
-    // Map pfiles to include subgenome info
-    def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
-        def subgenome = "Others"
-        def c = chr.toString()
-        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
-        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
-        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
-        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
-    }.groupTuple(by: 0)
-
-    if (params.process_dir) {
-        log.info "${params.c_green}Subsampled pfiles in dir:${params.c_reset} ${params.process_dir}"
-        merge_out = grouped_pfile.multiMap { subgenome, _ids, _chrs, _prefixes, _pgens, _psams, _pvars ->
-            def out_prefix = "${params.process_dir}/${subgenome}_test"
-            def bed = file("${out_prefix}.plink.bed")
-            def bim = file("${out_prefix}.plink.bim")
-            def fam = file("${out_prefix}.plink.fam")
-            def pgen = file("${out_prefix}.plink2.pgen")
-            def psam = file("${out_prefix}.plink2.psam")
-            def pvar = file("${out_prefix}.plink2.pvar")
-            def merge_pfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink2", pgen, psam, pvar ]
-            def merge_bfiles = [ subgenome, "sub_${subgenome}", "${out_prefix}.plink", bed, bim, fam ]
-            bfile: merge_bfiles
-            pfile: merge_pfiles
-        }
-    } else {
-        // Generate merge lists
-        merge_out = merge_subgenome_test_pfile(grouped_pfile)
-    }
-
-    // merge_out = merge_subgenome_test_pfile(grouped_pfile)
-
-    // make sample and variant basic information
-    basic_info_out = mk_plink_basic_info_camp_pop_with_filter(merge_out.pfile, camp_vmap4_map_tsv)
-    
 
     emit:
-    vcf = preprocess_out.gz_vcf
-    merged_bfile = merge_out.bfile
-    merged_pfile = merge_out.pfile
+    vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
     smiss = basic_info_out.smiss
     vmiss = basic_info_out.vmiss
     scount = basic_info_out.scount
     gcount = basic_info_out.gcount
     afreq = basic_info_out.afreq
     hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
 } 
+
+workflow test_common_thin_processor {
+    take:
+    // Expect a channel: [ val(id), val(chr), path(vcf) ]
+    vcf_in
+
+    main:
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
+
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip common-thin + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+        basic_info_out = mk_plink_basic_info(merge_pfile)
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else if (params.process_dir) {
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${params.process_dir}"
+        source_pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        log.info "${params.c_green}Building common-thin test pfiles with --geno ${params.hf_geno} --maf ${params.hf_maf} --thin ${params.hf_thin_rate}${params.c_reset}"
+        subsampling_out = subsampling_common_variant_pfile_for_test(source_pfiles)
+
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
+
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+    } else {
+        preprocess_out = plink_preprocess(vcf_in)
+        log.info "${params.c_green}Building common-thin test pfiles with --geno ${params.hf_geno} --maf ${params.hf_maf} --thin ${params.hf_thin_rate}${params.c_reset}"
+        subsampling_out = subsampling_common_variant_pfile_for_test(preprocess_out.pfile)
+
+        def grouped_pfile = subsampling_out.pfile.map { id, chr, prefix, pgen, psam, pvar ->
+            def subgenome = "Others"
+            def c = chr.toString()
+            if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+            else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+            else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+            return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+        }.groupTuple(by: 0)
+
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+    }
+
+    emit:
+    vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
+}
 
 workflow plink_processor {
     take:
@@ -193,7 +277,7 @@ workflow plink_processor {
     // 2. make sample and variant basic information
     if (params.process_dir) {
         log.info "${params.c_green}Making basic info from pfiles in dir:${params.c_reset} ${params.process_dir}"
-        basic_info_out = preprocess_out.pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+        basic_info_out = preprocess_out.pfile.multiMap { id, chr, _prefix, _pgen, _psam, _pvar ->
             def smiss = file("${params.process_dir}/sample/${id}.info.smiss")
             def vmiss = file("${params.process_dir}/variant/${id}.info.vmiss")
             def scount = file("${params.process_dir}/sample/${id}.info.scount")
@@ -557,8 +641,8 @@ process format_vcf_plink {
 
 process subsampling_pfile_for_test {
     tag "subsample pfile for test: ${id}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
-    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
     label 'cpus_32'
 
@@ -584,10 +668,41 @@ process subsampling_pfile_for_test {
     """
 }
 
+process subsampling_common_variant_pfile_for_test {
+    tag "common-thin pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.common.thin"), path("${id}.common.thin.pgen"), path("${id}.common.thin.psam"), path("${id}.common.thin.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > common_thin_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --geno ${params.hf_geno} \\
+        --maf ${params.hf_maf} \\
+        --thin ${params.hf_thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.common.thin
+    """
+}
+
 process merge_subgenome_test_pfile {
     tag "merge plink2 test subgenome pfile: ${subgenome}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
-    publishDir "${params.output_dir}/${params.job}/process/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
     label 'cpus_32'
 
@@ -601,17 +716,24 @@ process merge_subgenome_test_pfile {
     tuple val(subgenome), path("*.log"), emit: logs
 
     script:
-    """
-    set -euo pipefail
-    exec > merge_subgenome_test.${subgenome}.log 2>&1
-    
-    echo "${prefixes[1..-1].join('\n')}" > ${subgenome}.merge_list.txt
-    
+    def has_multiple_prefixes = prefixes.size() > 1
+    def merge_list_block = has_multiple_prefixes
+        ? """echo "${prefixes[1..-1].join('\n')}" > ${subgenome}.merge_list.txt
+
     plink2 --pfile ${prefixes[0]} \\
         --pmerge-list ${subgenome}.merge_list.txt \\
         --make-pgen \\
         --threads ${task.cpus} \\
-        --out ${subgenome}_test.plink2
+        --out ${subgenome}_test.plink2"""
+        : """plink2 --pfile ${prefixes[0]} \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${subgenome}_test.plink2"""
+    """
+    set -euo pipefail
+    exec > merge_subgenome_test.${subgenome}.log 2>&1
+    
+    ${merge_list_block}
 
     plink2 --pfile ${subgenome}_test.plink2 \\
         --make-bed \\
@@ -633,18 +755,18 @@ process mk_plink_basic_info_camp_pop_with_filter {
     path camp_vmap4_map_tsv
 
     output:
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.smiss"), emit: smiss
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.vmiss"), emit: vmiss
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.scount"), emit: scount
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.gcount"), emit: gcount
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.afreq"), emit: afreq
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.hardy"), emit: hardy
-    tuple val("${id}.camp.filter"), val(chr), path("${id}.camp.filter.info.log"), emit: log
+    tuple val(id), val(chr), path("${id}.info.smiss"), emit: smiss
+    tuple val(id), val(chr), path("${id}.info.vmiss"), emit: vmiss
+    tuple val(id), val(chr), path("${id}.info.scount"), emit: scount
+    tuple val(id), val(chr), path("${id}.info.gcount"), emit: gcount
+    tuple val(id), val(chr), path("${id}.info.afreq"), emit: afreq
+    tuple val(id), val(chr), path("${id}.info.hardy"), emit: hardy
+    tuple val(id), val(chr), path("${id}.info.log"), emit: log
 
     script:
     """
     set -euo pipefail
-    exec > ${chr}.camp.filter.info.log 2>&1
+    exec > ${chr}.info.log 2>&1
 
     # Extract sample IDs from column 2 (Bams) and column 3 (Bams-2), skipping the header
     awk -F'\\t' 'NR>1 {
@@ -663,7 +785,7 @@ process mk_plink_basic_info_camp_pop_with_filter {
         --freq \\
         --hardy \\
         --threads ${task.cpus} \\
-        --out ${id}.camp.filter.info
+        --out ${id}.info
     """
 }
 
@@ -680,18 +802,18 @@ process mk_plink_basic_info_camp_pop {
     path camp_vmap4_map_tsv
 
     output:
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.smiss"), emit: smiss
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.vmiss"), emit: vmiss
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.scount"), emit: scount
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.gcount"), emit: gcount
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.afreq"), emit: afreq
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.hardy"), emit: hardy
-    tuple val("${id}.camp"), val(chr), path("${id}.camp.info.log"), emit: log
+    tuple val(id), val(chr), path("${id}.info.smiss"), emit: smiss
+    tuple val(id), val(chr), path("${id}.info.vmiss"), emit: vmiss
+    tuple val(id), val(chr), path("${id}.info.scount"), emit: scount
+    tuple val(id), val(chr), path("${id}.info.gcount"), emit: gcount
+    tuple val(id), val(chr), path("${id}.info.afreq"), emit: afreq
+    tuple val(id), val(chr), path("${id}.info.hardy"), emit: hardy
+    tuple val(id), val(chr), path("${id}.info.log"), emit: log
 
     script:
     """
     set -euo pipefail
-    exec > ${chr}.camp.info.log 2>&1
+    exec > ${chr}.info.log 2>&1
 
     # Extract sample IDs from column 2 (Bams) and column 3 (Bams-2), skipping the header
     awk -F'\\t' 'NR>1 {
@@ -708,15 +830,15 @@ process mk_plink_basic_info_camp_pop {
         --freq \\
         --hardy \\
         --threads ${task.cpus} \\
-        --out ${id}.camp.info
+        --out ${id}.info
     """
 }
 
 process mk_plink_basic_info {
     tag "make plink basic info: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/process/sample", mode: 'copy', pattern: "*.{smiss,scount}"
-    publishDir "${params.output_dir}/${params.job}/process/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
-    publishDir "${params.output_dir}/${params.job}/process", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/sample", mode: 'copy', pattern: "*.{smiss,scount}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/variant", mode: 'copy', pattern: "*.{vmiss,gcount,afreq,hardy}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
     label 'cpus_32'
     
@@ -744,6 +866,71 @@ process mk_plink_basic_info {
         --hardy \\
         --threads ${task.cpus} \\
         --out ${id}.info > ${chr}.info.log 2>&1
+    """
+}
+
+process calc_plink_ld_unphased {
+    tag "make plink LD info: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/variant", mode: 'copy', pattern: "*.info.ld.vcor"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.ld.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.info.ld.vcor"), emit: ld
+    tuple val(id), val(chr), path("${id}.info.ld.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.ld.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --r2-unphased \\
+        --ld-window-kb ${params.ld_window_kb} \\
+        --ld-window ${params.ld_window} \\
+        --ld-window-r2 ${params.ld_window_r2} \\
+        --threads ${task.cpus} \\
+        --out ${id}.info.ld
+    """
+}
+
+process calc_plink_ld_crosschr_random {
+    tag "make cross-chr plink LD info: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/variant", mode: 'copy', pattern: "*.info.ld.crosschr.vcor"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.ld.crosschr.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.info.ld.crosschr.vcor"), emit: ld
+    tuple val(id), val(chr), path("${id}.info.ld.crosschr.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.ld.crosschr.log 2>&1
+
+    awk -v seed=${params.ld_decay_random_seed} -v rate=${params.ld_crosschr_sample_rate} 'BEGIN{srand(seed)} NR>1 { if (rand() <= rate) print \$3 }' ${pvar} > ${id}.crosschr.sample.id
+    sampled_n=\$(wc -l < ${id}.crosschr.sample.id || true)
+    if [ "\$sampled_n" -lt 2 ]; then
+        awk 'NR>1 {print \$3}' ${pvar} | head -n ${params.ld_crosschr_min_variants} > ${id}.crosschr.sample.id
+    fi
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --extract ${id}.crosschr.sample.id \\
+        --r2-unphased inter-chr \\
+        --ld-window-r2 ${params.ld_window_r2} \\
+        --threads ${task.cpus} \\
+        --out ${id}.info.ld.crosschr
     """
 }
 

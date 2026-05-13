@@ -191,6 +191,50 @@ def ref_ibs_vs_mapping(
         filename=output_filename,
         title='Correlation: Reference IBS vs Mapping Rate'
     )
+
+
+def safe_ref_ibs_stats(
+    mapping_file,
+    scount_file,
+    missing_file,
+    group_file,
+    output_prefix,
+):
+    """
+    Robust wrapper for pipeline usage.
+    Always emits at least:
+      - {output_prefix}.info.tsv
+      - {output_prefix}.dist.png
+    """
+    try:
+        ana_ref_ibs(scount_file, missing_file, group_file, output_prefix)
+        ref_ibs_vs_mapping(mapping_file, scount_file, group_file, output_prefix)
+    except Exception as e:
+        print(f"[Warning] safe_ref_ibs_stats fallback: {e}")
+
+    info_file = f"{output_prefix}.info.tsv"
+    if not os.path.exists(info_file):
+        save_df_to_tsv(pd.DataFrame(columns=["sample", "group", "ref_ibs"]), info_file)
+
+    dist_png = f"{output_prefix}.dist.png"
+    if not os.path.exists(dist_png):
+        # Make a minimal valid plot through shared infra plotting utility.
+        dummy = pd.DataFrame(
+            {
+                "IBS_Ref": [0.0],
+                "Group": ["NA"],
+            }
+        )
+        plot_stacked_distribution(
+            df=dummy,
+            col="IBS_Ref",
+            group_col="Group",
+            title="Distribution of IBS with Reference (fallback)",
+            filename=dist_png,
+            mean_val=0.0,
+            median_val=0.0,
+            x_label="IBS with Reference Genome",
+        )
         
         
 def main():

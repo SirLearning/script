@@ -66,6 +66,14 @@ process PHENO_PROCESS {
     """
 }
 
+process open_front_next_js {
+    tag "open front next.js"
+    script:
+    """
+    npm run dev --prefix ${projectDir}/src/nextjs
+    """
+}
+
 process import_gadm_to_dbone_windows {
     tag "import GADM to DBOne in windows"
     publishDir params.outdir + "/dbone_windows", mode: 'copy'

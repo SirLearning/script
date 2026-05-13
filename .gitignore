@@ -1,6 +1,9 @@
 # for output files
 /out/
 
+# for test folder
+/tmp/
+
 # for mac
 .DS_Store
 

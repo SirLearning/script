@@ -24,8 +24,8 @@ dependencies:
   - r-patchwork     # Plot composition tool
   - r-rcolorbrewer  # Classic color schemes
 
-  # Commonly used Bioconductor core tools
-  - bioconductor-biocmanager
+  # BiocManager: conda-forge ships it as r-biocmanager (bioconductor-biocmanager is often absent on mirrors)
+  - r-biocmanager
   - bioconductor-complexheatmap  # Powerful complex heatmaps
   - bioconductor-deseq2          # Differential expression analysis (optional)
 
@@ -34,5 +34,6 @@ dependencies:
 
 # 1. can be created with:
 # conda env create -f environment_stats_r.yml
+# quick solver: conda env create -f environment_stats_r.yml --solver libmamba
 # 2. or update an existing environment with:
 # conda env update -f environment_stats_r.yml

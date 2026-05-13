@@ -1,0 +1,17 @@
+---
+description: Python — infra-first I/O/graph, task template, conda env alignment
+globs: src/python/**/*.py
+alwaysApply: false
+---
+
+# Python conventions
+
+1. **Infra first:** For file I/O, parsing, or graph structures, read and reuse `src/python/infra/utils/io.py` and `src/python/infra/utils/graph.py`. Import utilities instead of duplicating logic.
+2. **Task functions:** Follow the project’s task-function template (docstrings, type hints, logging, errors). Reference implementation: `src/python/genetics/genomics/variant/maf.py`.
+3. **Nextflow callers:** Design CLIs/scripts so stdin/stdout and process boundaries work cleanly when invoked from `workflow/Genetics/` (see e.g. `workflow/Genetics/genotype/stats.nf` calling `maf.py`).
+4. **Conda / deps:** Match libraries to the target env (`EnvStats`, `EnvTiger`, etc.). Env definitions are root `*.yml`; Nextflow `conda` directives in modules (e.g. `stats.nf`) show which env applies.
+5. **Use infra plotting + io for new analytics:** For new analysis modules (e.g. LD decay), input parsing/saving must go through `infra.utils.io` helpers and plotting must go through `infra.utils.graph` helpers. Prefer **`plot_scatter_with_thresholds`**, **`plot_distribution_with_stats`**, and other existing `plot_*` functions before adding anything new.
+6. **Extend graph infra only when needed:** If `graph.py` lacks a required plot type, add a **generic** plotting function (not named after a single pipeline task), follow existing visual conventions (white style, shared font constants, legend placement, dpi/bbox output), then call it from task modules. Do not duplicate task-specific plotters when a generic helper suffices.
+7. **Partial reruns:** Prefer a **small Nextflow entry** (see `workflow/Genetics/tmp/ld_plots_redraw.nf`) that `include`s existing `process` blocks over ad-hoc `python -c` glue; log runs in `doc/NF_CMD.md` per workstation rules.
+8. **Stats output contract for variant analytics:** Follow existing variant stats conventions: publish `*.info.tsv` to `stats`, threshold summary files (e.g. `*.th.tsv`) to `stats/thresholds`, figures to `stats/plots`, and logs to `stats/logs`. Output naming should follow `<id>.variant.<topic>.*`.
+9. **Nextflow Python call style:** In Nextflow processes, call Python analysis functions directly via inline Python (`from ... import ...; func(...)`) rather than invoking module CLIs with `python -m ...` for internal pipeline analytics.

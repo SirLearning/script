@@ -6,6 +6,8 @@ include { getTaxaBamMapFile_v1 } from './utils.nf'
 
 workflow test_plink_stats {
     take:
+    ld
+    ld_cross
     // Expect a channel: [ val(id), path(smiss) ]
     smiss
     scount
@@ -52,6 +54,8 @@ workflow test_plink_stats {
     // 2.1 Basic Variant Stats (Missing, MAF)
     def vmiss_out = variant_missing_stats(vmiss)
     def maf_out = variant_maf_stats(afreq)
+    variant_ld_decay_plot(ld)
+    variant_ld_crosschr_plot(ld_cross)
 
     // emit:
 }
@@ -81,9 +85,9 @@ workflow plink_stats {
 
 process variant_missing_stats {
     tag "variant missing stats: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -109,10 +113,10 @@ process variant_missing_stats {
 
 process variant_maf_stats {
     tag "variant maf stats: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: 'copy', pattern: "*.th.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -168,6 +172,86 @@ process variant_popdep_mahalanobis {
     """
 }
 
+process variant_ld_decay_plot {
+    tag "variant ld decay: ${id}"
+    label 'cpus_16'
+    cache false
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(ld_vcor)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.th.tsv"), emit: th
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.ld_decay_ana.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant import ana_ld_decay
+
+    print("Running LD decay plotting for ${id} (${chr}) ...")
+    ana_ld_decay(
+        input_file="${ld_vcor}",
+        output_prefix="${id}.variant.ld_decay",
+        max_distance_kb=${params.ld_decay_max_kb},
+        bin_size_kb=${params.ld_decay_bin_kb},
+        scatter_max_points=${params.ld_decay_scatter_points},
+        chunksize=${params.ld_decay_chunksize},
+        median_sample_per_bin=${params.ld_decay_median_sample_per_bin},
+        workers=${task.cpus},
+        random_seed=${params.ld_decay_random_seed},
+    )
+    """
+}
+
+process variant_ld_crosschr_plot {
+    tag "variant cross-chr ld baseline: ${id}"
+    label 'cpus_16'
+    cache false
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(ld_cross_vcor)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.th.tsv"), emit: th
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.ld_crosschr_ana.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant import ana_ld_crosschr_baseline
+
+    print("Running cross-chromosome LD baseline plotting for ${id} (${chr}) ...")
+    ana_ld_crosschr_baseline(
+        input_file="${ld_cross_vcor}",
+        output_prefix="${id}.variant.ld_crosschr",
+        chunksize=${params.ld_decay_chunksize},
+    )
+    """
+}
+
 
 process variant_popdep_stats {
     tag "variant popdep stats: ${chr}"
@@ -202,10 +286,10 @@ process variant_popdep_stats {
 
 process sample_missing_stats {
     tag "compute missing rate threshold: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: 'copy', pattern: "*.th.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -234,10 +318,10 @@ process sample_missing_stats {
 
 process sample_coverage_stats {
     tag "compute coverage stats: ${id}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: 'copy', pattern: "*.th.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -268,10 +352,10 @@ process sample_coverage_stats {
 
 process sample_heterozygosity_stats {
     tag "compute heterozygosity rate: ${id}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: 'copy', pattern: "*.th.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -301,9 +385,9 @@ process sample_heterozygosity_stats {
 
 process sample_mapping_rate_stats {
     tag "compute mapping rate stats: ${id}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -333,9 +417,9 @@ process sample_mapping_rate_stats {
 
 process sample_ref_ibs_stats {
     tag "compute ref IBS stats"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: 'copy', pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -357,14 +441,16 @@ process sample_ref_ibs_stats {
     sys.stdout = open("${chr}.ref_ibs_ana.log", "w")
     sys.stderr = sys.stdout
 
-    from genetics.genomics.sample import ana_ref_ibs, ref_ibs_vs_mapping
+    from genetics.genomics.sample import safe_ref_ibs_stats
 
     print(f"Processing reference IBS stats for ${chr}...")
-    ana_ref_ibs("${scount}", "${smiss}", "${group_file}", "${id}.sample.ref_ibs")
-    
-    print(f"Processing reference IBS vs Mapping Rate for ${chr}...")
-    # mapping_file, scount_file, group_file, output_prefix
-    ref_ibs_vs_mapping("${idxstats}", "${scount}", "${group_file}", "${id}.sample.ref_ibs")
+    safe_ref_ibs_stats(
+        mapping_file="${idxstats}",
+        scount_file="${scount}",
+        missing_file="${smiss}",
+        group_file="${group_file}",
+        output_prefix="${id}.sample.ref_ibs",
+    )
     """
 }
 
@@ -451,9 +537,9 @@ process sample_ibs_stats {
 
 process sample_germplasm_dedup {
     tag "detect germplasm duplicates: ${id}"
-    publishDir "${params.output_dir}/${params.job}/stats", mode: 'copy', pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: 'copy', pattern: "*.th.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:
@@ -474,10 +560,10 @@ process sample_germplasm_dedup {
     sys.stdout = open("${chr}.germplasm.duplicates.log", "w")
     sys.stderr = sys.stdout
 
-    from genetics.germplasm.sample import ana_duplication
+    from genetics.germplasm.sample import safe_ana_duplication
 
     print(f"Detecting germplasm duplicates for ${chr}...")
-    ana_duplication("${tbm_dir}", "${dbone_dir}", "${id}.sample.dedup")
+    safe_ana_duplication("${tbm_dir}", "${dbone_dir}", "${id}.sample.dedup")
     """
 }
 

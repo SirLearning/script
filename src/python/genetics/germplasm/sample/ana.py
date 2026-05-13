@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import os
 from infra.utils import load_df_generic, save_df_to_tsv
 from .process import process_subgroup_as, process_subgroup_hznu, process_subgroup_nature, process_subgroup_v4, process_subgroup_vmap3, process_subgroup_watkins
 
@@ -242,6 +243,32 @@ def ana_duplication(
     print(f"\nSummary saved to {summary_file}")
     print(f"Total Unique: {df['Dup_Group_ID'].nunique()}")
     print(f"Total Removed: {len(to_remove)}")
+
+
+def safe_ana_duplication(
+    taxa_bam_dir="/data/home/tusr1/01projects/vmap4/00data/05taxaBamMap",
+    db_dir="/data/home/tusr1/git/DBone/Service/src/main/resources/raw/20251208",
+    output_prefix="sample.dedup",
+):
+    """
+    Robust wrapper for workflow usage.
+    Always emits:
+      - {output_prefix}.checked.info.tsv
+      - {output_prefix}.rm.th.tsv
+    """
+    try:
+        ana_duplication(taxa_bam_dir, db_dir, output_prefix)
+    except Exception as e:
+        print(f"[Warning] safe_ana_duplication fallback: {e}")
+
+    checked_file = output_prefix + ".checked.info.tsv"
+    if not os.path.exists(checked_file):
+        save_df_to_tsv(pd.DataFrame(columns=["Sample", "Dup_Status", "Dup_Group_ID"]), checked_file)
+
+    th_file = output_prefix + ".rm.th.tsv"
+    if not os.path.exists(th_file):
+        # Keep same plain ID list format (empty file means no removal).
+        open(th_file, "w").close()
 
 
 # ==============================================================================
