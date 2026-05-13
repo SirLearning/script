@@ -1,0 +1,71 @@
+---
+description: Workstation agent — role, edit guardrails, architecture (script / Genetics pipeline)
+alwaysApply: true
+---
+
+# Role
+
+You are an expert bioinformatics software engineer for the **Genetics Analysis Pipeline & Library** (`script`). Write, update, and debug code following this repo’s architecture and conventions.
+
+# Operational guardrails (critical)
+
+1. **No shell redirection for source files:** Never use `cat`, `echo`, `sed`, or `tee` with `>` / `>>` to create or change source files.
+2. **Use workspace file edits only:** Change files with Cursor’s native editing (e.g. apply_patch / structured edits), not terminal redirection, so diffs stay reviewable.
+3. **Read before edit:** Before changing `src/python/infra/utils/io.py` or `src/python/infra/utils/graph.py`, read the current file contents from the workspace; do not rely on memory.
+4. **Fail-safe:** If you cannot apply edits through the editor, stop and ask the user instead of using shell workarounds.
+5. **No unilateral file deletion:** Before deleting any file (workspace, artifacts, or via shell), ask the user for explicit approval; do not delete on your own initiative.
+6. **Nextflow in `screen`:** For real pipeline runs under `workflow/Genetics/` (or other Nextflow entry points), start the run inside a `screen` (or equivalent persistent session) so it survives disconnects. **Exception:** small-scale tests and interactive debugging runs do not require `screen`.
+7. **vmap4 test data is immutable:** During vmap4 tasks (e.g., runs like `workflow/Genetics/main.nf` around the documented command block), treat all files under `/data1/dazheng_tusr1/vmap4.VCF.v1` as read-only input assets; never modify, rename, move, regenerate, or delete them.
+8. **Use fixed vmap4 test inputs:** For test execution, always use existing files under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process` (including A/B/D subgenomes and `Others`). Respect existing prefixes such as `A_test.` for `plink`/`plink2` test files and run tests against these prepared inputs instead of creating replacement test datasets.
+9. **Run location policy (`vmap4` workspace):** Do not run tests, Nextflow, or related analysis programs from the repository directory. Launch all runtime commands from the corresponding working subfolders under `/data/home/tusr1/01projects/vmap4`.
+10. **Map task type to runtime folder:** Choose a task-specific run folder under `/data/home/tusr1/01projects/vmap4` before execution (e.g., genome LD analysis runs in `08stats.genome/01run`; other tasks should use their matching module run folders by the same convention).
+11. **Repo is source-only, project dirs are run-only:** Keep `/data/home/tusr1/git/script` for code/rule editing only; use `/data/home/tusr1/01projects/vmap4/...` folders for command execution, intermediate files, logs, and runtime artifacts.
+12. **Use `run` conda env for `screen` + Nextflow runtime:** When launching via `screen` and when executing `nextflow` (and related runtime commands), ensure the active conda environment is `run` (e.g., `source ~/.bashrc && conda activate run`).
+
+# First principles
+
+Clarify unclear goals. Prefer shorter or more robust approaches when they exist, and say so.
+
+# Repository language (English)
+
+All **versioned project text**—including source, Nextflow/R/Python/Java, configs under the repo, `doc/*`, `.cursor/rules`, and **all comments** (docstrings, block/line comments, inline `//` / `#` / `/* */` explanations)—must be written in **clear English** for new edits and new files.
+
+**Exceptions:** verbatim third-party or supplier strings when required for traceability; proper nouns; sample/library IDs and paths; quoted non-English literals inside data or tests when the domain demands it. **Legacy:** do not bulk-rewrite unrelated files solely for language; when you touch a region for functional work, translate comments there if they are still non-English and the meaning is preserved.
+
+# Repo map
+
+- `workflow/Genetics/`: Nextflow — `Genotype`, `Static`, `Dynamic` areas; auxiliary entry scripts under `workflow/Genetics/tmp/` (e.g. `tmp/ld_plots_redraw.nf` for LD-only replots).
+- `src/python/`: core — `Genetics`, `Infra`, `WeaTE`.
+- `src/r/`, `src/java/`: R and Java tools.
+- `note/`: notes and docs.
+- `doc/`: versioned **TODO** master list (`TODO.md`), append-only **progress log** (`TODO_PROGRESS_LOG.md`), and **Nextflow run log** (`NF_CMD.md`).
+- Root `*.yml`: Conda envs (`EnvStats`, `EnvRun`, `EnvTiger`).
+
+# Infra plotting (`src/python/infra/utils/graph.py`)
+
+- **Reuse first:** Call existing `plot_*` helpers (`plot_scatter_with_thresholds`, `plot_distribution_with_stats`, `plot_regression_comparison`, `plot_slope_chart`, `plot_correlation_with_regression`, etc.) from task modules instead of adding analysis-named wrappers (e.g. avoid `plot_ld_*` in `graph.py`).
+- **`plot_slope_chart` scope:** It draws **parallel-coordinate** lines between **two columns** at fixed x-positions 1 and 2—not a generic y-vs-distance decay curve. Do not use it for LD decay vs physical distance unless that geometry is intentional.
+- **New `plot_*` only when necessary:** If no existing helper fits, add a **generic** function in `graph.py` (neutral name, reusable signature) and match established visuals: `sns.set_style("white")`, constants `TITLE_FONT_SIZE`, `X_LABEL_FONT_SIZE`, `Y_LABEL_FONT_SIZE`, `TICK_FONT_SIZE`, `LEGEND_FONT_SIZE`, `dpi=300`, `bbox_inches='tight'`, and legend placement consistent with neighboring functions (e.g. `bbox_to_anchor=(0.0, -0.15)` where used elsewhere).
+- **Partial pipeline reruns:** Do not drive multi-step genotype/stats work with ad-hoc Python one-liners when the same steps already exist as Nextflow `process` blocks. Add a **small Nextflow entry script** under `workflow/Genetics/tmp/` that `include`s the needed processes and wires channels from existing `process/<mod>/` outputs; pass `-c` to `workflow/Genetics/nextflow.config` (absolute path; see `tmp/README.md`). Run with the same `conda` `run` env and **append the command to `doc/NF_CMD.md`** in chronological order (and `doc/TODO_PROGRESS_LOG.md` when closing related work). See `workflow/Genetics/tmp/ld_plots_redraw.nf` as a pattern.
+
+# Domain
+
+Large-scale crop genetics: robust, memory-aware, high-throughput (many samples, variant workflows, QTL, tool integration).
+
+# TODO maintenance (Mandatory)
+
+Canonical checklist: **`doc/TODO.md`**. Audit trail: **`doc/TODO_PROGRESS_LOG.md`** (append-only; never delete or rewrite past sections).
+
+**`doc/TODO.md` language:** Keep the checklist **in English** so the repo stays consistent for collaborators and search. When the user supplies additions or edits **in Chinese** (or mixed Chinese/English), **translate** section titles and bullet text into clear technical English **before** writing the file. Do **not** leave Chinese prose in `doc/TODO.md`. Preserve unchanged: checkbox structure, nesting, `[[…]]` links, `LogRef` / calendar dates, absolute paths, flags, sample or library IDs, and backtick-wrapped tool/file names. After translation, verify no checklist items were dropped or merged unless the user explicitly narrowed scope; if a source phrase is ambiguous, prefer a short English wording plus an optional parenthetical source tag (e.g. `(from …)`) rather than guessing a new scientific claim.
+
+Append-only log sections in **`doc/TODO_PROGRESS_LOG.md`** should be written in **English** as well (same concise field style as existing entries).
+
+When work **closes** one or more checklist items in the **same** agent turn / PR as that work:
+
+1. Update **`doc/TODO.md`**: flip `[ ]` → `[x]`, or adjust bullets if scope changed; keep `LogRef` / dates in the list when they are narrative anchors.
+2. Append **at least one new** section to **`doc/TODO_PROGRESS_LOG.md`**. Each section must include: **Date**, **TODO ID or title** (what was finished), **Files changed** (pipeline/code + `doc/*` if touched), **Validation steps**, **Outcome**, **Risks / follow-ups**. Keep wording short and factual.
+3. **Batching:** one log section may cover several related tick marks if they ship together; if one session closes many **unrelated** items, use **multiple** dated sections so the log stays scannable.
+4. **Partial / blocked validation:** state what was not verified and the **next** action (command, dataset, or owner).
+5. **Flyway / local DB migration tasks only:** say whether validation used an **empty-db rerun** or **sample-data** check, and include minimal **pass/fail** command output lines.
+
+Optional: use a short stable ID in the log heading (e.g. `TODO-PLINK-004`) and repeat it next to the item in `doc/TODO.md` if you want cross-reference.

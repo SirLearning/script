@@ -1,0 +1,24 @@
+---
+description: Nextflow — pipeline layout, conda envs, integration with src/python
+globs: workflow/**/*.nf
+alwaysApply: false
+---
+
+# Nextflow conventions
+
+- **Nextflow in conda `run`:** The `nextflow` executable is installed via the Conda environment defined in repo-root `environment_run.yml` (env name `run`). Create or update with `conda env create -f environment_run.yml` / `conda env update -f environment_run.yml`, then `conda activate run` for CLI runs (see also workstation-core: `screen` + Nextflow use `run`).
+- **IDE Nextflow plugin — Java:** Set the plugin’s Java environment to `/data/home/tusr1/lib/jvm/jdk-17` (JDK 17) for DSL editing, validation, and runner integration in the IDE.
+- **Run command log (`doc/NF_CMD.md`):** Every time you run Nextflow for this repo (or a human does), append a new dated block at the **end** of `doc/NF_CMD.md` in **chronological order** (see file intro): full `nextflow run ...` line(s), working directory and outcome when useful, and when using `screen`, the full `screen ... bash -c "..."` wrapper (or equivalent). Write log prose in **English** (see workstation-core: repository language). Do not leave undocumented ad-hoc production runs.
+- **Partial reruns — mini-workflow:** To rerun a **subset** of steps (e.g. only LD plotting) with existing `process/<mod>/` artifacts, add or use a **small Nextflow entry** under `workflow/Genetics/tmp/` that `include`s the existing `process` definitions and builds input channels from known paths—**not** ad-hoc `python -c` drivers. Use `-c` with an absolute path to `workflow/Genetics/nextflow.config`. Log each run in `doc/NF_CMD.md` (and `doc/TODO_PROGRESS_LOG.md` when the mini-workflow ships with repo changes). Example: `tmp/ld_plots_redraw.nf`.
+
+- Pipelines live under `workflow/Genetics/` (`Genotype`, `Static`, `Dynamic` themes).
+- Processes should invoke `src/python`, `src/r`, or `src/java` tools with I/O suitable for Nextflow (files, channels, stdin/stdout as designed).
+- Keep `conda` / container choices consistent with root `*.yml` envs and statistical vs heavy-genomics workloads.
+- When adding a process that needs new Python behavior, extend shared infra in `src/python/infra/` rather than one-off I/O in the `.nf` file.
+- **Processor vs stats boundary (strict):** Any `plink2` computation (e.g., `--r2-unphased`, filtering, matrix/stat generation) must be executed in `workflow/Genetics/genotype/processor.nf`. `workflow/Genetics/genotype/stats.nf` must only consume generated data files and perform statistical summarization/plotting.
+- **Parameter defaults in config (strict):** Define tunable/default runtime parameters in `workflow/Genetics/nextflow.config` (`params { ... }`) and set explicit initial values there.
+- **No inline fallback defaults in processes:** In `.nf` process scripts, reference parameters directly (e.g., `${params.xxx}`) and do not use inline fallback expressions like `${params.xxx ?: ...}`. Override values at launch time via CLI/config, not inside process code.
+- **Use task cpus for Python parallelism:** For Python analytics processes that support internal parallel computation, drive worker count from Nextflow task resources (e.g., pass `${task.cpus}`) instead of adding separate worker params in `nextflow.config`.
+- **Output path contract for test mods (strict):** For test jobs (e.g., `test_plink`), keep `job` as the top-level folder and place outputs under `job/process/<mod>/...` and `job/stats/<mod>/...` (including `plots`, `logs`, `thresholds`, `sample`, `variant` subfolders). Do not encode `mod` by mutating `params.job`.
+- **Run-folder numbering policy (strict):** Under task run roots (e.g., `/data/home/tusr1/01projects/vmap4/08stats.genome`), create new Nextflow run folders with monotonically increasing numeric prefixes (`01...`, `02...`, `03...`, etc.). Do not reuse old run folders for fresh attempts.
+- **Runtime log watchdog + incremental recovery:** During long `nextflow` test runs, monitor the run log file (e.g., `run_logs/nextflow.*.log`) continuously. If a process error appears, diagnose from log/work dir first, then prefer rerunning only failed steps by reusing completed upstream results (e.g., `-resume` and unchanged successful work), instead of deleting outputs and restarting the full pipeline. Only start a fresh full rerun when incremental recovery is not feasible.

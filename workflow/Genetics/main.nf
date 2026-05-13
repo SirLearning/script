@@ -5,6 +5,7 @@ include { plink_processor as PLINK_PROCESSOR } from './genotype/processor.nf'
 include { plink_stats as PLINK_STATS } from './genotype/stats.nf'
 include { test_plink_processor as TEST_PLINK_PROCESSOR } from './genotype/processor.nf'
 include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from './genotype/processor.nf'
+include { test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR } from './genotype/processor.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from './genotype/stats.nf'
 include { database as DATABASE } from './genotype/database.nf'
 include { kinship as KINSHIP } from './dynamic/kinship.nf'
@@ -46,66 +47,9 @@ def helpMessage() {
 
     Examples:
         nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod all --job test
-        // 20260130.1
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
-            --home_dir /data/home/tusr1/01projects/vmap4 \
-            --user_dir /data/home/tusr1 \
-            --src_dir /data/home/tusr1/git/script/src \
-            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod test_plink \
-            --job test_plink
-        // 20260130.2 - run MAO=1 chr002 only
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
-            --home_dir /data/home/tusr1/01projects/vmap4 \
-            --user_dir /data/home/tusr1 \
-            --src_dir /data/home/tusr1/git/script/src \
-            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --mod v1_plink \
-            --job rebuild
-        // 20260205.1
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
-            --home_dir /data/home/tusr1/01projects/vmap4 \
-            --user_dir /data/home/tusr1 \
-            --src_dir /data/home/tusr1/git/script/src \
-            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process \
-            --mod test_plink \
-            --job test_plink
-        // 20260209.1
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
-            --home_dir /data/home/tusr1/01projects/vmap4 \
-            --user_dir /data/home/tusr1 \
-            --src_dir /data/home/tusr1/git/script/src \
-            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/rebuild/process \
-            --mod v1_plink \
-            --job rebuild
-        // 20260401.1
-        nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
-            --home_dir /data/home/tusr1/01projects/vmap4 \
-            --user_dir /data/home/tusr1 \
-            --src_dir /data/home/tusr1/git/script/src \
-            --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
-            --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process \
-            --camp /data1/dazheng_tusr1/vmap4.VCF.v1/camp_vmap4_map.tsv \
-            --mod test_plink_camp \
-            --job test_plink
-    
-    screen prefix commands:
-        // test_plink
-        screen -dmS test_plink bash -c "\
-        cd /data1/dazheng_tusr1/01projects/vmap4/01plink_test/01run && \
-        source ~/.bashrc && conda activate run && \
-        "
-        screen -dmS test_plink bash -c "\
-        cd /data1/dazheng_tusr1/01projects/vmap4/01plink_test/02run && \
-        source ~/.bashrc && conda activate run && \
-        "
-        // rebuild
-        screen -dmS rebuild bash -c "\
-        cd /data/home/tusr1/01projects/vmap4/05reliable.lib/02rebuild.chr002 && \
-        source ~/.bashrc && conda activate run && \
-        "
+
+    Chronological Nextflow command log (append each new run at the end):
+        See repo file doc/NF_CMD.md.
     """.stripIndent()
 }
 
@@ -118,13 +62,16 @@ workflow {
     if (params.mod == 'v1_plink') {
         log.info "${params.c_yellow}Using PLINK PROCESS module.${params.c_reset}"
         vmap4_v1_plink(ch_vcf)
-    } else if (params.mod == 'test_plink') {
+    } else if (params.mod == 'test_plink' || params.mod == 'test_thin') {
         log.info "${params.c_yellow}Using PLINK TEST module.${params.c_reset}"
         test_plink(ch_vcf)
-    } else if (params.mod == 'test_plink_camp') {
+    } else if (params.mod == 'test_plink_camp' || params.mod == 'test_camp') {
         log.info "${params.c_yellow}Using PLINK TEST CAMP module.${params.c_reset}"
         camp_vmap4_map_tsv = file(params.camp)
         test_plink_camp(ch_vcf, camp_vmap4_map_tsv)
+    } else if (params.mod == 'test_common_thin') {
+        log.info "${params.c_yellow}Using PLINK COMMON-THIN TEST module.${params.c_reset}"
+        test_common_thin(ch_vcf)
     } else {
         log.info "${params.c_yellow}No workflow module was chosen.${params.c_reset}"
     }
@@ -157,6 +104,7 @@ workflow check_input {
     log.info "-\033[2m--------------------------------------------------\033[0m-"
     // --- Input Handling ---
     def job_config = getJobConfig(params.job, params.home_dir)
+    // Keep job as top-level output folder; mod is handled under process/stats.
     // Build input channel of VCF tuples: [ val(id), path(vcf) ]
     if (job_config.vcf_file) {
         def f = file(job_config.vcf_file)
@@ -207,6 +155,8 @@ workflow test_plink {
     main:
     def processor_out = TEST_PLINK_PROCESSOR(ch_vcf)
     TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
         processor_out.smiss, 
         processor_out.scount,
         processor_out.vmiss,
@@ -226,6 +176,8 @@ workflow test_plink_camp {
     main:
     def processor_out = TEST_PLINK_CAMP_PROCESSOR(ch_vcf, camp_vmap4_map_tsv)
     TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
         processor_out.smiss, 
         processor_out.scount,
         processor_out.vmiss,
@@ -235,6 +187,23 @@ workflow test_plink_camp {
     
     // emit:
 
+}
+
+workflow test_common_thin {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_COMMON_THIN_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
 }
 
 workflow vmap4_v1_plink {

@@ -13,6 +13,16 @@ TICK_FONT_SIZE = 12
 LEGEND_FONT_SIZE = 12
 
 
+def _finite_for_vline(val) -> bool:
+    """True if val can be drawn as a vertical line on a plot axis."""
+    if val is None:
+        return False
+    try:
+        return bool(np.isfinite(float(val)))
+    except (TypeError, ValueError):
+        return False
+
+
 def combine_plots(
     images,
     output_file = "/data/home/tusr1/git/script/out/combined_plot.png",
@@ -86,6 +96,60 @@ def combine_plots(
     print(f"Combined image saved to {output_file}")
 
 
+def plot_multi_line_series(
+    data,
+    x_col,
+    y_specs,
+    title,
+    filename,
+    x_label=None,
+    y_label=None,
+    figure_size=(10, 6),
+    xlim=None,
+    ylim=None,
+):
+    """
+    Plot multiple numeric y-series against one x column (line plot).
+
+    y_specs: list of dicts, each with required key ``y_col`` and optional
+    ``label``, ``color``, ``linestyle``, ``linewidth`` (defaults match common decay-style plots).
+    """
+    sns.set_style("white")
+    plt.figure(figsize=figure_size)
+
+    if x_label is None:
+        x_label = x_col
+    if y_label is None:
+        y_label = ""
+
+    for spec in y_specs:
+        yc = spec["y_col"]
+        lbl = spec.get("label", yc)
+        clr = spec.get("color", "steelblue")
+        ls = spec.get("linestyle", "-")
+        lw = float(spec.get("linewidth", 1.5))
+        plt.plot(data[x_col], data[yc], color=clr, linestyle=ls, linewidth=lw, label=lbl)
+
+    plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    plt.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    plt.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved plot to {filename}")
+    plt.close()
+
+
 def plot_distribution_with_stats(
     data, 
     col, 
@@ -131,25 +195,33 @@ def plot_distribution_with_stats(
     sns.histplot(data=data, x=col, bins=plot_bins, color=color, edgecolor='white', linewidth=0.1)
     
     # Statistics Lines
-    if mean_val is not None:
-        label_text = f'Mean: {mean_val:.4f}'
-        if std_val is not None:
-            label_text += f'\nSD: {std_val:.4f}'
-        plt.axvline(x=mean_val, color='red', linestyle='--', linewidth=1.5, label=label_text)
-        
-    if median_val is not None:
-        plt.axvline(x=median_val, color='orange', linestyle='-', linewidth=1.5, label=f'Median: {median_val:.4f}')
-        
+    if _finite_for_vline(mean_val):
+        label_text = f'Mean: {float(mean_val):.4f}'
+        if _finite_for_vline(std_val):
+            label_text += f'\nSD: {float(std_val):.4f}'
+        plt.axvline(x=float(mean_val), color='red', linestyle='--', linewidth=1.5, label=label_text)
+
+    if _finite_for_vline(median_val):
+        plt.axvline(
+            x=float(median_val),
+            color='orange',
+            linestyle='-',
+            linewidth=1.5,
+            label=f'Median: {float(median_val):.4f}',
+        )
+
     # Additional Threshold Lines
     if thresholds:
         for thr in thresholds:
             val = thr.get('value')
-            if val is None: continue
-            lbl = thr.get('label', f'{val:.4f}')
+            if not _finite_for_vline(val):
+                continue
+            v = float(val)
+            lbl = thr.get('label', f'{v:.4f}')
             clr = thr.get('color', 'black')
             ls = thr.get('linestyle', '--')
             lw = thr.get('linewidth', 1.5)
-            plt.axvline(x=val, color=clr, linestyle=ls, linewidth=lw, label=lbl)
+            plt.axvline(x=v, color=clr, linestyle=ls, linewidth=lw, label=lbl)
     
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
@@ -889,7 +961,9 @@ def plot_scatter_with_thresholds(
     color='royalblue',
     alpha=0.5,
     s=25,
-    figure_size=(10,8)
+    figure_size=(10,8),
+    xlim=None,
+    ylim=None,
 ):
     """
     Plots a scatter plot with optional horizontal and vertical threshold lines.
@@ -933,7 +1007,14 @@ def plot_scatter_with_thresholds(
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
     plt.ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
-    plt.legend(loc='best', fontsize=LEGEND_FONT_SIZE)
+    plt.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    if thresholds_h or thresholds_v:
+        plt.legend(loc='upper left', bbox_to_anchor=(0.0, -0.15), fontsize=LEGEND_FONT_SIZE, frameon=False)
     
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved scatter plot to {filename}")

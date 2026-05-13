@@ -88,6 +88,47 @@ def validatePaths(pathMap) {
     return [isValid: isValid, errors: errors]
 }
 
+// True when process_dir already holds merged per-subgenome plink2 outputs (A/B/D/Others _test.plink2).
+def hasMergedSubgenomeTestPfiles(process_dir) {
+    if (!process_dir) {
+        return false
+    }
+    def subgenomes = ['A', 'B', 'D', 'Others']
+    return subgenomes.every { sg ->
+        file("${process_dir}/${sg}_test.plink2.pgen").exists()
+    }
+}
+
+// Tuples matching merge_subgenome_test_pfile emit pfile shape: subgenome, chr_id, prefix, pgen, psam, pvar.
+def listMergedSubgenomeTestPfileTuples(process_dir) {
+    def subgenomes = ['A', 'B', 'D', 'Others']
+    return subgenomes.collect { sg ->
+        tuple(
+            sg,
+            "sub_${sg}",
+            "${sg}_test.plink2",
+            file("${process_dir}/${sg}_test.plink2.pgen"),
+            file("${process_dir}/${sg}_test.plink2.psam"),
+            file("${process_dir}/${sg}_test.plink2.pvar"),
+        )
+    }
+}
+
+// Tuples matching merge_subgenome_test_pfile emit bfile shape.
+def listMergedSubgenomeTestBfileTuples(process_dir) {
+    def subgenomes = ['A', 'B', 'D', 'Others']
+    return subgenomes.collect { sg ->
+        tuple(
+            sg,
+            "sub_${sg}",
+            "${sg}_test.plink",
+            file("${process_dir}/${sg}_test.plink.bed"),
+            file("${process_dir}/${sg}_test.plink.bim"),
+            file("${process_dir}/${sg}_test.plink.fam"),
+        )
+    }
+}
+
 // Get job-specific configuration
 def getJobConfig(job, home_dir) {
     def jobConfigs = [

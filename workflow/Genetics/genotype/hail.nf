@@ -9,8 +9,10 @@ workflow HAIL {
     // 1. Convert VCF to Hail MatrixTable
     mt = vcf_to_mt_hail(vcf_in.map{ id, vcf, job_config -> tuple(id, id, vcf) })
 
-    // 2. Filter VCF using Hail
-    filtered_vcf = filter_hail(mt.mt.map{ id, mtx -> tuple(id, id + '.hail', mtx.path) }, vcf_in.map{ id, vcf, job_config -> job_config })
+    // 2. Filter VCF using Hail (single channel: tuple id, vcf, job_config)
+    filtered_vcf = filter_hail(
+        mt.mt.join(vcf_in).map { id, mtx, vcf, job_config -> tuple(id, vcf, job_config) }
+    )
 
     // 3. Hail QC
     qc_stats = hail_qc(filtered_vcf.vcf)
