@@ -92,3 +92,16 @@ Append-only log for completed TODO items (per `.cursor/rules/workstation-core.md
 | **Validation** | Repo grep: no stale `workflow/Genetics/ld_plots_redraw.nf` references in rules; `include` path in `tmp/ld_plots_redraw.nf` points to `../genotype/stats.nf`. Nextflow not re-executed in this session after the move. |
 | **Outcome** | Auxiliary entry lives under `tmp/`; config still loaded via absolute `-c .../workflow/Genetics/nextflow.config`; agent docs match. |
 | **Risks / follow-ups** | Re-run `nextflow run .../tmp/ld_plots_redraw.nf` once from a vmap4 run folder to smoke-test after pull. |
+
+---
+
+## 2026-05-13 — OPS-ASSESS-001 — Tier-1 assess debug mini-workflow (`tmp/assess_plink_debug.nf`)
+
+| Field | Detail |
+| --- | --- |
+| **Date** | 2026-05-13 |
+| **TODO ID / title** | OPS-ASSESS-001 — §9 backlog tier-1: export narrow VCF from `*_test.plink2` for `test_thin` / `test_common_thin`, scrub PLINK `##chrSet` header for bcftools, run `quick_count` + `bcftools_qc_assess` + MAF-bin TSV; fix `assess.nf` conda + publishDir by `mod` + PLINK-safe `+fill-tags` / GQ handling |
+| **Files changed** | `workflow/Genetics/tmp/assess_plink_debug.nf`, `workflow/Genetics/tmp/README.md`, `workflow/Genetics/genotype/assess.nf`, `doc/TODO.md`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry), `.cursor/rules/workstation-{core,nextflow,python}.mdc` |
+| **Validation** | `conda activate run`: `21run_assess_debug_test_thin` — **exit 0**, **16** succeeded, **~2m 42s**; `22run_assess_debug_test_common_thin` — **exit 0**, **16** succeeded. |
+| **Outcome** | Published under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_thin/` and `.../assess/test_common_thin/` (`export/*.debug.vcf.gz`, `*.counts.tsv`, `*.maf_missing.tsv`, `*.gq_summary.tsv`, `info/*.mac_site_histogram.tsv`). |
+| **Risks / follow-ups** | Slice is one representative chromosome per subgenome (not full genome); `dumpnice` still optional / script path may be absent; extend or wire into `main.nf` when router work is ready. |

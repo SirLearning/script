@@ -139,14 +139,71 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/ld_plots_redraw.n
 
 ---
 
-### 2026-05-13 — LD plots only (`tmp/ld_plots_redraw.nf`), `test_common_thin` (planned)
+### 2026-05-13 — LD plots only (`tmp/ld_plots_redraw.nf`), `test_thin` (re-run, `*.variant.ld_decay` prefix)
 
-Use a **new** numbered run folder (e.g. `15run_ld_plots_redraw`).
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/16run_ld_plots_redraw_test_thin`. Outcome: exit 0, 8 tasks succeeded, ~15m 57s.
 
 ```bash
-cd /data/home/tusr1/01projects/vmap4/08stats.genome/15run_ld_plots_redraw && \
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/16run_ld_plots_redraw_test_thin && \
 source ~/.bashrc && conda activate run && \
 nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/ld_plots_redraw.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-13 — LD plots only (`tmp/ld_plots_redraw.nf`), `test_common_thin` (re-run, `*.variant.ld_decay` prefix)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/17run_ld_plots_redraw_test_common_thin`. Outcome: exit 0, 8 tasks succeeded (same session immediately after `test_thin`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/17run_ld_plots_redraw_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/ld_plots_redraw.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-13 — Assess debug (`tmp/assess_plink_debug.nf`), `test_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/21run_assess_debug_test_thin`. Outcome: exit 0, 16 tasks succeeded, ~2m 42s. Outputs under `.../test_plink/assess/test_thin/` (`export/`, `info/*.mac_site_histogram.tsv`, per-subgenome `*.maf_missing.tsv`, `*.counts.tsv`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/21run_assess_debug_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-13 — Assess debug (`tmp/assess_plink_debug.nf`), `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/22run_assess_debug_test_common_thin`. Outcome: exit 0, 16 tasks succeeded, ~43s wall clock. Outputs under `.../test_plink/assess/test_common_thin/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/22run_assess_debug_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
   -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
   --home_dir /data/home/tusr1/01projects/vmap4 \
   --user_dir /data/home/tusr1 \

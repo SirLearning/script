@@ -11,7 +11,8 @@ include { getJavaSetupScript; getServerPopulations } from './utils.nf'
 
 process quick_count {
     tag "quick count: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/assess/${params.mod ?: 'misc'}", mode: 'copy'
 
     input:
     tuple val(id), path(vcf)
@@ -32,7 +33,9 @@ process quick_count {
 
 process bcftools_qc_assess {
     tag "assess with bcftools: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess", mode: 'copy'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    errorStrategy 'terminate'
+    publishDir "${params.output_dir}/${params.job}/assess/${params.mod ?: 'misc'}", mode: 'copy'
 
     input:
     tuple val(id), path(vcf)
@@ -44,17 +47,27 @@ process bcftools_qc_assess {
     script:
     """
     set -euo pipefail
-    bcftools +fill-tags ${vcf} -- -t MAF,F_MISSING,AC,AN | \\
-        bcftools query -f '%CHROM\\t%POS\\t%REF\\t%ALT\\t%MAF\\t%F_MISSING\\t%QUAL\\n' > ${id}.maf_missing.tsv
+    # Do not request MAF in +fill-tags when INFO/MAF is already present (PLINK2 export).
+    bcftools +fill-tags ${vcf} -- -t F_MISSING,AN,AC | \\
+        bcftools query -f '%CHROM\\t%POS\\t%REF\\t%ALT\\t%INFO/MAF\\t%INFO/F_MISSING\\t%QUAL\\n' > ${id}.maf_missing.tsv
 
-    bcftools query -f '[%GQ\\t]\\n' ${vcf} | tr '\\t' '\\n' | awk 'NF && \$1 != "."' > all.gq
-    awk 'BEGIN{min=1e9;max=-1e9}{s+=\$1; n++; if(\$1<min)min=\$1; if(\$1>max)max=\$1} END{if(n==0){print "metric\\tvalue"; print "n\\t0"; exit} mean=s/n; print "metric\\tvalue"; print "n\\t"n; print "mean\\t"mean; print "min\\t"min; print "max\\t"max}' all.gq > ${id}.gq_summary.tsv
+    if bcftools view -h ${vcf} | grep -q '##FORMAT=<ID=GQ'; then
+        bcftools query -f '[%GQ\\t]\\n' ${vcf} | tr '\\t' '\\n' | awk 'NF && \$1 != "."' > all.gq || true
+        if [ ! -s all.gq ]; then
+            printf 'metric\\tvalue\\nn\\t0\\nmean\\tNA\\nmin\\tNA\\nmax\\tNA\\n' > ${id}.gq_summary.tsv
+        else
+            awk 'BEGIN{min=1e9;max=-1e9}{s+=\$1; n++; if(\$1<min)min=\$1; if(\$1>max)max=\$1} END{if(n==0){print "metric\\tvalue"; print "n\\t0"; exit} mean=s/n; print "metric\\tvalue"; print "n\\t"n; print "mean\\t"mean; print "min\\t"min; print "max\\t"max}' all.gq > ${id}.gq_summary.tsv
+        fi
+    else
+        printf 'metric\\tvalue\\nn\\t0\\nmean\\tNA\\nmin\\tNA\\nmax\\tNA\\n' > ${id}.gq_summary.tsv
+    fi
     """
 }
 
 process dumpnice_vcf_qc_assess {
     tag "dumpnice vcf qc assess: ${id}"
-    publishDir "${params.output_dir}/${params.job}/assess/qc", mode: 'copy'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/assess/${params.mod ?: 'misc'}/qc", mode: 'copy'
 
     input:
     tuple val(id), path(vcf)
