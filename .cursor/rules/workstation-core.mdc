@@ -46,7 +46,12 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - **Reuse first:** Call existing `plot_*` helpers (`plot_scatter_with_thresholds`, `plot_distribution_with_stats`, `plot_regression_comparison`, `plot_slope_chart`, `plot_correlation_with_regression`, etc.) from task modules instead of adding analysis-named wrappers (e.g. avoid `plot_ld_*` in `graph.py`).
 - **`plot_slope_chart` scope:** It draws **parallel-coordinate** lines between **two columns** at fixed x-positions 1 and 2—not a generic y-vs-distance decay curve. Do not use it for LD decay vs physical distance unless that geometry is intentional.
 - **New `plot_*` only when necessary:** If no existing helper fits, add a **generic** function in `graph.py` (neutral name, reusable signature) and match established visuals: `sns.set_style("white")`, constants `TITLE_FONT_SIZE`, `X_LABEL_FONT_SIZE`, `Y_LABEL_FONT_SIZE`, `TICK_FONT_SIZE`, `LEGEND_FONT_SIZE`, `dpi=300`, `bbox_inches='tight'`, and legend placement consistent with neighboring functions (e.g. `bbox_to_anchor=(0.0, -0.15)` where used elsewhere).
-- **Partial pipeline reruns:** Do not drive multi-step genotype/stats work with ad-hoc Python one-liners when the same steps already exist as Nextflow `process` blocks. Add a **small Nextflow entry script** under `workflow/Genetics/tmp/` that `include`s the needed processes and wires channels from existing `process/<mod>/` outputs; pass `-c` to `workflow/Genetics/nextflow.config` (absolute path; see `tmp/README.md`). Run with the same `conda` `run` env and **append the command to `doc/NF_CMD.md`** in chronological order (and `doc/TODO_PROGRESS_LOG.md` when closing related work). Examples: `workflow/Genetics/tmp/ld_plots_redraw.nf`, `workflow/Genetics/tmp/assess_plink_debug.nf`.
+- **Partial pipeline reruns:** Do not drive multi-step genotype/stats work with ad-hoc Python one-liners when the same steps already exist as Nextflow `process` blocks. Add a **small Nextflow entry script** under `workflow/Genetics/tmp/` that `include`s the needed processes and wires channels from existing `process/<mod>/` outputs; pass `-c` to `workflow/Genetics/nextflow.config` (absolute path; see `tmp/README.md`). Run with the same `conda` `run` env and **append the command to `doc/NF_CMD.md`** in chronological order; when closing related work, append a **narrative** section to **`doc/TODO_PROGRESS_LOG.md`** (goals, cwd, outcomes—see TODO maintenance; do not duplicate full commands already in `doc/NF_CMD.md`). Examples: `workflow/Genetics/tmp/ld_plots_redraw.nf`, `workflow/Genetics/tmp/assess_plink_debug.nf`.
+
+# Genotype assess (`assess.nf`, `tmp/assess_plink_debug.nf`)
+
+- **Prefer PLINK2 over bcftools** when inputs are already PLINK2-native (e.g. merged `*_test.plink2`): use `--freq`, `--missing`, and other PLINK2 summaries on pfiles. Reserve bcftools/VCF paths only when a metric truly requires VCF `INFO`/`FORMAT` fields that are not carried in the pfile.
+- **Plots and tables for assess** must be produced through **`src/python/genetics/...`** using **`infra.utils.io`** and **`infra.utils.graph`** (`plot_*`, shared font constants, `dpi=300`, `bbox_inches='tight'`, English labels), mirroring the conventions used for **`genotype/stats.nf`**. Publish assess figures under `assess/<mod>/plots/`, tabular summaries under `assess/<mod>/info/`, and logs under `assess/<mod>/logs/`.
 
 # Domain
 
@@ -54,18 +59,23 @@ Large-scale crop genetics: robust, memory-aware, high-throughput (many samples, 
 
 # TODO maintenance (Mandatory)
 
-Canonical checklist: **`doc/TODO.md`**. Audit trail: **`doc/TODO_PROGRESS_LOG.md`** (append-only; never delete or rewrite past sections).
+Canonical checklist: **`doc/TODO.md`**. Audit trail: **`doc/TODO_PROGRESS_LOG.md`** (append-only: never delete or rewrite existing body text; you may **append** new paragraphs or a new dated section at the **end** to supplement an older entry without altering its original text).
 
 **`doc/TODO.md` language:** Keep the checklist **in English** so the repo stays consistent for collaborators and search. When the user supplies additions or edits **in Chinese** (or mixed Chinese/English), **translate** section titles and bullet text into clear technical English **before** writing the file. Do **not** leave Chinese prose in `doc/TODO.md`. Preserve unchanged: checkbox structure, nesting, `[[…]]` links, `LogRef` / calendar dates, absolute paths, flags, sample or library IDs, and backtick-wrapped tool/file names. After translation, verify no checklist items were dropped or merged unless the user explicitly narrowed scope; if a source phrase is ambiguous, prefer a short English wording plus an optional parenthetical source tag (e.g. `(from …)`) rather than guessing a new scientific claim.
 
-Append-only log sections in **`doc/TODO_PROGRESS_LOG.md`** should be written in **English** as well (same concise field style as existing entries).
+**`doc/TODO_PROGRESS_LOG.md` — reporting priority (English):** This file is the **engineering narrative**: goals, what changed in the repo and **why**, each validation or runtime step (**pass / fail / skipped**), if something failed **what went wrong**, **how** it was fixed or what to do next, and the **final effect** (science or ops). Describe **how results are exposed** (e.g. `publishDir` layout, file types such as PNG/TSV, notable prefixes). Use **natural prose**, a memo, or a markdown **table**—whatever reads clearest. **Do not paste full shell command lines** here when the same run is already logged in **`doc/NF_CMD.md`**; instead cite that log (e.g. `doc/NF_CMD.md`, heading `### YYYY-MM-DD — …`) and record **only the working directory(ies)** from which each run or retry was launched, plus short non-secret flags if not obvious from NF_CMD (e.g. `--mod`, `-preview`). You may still quote **one or two outcome lines** (exit code, succeeded/failed counts) if they are not in NF_CMD. For each work batch or validation pass, aim to cover where relevant:
+
+- **Intent** of the change or experiment.
+- **Files / modules touched** and rationale (design trade-off, bug fix, policy).
+- **Tests and runs:** cwd per attempt; outcome (pass/fail); if fail, root cause and remediation or open **next step**; if blocked, who/what unblocks it.
+- **Deliverables:** where artefacts land, formats, and how a human should interpret them.
 
 When work **closes** one or more checklist items in the **same** agent turn / PR as that work:
 
 1. Update **`doc/TODO.md`**: flip `[ ]` → `[x]`, or adjust bullets if scope changed; keep `LogRef` / dates in the list when they are narrative anchors.
-2. Append **at least one new** section to **`doc/TODO_PROGRESS_LOG.md`**. Each section must include: **Date**, **TODO ID or title** (what was finished), **Files changed** (pipeline/code + `doc/*` if touched), **Validation steps**, **Outcome**, **Risks / follow-ups**. Keep wording short and factual.
-3. **Batching:** one log section may cover several related tick marks if they ship together; if one session closes many **unrelated** items, use **multiple** dated sections so the log stays scannable.
-4. **Partial / blocked validation:** state what was not verified and the **next** action (command, dataset, or owner).
-5. **Flyway / local DB migration tasks only:** say whether validation used an **empty-db rerun** or **sample-data** check, and include minimal **pass/fail** command output lines.
+2. Append **at least one new** section to the **end** of **`doc/TODO_PROGRESS_LOG.md`**. A reader should understand **intent, diffs, validation story, and artefact layout** without chat. **Do not duplicate** full Nextflow/bash transcripts when they are already in **`doc/NF_CMD.md`**. If an older log entry was thin, append a new trailing section titled e.g. `## YYYY-MM-DD — SUPP — <topic>` with the missing narrative—**do not erase** the original entry.
+3. **Batching:** one top-level section per completion batch is typical; use subheadings for each goal or retry. If one session closes many **unrelated** items, use **multiple** dated sections at the end.
+4. **Partial / blocked validation:** state what was not verified and the **next** action (owner, dataset, or type of run).
+5. **Flyway / local DB migration tasks only:** say whether validation used an **empty-db rerun** or **sample-data** check, and state **pass/fail** in plain language (no need to paste full SQL logs unless diagnosis requires it).
 
 Optional: use a short stable ID in the log heading (e.g. `TODO-PLINK-004`) and repeat it next to the item in `doc/TODO.md` if you want cross-reference.

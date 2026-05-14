@@ -153,7 +153,7 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 
 ## 8. Parallel / legacy modules (not on current router)
 
-- [x] **Assess (debug):** `genotype/assess.nf` wired for `test_thin` / `test_common_thin` via `tmp/assess_plink_debug.nf` (export slice + `quick_count` + `bcftools_qc_assess` + MAF bins); full router integration still optional (LogRef: 2026-05-13)
+- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq`/`--missing`, MAF bins from `.afreq`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); full `main.nf` router integration still optional
 - [x] Hail scaffold: `genotype/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
 
 ---
@@ -164,9 +164,9 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 
 - [x] Assess inputs: fixed test dir only; do not rebuild test VCFs (LogRef: 2026-04-22)
 - [x] Core plot: variance vs depth (aberrant sites / repeats)
-- [x] Tier-1 assess debug (both mods): `workflow/Genetics/tmp/assess_plink_debug.nf` — per-subgenome PLINK2 export (A=chr1, B=3, D=5, Others=0), strip `##chrSet` for bcftools, `quick_count` + `bcftools_qc_assess` + MAF-bin table under `assess/<mod>/` (LogRef: 2026-05-13)
+- [x] Tier-1 assess debug (both mods): `workflow/Genetics/tmp/assess_plink_debug.nf` — per-subgenome PLINK2 representative chr (`A=1`, `B=3`, `D=5`, `Others=0`) on `*_test.plink2`, `--freq`/`--missing`, MAF-bin TSV from `.afreq`, `src/python/genetics/genomics/variant/assess_slice.py` + `infra.utils.graph` under `assess/<mod>/plots` and `assess/<mod>/info` (LogRef: 2026-05-14)
 - [ ] Singletons: counts and distribution
-	- [x] Debug slice: MAF-bin counts + per-site `maf_missing.tsv` / `gq_summary.tsv` (no FORMAT/GQ in export → placeholder summary)
+	- [x] Debug slice: MAF-bin counts + joined MAF / `F_MISS` from PLINK2 `.afreq`/`.vmiss` + Python QC plots (`assess_slice.py`; FORMAT/GQ not on pfile path — placeholder summary retained)
 	- [ ] Effect on LD
 	- [ ] Sample size vs variant discovery
 	- [ ] Why singletons are scarce

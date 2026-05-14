@@ -605,7 +605,8 @@ def plot_bar_chart(
     filename,
     ylim=(0.0, 1.05),
     color='steelblue',
-    figure_size=(10, 5)
+    figure_size=(10, 5),
+    dpi=300,
 ):
     """
     Plots a simple bar chart with value labels on top.
@@ -628,13 +629,20 @@ def plot_bar_chart(
     ax.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
     if ylim:
         ax.set_ylim(ylim)
-        
+
+    ymax = max(values) if values else 0.0
+    label_pad = 0.01 if ymax <= 1.0 else ymax * 0.02
+
     # Add text labels
     for i, v in enumerate(values):
-        ax.text(i, v + 0.01, f"{v:.3f}", ha='center', va='bottom', fontsize=12)
-        
+        if ymax <= 1.0:
+            lbl = f"{v:.3f}"
+        else:
+            lbl = f"{v:.0f}" if v >= 10 else f"{v:.2f}"
+        ax.text(i, v + label_pad, lbl, ha='center', va='bottom', fontsize=TICK_FONT_SIZE)
+
     # fig.tight_layout()
-    fig.savefig(filename, dpi=150, bbox_inches='tight')
+    fig.savefig(filename, dpi=dpi, bbox_inches='tight')
     print(f"Saved bar chart: {filename}")
     plt.close(fig)
 

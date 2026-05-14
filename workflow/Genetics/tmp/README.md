@@ -11,4 +11,4 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/ld_plots_redraw.n
 Entry scripts use `include { ... } from '../genotype/...'` paths relative to this directory.
 
 - `ld_plots_redraw.nf` — LD decay + cross-chr plots from existing `.vcor`.
-- `assess_plink_debug.nf` — §9 tier-1 assess on `test_thin` / `test_common_thin`: export narrow VCF from `*_test.plink2`, then `quick_count` + `bcftools_qc_assess` + MAF-bin TSV under `assess/<mod>/`.
+- `assess_plink_debug.nf` — §9 tier-1 assess on `test_thin` / `test_common_thin`: PLINK2 `--freq` / `--missing` on a representative-chr slice of each `*_test.plink2`, MAF-bin TSV from `.afreq`, then `src/python` plots (`assess_slice.py` + `infra.utils.graph`) under `assess/<mod>/plots` and tables under `assess/<mod>/info`.
