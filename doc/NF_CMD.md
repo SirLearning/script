@@ -212,3 +212,22 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debu
   --job test_plink \
   --mod test_common_thin
 ```
+
+---
+
+### 2026-05-14 — Assess debug (`tmp/assess_plink_debug.nf`) — PLINK2 slice + `assess_slice.py` plots
+
+Working directory (example): `/data/home/tusr1/01projects/vmap4/08stats.genome/23run_assess_plink2_debug_stub`. Agent session: `nextflow ... -preview` exit 0 against real `--output_dir` / `--job` (no Graphviz). Re-run without `-preview` after `test_plink` processor outputs exist. Published layout: `assess/<mod>/*.afreq`, `*.vmiss`, `*.tsv`, `plots/*.png`, `info/*.tsv`, `logs/*.log`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/23run_assess_plink2_debug_stub && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
