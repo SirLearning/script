@@ -86,6 +86,23 @@ Processes invoke **`src/python`**, **`src/r`**, and **`src/java`** as configured
 
 ---
 
+## Integrated wheat-analysis workflows
+
+Additional independent genetics workflows are available under **`workflow/Genetics/integrated/`**:
+
+- `snp_qc/` (SNP QC)
+- `hapmap/` (HAPMAP construction)
+- `pca_tsne/` (PCA + t-SNE)
+- `gwas/` (GWAS)
+- `tagsnp/` (tagSNP)
+- `cnv/` (CNV)
+- `kgwas/` (kGWAS)
+- `genetic_map/` (genetic map)
+
+Each subdirectory contains its own `main.nf` entrypoint and `README.md` parameter guide, and delegates analysis logic to `src/python/genetics/wheat/`.
+
+---
+
 ## Further reading
 
 - **`doc/NF_CMD.md`** — chronological full command lines and cwd notes.
