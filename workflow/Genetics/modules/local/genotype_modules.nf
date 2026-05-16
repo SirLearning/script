@@ -1,0 +1,81 @@
+nextflow.enable.dsl=2
+
+include { plink_processor as PLINK_PROCESSOR } from '../../genotype/processor.nf'
+include { plink_stats as PLINK_STATS } from '../../genotype/stats.nf'
+include { test_plink_processor as TEST_PLINK_PROCESSOR } from '../../genotype/processor.nf'
+include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from '../../genotype/processor.nf'
+include { test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR } from '../../genotype/processor.nf'
+include { test_plink_stats as TEST_PLINK_STATS } from '../../genotype/stats.nf'
+include { database as DATABASE } from '../../genotype/database.nf'
+include { kinship as KINSHIP } from '../../dynamic/kinship.nf'
+include { population_structure as POPULATION_STRUCTURE } from '../../dynamic/ps.nf'
+include { GWAS } from '../../static/gwas/gwas.nf'
+include { HAIL } from '../../genotype/hail.nf'
+
+workflow RUN_V1_PLINK {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = PLINK_PROCESSOR(ch_vcf)
+    PLINK_STATS(
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.popdep)
+}
+
+workflow RUN_TEST_PLINK {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_PLINK_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
+}
+
+workflow RUN_TEST_PLINK_CAMP {
+    take:
+    ch_vcf
+    camp_vmap4_map_tsv
+
+    main:
+    def processor_out = TEST_PLINK_CAMP_PROCESSOR(ch_vcf, camp_vmap4_map_tsv)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
+}
+
+workflow RUN_TEST_COMMON_THIN {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_COMMON_THIN_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy)
+}
