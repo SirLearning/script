@@ -47,7 +47,7 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [x] A / B / D / Others + `A_test.` prefix conventions frozen (LogRef: 2026-04-22)
 - [x] `plink` version pinned
 - [ ] **Router gap:** `HAIL`, `KINSHIP`, `POPULATION_STRUCTURE`, `GWAS`, genotype `database` are `include`d but **not** branched in `workflow { }` — add `params.mod` (or meta-workflow) + examples
-- [ ] **Docs drift:** refresh `workflow/Genetics/README.md` (active mods, `process_dir` / `--camp` TSV, output layout, run-folder / `run` conda / `screen` policy)
+- [x] **Docs drift:** refresh `workflow/Genetics/README.md` (active mods, `process_dir` / `--camp` TSV, output layout, run-folder / `run` conda / `screen` policy) (LogRef: 2026-05-14)
 - [ ] **Provenance:** emit `run_manifest.tsv` (or JSON): `params` subset, plink2 version, conda envs, Tiger JAR tag, optional git commit
 - [ ] `hail` version + gnomAD-style reference; expose `--mod hail` (or equivalent) in `main.nf` + resource profile
 
@@ -153,7 +153,7 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 
 ## 8. Parallel / legacy modules (not on current router)
 
-- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq`/`--missing`, MAF bins from `.afreq`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); full `main.nf` router integration still optional
+- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq`/`--missing`, MAF bins from `.afreq`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); full `main.nf` router integration still optional. Full non-preview runs re-validated 2026-05-15 — `doc/TODO_PROGRESS_LOG.md`, `doc/NF_CMD.md`.
 - [x] Hail scaffold: `genotype/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
 
 ---

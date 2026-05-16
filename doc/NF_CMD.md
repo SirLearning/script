@@ -231,3 +231,41 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debu
   --job test_plink \
   --mod test_thin
 ```
+
+---
+
+### 2026-05-15 — Assess debug (`tmp/assess_plink_debug.nf`) — full run `test_thin` (PLINK2 + plots)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/24run_assess_plink2_full_test_thin`. Outcome: exit 0, **8** succeeded (4× slice + 4× Python plots); wall ~65 s; Nextflow trace aggregate succeedDuration ~7m 25s. Outputs under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_thin/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/24run_assess_plink2_full_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-15 — Assess debug (`tmp/assess_plink_debug.nf`) — full run `test_common_thin` (PLINK2 + plots)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/25run_assess_plink2_full_test_common_thin`. Outcome: exit 0, **8** succeeded, succeedDuration ~1m 25s. Outputs under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_common_thin/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/25run_assess_plink2_full_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
