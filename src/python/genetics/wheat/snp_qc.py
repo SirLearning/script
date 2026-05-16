@@ -1,4 +1,3 @@
-import argparse
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
 from infra.utils.graph import plot_distribution_with_stats
@@ -44,18 +43,3 @@ def run_snp_qc(input_file, output_prefix, maf=0.05, max_missing=0.1, min_qual=30
         y_label='Variant Count',
         thresholds=[{'value': float(maf), 'label': f'MAF >= {maf}', 'color': 'red', 'linestyle': '--'}],
     )
-
-
-def main():
-    p = argparse.ArgumentParser(description='WWWG2B-style SNP calling QC post-filter')
-    p.add_argument('--input', required=True, help='SNP table with MAF/MISSING_RATE/QUAL columns')
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--maf', type=float, default=0.05)
-    p.add_argument('--max-missing', type=float, default=0.1)
-    p.add_argument('--min-qual', type=float, default=30.0)
-    args = p.parse_args()
-    run_snp_qc(args.input, args.output_prefix, maf=args.maf, max_missing=args.max_missing, min_qual=args.min_qual)
-
-
-if __name__ == '__main__':
-    main()

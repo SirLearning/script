@@ -16,6 +16,7 @@ include { HAIL } from './genotype/hail.nf'
 include { getJobConfig } from './genotype/utils.nf'
 include { getVcfIdFromPath } from './genotype/utils.nf'
 include { getRefV1SubChr } from './genotype/utils.nf'
+include { integrated_wheat } from './integrated/integrated_wheat.nf'
 
 // --- Header ---
 def header() {
@@ -37,16 +38,21 @@ def helpMessage() {
     Required params:
         --home_dir <dir>      Home directory for predefined modules
         --src_dir <dir>       Source directory for scripts and resources
-        --mod <string>        Predefined module name for input data (all, gwas)
+        --mod <string>        Predefined module name for input data (v1_plink, test_plink, test_thin,
+                              test_plink_camp, test_camp, test_common_thin, or wheat_* integrated modes)
         --job <string>        Job name/ID (default: genotype_<mod>)
         --tool <string>       Tool to use (plink, hail). Default: plink
+
+    Wheat integrated (`wheat_*` mods): `--home_dir` / `--src_dir` are unused; require `--output_dir`,
+        `--job`, `--user_dir` (Conda stats env), and the task-specific `wheat_*` input params from
+        `nextflow.config` / CLI (see `workflow/Genetics/README.md`, Wheat integrated section).
 
     Options:
         --output_dir <dir>    Directory to output results
         --help                This usage statement
 
     Examples:
-        nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod all --job test
+        nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod test_plink --job test
 
     Chronological Nextflow command log (append each new run at the end):
         See repo file doc/NF_CMD.md.
@@ -55,6 +61,16 @@ def helpMessage() {
 
 // --- Workflow ---
 workflow {
+    if (params.mod != null && params.mod.toString().startsWith('wheat_')) {
+        log.info header()
+        if (params.help) {
+            helpMessage()
+            exit 0
+        }
+        log.info "${params.c_purple}Wheat integrated analytics (${params.mod}).${params.c_reset}"
+        integrated_wheat()
+    } else {
+
     def input_out = check_input()
     def ch_vcf = input_out.vcf
     // --- Main workflow execution ---
@@ -74,6 +90,7 @@ workflow {
         test_common_thin(ch_vcf)
     } else {
         log.info "${params.c_yellow}No workflow module was chosen.${params.c_reset}"
+    }
     }
 }
 

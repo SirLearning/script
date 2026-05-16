@@ -1,4 +1,3 @@
-import argparse
 import pandas as pd
 from infra.stats import compute_pca_coordinates, compute_tsne_coordinates
 from infra.utils.io import load_df_generic, save_df_to_tsv
@@ -54,17 +53,3 @@ def run_population_structure(input_file, output_prefix, n_pcs=10, tsne_perplexit
         filename=f'{output_prefix}.variance.png',
         ylim=(0.0, 1.0),
     )
-
-
-def main():
-    p = argparse.ArgumentParser(description='WWWG2B-style PCA/t-SNE population structure')
-    p.add_argument('--input', required=True, help='Sample-by-marker numeric genotype matrix with Sample column')
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--n-pcs', type=int, default=10)
-    p.add_argument('--tsne-perplexity', type=float, default=30.0)
-    args = p.parse_args()
-    run_population_structure(args.input, args.output_prefix, n_pcs=args.n_pcs, tsne_perplexity=args.tsne_perplexity)
-
-
-if __name__ == '__main__':
-    main()

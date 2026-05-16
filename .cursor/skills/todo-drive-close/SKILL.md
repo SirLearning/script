@@ -23,7 +23,7 @@ Follow **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation
 - **Long Nextflow:** Start real pipeline runs inside **`screen`** (or equivalent). Small tests / debug runs are exempt.
 - **vmap4 inputs:** Treat `/data1/dazheng_tusr1/vmap4.VCF.v1` as **read-only**. For prepared test data, use **`/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process`** and existing prefixes (e.g. `A_test.`).
 - **Assess track:** Prefer **PLINK2 on pfiles** over bcftools for tier-1 `tmp/assess_plink_debug.nf`; assess **plots/tables** must use **`src/python/genetics/...`** + **`infra.utils.io` / `infra.utils.graph`** and publish under `assess/<mod>/{plots,info,logs}` (see `.cursor/rules/workstation-core.mdc` “Genotype assess”).
-- **Partial NF reruns:** Prefer a small entry under `workflow/Genetics/tmp/` that `include`s existing processes; pass **absolute** `-c` to `workflow/Genetics/nextflow.config` (see `workflow/Genetics/tmp/README.md`).
+- **Partial NF reruns:** Prefer a small entry under `workflow/Genetics/tmp/` that `include`s existing processes; pass **absolute** `-c` to `workflow/Genetics/nextflow.config` (see `workflow/Genetics/README.md`, Auxiliary entry scripts).
 - **Docs language:** New or edited checklist text in `doc/TODO.md` stays **English**. **`doc/TODO_PROGRESS_LOG.md` is append-only** — never delete or rewrite past sections.
 - **File edits:** Use editor/patch tools for source and docs; **do not** create or modify tracked files with shell redirection (`cat`/`echo`/`sed`/`tee` + `>`/`>>`).
 

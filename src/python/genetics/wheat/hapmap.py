@@ -1,4 +1,3 @@
-import argparse
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
 
@@ -32,15 +31,3 @@ def run_hapmap_build(input_file, output_prefix, window_size=100000):
 
     save_df_to_tsv(out, f'{output_prefix}.hapmap.tsv')
 
-
-def main():
-    p = argparse.ArgumentParser(description='WWWG2B-style HAPMAP block builder')
-    p.add_argument('--input', required=True, help='Genotype table: CHR POS plus sample genotype columns')
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--window-size', type=int, default=100000)
-    args = p.parse_args()
-    run_hapmap_build(args.input, args.output_prefix, window_size=args.window_size)
-
-
-if __name__ == '__main__':
-    main()
