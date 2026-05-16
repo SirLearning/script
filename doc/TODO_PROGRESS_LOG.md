@@ -197,3 +197,36 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 **What changed:** Header and `SUPP` in this file; `workstation-core.mdc`, `workstation-nextflow.mdc`, `todo-drive-close/SKILL.md` updated so agents record **cwd** per run in the progress log and **cite** `doc/NF_CMD.md` instead of duplicating multi-line commands.
 
 **Validation:** Doc-only; no pipeline execution.
+
+---
+
+## 2026-05-14 — TODO-DOC-README — Refresh `workflow/Genetics/README.md` (todo-drive-close batch)
+
+**Goal:** Close **`doc/TODO.md`** §2 “Docs drift” by replacing the outdated one-line `README` with a concise operator-facing description of the real **`main.nf`** router, optional `process_dir` / `camp`, test output tree, `tmp/` auxiliary entries, and workstation run policy (cwd under vmap4 projects, conda `run`, `screen` for long jobs, read-only vmap4 inputs).
+
+**Changes:** Rewrote **`workflow/Genetics/README.md`** (English tables + sections); flipped the matching checklist item in **`doc/TODO.md`** to `[x]` with `LogRef: 2026-05-14`. No Nextflow execution in this session—**no new block in `doc/NF_CMD.md`**.
+
+**Validation:** Manual review of `main.nf` dispatch (`v1_plink`, `test_plink`/`test_thin`, camp mods, `test_common_thin`) and `nextflow.config` parameter names against the new text; no automated test run.
+
+**Outputs / effect:** README now points readers to **`doc/NF_CMD.md`**, **`doc/TODO.md`**, **`tmp/README.md`**, and **`.cursor/rules/workstation-*.mdc`** for commands and policy instead of duplicating long command blocks.
+
+**Risks / follow-ups:** Router-gap mods (`HAIL`, kinship, PS, GWAS, `database`) remain documented only as backlog in README + **`doc/TODO.md`** §2; refresh again when those branches land in `workflow { }`.
+
+---
+
+## 2026-05-15 — OPS-ASSESS-003 — Full `assess_plink_debug.nf` runs (`test_thin`, `test_common_thin`)
+
+**Goal:** Close the validation gap left after OPS-ASSESS-002 (preview + AST only): execute the PLINK2-native assess mini-workflow **without** `-preview` for both test mods so `assess_slice.py` plots and TSVs are materialized under the real `publishDir` tree.
+
+**Why:** Confirms merged `*_test.plink2` under `process/<mod>/` are readable end-to-end and that Python plotting processes complete under conda `stats`.
+
+**Runs (cwd; full commands in `doc/NF_CMD.md` → `### 2026-05-15 — Assess debug …`):**
+1. `…/08stats.genome/24run_assess_plink2_full_test_thin` — `--mod test_thin` — **pass** (exit 0, 8 processes succeeded; wall ~65 s from launcher; Nextflow `succeedDuration` aggregate ~7m 25s in `.nextflow.log`).
+2. `…/08stats.genome/25run_assess_plink2_full_test_common_thin` — `--mod test_common_thin` — **pass** (exit 0, 8 succeeded, succeedDuration ~1m 25s in trace).
+
+**Outputs / format:** Under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/<mod>/`: per-subgenome `*.assess.afreq`, `*.assess.vmiss`, `*.counts.tsv`, `*.mac_site_histogram.tsv`, `*.gq_summary.tsv` (placeholder); `plots/` PNGs (`*.maf_vs_fmiss.scatter.png`, `*.maf.dist.png`, `*.fmiss.dist.png`, `*.maf_bins.bar.png` per `test_*__{A,B,D,Others}` prefix); `info/` joined TSVs (`*.maf_miss.info.tsv`, `*.maf_miss.th.tsv`, `*.counts.echo.tsv`); `logs/` from plot processes.
+
+**Issues:** None blocking. Optional Graphviz missing for DAG render (warn only).
+
+**Risks / follow-ups:** `main.nf` still does not dispatch assess (§8 item remains “router integration optional”); tier-1 slice remains one representative chr per subgenome. Large §9 science backlog unchanged.
+
