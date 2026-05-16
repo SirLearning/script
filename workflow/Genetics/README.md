@@ -1,6 +1,6 @@
 # Genetics Nextflow workflow (`workflow/Genetics/`)
 
-**Documentation policy (`workflow/`):** Under `workflow/`, keep **exactly one** README—**this file** (`workflow/Genetics/README.md`). Do **not** add `README.md` elsewhere under `workflow/` (including `tmp/`, `integrated/`, or deeper subtrees). New workflow topics, tmp entry conventions, and wheat integrated modes belong **here** as new sections or bullets.
+**Documentation policy (`workflow/`):** Canonical workflow docs remain in this file (`workflow/Genetics/README.md`). The nf-core-style quickstart is in `workflow/Genetics/docs/README.md`. Do not add additional READMEs under implementation subtrees (such as `tmp/`, `integrated/`, or deeper legacy folders).
 
 This directory holds the **Genotype** branch of the pipeline: PLINK/PLINK2 preprocessing, per-mod processors, stats (Python/R via `src/`), small **auxiliary** entry scripts under `tmp/`, and **wheat** table/matrix analytics under `integrated/`. This README focuses on what **`main.nf`** runs and how auxiliary scripts are launched.
 

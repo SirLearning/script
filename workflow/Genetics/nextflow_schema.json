@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "workflow/Genetics parameter schema",
+  "description": "Parameter schema for the Genetics Nextflow pipeline.",
+  "type": "object",
+  "properties": {
+    "home_dir": { "type": ["string", "null"] },
+    "src_dir": { "type": ["string", "null"] },
+    "user_dir": { "type": ["string", "null"] },
+    "output_dir": { "type": ["string", "null"] },
+    "mod": {
+      "type": ["string", "null"],
+      "description": "Pipeline mode (e.g. v1_plink, test_plink, test_common_thin, wheat_*)."
+    },
+    "job": { "type": ["string", "null"] },
+    "tool": { "type": ["string", "null"], "default": "plink" },
+    "camp": { "type": ["string", "null"] },
+    "chr": { "type": ["string", "null"] },
+    "process_dir": { "type": ["string", "null"] },
+
+    "wheat_table_input": { "type": ["string", "null"] },
+    "wheat_gwas_genotype": { "type": ["string", "null"] },
+    "wheat_gwas_phenotype": { "type": ["string", "null"] },
+    "wheat_kgwas_kmer_matrix": { "type": ["string", "null"] },
+    "wheat_kgwas_phenotype": { "type": ["string", "null"] },
+
+    "wheat_snp_qc_maf": { "type": "number", "default": 0.05 },
+    "wheat_snp_qc_max_missing": { "type": "number", "default": 0.1 },
+    "wheat_snp_qc_min_qual": { "type": "number", "default": 30.0 },
+    "wheat_pca_n_pcs": { "type": "integer", "default": 10 },
+    "wheat_pca_tsne_perplexity": { "type": "number", "default": 30.0 },
+    "wheat_tagsnp_max_tags": { "type": "integer", "default": 1000 },
+    "wheat_tagsnp_ld_threshold": { "type": "number", "default": 0.8 },
+    "wheat_hapmap_window_size": { "type": "integer", "default": 100000 },
+    "wheat_cnv_del_z": { "type": "number", "default": -2.0 },
+    "wheat_cnv_dup_z": { "type": "number", "default": 2.0 },
+    "wheat_gwas_trait": { "type": "string", "default": "Trait" },
+    "wheat_kgwas_trait": { "type": "string", "default": "Trait" },
+
+    "thin_rate": { "type": "number", "default": 0.001 },
+    "hf_maf": { "type": "number", "default": 0.05 },
+    "hf_geno": { "type": "number", "default": 0.2 },
+    "hf_thin_rate": { "type": "number", "default": 0.005 },
+
+    "ld_window_kb": { "type": "integer", "default": 5000 },
+    "ld_decay_max_kb": { "type": "integer", "default": 5000 },
+    "ld_decay_bin_kb": { "type": "integer", "default": 50 }
+  },
+  "additionalProperties": true
+}
