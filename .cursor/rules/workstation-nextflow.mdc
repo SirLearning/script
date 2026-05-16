@@ -1,6 +1,8 @@
 ---
 description: Nextflow — pipeline layout, conda envs, integration with src/python
-globs: workflow/**/*.nf
+globs:
+  - workflow/**/*.nf
+  - workflow/Genetics/README.md
 alwaysApply: false
 ---
 
@@ -10,7 +12,7 @@ alwaysApply: false
 - **IDE Nextflow plugin — Java:** Set the plugin’s Java environment to `/data/home/tusr1/lib/jvm/jdk-17` (JDK 17) for DSL editing, validation, and runner integration in the IDE.
 - **Run command log (`doc/NF_CMD.md`):** Every time you run Nextflow for this repo (or a human does), append a new dated block at the **end** of `doc/NF_CMD.md` in **chronological order** (see file intro): full `nextflow run ...` line(s), working directory and outcome when useful, and when using `screen`, the full `screen ... bash -c "..."` wrapper (or equivalent). Write log prose in **English** (see workstation-core: repository language). Do not leave undocumented ad-hoc production runs.
 - **Progress log (`doc/TODO_PROGRESS_LOG.md`):** When a change ships with a mini-workflow or closes TODO items, append a section per **workstation-core**: narrative (goals, diffs and why, pass/fail, failures and fixes, artefact layout). Record **working directories** for runs; **do not** duplicate full command blocks that already belong in **`doc/NF_CMD.md`**—cross-reference that file instead.
-- **Partial reruns — mini-workflow:** To rerun a **subset** of steps (e.g. only LD plotting) with existing `process/<mod>/` artifacts, add or use a **small Nextflow entry** under `workflow/Genetics/tmp/` that `include`s the existing `process` definitions and builds input channels from known paths—**not** ad-hoc `python -c` drivers. Use `-c` with an absolute path to `workflow/Genetics/nextflow.config`. Log each run in `doc/NF_CMD.md` (and `doc/TODO_PROGRESS_LOG.md` when the mini-workflow ships with repo changes). Examples: `tmp/ld_plots_redraw.nf`, `tmp/assess_plink_debug.nf`.
+- **Partial reruns — mini-workflow:** To rerun a **subset** of steps (e.g. only LD plotting) with existing `process/<mod>/` artifacts, add or use a **small Nextflow entry** under `workflow/Genetics/tmp/` that `include`s the existing `process` definitions and builds input channels from known paths—**not** ad-hoc `python -c` drivers. Use `-c` with an absolute path to `workflow/Genetics/nextflow.config`. Log each run in `doc/NF_CMD.md` (and `doc/TODO_PROGRESS_LOG.md` when the mini-workflow ships with repo changes). Examples: `tmp/ld_plots_redraw.nf`, `tmp/assess_plink_debug.nf`. Conventions for `tmp/*.nf` and wheat integrated modes are documented only in **`workflow/Genetics/README.md`** (single README under `workflow/`; see **workstation-core** repo map).
 
 - Pipelines live under `workflow/Genetics/` (`Genotype`, `Static`, `Dynamic` themes).
 - Processes should invoke `src/python`, `src/r`, or `src/java` tools with I/O suitable for Nextflow (files, channels, stdin/stdout as designed).

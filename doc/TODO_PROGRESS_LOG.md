@@ -230,3 +230,10 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 **Risks / follow-ups:** `main.nf` still does not dispatch assess (§8 item remains “router integration optional”); tier-1 slice remains one representative chr per subgenome. Large §9 science backlog unchanged.
 
+---
+
+## 2026-05-16 — WF-DOC-README-001 — Consolidate `workflow/` documentation into `workflow/Genetics/README.md`
+
+**Goal:** Keep **one** README under `workflow/` (`workflow/Genetics/README.md`); merge content from `workflow/Genetics/integrated/README.md` and `workflow/Genetics/tmp/README.md`, delete those files, and encode the rule in **`.cursor/rules/workstation-core.mdc`**, **`.cursor/rules/workstation-nextflow.mdc`**, and cross-references (`main.nf`, `nextflow.config`, `tmp/ld_plots_redraw.nf`, `.cursor/skills/todo-drive-close/SKILL.md`).
+
+**Validation:** Grep confirms no remaining `README.md` under `workflow/` except `Genetics/README.md`; doc-only.

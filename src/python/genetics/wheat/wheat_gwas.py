@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
@@ -70,17 +69,3 @@ def run_gwas(genotype_file, phenotype_file, output_prefix, trait='Trait'):
         xlabel='Marker Index',
         ylabel='-log10(P)',
     )
-
-
-def main():
-    p = argparse.ArgumentParser(description='WWWG2B-style GWAS core workflow (Python implementation)')
-    p.add_argument('--genotype', required=True)
-    p.add_argument('--phenotype', required=True)
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--trait', default='Trait')
-    args = p.parse_args()
-    run_gwas(args.genotype, args.phenotype, args.output_prefix, trait=args.trait)
-
-
-if __name__ == '__main__':
-    main()

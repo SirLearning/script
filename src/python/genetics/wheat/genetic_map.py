@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
@@ -63,14 +62,3 @@ def run_genetic_map(input_file, output_prefix):
             y_label='Genetic Distance (cM)',
         )
 
-
-def main():
-    p = argparse.ArgumentParser(description='WatSeqAnalysis-style genetic map analysis')
-    p.add_argument('--input', required=True)
-    p.add_argument('--output-prefix', required=True)
-    args = p.parse_args()
-    run_genetic_map(args.input, args.output_prefix)
-
-
-if __name__ == '__main__':
-    main()

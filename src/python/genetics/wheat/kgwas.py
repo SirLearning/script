@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
@@ -54,16 +53,3 @@ def run_kgwas(kmer_matrix_file, phenotype_file, output_prefix, trait='Trait'):
     obs = -np.log10(np.sort(out['PVALUE'].values))
     plot_gwas_qq(exp, obs, title='kGWAS QQ Plot', filename=f'{output_prefix}.qq.png')
 
-
-def main():
-    p = argparse.ArgumentParser(description='WatSeqAnalysis-style kGWAS')
-    p.add_argument('--kmer-matrix', required=True)
-    p.add_argument('--phenotype', required=True)
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--trait', default='Trait')
-    args = p.parse_args()
-    run_kgwas(args.kmer_matrix, args.phenotype, args.output_prefix, trait=args.trait)
-
-
-if __name__ == '__main__':
-    main()

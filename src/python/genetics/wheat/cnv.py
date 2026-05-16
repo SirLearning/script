@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import pandas as pd
 from infra.utils.io import load_df_generic, save_df_to_tsv
@@ -59,17 +58,3 @@ def run_cnv_calling(input_file, output_prefix, del_z=-2.0, dup_z=2.0):
             {'value': float(dup_z), 'label': f'DUP >= {dup_z}', 'color': 'blue', 'linestyle': '--'},
         ],
     )
-
-
-def main():
-    p = argparse.ArgumentParser(description='WWWG2B-style CNV calling from normalized depth')
-    p.add_argument('--input', required=True)
-    p.add_argument('--output-prefix', required=True)
-    p.add_argument('--del-z', type=float, default=-2.0)
-    p.add_argument('--dup-z', type=float, default=2.0)
-    args = p.parse_args()
-    run_cnv_calling(args.input, args.output_prefix, del_z=args.del_z, dup_z=args.dup_z)
-
-
-if __name__ == '__main__':
-    main()
