@@ -92,6 +92,18 @@ Path: `workflow/Genetics/dynamic/`
 *   **`kinship.nf`**: Kinship analysis.
 *   **`xp_clr.nf`**: Selective sweep analysis.
 
+### Integrated Wheat Genetics (WWWG2B + WatSeqAnalysis style)
+Path: `workflow/Genetics/integrated/`
+
+*   **`snp_qc/`**: SNP calling QC post-filtering workflow.
+*   **`hapmap/`**: HAPMAP block construction workflow.
+*   **`pca_tsne/`**: Population structure analysis with PCA and t-SNE.
+*   **`gwas/`**: Python GWAS workflow and QQ/Manhattan-like visualization.
+*   **`tagsnp/`**: tagSNP selection workflow.
+*   **`cnv/`**: CNV detection from normalized depth matrix.
+*   **`kgwas/`**: k-mer GWAS workflow.
+*   **`genetic_map/`**: Genetic map analysis workflow.
+
 ## 📦 Source Code Library (Src)
 
 ### Python (`src/python`)
