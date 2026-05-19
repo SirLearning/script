@@ -1,16 +1,21 @@
 nextflow.enable.dsl=2
 
-include { plink_processor as PLINK_PROCESSOR } from '../../genotype/processor.nf'
-include { plink_stats as PLINK_STATS } from '../../genotype/stats.nf'
-include { test_plink_processor as TEST_PLINK_PROCESSOR } from '../../genotype/processor.nf'
-include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from '../../genotype/processor.nf'
-include { test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR } from '../../genotype/processor.nf'
-include { test_plink_stats as TEST_PLINK_STATS } from '../../genotype/stats.nf'
-include { database as DATABASE } from '../../genotype/database.nf'
-include { kinship as KINSHIP } from '../../dynamic/kinship.nf'
-include { population_structure as POPULATION_STRUCTURE } from '../../dynamic/ps.nf'
-include { GWAS } from '../../static/gwas/gwas.nf'
-include { HAIL } from '../../genotype/hail.nf'
+/*
+ * Composed DSL2 workflows for PLINK / PLINK2 genotype tracks (non-wheat modes).
+ * Process definitions live under workflow/Genetics/modules/local/{genotype,dynamic,static,integrated}/.
+ */
+
+include { plink_processor as PLINK_PROCESSOR } from '../../modules/local/genotype/processor.nf'
+include { plink_stats as PLINK_STATS } from '../../modules/local/genotype/stats.nf'
+include { test_plink_processor as TEST_PLINK_PROCESSOR } from '../../modules/local/genotype/processor.nf'
+include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from '../../modules/local/genotype/processor.nf'
+include { test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR } from '../../modules/local/genotype/processor.nf'
+include { test_plink_stats as TEST_PLINK_STATS } from '../../modules/local/genotype/stats.nf'
+include { database as DATABASE } from '../../modules/local/genotype/database.nf'
+include { kinship as KINSHIP } from '../../modules/local/dynamic/kinship.nf'
+include { population_structure as POPULATION_STRUCTURE } from '../../modules/local/dynamic/ps.nf'
+include { GWAS } from '../../modules/local/static/gwas/gwas.nf'
+include { HAIL } from '../../modules/local/genotype/hail.nf'
 
 workflow RUN_V1_PLINK {
     take:
@@ -62,7 +67,6 @@ workflow RUN_TEST_PLINK_CAMP {
         processor_out.afreq,
         processor_out.hardy)
 }
-
 workflow RUN_TEST_COMMON_THIN {
     take:
     ch_vcf
@@ -79,3 +83,4 @@ workflow RUN_TEST_COMMON_THIN {
         processor_out.afreq,
         processor_out.hardy)
 }
+

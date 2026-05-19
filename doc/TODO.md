@@ -40,8 +40,8 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 
 `workflow { }` selects `params.mod` after `check_input` builds `ch_vcf` (optional `--chr` filter).
 
-- [x] `main.nf` dispatches: `v1_plink` \| `test_plink` / `test_thin` \| `test_plink_camp` / `test_camp` \| `test_common_thin`
-- [x] Freeze `test_plink` / `test_plink_camp` entry points and command baseline (`main.nf` example 20260401.1)
+- [x] `main.nf` dispatches (VCF/PLINK branch): `v1_plink` \| `test_thin` \| `test_camp` \| `test_common_thin` (plus `wheat_*` integrated branch)
+- [x] Canonical `--mod` names for test tracks: `test_thin`, `test_camp` (historic `doc/NF_CMD.md` examples may still show `test_plink` / `test_plink_camp`; use the canonical names for new runs)
 - [x] Fixed test input dir: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process` (read-only) (LogRef: 2026-04-22)
 - [x] Fixed VCF root: `/data1/dazheng_tusr1/vmap4.VCF.v1` (read-only) (LogRef: 2026-04-22)
 - [x] A / B / D / Others + `A_test.` prefix conventions frozen (LogRef: 2026-04-22)
@@ -88,7 +88,7 @@ Sub-workflows run **in this order** inside each test path: **input pfiles** → 
 
 ## 5. Stats — `test_plink_stats` (`genotype/stats.nf`)
 
-Runs **after** any of **§4.1–4.3** (`main.nf` workflows `test_plink`, `test_plink_camp`, `test_common_thin`). Order in code: **sample** pipelines → **variant** stats → **LD** plots.
+Runs **after** any of **§4.1–4.3** (`main.nf` mods `test_thin`, `test_camp`, `test_common_thin`). Order in code: **sample** pipelines → **variant** stats → **LD** plots.
 
 ### 5.1 Sample-level (Python `stats` env)
 
@@ -153,7 +153,7 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 
 ## 8. Parallel / legacy modules (not on current router)
 
-- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq`/`--missing`, MAF bins from `.afreq`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); full `main.nf` router integration still optional. Full non-preview runs re-validated 2026-05-15 — `doc/TODO_PROGRESS_LOG.md`, `doc/NF_CMD.md`.
+- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq counts`/`--missing`, MAF bins from `.acount`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); MAC/singleton tables 2026-05-17; full `main.nf` router integration still optional. Full non-preview runs re-validated 2026-05-15 — `doc/TODO_PROGRESS_LOG.md`, `doc/NF_CMD.md`.
 - [x] Hail scaffold: `genotype/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
 
 ---
@@ -164,9 +164,9 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 
 - [x] Assess inputs: fixed test dir only; do not rebuild test VCFs (LogRef: 2026-04-22)
 - [x] Core plot: variance vs depth (aberrant sites / repeats)
-- [x] Tier-1 assess debug (both mods): `workflow/Genetics/tmp/assess_plink_debug.nf` — per-subgenome PLINK2 representative chr (`A=1`, `B=3`, `D=5`, `Others=0`) on `*_test.plink2`, `--freq`/`--missing`, MAF-bin TSV from `.afreq`, `src/python/genetics/genomics/variant/assess_slice.py` + `infra.utils.graph` under `assess/<mod>/plots` and `assess/<mod>/info` (LogRef: 2026-05-14)
-- [ ] Singletons: counts and distribution
-	- [x] Debug slice: MAF-bin counts + joined MAF / `F_MISS` from PLINK2 `.afreq`/`.vmiss` + Python QC plots (`assess_slice.py`; FORMAT/GQ not on pfile path — placeholder summary retained)
+- [x] Tier-1 assess debug (both mods): `workflow/Genetics/tmp/assess_plink_debug.nf` — per-subgenome PLINK2 representative chr (`A=1`, `B=3`, `D=5`, `Others=0`) on `*_test.plink2`, `--freq counts`/`--missing`, MAF-bin TSV from `.acount`, `src/python/genetics/genomics/variant/assess_slice.py` + `infra.utils.graph` under `assess/<mod>/plots` and `assess/<mod>/info` (LogRef: 2026-05-14, singleton/MAC summaries 2026-05-17)
+- [x] Singletons: counts and distribution — PLINK2 `--freq counts` (`.acount`) + `assess_slice.py` MAC buckets, singleton fraction TSV, MAC bar/histogram (representative-chr slice; LogRef: 2026-05-17)
+	- [x] Debug slice: MAF-bin counts + joined MAF / MAC / `F_MISS` from PLINK2 `.acount`/`.vmiss` + Python QC plots (`assess_slice.py`; FORMAT/GQ not on pfile path — placeholder summary retained)
 	- [ ] Effect on LD
 	- [ ] Sample size vs variant discovery
 	- [ ] Why singletons are scarce
@@ -221,4 +221,4 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 
 - [ ] Scale GBS sample size
 - [ ] Step-3 direct scan: runtime / logic differences?
-- [ ] Optional CI smoke: `test_plink` dry run or `-stub-run` when CI paths exist
+- [ ] Optional CI smoke: `test_thin` dry run or `-stub-run` when CI paths exist

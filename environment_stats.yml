@@ -23,6 +23,7 @@ dependencies:
   - fastqc
   - plink
   - plink2
+  - gcta
   - samtools
   - bcftools
   - vcftools

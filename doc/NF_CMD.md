@@ -2,6 +2,8 @@
 
 Chronological log of **Nextflow** command lines for `workflow/Genetics`. Append **new runs at the end** with a `### YYYY-MM-DD` (or dated tag) heading, optional one-line working directory / outcome, then a fenced `bash` block. See `.cursor/rules/workstation-nextflow.mdc`.
 
+**Router (VCF/PLINK branch, `main.nf`):** As of **2026-05-16**, only `--mod v1_plink`, `test_thin`, `test_camp`, and `test_common_thin` are dispatched (plus any `wheat_*` integrated mod). Older blocks below may still use `--mod test_plink` or `test_plink_camp`; for **new** full-pipeline runs, substitute **`test_thin`** and **`test_camp`** respectively (same processor workflows; `job` / `output_dir` paths are unchanged).
+
 **Note:** Stats processes often use `publishDir` with `mode: 'copy'`. Changing `output_prefix` produces **new** filenames under `stats/.../plots` (and related dirs) but **does not delete** older PNG/TSV names. If plots “look unchanged,” confirm you are opening files whose basenames match the **current** prefix (e.g. `*.variant.ld_decay.*`), not leftover files from an older prefix.
 
 ---
@@ -265,6 +267,174 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debu
   --home_dir /data/home/tusr1/01projects/vmap4 \
   --user_dir /data/home/tusr1 \
   --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-16 — Wheat PCA/t-SNE from merged PLINK2 (`tmp/wheat_integrated_from_plink.nf`), `test_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/26run_wheat_pca_test_thin`. Outcome: **8** succeeded (~12m 30s). Genotype matrices: `test_plink/process/test_thin/integrated/geno_matrix/`; PCA/t-SNE: `test_plink/integrated/test_thin/{info,plots}/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/26run_wheat_pca_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-16 — Wheat PCA/t-SNE from merged PLINK2 (`tmp/wheat_integrated_from_plink.nf`), `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/27run_wheat_pca_test_common_thin`. Outcome: **8** succeeded (~11m 1s). Genotype matrices: `test_plink/process/test_common_thin/integrated/geno_matrix/`; PCA/t-SNE: `test_plink/integrated/test_common_thin/{info,plots}/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/27run_wheat_pca_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-17 — Assess debug (`tmp/assess_plink_debug.nf`) — revalidation `test_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/28run_assess_revalidate_test_thin`. Outcome: exit 0, **8** succeeded; wall ~1m 14s; Nextflow trace `succeedDuration` ~9m 19s (aggregate). Published refreshed artefacts under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_thin/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/28run_assess_revalidate_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-17 — Assess debug (`tmp/assess_plink_debug.nf`) — revalidation `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/29run_assess_revalidate_test_common_thin`. Outcome: exit 0, **8** succeeded; wall ~23s; Nextflow trace `succeedDuration` ~1m 9s (aggregate). Published refreshed artefacts under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_common_thin/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/29run_assess_revalidate_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-17 — Assess debug (`tmp/assess_plink_debug.nf`) — PLINK2 `--freq counts` + MAC / singleton summaries (`test_thin`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/30run_assess_singleton_mac_test_thin`. Outcome: exit 0, **8** succeeded; aggregate `succeedDuration` ~1m 32s. Publishes `.acount`, `*.singleton_mac.summary.tsv`, `*.mac_category_counts.tsv`, `*.mac_category.bar.png`, `*.mac.dist.png`, plus existing assess plot/table names under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_thin/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/30run_assess_singleton_mac_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-17 — Assess debug (`tmp/assess_plink_debug.nf`) — PLINK2 `--freq counts` + MAC / singleton summaries (`test_common_thin`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/31run_assess_singleton_mac_test_common_thin`. Outcome: exit 0, **8** succeeded. Same artefact layout under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_common_thin/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/31run_assess_singleton_mac_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-17 — Output naming refactor: assess (subgenome-only) + wheat-from-PLINK (`integrated/<plink_mod>/<wheat_mod>/`)
+
+**Intent:** Drop redundant `job` / PLINK-`mod` / `test_*__` prefixes from artefact **basenames**; **paths** carry `job` and assess PLINK `mod`. Wheat-from-PLINK **plots/tables** publish under **`…/integrated/{plink_source_mod}/{wheat_task_mod}/`** so `test_thin` and `test_common_thin` do not collide. **`plink2_pca`** uses **`--pca approx`** (valid PLINK 2.0 syntax; avoids GRM NaN with extreme missingness). Prior `test_plink/integrated/*` and assess outputs for the two test mods were removed before regenerate.
+
+**Assess** — cwds `…/32run_assess_naming_test_thin`, `…/33run_assess_naming_test_common_thin`; example `A.assess.maf.dist.png` under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/{test_thin,test_common_thin}/`.
+
+**Wheat PCA** — cwds `…/39run_wheat_layout_test_thin`, `…/40run_wheat_layout_test_common_thin`; example `…/integrated/test_thin/wheat_pca_tsne/plots/A.pca.png`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/32run_assess_naming_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/33run_assess_naming_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/assess_plink_debug.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/39run_wheat_layout_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/40run_wheat_layout_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
   --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
   --job test_plink \
   --mod test_common_thin

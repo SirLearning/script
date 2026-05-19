@@ -2,12 +2,13 @@ nextflow.enable.dsl=2
 
 /*
  * Debug assess track for test_thin / test_common_thin:
- * PLINK2 --freq / --missing on a narrow chromosome slice from existing *_test.plink2,
- * MAF-bin table from .afreq (no bcftools), then Python plots via infra.utils.graph.
+ * PLINK2 --freq counts / --missing on a narrow chromosome slice from existing *_test.plink2,
+ * MAF-bin table from .acount (no bcftools), singleton / MAC summaries in Python, then
+ * plots via infra.utils.graph.
  *
  * Per subgenome, one representative PLINK chromosome: A=1, B=3, D=5, Others=0.
  */
-include { plink2_assess_debug_slice } from '../genotype/assess.nf'
+include { plink2_assess_debug_slice } from '../modules/local/genotype/assess.nf'
 
 process assess_plink_debug_plots {
     tag "assess plots ${id}"
@@ -20,7 +21,7 @@ process assess_plink_debug_plots {
     publishDir "${params.output_dir}/${params.job}/assess/${params.mod}/logs", mode: 'copy', pattern: "*.log"
 
     input:
-    tuple val(id), path(afreq), path(vmiss), path(counts), path(mac_hist), path(gq_summary)
+    tuple val(id), path(acount), path(vmiss), path(counts), path(mac_hist), path(gq_summary)
 
     output:
     path("*.png"), emit: plots
@@ -37,7 +38,7 @@ process assess_plink_debug_plots {
     from genetics.genomics.variant.assess_slice import ana_assess_plink_debug_slice
 
     ana_assess_plink_debug_slice(
-        afreq_path="${afreq}",
+        acount_path="${acount}",
         vmiss_path="${vmiss}",
         mac_hist_path="${mac_hist}",
         counts_path="${counts}",
@@ -64,8 +65,6 @@ workflow {
     def ch_in = channel.from(sub.collect { sg -> tuple(sg, "${sg}_test.plink2", chrPick[sg]) })
     plink2_assess_debug_slice(ch_in)
     def b = plink2_assess_debug_slice.out.bundle
-    def plot_in = b.map { id, af, vm, co, mh, gq ->
-        tuple("${params.mod}__${id}", af, vm, co, mh, gq)
-    }
+    def plot_in = b.map { id, ac, vm, co, mh, gq -> tuple(id, ac, vm, co, mh, gq) }
     assess_plink_debug_plots(plot_in)
 }

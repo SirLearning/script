@@ -1,14 +1,14 @@
 nextflow.enable.dsl=2
 
-include { RUN_V1_PLINK } from '../../modules/local/genotype_modules.nf'
-include { RUN_TEST_PLINK } from '../../modules/local/genotype_modules.nf'
-include { RUN_TEST_PLINK_CAMP } from '../../modules/local/genotype_modules.nf'
-include { RUN_TEST_COMMON_THIN } from '../../modules/local/genotype_modules.nf'
-include { RUN_WHEAT_INTEGRATED } from '../../modules/local/wheat_modules.nf'
+/*
+ * Shared helpers for the Genetics entry: logging banner, CLI help text, and VCF channel setup.
+ * The anonymous top-level workflow in main.nf performs mode routing; this file only supplies
+ * functions and the check_input workflow.
+ */
 
-include { getJobConfig } from '../../genotype/utils.nf'
-include { getVcfIdFromPath } from '../../genotype/utils.nf'
-include { getRefV1SubChr } from '../../genotype/utils.nf'
+include { getJobConfig } from '../../modules/local/genotype/utils.nf'
+include { getVcfIdFromPath } from '../../modules/local/genotype/utils.nf'
+include { getRefV1SubChr } from '../../modules/local/genotype/utils.nf'
 
 def header() {
     return """
@@ -28,21 +28,21 @@ def helpMessage() {
     Required params:
         --home_dir <dir>      Home directory for predefined modules
         --src_dir <dir>       Source directory for scripts and resources
-        --mod <string>        Predefined module name for input data (v1_plink, test_plink, test_thin,
-                              test_plink_camp, test_camp, test_common_thin, or wheat_* integrated modes)
+        --mod <string>        VCF/PLINK router: v1_plink, test_thin, test_camp, test_common_thin; or
+                              wheat_* integrated modes (table/matrix track, no VCF channel)
         --job <string>        Job name/ID (default: genotype_<mod>)
         --tool <string>       Tool to use (plink, hail). Default: plink
 
     Wheat integrated (`wheat_*` mods): `--home_dir` / `--src_dir` are unused; require `--output_dir`,
         `--job`, `--user_dir` (Conda stats env), and the task-specific `wheat_*` input params from
-        `nextflow.config` / CLI (see `workflow/Genetics/README.md`, Wheat integrated section).
+        `nextflow.config` / CLI (see workflow/Genetics/docs/GENETICS_WORKFLOW.md, Wheat integrated section).
 
     Options:
         --output_dir <dir>    Directory to output results
         --help                This usage statement
 
     Examples:
-        nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod test_plink --job test
+        nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod test_thin --job myjob
 
     Chronological Nextflow command log (append each new run at the end):
         See repo file doc/NF_CMD.md.
@@ -111,38 +111,4 @@ workflow check_input {
 
     emit:
     vcf = ch_vcf
-}
-
-workflow GENETICS_PIPELINE {
-    main:
-    if (params.mod != null && params.mod.toString().startsWith('wheat_')) {
-        log.info header()
-        if (params.help) {
-            helpMessage()
-            exit 0
-        }
-        log.info "${params.c_purple}Wheat integrated analytics (${params.mod}).${params.c_reset}"
-        RUN_WHEAT_INTEGRATED()
-    } else {
-        def input_out = check_input()
-        def ch_vcf = input_out.vcf
-
-        log.info "${params.c_purple}Process all vcf with plink / plink2 tools.${params.c_reset}"
-        if (params.mod == 'v1_plink') {
-            log.info "${params.c_yellow}Using PLINK PROCESS module.${params.c_reset}"
-            RUN_V1_PLINK(ch_vcf)
-        } else if (params.mod == 'test_plink' || params.mod == 'test_thin') {
-            log.info "${params.c_yellow}Using PLINK TEST module.${params.c_reset}"
-            RUN_TEST_PLINK(ch_vcf)
-        } else if (params.mod == 'test_plink_camp' || params.mod == 'test_camp') {
-            log.info "${params.c_yellow}Using PLINK TEST CAMP module.${params.c_reset}"
-            camp_vmap4_map_tsv = file(params.camp)
-            RUN_TEST_PLINK_CAMP(ch_vcf, camp_vmap4_map_tsv)
-        } else if (params.mod == 'test_common_thin') {
-            log.info "${params.c_yellow}Using PLINK COMMON-THIN TEST module.${params.c_reset}"
-            RUN_TEST_COMMON_THIN(ch_vcf)
-        } else {
-            log.info "${params.c_yellow}No workflow module was chosen.${params.c_reset}"
-        }
-    }
 }

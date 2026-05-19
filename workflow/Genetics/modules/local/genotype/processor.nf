@@ -1,6 +1,12 @@
 nextflow.enable.dsl=2
 
-include { getTigerJarConfig; hasMergedSubgenomeTestPfiles; listMergedSubgenomeTestPfileTuples; listMergedSubgenomeTestBfileTuples } from './utils.nf'
+include {
+    getTigerJarConfig
+    hasMergedSubgenomeTestPfiles
+    hasPlinkBasicInfoForMergedTests
+    listMergedSubgenomeTestPfileTuples
+    listMergedSubgenomeTestBfileTuples
+} from './utils.nf'
 include { getPopDepTaxaBamFile_v1 } from './utils.nf'
 include { getRefV1ChrLength } from './utils.nf'
 include { getRefV1ChrName } from './utils.nf'
@@ -25,8 +31,21 @@ workflow test_plink_processor {
         log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip per-chr thin + merge)"
         merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
         merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
-        log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
-        basic_info_out = mk_plink_basic_info(merge_pfile)
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant and sample/${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
         ld_out = calc_plink_ld_unphased(merge_pfile)
         ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
     } else if (params.process_dir) {
@@ -196,8 +215,21 @@ workflow test_common_thin_processor {
         log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip common-thin + merge)"
         merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
         merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
-        log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
-        basic_info_out = mk_plink_basic_info(merge_pfile)
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant and sample/${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
         ld_out = calc_plink_ld_unphased(merge_pfile)
         ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
     } else if (params.process_dir) {
@@ -834,6 +866,117 @@ process mk_plink_basic_info_camp_pop {
     """
 }
 
+process plink2_pca {
+    tag "plink2 pca: ${id}"
+    label 'cpus_8'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/process/${params.wheat_plink_source_mod ?: params.mod}/integrated/pca", mode: 'copy', pattern: "*.{eigenvec,eigenval,log}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.wheat_plink_source_mod ?: params.mod}/integrated/pca/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.pca.eigenvec"), path("${id}.pca.eigenval"), emit: pca
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink2_pca.log 2>&1
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --pca approx ${params.wheat_pca_n_pcs} \\
+        --threads ${task.cpus} \\
+        --out ${id}.pca
+    """
+}
+
+process plink2_tagsnp_prune {
+    tag "plink2 tagsnp: ${id}"
+    label 'cpus_8'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/process/${params.wheat_plink_source_mod ?: params.mod}/integrated/tagsnp", mode: 'copy', pattern: "*.{prune.in,prune.out,log}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.wheat_plink_source_mod ?: params.mod}/integrated/tagsnp/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.tagsnp.prune.in"), emit: prune
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink2_tagsnp.log 2>&1
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --indep-pairwise 50 5 ${params.wheat_tagsnp_ld_threshold} \\
+        --threads ${task.cpus} \\
+        --out ${id}.tagsnp
+    """
+}
+
+process awk_depth_cnv_call {
+    tag "awk cnv"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/integrated/${params.mod}/compute", mode: 'copy', pattern: "*.cnv.tsv"
+
+    input:
+    path depth_matrix
+    val output_prefix
+
+    output:
+    path "${output_prefix}.cnv.tsv", emit: cnv
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${output_prefix}.cnv.log 2>&1
+    awk -F'\\t' -v del_z=${params.wheat_cnv_del_z} -v dup_z=${params.wheat_cnv_dup_z} '
+    NR==FNR && FNR==1 {
+        for (i=4; i<=NF; i++) { sn[i]=\$i; sum[i]=0; sumsq[i]=0; n[i]=0 }
+        next
+    }
+    NR==FNR && FNR>1 {
+        for (i=4; i<=NF; i++) {
+            v=\$i+0
+            if (v==v) { sum[i]+=v; sumsq[i]+=v*v; n[i]++ }
+        }
+        next
+    }
+    FNR==1 && NR!=FNR {
+        for (i=4; i<=NF; i++) {
+            if (n[i]>1) { mu[i]=sum[i]/n[i]; sd[i]=sqrt((sumsq[i]-n[i]*mu[i]*mu[i])/(n[i]-1)) }
+            else if (n[i]==1) { mu[i]=sum[i]; sd[i]=0 }
+            else { mu[i]=0; sd[i]=0 }
+        }
+        print "Sample\\tCHR\\tSTART\\tEND\\tZScore\\tCNVType"
+        next
+    }
+    FNR>1 && NR!=FNR {
+        chr=\$1; st=\$2; en=\$3
+        for (i=4; i<=NF; i++) {
+            v=\$i+0
+            if (v!=v) continue
+            z=(sd[i]>0)?(v-mu[i])/sd[i]:0
+            state="NORMAL"
+            if (z<=del_z) state="DELETION"
+            else if (z>=dup_z) state="DUPLICATION"
+            if (state!="NORMAL")
+                print sn[i]"\\t"chr"\\t"st"\\t"en"\\t"z"\\t"state
+        }
+    }' "${depth_matrix}" "${depth_matrix}" > ${output_prefix}.cnv.tsv
+    """
+}
+
+/*
+ * Single PLINK2 pass for per-dataset summary statistics on pfiles.
+ * Flags: --missing, --sample-counts, --geno-counts, --freq, --hardy.
+ * Downstream modules (stats, wheat_snp_qc, assess) must reuse
+ * process/<mod>/sample/*.info.{smiss,scount} and variant/*.info.{vmiss,gcount,afreq,hardy}
+ * instead of re-running --freq/--missing. Mode-specific flags (--pca, --indep-pairwise,
+ * --r2-unphased, --glm) stay in dedicated processes.
+ */
 process mk_plink_basic_info {
     tag "make plink basic info: ${chr}"
     publishDir "${params.output_dir}/${params.job}/process/${params.mod}/sample", mode: 'copy', pattern: "*.{smiss,scount}"

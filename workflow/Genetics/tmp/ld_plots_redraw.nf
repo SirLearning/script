@@ -6,9 +6,9 @@ nextflow.enable.dsl=2
  *   ${params.output_dir}/${params.job}/process/${params.mod}/variant/
  * for subgenomes A, B, D, Others.
  *
- * Config: pass -c /path/to/workflow/Genetics/nextflow.config (see workflow/Genetics/README.md, Auxiliary entry scripts).
+ * Config: pass -c /path/to/workflow/Genetics/nextflow.config (see workflow/Genetics/docs/GENETICS_WORKFLOW.md, Auxiliary entry scripts).
  */
-include { variant_ld_decay_plot; variant_ld_crosschr_plot } from '../genotype/stats.nf'
+include { variant_ld_decay_plot; variant_ld_crosschr_plot } from '../modules/local/genotype/stats.nf'
 
 workflow {
     if (!params.mod) {

@@ -10,12 +10,13 @@
     "output_dir": { "type": ["string", "null"] },
     "mod": {
       "type": ["string", "null"],
-      "description": "Pipeline mode (e.g. v1_plink, test_plink, test_common_thin, wheat_*)."
+      "description": "Pipeline mode: VCF/PLINK branch — v1_plink, test_thin, test_camp, test_common_thin; or wheat_* integrated modes."
     },
     "job": { "type": ["string", "null"] },
     "tool": { "type": ["string", "null"], "default": "plink" },
     "camp": { "type": ["string", "null"] },
     "chr": { "type": ["string", "null"] },
+    "help": { "type": "boolean", "default": false, "description": "Print usage and exit when true." },
     "process_dir": { "type": ["string", "null"] },
 
     "wheat_table_input": { "type": ["string", "null"] },
@@ -28,7 +29,25 @@
     "wheat_snp_qc_max_missing": { "type": "number", "default": 0.1 },
     "wheat_snp_qc_min_qual": { "type": "number", "default": 30.0 },
     "wheat_pca_n_pcs": { "type": "integer", "default": 10 },
-    "wheat_pca_tsne_perplexity": { "type": "number", "default": 30.0 },
+    "wheat_gcta_bin": { "type": "string", "default": "gcta64" },
+    "wheat_gwas_tool": { "type": "string", "default": "plink2", "enum": ["plink2", "gcta"] },
+    "wheat_afreq_input": { "type": ["string", "null"] },
+    "wheat_vmiss_input": { "type": ["string", "null"] },
+    "wheat_prune_in": { "type": ["string", "null"] },
+    "wheat_plink_eigenvec": { "type": ["string", "null"] },
+    "wheat_plink_eigenval": { "type": ["string", "null"] },
+    "wheat_gwas_association": { "type": ["string", "null"] },
+    "wheat_map_input": { "type": ["string", "null"] },
+    "wheat_hapmap_input": { "type": ["string", "null"] },
+    "wheat_kgwas_glm": { "type": ["string", "null"] },
+    "wheat_plink_source_mod": {
+      "type": ["string", "null"],
+      "description": "Genotype process mod supplying merged *_test.plink2 (e.g. test_thin, test_common_thin) for wheat_* matrix export."
+    },
+    "wheat_integrated_mod": {
+      "type": ["string", "null"],
+      "description": "Wheat analytic mod when using tmp/wheat_integrated_from_plink.nf (e.g. wheat_pca_tsne); params.mod stays the PLINK source mod."
+    },
     "wheat_tagsnp_max_tags": { "type": "integer", "default": 1000 },
     "wheat_tagsnp_ld_threshold": { "type": "number", "default": 0.8 },
     "wheat_hapmap_window_size": { "type": "integer", "default": 100000 },
@@ -44,7 +63,17 @@
 
     "ld_window_kb": { "type": "integer", "default": 5000 },
     "ld_decay_max_kb": { "type": "integer", "default": 5000 },
-    "ld_decay_bin_kb": { "type": "integer", "default": 50 }
+    "ld_decay_bin_kb": { "type": "integer", "default": 50 },
+
+    "c_reset": { "type": "string", "description": "ANSI reset (terminal log styling)." },
+    "c_dim": { "type": "string", "description": "ANSI dim (terminal log styling)." },
+    "c_black": { "type": "string", "description": "ANSI black (terminal log styling)." },
+    "c_green": { "type": "string", "description": "ANSI green (terminal log styling)." },
+    "c_yellow": { "type": "string", "description": "ANSI yellow (terminal log styling)." },
+    "c_blue": { "type": "string", "description": "ANSI blue (terminal log styling)." },
+    "c_purple": { "type": "string", "description": "ANSI magenta (terminal log styling)." },
+    "c_cyan": { "type": "string", "description": "ANSI cyan (terminal log styling)." },
+    "c_white": { "type": "string", "description": "ANSI white (terminal log styling)." }
   },
   "additionalProperties": true
 }

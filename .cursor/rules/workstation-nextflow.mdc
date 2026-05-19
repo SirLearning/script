@@ -2,23 +2,41 @@
 description: Nextflow — pipeline layout, conda envs, integration with src/python
 globs:
   - workflow/**/*.nf
-  - workflow/Genetics/README.md
+  - workflow/Genetics/docs/GENETICS_WORKFLOW.md
+  - workflow/Genetics/docs/**/*.md
 alwaysApply: false
 ---
 
 # Nextflow conventions
 
+## `workflow/Genetics` — nf-core-inspired layout (terminology and boundaries)
+
+This pipeline uses an **nf-core-like folder split** (`conf/`, `modules/`, `subworkflows/`, `docs/`, `tests/`). **Active** `process` definitions live under **`workflow/Genetics/modules/local/{genotype,dynamic,static,integrated}/`**. Older theme snapshots may remain under **`workflow/Genetics/old/`** for reference; new `include` paths should target **`modules/local/...`**. Agents should not confuse Nextflow DSL2 **`workflow { ... }` blocks** with nf-core **Modules** (process templates).
+
+- **`main.nf` (entry):** The **anonymous** top-level `workflow { }` performs `params.mod` routing (wheat vs VCF/PLINK branches). Shared banner/help/VCF setup live in **`subworkflows/local/genetics_helpers.nf`** (`header`, `helpMessage`, `check_input`). Composed mode runners live in **`subworkflows/local/plink_genotype_modes.nf`** and **`wheat_integrated_mode.nf`**.
+
+- **`subworkflows/local/`:** Holds **composed workflows** (DSL2 `workflow NAME { take: … main: … }`) and entry helpers—for example `genetics_helpers.nf`, `plink_genotype_modes.nf` (`RUN_V1_PLINK`, …), `wheat_integrated_mode.nf`.
+
+- **`modules/local/`:** Holds **process** libraries grouped by theme (`genotype`, `dynamic`, `static`, `integrated`). Treat **`workflow/Genetics/old/`** as archive-only unless explicitly reviving files.
+
+- **`tmp/` vs `tests/`:** Keep **developer / ops mini-entry scripts** (partial reruns, assess-only, LD redraw) under `workflow/Genetics/tmp/` as documented in **`workflow/Genetics/docs/GENETICS_WORKFLOW.md`**. Use **`tests/`** for automated or profile-driven checks (e.g. `tests/nextflow.config`, small harness runs)—not as the default place for ad-hoc partial pipeline entry points, so scratch flows do not collide with CI-style tests.
+
+- **Documentation:** The **canonical operator narrative** for Genetics Nextflow is **`workflow/Genetics/docs/GENETICS_WORKFLOW.md`** only (no separate `workflow/Genetics/README.md` or `docs/README.md` index).
+
+- **`nextflow_schema.json` and `nextflow.config`:** Moving router DSL between `main.nf` and subworkflow files **does not** require schema or config changes by itself. Update **`nextflow_schema.json`** when **`params`** names, types, or documented defaults change. Update **`conf/*.config`** / **`nextflow.config`** when parameters, profiles, resource labels, or optional `validation { … }` / schema paths change. If you add JSON Schema validation in config, keep the schema file path consistent with where the pipeline is launched from.
+
 - **Nextflow in conda `run`:** The `nextflow` executable is installed via the Conda environment defined in repo-root `environment_run.yml` (env name `run`). Create or update with `conda env create -f environment_run.yml` / `conda env update -f environment_run.yml`, then `conda activate run` for CLI runs (see also workstation-core: `screen` + Nextflow use `run`).
 - **IDE Nextflow plugin — Java:** Set the plugin’s Java environment to `/data/home/tusr1/lib/jvm/jdk-17` (JDK 17) for DSL editing, validation, and runner integration in the IDE.
 - **Run command log (`doc/NF_CMD.md`):** Every time you run Nextflow for this repo (or a human does), append a new dated block at the **end** of `doc/NF_CMD.md` in **chronological order** (see file intro): full `nextflow run ...` line(s), working directory and outcome when useful, and when using `screen`, the full `screen ... bash -c "..."` wrapper (or equivalent). Write log prose in **English** (see workstation-core: repository language). Do not leave undocumented ad-hoc production runs.
 - **Progress log (`doc/TODO_PROGRESS_LOG.md`):** When a change ships with a mini-workflow or closes TODO items, append a section per **workstation-core**: narrative (goals, diffs and why, pass/fail, failures and fixes, artefact layout). Record **working directories** for runs; **do not** duplicate full command blocks that already belong in **`doc/NF_CMD.md`**—cross-reference that file instead.
-- **Partial reruns — mini-workflow:** To rerun a **subset** of steps (e.g. only LD plotting) with existing `process/<mod>/` artifacts, add or use a **small Nextflow entry** under `workflow/Genetics/tmp/` that `include`s the existing `process` definitions and builds input channels from known paths—**not** ad-hoc `python -c` drivers. Use `-c` with an absolute path to `workflow/Genetics/nextflow.config`. Log each run in `doc/NF_CMD.md` (and `doc/TODO_PROGRESS_LOG.md` when the mini-workflow ships with repo changes). Examples: `tmp/ld_plots_redraw.nf`, `tmp/assess_plink_debug.nf`. Conventions for `tmp/*.nf` and wheat integrated modes are documented only in **`workflow/Genetics/README.md`** (single README under `workflow/`; see **workstation-core** repo map).
+- **Partial reruns — mini-workflow:** To rerun a **subset** of steps (e.g. only LD plotting) with existing `process/<mod>/` artifacts, add or use a **small Nextflow entry** under `workflow/Genetics/tmp/` that `include`s the existing `process` definitions and builds input channels from known paths—**not** ad-hoc `python -c` drivers. Use `-c` with an absolute path to `workflow/Genetics/nextflow.config`. Log each run in `doc/NF_CMD.md` (and `doc/TODO_PROGRESS_LOG.md` when the mini-workflow ships with repo changes). Examples: `tmp/ld_plots_redraw.nf`, `tmp/assess_plink_debug.nf`. Conventions for `tmp/*.nf` and wheat integrated modes are documented in **`workflow/Genetics/docs/GENETICS_WORKFLOW.md`** (see **workstation-core** repo map).
 
 - Pipelines live under `workflow/Genetics/` (`Genotype`, `Static`, `Dynamic` themes).
 - Processes should invoke `src/python`, `src/r`, or `src/java` tools with I/O suitable for Nextflow (files, channels, stdin/stdout as designed).
 - Keep `conda` / container choices consistent with root `*.yml` envs and statistical vs heavy-genomics workloads.
 - When adding a process that needs new Python behavior, extend shared infra in `src/python/infra/` rather than one-off I/O in the `.nf` file.
-- **Processor vs stats boundary (strict):** Any `plink2` computation (e.g., `--r2-unphased`, filtering, matrix/stat generation) must be executed in `workflow/Genetics/genotype/processor.nf`. `workflow/Genetics/genotype/stats.nf` must only consume generated data files and perform statistical summarization/plotting.
+- **Processor vs stats boundary (strict):** Any `plink2` computation (e.g., `--r2-unphased`, filtering, matrix/stat generation) must be executed in `workflow/Genetics/modules/local/genotype/processor.nf`. `workflow/Genetics/modules/local/genotype/stats.nf` must only consume generated data files and perform statistical summarization/plotting.
+- **Integrated wheat boundary (strict):** Add PLINK2/awk compute in `genotype/processor.nf`, GWAS in `static/gwas/gwas.nf`, plots in `genotype/stats.nf` / `gwas.nf`; wire study flows in `subworkflows/local/wheat_integrated_study.nf`. Do not add compute processes to `integrated/integrated_wheat.nf`. See **workstation-core** — Integrated wheat study.
 - **Parameter defaults in config (strict):** Define tunable/default runtime parameters in `workflow/Genetics/nextflow.config` (`params { ... }`) and set explicit initial values there.
 - **No inline fallback defaults in processes:** In `.nf` process scripts, reference parameters directly (e.g., `${params.xxx}`) and do not use inline fallback expressions like `${params.xxx ?: ...}`. Override values at launch time via CLI/config, not inside process code.
 - **Use task cpus for Python parallelism:** For Python analytics processes that support internal parallel computation, drive worker count from Nextflow task resources (e.g., pass `${task.cpus}`) instead of adding separate worker params in `nextflow.config`.

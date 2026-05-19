@@ -237,3 +237,79 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 **Goal:** Keep **one** README under `workflow/` (`workflow/Genetics/README.md`); merge content from `workflow/Genetics/integrated/README.md` and `workflow/Genetics/tmp/README.md`, delete those files, and encode the rule in **`.cursor/rules/workstation-core.mdc`**, **`.cursor/rules/workstation-nextflow.mdc`**, and cross-references (`main.nf`, `nextflow.config`, `tmp/ld_plots_redraw.nf`, `.cursor/skills/todo-drive-close/SKILL.md`).
 
 **Validation:** Grep confirms no remaining `README.md` under `workflow/` except `Genetics/README.md`; doc-only.
+
+---
+
+## 2026-05-16 — WF-ROUTER-001 — Narrow VCF/PLINK `params.mod` list in docs and schema
+
+**Goal:** Align operator docs, CLI help, JSON parameter schema, and engineering checklists with **`workflow/Genetics/main.nf`**: the VCF/PLINK branch now dispatches only **`v1_plink`**, **`test_thin`**, **`test_camp`**, and **`test_common_thin`** (the `wheat_*` integrated branch is unchanged).
+
+**Changes:** Updated **`workflow/Genetics/subworkflows/local/genetics_helpers.nf`** (`helpMessage`), **`workflow/Genetics/docs/GENETICS_WORKFLOW.md`** (router table + `camp` row + output-layout note), **`workflow/Genetics/nextflow_schema.json`** (`mod` description), **`doc/TODO.md`** §2 router bullets + §5 intro line, and **`doc/NF_CMD.md`** intro (historic command blocks kept; note explains **`test_plink`** / **`test_plink_camp`** → **`test_thin`** / **`test_camp`** for new runs).
+
+**Validation:** Doc-only; manual grep of `main.nf` branches vs edited tables. No Nextflow execution in this session.
+
+**Risks / follow-ups:** Frozen paths and `params.job` examples still use the **`test_plink`** folder name under `output_dir`; that is independent of `--mod` string.
+
+---
+
+## 2026-05-17 — OPS-ASSESS-004 — Tier-1 assess mini-workflow revalidation (`todo-drive-close`, assess scope)
+
+**Goal:** Re-run **`workflow/Genetics/tmp/assess_plink_debug.nf`** for **`test_thin`** and **`test_common_thin`** after recent repo activity so the PLINK2 slice + **`assess_slice.py`** path remains green. **`doc/TODO.md`** §8 assess debug and the tier-1 bullet under §9 were already `[x]`; this session did **not** flip additional checklist boxes (§9 singletons / depth / LD backlog remains open).
+
+**Why:** `todo-drive-close` hygiene: smallest proof that merged `*_test.plink2` under `process/<mod>/` still feed representative-chr `--freq` / `--missing` and Python plots without code changes.
+
+**Code touched:** None.
+
+**Validation & runs:** Conda env **`run`**; full commands in **`doc/NF_CMD.md`** (`### 2026-05-17 — Assess debug …` for each mod).
+
+| Mod | cwd | Result |
+| --- | --- | --- |
+| `test_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/28run_assess_revalidate_test_thin` | **pass** — exit 0, 8 succeeded; wall ~1m 14s; aggregate `succeedDuration` ~9m 19s |
+| `test_common_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/29run_assess_revalidate_test_common_thin` | **pass** — exit 0, 8 succeeded; wall ~23s; aggregate `succeedDuration` ~1m 9s |
+
+**Outputs:** Same publish layout as **OPS-ASSESS-003**: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/<mod>/` with `.afreq` / `.vmiss` / bin TSVs at assess root; `plots/*.png`, `info/*.tsv`, `logs/*.log` under the mod tree.
+
+**Issues:** Graphviz missing for DAG (warn only).
+
+**Follow-ups:** Optional **`main.nf`** router hook for assess remains backlog (§8); science items in §9 (singletons, depth CI, LD interpretation, etc.) unchanged.
+
+---
+
+## 2026-05-17 — TODO-ASSESS-009 — §9 singleton / MAC tables from PLINK2 `.acount` (`todo-drive-close`, §9 backlog)
+
+**Goal:** Close **`doc/TODO.md`** §9 “Singletons: counts and distribution” with an **implementable** tier: extend the existing assess mini-workflow to use PLINK2 **`--freq counts`** (`.acount` with `ALT_CTS` / `OBS_CT`), derive **MAC** and **MAF**, and publish **singleton fraction / MAC bucket** tables plus bar + histogram figures next to the existing MAF–missing assess plots—still on the **representative-chromosome slice** per subgenome (not genome-wide).
+
+**Why:** Frequency-only `.afreq` cannot stratify exact MAC (needed for singleton counts); `--freq counts` stays on the pfile-first assess policy.
+
+**Changes (repo):**
+- **`workflow/Genetics/modules/local/genotype/assess.nf`:** `plink2_assess_debug_slice` now runs `--freq counts`, publishes `*.acount`, MAF-bin awk reads `ALT_CTS` / `OBS_CT`.
+- **`src/python/genetics/genomics/variant/assess_slice.py`:** `ana_assess_plink_debug_slice(..., acount_path=...)`, merged **`REF_CTS`**, **`MAC`**, **`MAF`** with **`F_MISS`**; new artefacts `*.singleton_mac.summary.tsv`, `*.mac_category_counts.tsv`, plots `*.mac_category.bar.png`, `*.mac.dist.png`; MAF-bin plot title notes `.acount`.
+- **`workflow/Genetics/tmp/assess_plink_debug.nf`:** Wire `.acount` into the plot process.
+- **Docs / policy:** `workflow/Genetics/docs/GENETICS_WORKFLOW.md` (aux table), **`doc/TODO.md`** §8–§9 (singleton parent + tier-1 bullet text, LogRef 2026-05-17), **`.cursor/rules/workstation-core.mdc`** (assess + `--freq counts`).
+
+**Validation & runs:** Conda **`run`**; verbatim commands in **`doc/NF_CMD.md`** (`### 2026-05-17 — Assess debug ... PLINK2 \`--freq counts\` + MAC / singleton summaries` for each mod).
+
+| Mod | cwd | Result |
+| --- | --- | --- |
+| `test_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/30run_assess_singleton_mac_test_thin` | **pass** — 8 succeeded |
+| `test_common_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/31run_assess_singleton_mac_test_common_thin` | **pass** — 8 succeeded |
+
+**Outputs / layout:** Under `.../test_plink/assess/<mod>/`: root **`*.assess.acount`**, **`*.assess.vmiss`**, **`*.counts.tsv`**, **`*.mac_site_histogram.tsv`**; **`info/`** adds **`*.singleton_mac.summary.tsv`**, **`*.mac_category_counts.tsv`**, updated **`*.maf_miss.info.tsv`** (extra MAC columns), thresholds **`*.maf_miss.th.tsv`**; **`plots/`** adds **`*.mac_category.bar.png`**, **`*.mac.dist.png`**. Older **`*.assess.afreq`** files may still appear in the same folder from **pre-change** runs (not removed by this workflow).
+
+**Issues:** Graphviz missing (warn only).
+
+**Follow-ups (still open in §9):** “Effect on LD”, caller/`lib.gz` singleton **science**, genome-wide singleton stats, **`MAC < 10` het** vs missing, etc.
+
+---
+
+## 2026-05-17 — OPS-NAMING-001 — Subgenome-first artefact names; integrated path encodes PLINK source mod
+
+**Goal:** Remove **`job`** / redundant **`mod`** prefixes from **assess** and **wheat-from-PLINK** file basenames (subgenome id first, e.g. `A.assess.*`, `A.pca.png`). Keep **folder** semantics: **`assess/<plink_mod>/`**, and **`integrated/<plink_source_mod>/<wheat_task_mod>/`** so two PLINK test mods no longer share one integrated directory.
+
+**Changes:** `tmp/assess_plink_debug.nf` (plot channel id only); `wheat_integrated_study.nf` (prefix = subgenome id; `RUN_WHEAT_INTEGRATED` table-mode prefix = `params.mod` only); `utils.nf` `listMergedSubgenomeSnpQcPlotTuples(process_dir)`; `stats.nf` publishDir for **`plot_plink2_population_structure`** / **`report_plink2_tagsnp`**; `processor.nf` **`plink2_pca`** `--pca approx` (fixes invalid legacy `alleles vzs` on PLINK 2.0a; avoids deterministic GRM NaN on high-missing pairs); **`GENETICS_WORKFLOW.md`** output layout text.
+
+**Ops:** Cleared **`…/test_plink/integrated/`** and assess+integrated targets for **`test_thin`** / **`test_common_thin`** before regenerate.
+
+**Validation:** Conda **`run`**; commands in **`doc/NF_CMD.md`** (`### 2026-05-17 — Output naming refactor…`). Assess **pass** (32–33); wheat **pass** (39–40), **8** processes each.
+
+**Outputs:** Assess e.g. `A.assess.maf.dist.png` under `assess/test_thin/`; wheat PCA e.g. `integrated/test_thin/wheat_pca_tsne/plots/A.pca.png` (and parallel `test_common_thin` tree).
