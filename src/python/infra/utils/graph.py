@@ -972,6 +972,7 @@ def plot_scatter_with_thresholds(
     figure_size=(10,8),
     xlim=None,
     ylim=None,
+    group_col=None,
 ):
     """
     Plots a scatter plot with optional horizontal and vertical threshold lines.
@@ -979,15 +980,25 @@ def plot_scatter_with_thresholds(
     Args:
         thresholds_h (list of dict): e.g. [{'value': 0.95, 'color': 'red', 'linestyle': '--', 'label': 'Cutoff'}]
         thresholds_v (list of dict): e.g. [{'value': 0.5, 'color': 'orange', 'linestyle': '--', 'label': 'Limit'}]
+        group_col: Optional column name for hue (e.g. ``Group`` from ``anno_group``).
     """
     sns.set_style("white")
     
     plt.figure(figsize=figure_size)
-    
-    sns.scatterplot(
-        data=data, x=x_col, y=y_col, 
-        alpha=alpha, s=s, edgecolor='w', color=color
-    )
+
+    use_hue = group_col and group_col in data.columns
+    if use_hue:
+        plot_data = data[[x_col, y_col, group_col]].replace([np.inf, -np.inf], np.nan).dropna()
+        sns.scatterplot(
+            data=plot_data, x=x_col, y=y_col,
+            hue=group_col, alpha=alpha, s=s, edgecolor='w',
+        )
+    else:
+        plot_data = data
+        sns.scatterplot(
+            data=plot_data, x=x_col, y=y_col,
+            alpha=alpha, s=s, edgecolor='w', color=color,
+        )
     
     # Horizontal Thresholds
     if thresholds_h:
@@ -1021,8 +1032,12 @@ def plot_scatter_with_thresholds(
     if ylim is not None:
         plt.ylim(ylim)
 
-    if thresholds_h or thresholds_v:
-        plt.legend(loc='upper left', bbox_to_anchor=(0.0, -0.15), fontsize=LEGEND_FONT_SIZE, frameon=False)
+    if use_hue or thresholds_h or thresholds_v:
+        plt.legend(
+            loc='upper left', bbox_to_anchor=(0.0, -0.15),
+            fontsize=LEGEND_FONT_SIZE, frameon=False,
+            title=group_col if use_hue else None,
+        )
     
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved scatter plot to {filename}")

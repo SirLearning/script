@@ -12,7 +12,9 @@ def load_plink2_eigenvec(path):
         raise ValueError(f'Empty eigenvec: {path}')
     if '#FID' in df.columns:
         df = df.rename(columns={'#FID': 'FID'})
-    if 'IID' in df.columns and 'Sample' not in df.columns:
+    if '#IID' in df.columns and 'Sample' not in df.columns:
+        df = df.rename(columns={'#IID': 'Sample'})
+    elif 'IID' in df.columns and 'Sample' not in df.columns:
         df = df.rename(columns={'IID': 'Sample'})
     return df
 

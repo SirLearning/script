@@ -313,3 +313,47 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 **Validation:** Conda **`run`**; commands in **`doc/NF_CMD.md`** (`### 2026-05-17 — Output naming refactor…`). Assess **pass** (32–33); wheat **pass** (39–40), **8** processes each.
 
 **Outputs:** Assess e.g. `A.assess.maf.dist.png` under `assess/test_thin/`; wheat PCA e.g. `integrated/test_thin/wheat_pca_tsne/plots/A.pca.png` (and parallel `test_common_thin` tree).
+
+---
+
+## 2026-05-20 — WHEAT-PCA-TSNE-001 — t-SNE on PLINK2 PCs in `plot_population_structure`
+
+**Goal:** Restore **t-SNE** alongside PCA for **`wheat_pca_tsne`**: run **sklearn** `TSNE` on the first *K* PLINK PC columns (same idea as before job/mod prefixes were dropped), save **`{subgenome}.tsne.tsv`** + **`{subgenome}.tsne.png`**, without replacing PLINK2 PCA itself.
+
+**Changes:** `src/python/genetics/genomics/sample/pca_structure.py` (perplexity scaled to sample size; optional `n_jobs`); **`plot_plink2_population_structure`** gains **`cpus 8`** and passes **`wheat_tsne_*`** + **`task.cpus`**; **`conf/base.config`** / **`nextflow_schema.json`** for `wheat_tsne_n_input_pcs`, `wheat_tsne_max_iter`, `wheat_tsne_random_state`; **`GENETICS_WORKFLOW.md`** / **`.cursor/rules/workstation-python.mdc`** (t-SNE on PCs allowed for visualisation).
+
+**Validation:** Conda **`stats`**, **`PYTHONPATH=src/python`**, smoke call on real **`A.pca.eigenvec`/`eigenval`** (`test_common_thin`), `tsne_max_iter=300` — **pass** (writes `*.tsne.png` / `*.tsne.tsv`). Full Nextflow **`wheat_integrated_from_plink`** re-run not repeated in this batch (same process entry; operator can `-resume` or rerun when convenient).
+
+**Outputs:** Per subgenome under **`…/integrated/<plink_mod>/wheat_pca_tsne/{info,plots}/`**: adds **`*.tsne.tsv`**, **`*.tsne.png`** next to existing PCA artifacts.
+
+---
+
+## 2026-05-20 — SUPP — WHEAT-PCA-TSNE-001 — Full NF rerun (`test_thin`, `test_common_thin`)
+
+**Goal:** Regenerate **`wheat_pca_tsne`** integrated artefacts after t-SNE code landed.
+
+**Runs:** Conda **`run`**; commands in **`doc/NF_CMD.md`** (`### 2026-05-20 — Wheat PCA/t-SNE …`).
+
+| Mod | cwd | Result |
+| --- | --- | --- |
+| `test_thin` | `…/08stats.genome/41run_wheat_pca_tsne_test_thin` | **pass** — 8 succeeded, ~12m 36s |
+| `test_common_thin` | `…/08stats.genome/42run_wheat_pca_tsne_test_common_thin` | **pass** — 8 succeeded, ~2m 42s |
+
+**Outputs:** `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/integrated/<mod>/wheat_pca_tsne/` — per subgenome **`A|B|D|Others`**: `*.pca.png`, `*.variance.png`, **`*.tsne.png`**, matching **`info/*.tsne.tsv`**.
+
+---
+
+## 2026-05-20 — WHEAT-PCA-GROUP-001 — Sample `Group` on PCA/t-SNE plots
+
+**Goal:** Color PCA and t-SNE scatter plots by germplasm **`Group`** (same `anno_group` path as `ref_ibs` / `test_plink_stats`), and include `Group` in exported TSVs.
+
+**Changes:** `pca_structure.py` (`group_file`, `_attach_sample_groups`); `graph.py` `plot_scatter_with_thresholds(..., group_col=)`; `anno.py` `save_tsv=False` for in-memory annotate; `results_io.load_plink2_eigenvec` maps `#IID` → `Sample`; `stats.nf` passes `${params.output_dir}/sample_group.txt`.
+
+**Validation:** Conda **`stats`** smoke on `A.pca.eigenvec` — **pass** (7 group categories). Nextflow **`run`** env:
+
+| Mod | cwd | Result |
+| --- | --- | --- |
+| `test_common_thin` | `…/44run_wheat_pca_grp_test_common_thin` | **pass** — 8 succeeded, ~13m 43s (`doc/NF_CMD.md` §2026-05-20 group coloring, `test_common_thin`) |
+| `test_thin` | `…/43run_wheat_pca_grp_test_thin` | **in progress** — `screen wheat43`; prior agent interrupt left no run dirs |
+
+**Outputs (when complete):** `…/integrated/<mod>/wheat_pca_tsne/info/*.pca.tsv` with columns `Sample`, `PC*`, `Group`; plots `*.pca.png` / `*.tsne.png` with legend by group.

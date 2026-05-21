@@ -643,6 +643,7 @@ process vcftools_vcf_qc_r {
 process plot_plink2_population_structure {
     tag "plot pca: ${id}"
     label 'cpus_2'
+    cpus 8
     conda "${params.user_dir}/miniconda3/envs/stats"
     publishDir "${params.output_dir}/${params.job}/integrated/${params.wheat_plink_source_mod ?: params.mod}/${publish_mod}/info", mode: 'copy', pattern: "*.tsv"
     publishDir "${params.output_dir}/${params.job}/integrated/${params.wheat_plink_source_mod ?: params.mod}/${publish_mod}/plots", mode: 'copy', pattern: "*.png"
@@ -660,7 +661,16 @@ process plot_plink2_population_structure {
     """
     #!/usr/bin/env python
     from genetics.genomics.sample.pca_structure import plot_population_structure
-    plot_population_structure("${eigenvec}", "${eigenval}", "${output_prefix}")
+    plot_population_structure(
+        "${eigenvec}",
+        "${eigenval}",
+        "${output_prefix}",
+        group_file="${params.output_dir}/sample_group.txt",
+        tsne_n_input_pcs=${params.wheat_tsne_n_input_pcs},
+        tsne_max_iter=${params.wheat_tsne_max_iter},
+        tsne_random_state=${params.wheat_tsne_random_state},
+        tsne_n_jobs=${task.cpus},
+    )
     """
 }
 

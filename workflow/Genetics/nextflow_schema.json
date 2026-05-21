@@ -29,6 +29,21 @@
     "wheat_snp_qc_max_missing": { "type": "number", "default": 0.1 },
     "wheat_snp_qc_min_qual": { "type": "number", "default": 30.0 },
     "wheat_pca_n_pcs": { "type": "integer", "default": 10 },
+    "wheat_tsne_n_input_pcs": {
+      "type": "integer",
+      "default": 10,
+      "description": "Leading PLINK PCs used as input to sklearn t-SNE in wheat_pca_tsne plots."
+    },
+    "wheat_tsne_max_iter": {
+      "type": "integer",
+      "default": 1000,
+      "description": "Max iterations for sklearn TSNE (plot_population_structure)."
+    },
+    "wheat_tsne_random_state": {
+      "type": "integer",
+      "default": 42,
+      "description": "Random seed for sklearn TSNE reproducibility."
+    },
     "wheat_gcta_bin": { "type": "string", "default": "gcta64" },
     "wheat_gwas_tool": { "type": "string", "default": "plink2", "enum": ["plink2", "gcta"] },
     "wheat_afreq_input": { "type": ["string", "null"] },

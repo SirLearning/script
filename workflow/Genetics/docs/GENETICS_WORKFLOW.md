@@ -112,7 +112,7 @@ When `params.mod` starts with `wheat_`, the workflow runs `modules/local/integra
 | `wheat_gwas` | `wheat_gwas_genotype`, `wheat_gwas_phenotype` | `genetics.wheat.wheat_gwas.run_gwas` |
 | `wheat_kgwas` | `wheat_kgwas_kmer_matrix`, `wheat_kgwas_phenotype` | `genetics.wheat.kgwas.run_kgwas` |
 
-Tuning knobs (defaults in `nextflow.config`): `wheat_snp_qc_*`, `wheat_pca_*`, `wheat_tagsnp_*`, `wheat_hapmap_window_size`, `wheat_cnv_*`, `wheat_gwas_trait`, `wheat_kgwas_trait`.
+Tuning knobs (defaults in `conf/base.config`): `wheat_snp_qc_*`, `wheat_pca_*`, `wheat_tsne_*` (t-SNE on PLINK PCs in `wheat_pca_tsne`), `wheat_tagsnp_*`, `wheat_hapmap_window_size`, `wheat_cnv_*`, `wheat_gwas_trait`, `wheat_kgwas_trait`.
 
 ### Required launch params (wheat)
 
@@ -124,7 +124,7 @@ Tuning knobs (defaults in `nextflow.config`): `wheat_snp_qc_*`, `wheat_pca_*`, `
 
 ### Wheat output layout
 
-Artifacts publish under **`{output_dir}/{job}/integrated/{mod}/info`** (TSV) and **`.../plots`** (PNG when figures exist). For per–subgenome steps from merged `*_test.plink2`, output file **prefixes are the subgenome id only** (`A`, `B`, `D`, `Others`); folder layout already encodes `job` and analysis `mod`. Table-only entry modes use **`{mod}`** as the prefix (e.g. `wheat_gwas.gwas.tsv`).
+Artifacts publish under **`{output_dir}/{job}/integrated/{mod}/info`** (TSV) and **`.../plots`** (PNG when figures exist). For per–subgenome **`wheat_pca_tsne`** from PLINK2, expect **`*.pca.tsv`**, **`*.eigen.tsv`**, **`*.tsne.tsv`**, **`*.pca.png`**, **`*.variance.png`**, **`*.tsne.png`** (prefix = subgenome id). Table-only entry modes use **`{mod}`** as the prefix (e.g. `wheat_gwas.gwas.tsv`).
 
 Topic folders under `modules/local/integrated/` (`gwas/`, `snp_qc/`, …) are organizational only; the executable surface is **`integrated_wheat.nf`** plus **`main.nf`** routing.
 

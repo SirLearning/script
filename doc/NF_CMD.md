@@ -439,3 +439,71 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_
   --job test_plink \
   --mod test_common_thin
 ```
+
+---
+
+### 2026-05-20 — Wheat PCA/t-SNE from merged PLINK2 (`tmp/wheat_integrated_from_plink.nf`), `test_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/41run_wheat_pca_tsne_test_thin`. Outcome: exit 0, **8** succeeded (~12m 36s). Outputs under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/integrated/test_thin/wheat_pca_tsne/{info,plots}/` (includes `*.tsne.png` / `*.tsne.tsv` per subgenome). Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/41run_wheat_pca_tsne_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-05-20 — Wheat PCA/t-SNE from merged PLINK2 (`tmp/wheat_integrated_from_plink.nf`), `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/42run_wheat_pca_tsne_test_common_thin`. Outcome: exit 0, **8** succeeded (~2m 42s). Outputs under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/integrated/test_common_thin/wheat_pca_tsne/{info,plots}/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/42run_wheat_pca_tsne_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-20 — Wheat PCA/t-SNE with sample `Group` coloring (`tmp/wheat_integrated_from_plink.nf`), `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/44run_wheat_pca_grp_test_common_thin`. Outcome: exit 0, **8** succeeded (~13m 43s). Tables include `Sample` + `Group`; plots use group hue. Outputs under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/integrated/test_common_thin/wheat_pca_tsne/{info,plots}/`. Graphviz warning only.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/44run_wheat_pca_grp_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin
+```
+
+---
+
+### 2026-05-20 — Wheat PCA/t-SNE with sample `Group` coloring (`tmp/wheat_integrated_from_plink.nf`), `test_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/43run_wheat_pca_grp_test_thin`. Launched in `screen` session `wheat43` after Cursor interrupt (prior launch never created run dirs). **In progress** at log time — expect ~12–15m total; same publish layout under `…/integrated/test_thin/wheat_pca_tsne/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/43run_wheat_pca_grp_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/wheat_integrated_from_plink.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --user_dir /data/home/tusr1 \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```

@@ -12,7 +12,8 @@ from infra.utils import load_df_generic, save_df_to_tsv, load_df_from_space_sep_
 def anno_group(
     df,
     group_file="/data1/dazheng_tusr1/vmap4.VCF.v1/sample_groups.txt",
-    output_prefix=None
+    output_prefix=None,
+    save_tsv=True,
 ) -> pd.DataFrame:
     print(f"[Info] Running Group Annotation...")
     print(f"  Group File: {group_file}")
@@ -34,13 +35,12 @@ def anno_group(
         if join_col != 'Sample':
             merged = merged.drop(columns=['Sample']) 
         
-        # Generate output filename
-        if output_prefix is not None:
-             out_path = output_prefix + '.grouped.tsv'
-        else:
-             out_path = 'sample.grouped.tsv'
-
-        save_df_to_tsv(merged, out_path)
+        if save_tsv:
+            if output_prefix is not None:
+                out_path = output_prefix + '.grouped.tsv'
+            else:
+                out_path = 'sample.grouped.tsv'
+            save_df_to_tsv(merged, out_path)
         
         return merged
     else:
