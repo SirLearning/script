@@ -16,7 +16,7 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [x] Baseline setup
 	- [x] Python package layout (`environment.yml`, `setup.py`)
 	- [x] Global `nextflow` configuration
-- [ ] Sequencing QC — 📅 2026-03-27
+- [ ] Sequencing QC — 📅 2026-05-23
 	- [ ] Noise from short-read alignment
 	- [ ] **Depth distribution and statistical modeling** (from `5.wheat-WGS-technology`)
 		- [ ] Check Mahalanobis assumptions: normality required? Prefer or add a direct non-parametric alternative
@@ -33,6 +33,23 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [ ] Large-cohort variation library build-out
 - [x] Depth-only thresholds rejected; use joint QC on Depth / MQ / MAF / Missing (LogRef: 2026-04-22)
 - [ ] Encode multi-metric thresholds as reusable parameter templates (per A / B / D / Others)
+- [ ] Raw-data backup and DBone records (from `2026-05-21.md` / Raw Data Process)
+	- [x] FASTQ collection baseline (`[[1.fastq]]`)
+	- [x] Alignment baseline (`[[2.bam]]`) and VMap4 SNP calling baseline (`[[3.vcf]]`)
+	- [ ] Audit VMap4 data backups
+		- [ ] `fastq`: LuLab 18 T-5 through T-11 (7 disks, 126 T)
+		- [ ] `bam`: LuLab 18 T-12 through T-22 (11 disks, 198 T)
+	- [ ] Audit Watkins data backups
+		- [ ] `fastq`: LuLab 18 T-35 through T-41 (7 disks, 126 T; 120 T expected)
+		- [ ] `bam`: server 243 backup, including server 204 copy with missing MD5 check
+		- [ ] Resolve failed Watkins BAM backup samples: `CRR877047`, `CRR877091`, `CRR877338`
+		- [ ] Server 66 backup: complete missing MD5 check (`usb-1: LuLab18T-66`, `usb-3: LuLab18T-67`)
+		- [ ] Server 203 backup: complete missing MD5 check (`usb-1: LuLab18T-68`, `usb-2: LuLab18T-69`)
+	- [ ] Confirm and document the VMap4 BAM deduplication sample list and dedup method (progress_overview §2.1)
+	- [ ] Post-process imported raw spreadsheet data for DBone
+	- [ ] Produce a missing-data requirements table for manual completion and upload
+	- [ ] Finalize a complete database record table after corrections
+	- [ ] Create complete DBone records for VMap1.0-4, WAP, and other source datasets (progress_overview §2.1)
 
 ---
 
@@ -50,6 +67,9 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [x] **Docs drift:** refresh `workflow/Genetics/README.md` (active mods, `process_dir` / `--camp` TSV, output layout, run-folder / `run` conda / `screen` policy) (LogRef: 2026-05-14)
 - [ ] **Provenance:** emit `run_manifest.tsv` (or JSON): `params` subset, plink2 version, conda envs, Tiger JAR tag, optional git commit
 - [ ] `hail` version + gnomAD-style reference; expose `--mod hail` (or equivalent) in `main.nf` + resource profile
+- [ ] Confirm `43run_wheat_pca_grp_test_thin` (`test_thin` Group coloring) exited 0 and record it in `doc/NF_CMD.md` / `doc/TODO_PROGRESS_LOG.md` (progress_overview §6.1)
+- [ ] Write the fixed-input interpretation note for MAF-missing, LD, PCA/t-SNE, and singleton/MAC relationships under `test_plink/process` (progress_overview §6.1)
+- [ ] Decide whether test tracks (`stats` / LD / assess / integrated) should move to `v1_plink`, or explicitly mark them test-only (progress_overview §5.1)
 
 ---
 
@@ -189,6 +209,7 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 		- [ ] `SAMEA10944181` depth zero — handle or exclude
 - [ ] Dimensionality reduction
 	- [ ] PCA for population layout (flag outliers first; do not drop samples preemptively)
+		- [ ] Confirm integrated `wheat_pca_tsne` PCA + t-SNE + Group coloring status for the `test_thin` Group run (WHEAT-PCA-TSNE-001 / WHEAT-PCA-GROUP-001, 2026-05-20)
 		- [ ] **(from `2.population-genetics`)** Heterozygosity vs missing-rate regression line looks wrong — biological interpretation?
 		- [ ] **(from `2.population-genetics`)** PCA on hexaploid-only panel vs Schulthess et al. 2022 reference
 	- [ ] UMAP
@@ -214,10 +235,96 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 	- [ ] GRM
 		- [ ] Z-score computation
 - [ ] Population structure: Q matrix
+- [ ] Build a reproducible pre-GWAS decision table: retained/dropped samples, retained/flagged sites, and low-depth sample isolation (progress_overview §6.3)
 
 ---
 
-## 10. Future
+## 10. Association and GWAS — [[workflow]] / [[1.GWAS]]
+
+- [x] Basic theory study
+	- [x] Relationship between association and evolution — 📅 2026-03-10
+	- [x] Understand the study population — 📅 2026-03-10
+	- [x] Statistics background — 📅 2026-03-10
+- [x] Scientific question framing
+	- [x] Define the theoretical framework — 📅 2026-03-16
+	- [x] Identify expected workstream issues — 📅 2026-03-19
+		- [x] Polyploidy
+		- [x] LD and selfing
+	- [x] VMap4 GWAS planning and downstream topic partitioning
+- [ ] Technical background synthesis
+	- [x] Connect current knowledge to statistical principles — 📅 2026-03-24
+	- [x] Integrate prior notes on rare alleles and fine-mapping
+	- [ ] Large-cohort methods
+		- [ ] Standard GWAS workflow
+	- [ ] Define multivariate GWAS, metabolite GWAS, and path-analysis questions (progress_overview §4)
+- [ ] GWAS workflow and execution
+	- [ ] Workflow design: `[[workflow]]`
+	- [ ] Runtime plan: `[[1.GWAS]]`
+		- [ ] TASSEL
+			- [ ] Explain why TASSEL is suitable for plant GWAS
+		- [ ] GEMMA
+		- [ ] GCTA
+- [ ] Signal validation
+	- [ ] Exclude or control population-structure effects
+
+---
+
+## 11. Post-GWAS analysis
+
+- [ ] Fine-mapping
+	- [ ] Classical methods
+		- [ ] PIP
+	- [ ] LLM-assisted workflow
+		- [ ] Create the corresponding workflow
+		- [ ] Configure the `evo2` environment and run a trial
+		- [ ] Write the `evo2` run script
+		- [ ] Find literature for comparable functionality
+	- [ ] SV-GWAS
+		- [ ] ImputeSV
+- [ ] Rare allele analysis
+	- [x] Singleton interpretation for recent variants
+	- [ ] RVAT
+- [ ] Breeding value
+	- [ ] Polygenic score (PGS)
+- [ ] Heritability
+- [ ] Meta-analysis
+- [ ] Omics cascade
+	- [ ] Network analysis
+
+---
+
+## 12. Wheat genome
+
+- [ ] Genome
+	- [x] Assembly
+	- [ ] Structure
+		- [ ] Pan-genome
+	- [ ] Gene
+	- [ ] Variation
+- [ ] Evolution
+	- [x] Inbreeding
+		- [x] LD
+	- [ ] Polyploidy
+		- [ ] Nicolas paper — 📅 2026-05-20
+	- [ ] Introgression
+	- [ ] Human breeding
+		- [ ] 145 China cultivar panel
+
+---
+
+## 13. Population genetics
+
+- [ ] Fine-scale population structure
+	- [ ] Ancient wheat
+		- [ ] Sequencing depth is too shallow
+- [ ] Inner-species conservation
+	- [ ] `ggComp`
+		- [ ] Read the code
+		- [ ] Run it on germplasm data
+
+---
+
+## 14. Future
 
 - [ ] Scale GBS sample size
 - [ ] Step-3 direct scan: runtime / logic differences?
