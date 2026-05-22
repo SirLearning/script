@@ -1,6 +1,6 @@
 nextflow.enable.dsl = 2
 
-include { format_vcf_plink } from '../../genotype/processor.nf'
+include { format_vcf_plink } from '../genotype/processor.nf'
 
 // Utilities
 def toCsvList(list) { list ? list.join(',') : '' }
