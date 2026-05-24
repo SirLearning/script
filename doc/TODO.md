@@ -33,7 +33,8 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [ ] Large-cohort variation library build-out
 - [x] Depth-only thresholds rejected; use joint QC on Depth / MQ / MAF / Missing (LogRef: 2026-04-22)
 - [ ] Encode multi-metric thresholds as reusable parameter templates (per A / B / D / Others)
-- [ ] Raw-data backup and DBone records (from `2026-05-21.md` / Raw Data Process)
+- [ ] Integrate external wheat genomics reference code (progress_overview §1)
+- [ ] Raw-data backup and DBone records (from `2026-05-22.md` / Raw Data Process)
 	- [x] FASTQ collection baseline (`[[1.fastq]]`)
 	- [x] Alignment baseline (`[[2.bam]]`) and VMap4 SNP calling baseline (`[[3.vcf]]`)
 	- [ ] Audit VMap4 data backups
@@ -41,11 +42,20 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 		- [ ] `bam`: LuLab 18 T-12 through T-22 (11 disks, 198 T)
 	- [ ] Audit Watkins data backups
 		- [ ] `fastq`: LuLab 18 T-35 through T-41 (7 disks, 126 T; 120 T expected)
-		- [ ] `bam`: server 243 backup, including server 204 copy with missing MD5 check
-		- [ ] Resolve failed Watkins BAM backup samples: `CRR877047`, `CRR877091`, `CRR877338`
-		- [ ] Server 66 backup: complete missing MD5 check (`usb-1: LuLab18T-66`, `usb-3: LuLab18T-67`)
-		- [ ] Server 203 backup: complete missing MD5 check (`usb-1: LuLab18T-68`, `usb-2: LuLab18T-69`)
+		- [ ] `bam`: server 243 backup
+			- [ ] Server 204 backup still lacks MD5 check
+				- [x] `usb2: LuLab18T-48`
+				- [x] `usb3: LuLab18T-49`
+				- [x] `usb4: LuLab18T-50`
+				- [ ] Failed samples: `CRR877047`, `CRR877091`, `CRR877338`
+		- [ ] Server 66 backup still lacks MD5 check
+			- [x] `usb-1: LuLab18T-66`
+			- [x] `usb-3: LuLab18T-67`
+		- [ ] Server 203 backup still lacks MD5 check
+			- [x] `usb-1: LuLab18T-68`
+			- [x] `usb-2: LuLab18T-69`
 	- [ ] Confirm and document the VMap4 BAM deduplication sample list and dedup method (progress_overview §2.1)
+	- [ ] Document sequence-filtering proportions across alignment filter stages (progress_overview §2.1.1 / §6.1)
 	- [ ] Post-process imported raw spreadsheet data for DBone
 	- [ ] Produce a missing-data requirements table for manual completion and upload
 	- [ ] Finalize a complete database record table after corrections
@@ -70,6 +80,12 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [ ] Confirm `43run_wheat_pca_grp_test_thin` (`test_thin` Group coloring) exited 0 and record it in `doc/NF_CMD.md` / `doc/TODO_PROGRESS_LOG.md` (progress_overview §6.1)
 - [ ] Write the fixed-input interpretation note for MAF-missing, LD, PCA/t-SNE, and singleton/MAC relationships under `test_plink/process` (progress_overview §6.1)
 - [ ] Decide whether test tracks (`stats` / LD / assess / integrated) should move to `v1_plink`, or explicitly mark them test-only (progress_overview §5.1)
+- [ ] Extract `align.nf` + `caller.nf` into a raw-data subworkflow (progress_overview §2.1.1 / §6.2)
+- [ ] Stabilize `plink_genotype_modes` as an independent subworkflow (progress_overview §2.1.2 / §6.2)
+- [ ] Stabilize `wheat_integrated_study` as an independent subworkflow (progress_overview §2.1.3 / §6.2)
+- [ ] Merge `genotype/database.nf` with static `database.nf` and keep a single DBone wiring entry point (progress_overview §2.3 / §6.1)
+- [ ] Evaluate which tmp tracks (`assess_plink_debug`, `ld_plots_redraw`, `wheat_integrated_from_plink`) should be promoted to formal subworkflows (progress_overview §6.2)
+- [ ] Add a modules index to `[[4.process]]`, including `utils.nf` (progress_overview §2.3.3)
 
 ---
 
@@ -164,6 +180,7 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 	- [ ] `gVCF` merge across samples
 		- [ ] Embed `vlib` for speed?
 - [ ] Ship `VCF filter params v1` (A / B / D / Others retention and behavior)
+- [ ] Write the chr2 `MAC>=1` vs `MAC>=2` comparison conclusion into `VCF filter params v1` (progress_overview §2.1.2 / §6.1)
 - [ ] **Integrated filter / QC** (cross-cutting)
 	- [ ] Hard-filter tuning: inbreeding, heterozygosity, chromosome context
 	- [ ] Per-chromosome QC (SV differences)
@@ -175,6 +192,8 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 
 - [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq counts`/`--missing`, MAF bins from `.acount`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); MAC/singleton tables 2026-05-17; full `main.nf` router integration still optional. Full non-preview runs re-validated 2026-05-15 — `doc/TODO_PROGRESS_LOG.md`, `doc/NF_CMD.md`.
 - [x] Hail scaffold: `genotype/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
+- [ ] Confirm whether `plots.nf` was deleted or merged into `stats.nf` (progress_overview §2.3.1)
+- [ ] Check whether the `assess.nf` progress record matches the repository and notes (progress_overview §2.3.3)
 
 ---
 
@@ -210,6 +229,8 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 - [ ] Dimensionality reduction
 	- [ ] PCA for population layout (flag outliers first; do not drop samples preemptively)
 		- [ ] Confirm integrated `wheat_pca_tsne` PCA + t-SNE + Group coloring status for the `test_thin` Group run (WHEAT-PCA-TSNE-001 / WHEAT-PCA-GROUP-001, 2026-05-20)
+		- [ ] Check whether `sample_group.txt` can be supplemented with geographic annotations (progress_overview §2.2)
+		- [ ] Trace the module-flow sources used by Group coloring and the integrated pipeline (progress_overview §2.2)
 		- [ ] **(from `2.population-genetics`)** Heterozygosity vs missing-rate regression line looks wrong — biological interpretation?
 		- [ ] **(from `2.population-genetics`)** PCA on hexaploid-only panel vs Schulthess et al. 2022 reference
 	- [ ] UMAP
@@ -258,6 +279,7 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 		- [ ] Standard GWAS workflow
 	- [ ] Define multivariate GWAS, metabolite GWAS, and path-analysis questions (progress_overview §4)
 - [ ] GWAS workflow and execution
+	- [ ] Select the GWAS v1 tool entry point among TASSEL / GEMMA / GCTA (progress_overview §6.2)
 	- [ ] Workflow design: `[[workflow]]`
 	- [ ] Runtime plan: `[[1.GWAS]]`
 		- [ ] TASSEL
@@ -276,8 +298,8 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 		- [ ] PIP
 	- [ ] LLM-assisted workflow
 		- [ ] Create the corresponding workflow
-		- [ ] Configure the `evo2` environment and run a trial
-		- [ ] Write the `evo2` run script
+			- [ ] Configure the `evo2` environment and run a trial
+			- [ ] Write the `evo2` run script
 		- [ ] Find literature for comparable functionality
 	- [ ] SV-GWAS
 		- [ ] ImputeSV
