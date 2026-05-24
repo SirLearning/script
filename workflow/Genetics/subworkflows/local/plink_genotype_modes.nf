@@ -14,7 +14,7 @@ include { test_plink_stats as TEST_PLINK_STATS } from '../../modules/local/genot
 include { database as DATABASE } from '../../modules/local/genotype/database.nf'
 include { kinship as KINSHIP } from '../../modules/local/dynamic/kinship.nf'
 include { population_structure as POPULATION_STRUCTURE } from '../../modules/local/dynamic/ps.nf'
-include { GWAS } from '../../modules/local/static/gwas/gwas.nf'
+include { GWAS } from '../../modules/local/static/gwas.nf'
 include { HAIL } from '../../modules/local/genotype/hail.nf'
 
 workflow RUN_V1_PLINK {

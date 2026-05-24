@@ -23,3 +23,6 @@ __pycache__/
 .idea/
 .vscode/
 
+# CodeGraph local index (regenerate with: codegraph init -i)
+.codegraph/
+

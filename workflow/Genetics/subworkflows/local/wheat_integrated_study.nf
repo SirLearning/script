@@ -25,7 +25,7 @@ include {
     plot_genetic_map
     report_hapmap_table
 } from '../../modules/local/genotype/stats.nf'
-include { plink2_gwas_glm; gcta_gwas; plot_gwas_association } from '../../modules/local/static/gwas/gwas.nf'
+include { plink2_gwas_glm; gcta_gwas; plot_gwas_association } from '../../modules/local/static/gwas.nf'
 
 workflow WHEAT_STUDY_FROM_PLINK {
     take:
