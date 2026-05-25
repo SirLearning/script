@@ -87,6 +87,7 @@ Entry scripts use `include { ... } from '../modules/local/genotype/...'` paths r
 | `tmp/ld_plots_redraw.nf` | Re-run LD decay + cross-chr plot processes from existing `process/<mod>/variant/*.vcor` without rerunning the full processor. |
 | `tmp/assess_plink_debug.nf` | Tier-1 assess on `test_thin` / `test_common_thin`: PLINK2 `--freq counts` / `--missing` on a representative-chr slice of each `*_test.plink2`, MAF-bin TSV from `.acount`, MAC / singleton summaries and QC plots via `assess_slice.py` under `assess/<mod>/plots` and tables under `assess/<mod>/info`. |
 | `tmp/gsa_ftp_upload.nf` | Upload large raw sequencing files (HiFi BAM, Illumina PE, Hi-C FASTQ) to BIG GSA FTP (`submit.big.ac.cn`, default `/GSA/subCRA071073`) with `curl -C -` resume, per-file retry, and a summary TSV under `params.output_dir`. Set `GSA_FTP_PASSWORD` in the environment before launch. |
+| `tmp/gwh_ftp_upload.nf` | Upload genome assembly FASTA to BIG GWH FTP (`submit.big.ac.cn`, default `/GWH/Batch0092978`) with `curl -C -` resume, per-file retry, and a summary TSV under `params.output_dir`. Default source: `Jm229.final.fasta` on s107. Optional `--verify_md5` (default true) or `--verify_only` to stream remote content and compare MD5 with local `md5sum`. Set `GSA_FTP_PASSWORD` in the environment before launch. |
 
 ---
 
