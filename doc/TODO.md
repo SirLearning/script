@@ -34,9 +34,9 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [x] Depth-only thresholds rejected; use joint QC on Depth / MQ / MAF / Missing (LogRef: 2026-04-22)
 - [ ] Encode multi-metric thresholds as reusable parameter templates (per A / B / D / Others)
 - [ ] Integrate external wheat genomics reference code (progress_overview §1)
-- [ ] Raw-data backup and DBone records (from `2026-05-22.md` / Raw Data Process)
-	- [x] FASTQ collection baseline (`[[1.fastq]]`)
-	- [x] Alignment baseline (`[[2.bam]]`) and VMap4 SNP calling baseline (`[[3.vcf]]`)
+- [ ] Raw-data backup and DBone records (from `2026-05-30.md` / Raw Data Process)
+	- [x] FASTQ collection baseline (`[[VMap_raw_data]]`; Variation Library `[[1.fastq]]`)
+	- [x] Alignment, BAM upload, and VMap4 SNP calling baseline (`[[genotyping]]`; Variation Library `[[2.bam]]` / `[[3.vcf]]`)
 	- [ ] Audit VMap4 data backups
 		- [ ] `fastq`: LuLab 18 T-5 through T-11 (7 disks, 126 T)
 		- [ ] `bam`: LuLab 18 T-12 through T-22 (11 disks, 198 T)
