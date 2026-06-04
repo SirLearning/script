@@ -32,7 +32,7 @@ Follow **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation
 ### 1) Inventory open work
 
 1. Read **`doc/TODO.md`** and list bullets that are still **`- [ ]`** (nested items count independently).
-2. If the user named a **section, TODO id, or bullet**, scope to that. Otherwise propose **one coherent batch** (single feature, single NF area, or single doc pass) and confirm implicit scope is reasonable; avoid mixing unrelated science + infra in one batch without user intent.
+2. If the user named a **section, progress-log date/title, or bullet**, scope to that. Otherwise propose **one coherent batch** (single feature, single NF area, or single doc pass) and confirm implicit scope is reasonable; avoid mixing unrelated science + infra in one batch without user intent.
 
 ### 2) Plan the batch
 
@@ -56,7 +56,7 @@ Follow **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation
 When one or more targeted items are **actually done**:
 
 1. **`doc/TODO.md`:** Flip matching **`[ ]` → `[x]`**. Preserve `LogRef`, dates, paths, `[[wiki]]` links, and checkbox nesting. Do **not** bulk-uncheck unrelated items.
-2. **`doc/TODO_PROGRESS_LOG.md`:** Append a **new** section at the **end** (English). Write a **report-style narrative** (or a table) covering: **goal** of the work; **what changed** in the repo and **why**; each **test/run** (working directory only—full commands go to **`doc/NF_CMD.md`**); **whether it passed**; if not, **root cause** and **next fix**; **final outcome** and **how outputs are shaped** (paths, formats, prefixes). Cite `doc/NF_CMD.md` by date heading for command detail. Do **not** paste duplicate multi-line bash blocks. For thin older entries, append `## YYYY-MM-DD — SUPP — …` at the end—**do not rewrite** earlier text.
+2. **`doc/TODO_PROGRESS_LOG.md`:** Append a **new** section at the **end** (English) with heading `## YYYY-MM-DD — <short English title>` (no opaque IDs). Write a **report-style narrative** (or a table with a **`Summary`** row if needed) covering: **goal** of the work; **what changed** in the repo and **why**; each **test/run** (working directory only—full commands go to **`doc/NF_CMD.md`**); **whether it passed**; if not, **root cause** and **next fix**; **final outcome** and **how outputs are shaped** (paths, formats, prefixes). Cite `doc/NF_CMD.md` by date heading for command detail. Do **not** paste duplicate multi-line bash blocks. For thin older entries, append `## YYYY-MM-DD — SUPP — <topic>` at the end—**do not rewrite** earlier text.
 3. **`doc/NF_CMD.md`:** If **any** `nextflow` (or `screen ... nextflow`) command was executed for this repo during the session, append a **new block at the end** in chronological order: `### YYYY-MM-DD` heading, optional one-line cwd/outcome, then a fenced **`bash`** block with the **full** command line(s). English prose only.
 
 ### 6) User did not ask for doc-only work
@@ -70,7 +70,7 @@ Append to **`doc/TODO_PROGRESS_LOG.md`** (English). Example shape:
 ```markdown
 ---
 
-## YYYY-MM-DD — TODO-<SHORT-ID> — <Short title>
+## YYYY-MM-DD — <Short English title>
 
 **Goal:** …
 

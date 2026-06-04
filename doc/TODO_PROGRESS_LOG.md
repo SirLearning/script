@@ -1,15 +1,19 @@
 # TODO progress log
 
-Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstation-core.mdc`). **Do not delete or rewrite** existing body text; add new material at the **end** only (including `SUPP` sections). Each entry should read like an **engineering report**: goals, what changed and why, validation (**pass / fail / blocked**), root causes and fixes, next steps, and how outputs are laid out (formats, `publishDir`, prefixes). **Full command lines** belong in **`doc/NF_CMD.md`**; here, cite that file by heading and record **working directory(ies)** per run. English; prose or tables are both fine.
+Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstation-core.mdc`). **Do not delete or rewrite** existing body text; add new material at the **end** only (including `SUPP` sections).
+
+**Section headings:** `## YYYY-MM-DD — <short English title>` (and `## YYYY-MM-DD — SUPP — <topic>` for supplements). No opaque IDs (e.g. `OPS-NF-001`); the date plus title should be enough to find an entry.
+
+Each entry should read like an **engineering report**: goals, what changed and why, validation (**pass / fail / blocked**), root causes and fixes, next steps, and how outputs are laid out (formats, `publishDir`, prefixes). **Full command lines** belong in **`doc/NF_CMD.md`**; here, cite that file by heading and record **working directory(ies)** per run. English; prose or tables are both fine.
 
 ---
 
-## 2026-05-13 — TODO-INIT-001 — Establish master TODO + progress log in repo
+## 2026-05-13 — Establish master TODO + progress log in repo
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | TODO-INIT-001 — Import vmap4 workflow methodology/process/assess/filter checklist |
+| **Summary** | Import vmap4 workflow methodology/process/assess/filter checklist |
 | **Files changed** | `doc/TODO.md` (created), `doc/TODO_PROGRESS_LOG.md` (created) |
 | **Validation** | Manual: checklist matches user-supplied snapshot; open `[ ]` and done `[x]` preserved. |
 | **Outcome** | Master list versioned in repo; future completions should flip boxes in `doc/TODO.md` and append a new section here. |
@@ -17,12 +21,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — TODO-DOC-002 — Variation library TODO: English + expanded scope
+## 2026-05-13 — Variation library TODO: English + expanded scope
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | TODO-DOC-002 — Rewrite `doc/TODO.md` in English; merge new items from methodology / `3.variation-library` / `2.population-genetics` / `5.wheat-WGS-technology` |
+| **Summary** | Rewrite `doc/TODO.md` in English; merge new items from methodology / `3.variation-library` / `2.population-genetics` / `5.wheat-WGS-technology` |
 | **Files changed** | `doc/TODO.md` |
 | **Validation** | Manual diff vs user checklist: all new bullets present; prior `[x]` / `[ ]` states preserved; wiki links `[[4.process]]`, `[[5.assess]]`, `[[6.filter]]` and paths unchanged. |
 | **Outcome** | Single English master list under “Variation library”; nested QC / AF / LD / IBS / filter sections expanded per user input. |
@@ -30,12 +34,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — TODO-DOC-003 — TODO.md supplemented from repo survey
+## 2026-05-13 — TODO.md supplemented from repo survey
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | TODO-DOC-003 — Align `doc/TODO.md` with `workflow/Genetics` implementation (main router, stats/processor/hail, config gaps) |
+| **Summary** | Align `doc/TODO.md` with `workflow/Genetics` implementation (main router, stats/processor/hail, config gaps) |
 | **Files changed** | `doc/TODO.md` |
 | **Validation** | Manual: reviewed `main.nf`, `genotype/processor.nf`, `genotype/stats.nf`, `genotype/hail.nf`, `genotype/assess.nf`, `nextflow.config`; new bullets match current wiring. |
 | **Outcome** | Added “Pipeline & repository snapshot” block; noted `test_common_thin`, test-only LD stats vs `v1_plink`, HAIL/kinship/PS router gap, README/assess parity, provenance + CI follow-ups. |
@@ -43,12 +47,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — TODO-DOC-004 — Reorder `doc/TODO.md` by Nextflow execution path
+## 2026-05-13 — Reorder `doc/TODO.md` by Nextflow execution path
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | TODO-DOC-004 — Structure TODO list along `main.nf` → `processor.nf` (`test_plink*`, `test_common_thin`, `v1_plink`) → `test_plink_stats` / `plink_stats` |
+| **Summary** | Structure TODO list along `main.nf` → `processor.nf` (`test_plink*`, `test_common_thin`, `v1_plink`) → `test_plink_stats` / `plink_stats` |
 | **Files changed** | `doc/TODO.md` |
 | **Validation** | Manual: compared section order to `workflow/Genetics/main.nf` branches and `test_plink_processor` / `test_plink_camp` / `test_common_thin_processor` / `plink_processor` + `test_plink_stats` / `plink_stats`; prior checklist items relocated, not dropped. |
 | **Outcome** | Numbered sections (methodology → entry → preprocess → processor by mod → stats → production → filter → parallel modules → extended backlog → future); wiki anchors `[[4.process]]`, `[[5.assess]]`, `[[6.filter]]` kept on relevant sections. |
@@ -56,12 +60,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — OPS-NF-001 — Re-run `test_thin` and `test_common_thin` with merged `process_dir` reuse
+## 2026-05-13 — Re-run `test_thin` and `test_common_thin` with merged `process_dir` reuse
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | OPS-NF-001 — Restats for `test_thin` / `test_common_thin` using `--process_dir` with existing `A_test.plink2` … `Others_test.plink2` (skip thin/merge; rebuild `mk_plink_basic_info` + LD + `test_plink_stats`) |
+| **Summary** | Restats for `test_thin` / `test_common_thin` using `--process_dir` with existing `A_test.plink2` … `Others_test.plink2` (skip thin/merge; rebuild `mk_plink_basic_info` + LD + `test_plink_stats`) |
 | **Files changed** | `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry) |
 | **Validation** | Ran Nextflow from conda env `run`: (1) `08stats.genome/11run_test_thin_restats` — exit 0, 52 succeeded, 21m 50s, log shows merged reuse; (2) `08stats.genome/12run_test_common_thin_restats` — exit 0, 52 succeeded, 1m 38s. |
 | **Outcome** | Stats/plots republished under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin` and `.../stats/test_common_thin` per existing `publishDir` wiring. |
@@ -69,12 +73,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — OPS-NF-002 — Mini-workflow `tmp/ld_plots_redraw.nf` for LD-only stats
+## 2026-05-13 — Mini-workflow `tmp/ld_plots_redraw.nf` for LD-only stats
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | OPS-NF-002 — Add `workflow/Genetics/tmp/ld_plots_redraw.nf` to re-run `variant_ld_decay_plot` + `variant_ld_crosschr_plot` from existing `process/<mod>/variant/*.vcor`; document commands in `doc/NF_CMD.md`; agent rules: prefer mini-NF over ad-hoc Python for partial reruns |
+| **Summary** | Add `workflow/Genetics/tmp/ld_plots_redraw.nf` to re-run `variant_ld_decay_plot` + `variant_ld_crosschr_plot` from existing `process/<mod>/variant/*.vcor`; document commands in `doc/NF_CMD.md`; agent rules: prefer mini-NF over ad-hoc Python for partial reruns |
 | **Files changed** | `workflow/Genetics/tmp/ld_plots_redraw.nf`, `workflow/Genetics/tmp/README.md`, `.cursor/rules/workstation-core.mdc`, `.cursor/rules/workstation-nextflow.mdc`, `.cursor/rules/workstation-python.mdc`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry); removed top-level `workflow/Genetics/ld_plots_redraw.nf` in favor of `tmp/` |
 | **Validation** | `test_thin`: from `08stats.genome/14run_ld_plots_redraw`, `conda activate run`, `nextflow run .../ld_plots_redraw.nf ... --mod test_thin` — **exit 0**, **8** succeeded, **~15m 22s** (original run used repo root `ld_plots_redraw.nf`; equivalent command uses `tmp/ld_plots_redraw.nf`). Repeat from a **new** numbered folder for `--mod test_common_thin` (not run in this session). |
 | **Outcome** | Partial reruns reuse the same `publishDir` layout as full `test_plink_stats`; eight LD-related tasks per mod run in parallel across subgenomes. |
@@ -82,25 +86,25 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-13 — OPS-NF-003 — Relocate LD mini-workflow to `tmp/`; chronological `NF_CMD.md`; rules sync
+## 2026-05-13 — Relocate LD mini-workflow to `tmp/`; chronological `NF_CMD.md`; rules sync
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | OPS-NF-003 — Move `ld_plots_redraw.nf` to `workflow/Genetics/tmp/`; document `-c` to `nextflow.config`; restructure `doc/NF_CMD.md` as time-ordered run log only; update `.cursor/rules` and `main.nf` help |
-| **Files changed** | `workflow/Genetics/tmp/ld_plots_redraw.nf`, `workflow/Genetics/tmp/README.md`, removed `workflow/Genetics/ld_plots_redraw.nf`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry + OPS-NF-002 heading/files refresh), `.cursor/rules/workstation-core.mdc`, `.cursor/rules/workstation-nextflow.mdc`, `.cursor/rules/workstation-python.mdc`, `workflow/Genetics/main.nf` (help text) |
+| **Summary** | Move `ld_plots_redraw.nf` to `workflow/Genetics/tmp/`; document `-c` to `nextflow.config`; restructure `doc/NF_CMD.md` as time-ordered run log only; update `.cursor/rules` and `main.nf` help |
+| **Files changed** | `workflow/Genetics/tmp/ld_plots_redraw.nf`, `workflow/Genetics/tmp/README.md`, removed `workflow/Genetics/ld_plots_redraw.nf`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry + LD redraw entry heading/files refresh), `.cursor/rules/workstation-core.mdc`, `.cursor/rules/workstation-nextflow.mdc`, `.cursor/rules/workstation-python.mdc`, `workflow/Genetics/main.nf` (help text) |
 | **Validation** | Repo grep: no stale `workflow/Genetics/ld_plots_redraw.nf` references in rules; `include` path in `tmp/ld_plots_redraw.nf` points to `../genotype/stats.nf`. Nextflow not re-executed in this session after the move. |
 | **Outcome** | Auxiliary entry lives under `tmp/`; config still loaded via absolute `-c .../workflow/Genetics/nextflow.config`; agent docs match. |
 | **Risks / follow-ups** | Re-run `nextflow run .../tmp/ld_plots_redraw.nf` once from a vmap4 run folder to smoke-test after pull. |
 
 ---
 
-## 2026-05-13 — OPS-ASSESS-001 — Tier-1 assess debug mini-workflow (`tmp/assess_plink_debug.nf`)
+## 2026-05-13 — Tier-1 assess debug mini-workflow (`tmp/assess_plink_debug.nf`)
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-13 |
-| **TODO ID / title** | OPS-ASSESS-001 — §9 backlog tier-1: export narrow VCF from `*_test.plink2` for `test_thin` / `test_common_thin`, scrub PLINK `##chrSet` header for bcftools, run `quick_count` + `bcftools_qc_assess` + MAF-bin TSV; fix `assess.nf` conda + publishDir by `mod` + PLINK-safe `+fill-tags` / GQ handling |
+| **Summary** | §9 backlog tier-1: export narrow VCF from `*_test.plink2` for `test_thin` / `test_common_thin`, scrub PLINK `##chrSet` header for bcftools, run `quick_count` + `bcftools_qc_assess` + MAF-bin TSV; fix `assess.nf` conda + publishDir by `mod` + PLINK-safe `+fill-tags` / GQ handling |
 | **Files changed** | `workflow/Genetics/tmp/assess_plink_debug.nf`, `workflow/Genetics/tmp/README.md`, `workflow/Genetics/genotype/assess.nf`, `doc/TODO.md`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry), `.cursor/rules/workstation-{core,nextflow,python}.mdc` |
 | **Validation** | `conda activate run`: `21run_assess_debug_test_thin` — **exit 0**, **16** succeeded, **~2m 42s**; `22run_assess_debug_test_common_thin` — **exit 0**, **16** succeeded. |
 | **Outcome** | Published under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/test_thin/` and `.../assess/test_common_thin/` (`export/*.debug.vcf.gz`, `*.counts.tsv`, `*.maf_missing.tsv`, `*.gq_summary.tsv`, `info/*.mac_site_histogram.tsv`). |
@@ -108,12 +112,12 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-14 — OPS-ASSESS-002 — Assess debug: PLINK2-native slice + Python infra plots
+## 2026-05-14 — Assess debug: PLINK2-native slice + Python infra plots
 
 | Field | Detail |
 | --- | --- |
 | **Date** | 2026-05-14 |
-| **TODO ID / title** | OPS-ASSESS-002 — Replace bcftools/VCF export path in `tmp/assess_plink_debug.nf` with PLINK2 `--freq`/`--missing` on pfiles; MAF bins from `.afreq`; plots via `assess_slice.py` + `infra.utils.graph`; agent rules for assess + plotting |
+| **Summary** | Replace bcftools/VCF export path in `tmp/assess_plink_debug.nf` with PLINK2 `--freq`/`--missing` on pfiles; MAF bins from `.afreq`; plots via `assess_slice.py` + `infra.utils.graph`; agent rules for assess + plotting |
 | **Files changed** | `workflow/Genetics/genotype/assess.nf` (`plink2_assess_debug_slice`), `workflow/Genetics/tmp/assess_plink_debug.nf`, `workflow/Genetics/tmp/README.md`, `src/python/genetics/genomics/variant/assess_slice.py`, `src/python/infra/utils/graph.py` (`plot_bar_chart` dpi/labels), `.cursor/rules/workstation-core.mdc`, `.cursor/rules/workstation-python.mdc`, `doc/TODO.md`, `doc/NF_CMD.md`, `doc/TODO_PROGRESS_LOG.md` (this entry) |
 | **Validation** | `python3` AST parse of `assess_slice.py`; `nextflow run .../tmp/assess_plink_debug.nf -preview` with real `output_dir`/`job`/`mod` from `/data/home/tusr1/01projects/vmap4/08stats.genome/23run_assess_plink2_debug_stub` — **exit 0**. Full `nextflow run` not re-executed (requires existing `process/<mod>/*_test.plink2`). |
 | **Outcome** | Debug assess no longer depends on bcftools for the tier-1 slice; tables + PNGs follow stats-style infra helpers; workstation rules document PLINK2-first assess and plot layout under `assess/<mod>/`. |
@@ -121,11 +125,11 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-14 — SUPP — Narrative supplement (OPS-NF-001, OPS-NF-002, OPS-ASSESS-001, OPS-ASSESS-002, OPS-NF-003)
+## 2026-05-14 — SUPP — Narrative supplement (2026-05-13 batch: restats, LD redraw, assess, rules)
 
 **Purpose of this supplement:** Earlier table rows (above) captured outcomes briefly. This block adds **goals, rationale, working directories, pass/fail, output layout, and follow-ups** in prose. **Full command lines** for every Nextflow run are in **`doc/NF_CMD.md`** under the matching `### 2026-05-13 …` / `### 2026-05-14 …` headings—do not duplicate them here.
 
-### OPS-NF-001 — Restats with merged `process_dir`
+### Restats with merged `process_dir`
 
 **Goal:** Refresh `test_thin` and `test_common_thin` stats (and downstream LD in that track) **without** re-thinning or re-merging, by pointing `--process_dir` at already merged `*_test.plink2` trees so the processor short-circuits to `mk_plink_basic_info` + LD + stats.
 
@@ -139,7 +143,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 **Issues / next steps:** Optional Graphviz warning for DAG image only. Use `-resume` from the same launch dir on transient failures.
 
-### OPS-NF-002 — LD-only redraw (`tmp/ld_plots_redraw.nf`)
+### LD-only redraw (`tmp/ld_plots_redraw.nf`)
 
 **Goal:** Regenerate LD decay and cross-chromosome LD plots from existing `.vcor` inputs when plotting code or output prefixes change, without rerunning genotype.
 
@@ -150,15 +154,15 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 - `.../16run_ld_plots_redraw_test_thin` — second `test_thin` pass after decay basename/prefix tweak — **pass** (8 tasks, ~16 m).
 - `.../17run_ld_plots_redraw_test_common_thin` — `test_common_thin` — **pass** (8 tasks).
 
-*(Note: the original OPS-NF-002 table row was conservative about `test_common_thin`; `doc/NF_CMD.md` records the `17run…` run as above.)*
+*(Note: the original LD-only redraw table row was conservative about `test_common_thin`; `doc/NF_CMD.md` records the `17run…` run as above.)*
 
 **Outputs / format:** Same publish layout as stats LD processes (`stats/<mod>/plots` etc.). **Interpretation:** `publishDir` copies by pattern; confirm opened PNG basenames match the **current** run prefix to avoid stale files.
 
-### OPS-ASSESS-001 — Legacy tier-1 assess (VCF slice + bcftools)
+### Legacy tier-1 assess (VCF slice + bcftools)
 
 **Goal:** Fast per-subgenome QC on one representative chromosome each for `test_thin` / `test_common_thin`, using a narrow VCF export so bcftools could fill/query `INFO` fields.
 
-**Why (superseded):** bcftools path was needed for `+fill-tags` / per-site tables; later superseded by PLINK2-native slice (OPS-ASSESS-002) where pfiles suffice.
+**Why (superseded):** bcftools path was needed for `+fill-tags` / per-site tables; later superseded by the 2026-05-14 PLINK2-native assess entry where pfiles suffice.
 
 **Runs (cwd; commands → `doc/NF_CMD.md`):**
 - `.../21run_assess_debug_test_thin` — **pass** (16 tasks, ~3 m).
@@ -166,7 +170,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 **Outputs / format:** Under `.../test_plink/assess/<mod>/`: `export/*.debug.vcf.gz`, root-level `*.counts.tsv`, `*.maf_missing.tsv`, `*.gq_summary.tsv`, `info/*.mac_site_histogram.tsv`. GQ summary often a placeholder when FORMAT/GQ absent in export.
 
-### OPS-ASSESS-002 — PLINK2-native assess + Python plots
+### PLINK2-native assess + Python plots
 
 **Goal:** Remove bcftools/VCF export from the debug assess mini-workflow where possible; surface MAF vs missing and MAF-bin summaries with **`infra.utils.graph`**-style figures.
 
@@ -180,7 +184,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 **Expected outputs after full run:** `assess/<mod>/` with `.afreq`, `.vmiss`, TSVs, `plots/*.png`, `info/*.tsv`, `logs/*.log` — no new `export/*.vcf.gz` from this workflow version.
 
-### OPS-NF-003 — Relocate LD mini-workflow + rules
+### Relocate LD mini-workflow + rules
 
 **Goal:** Keep auxiliary entry scripts under `workflow/Genetics/tmp/` and keep agent docs aligned.
 
@@ -190,7 +194,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-14 — DOC-PROGLOG-001 — Progress log policy (narrative vs `NF_CMD.md`)
+## 2026-05-14 — Progress log policy (narrative vs `NF_CMD.md`)
 
 **Goal:** `doc/TODO_PROGRESS_LOG.md` should carry **intent, diffs, rationale, test outcomes, failure analysis, remediation, and how artefacts are structured**; **`doc/NF_CMD.md`** remains the single place for **verbatim** runnable Nextflow/bash command blocks.
 
@@ -200,7 +204,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-14 — TODO-DOC-README — Refresh `workflow/Genetics/README.md` (todo-drive-close batch)
+## 2026-05-14 — Refresh `workflow/Genetics/README.md` (todo-drive-close batch)
 
 **Goal:** Close **`doc/TODO.md`** §2 “Docs drift” by replacing the outdated one-line `README` with a concise operator-facing description of the real **`main.nf`** router, optional `process_dir` / `camp`, test output tree, `tmp/` auxiliary entries, and workstation run policy (cwd under vmap4 projects, conda `run`, `screen` for long jobs, read-only vmap4 inputs).
 
@@ -214,9 +218,9 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-15 — OPS-ASSESS-003 — Full `assess_plink_debug.nf` runs (`test_thin`, `test_common_thin`)
+## 2026-05-15 — Full `assess_plink_debug.nf` runs (`test_thin`, `test_common_thin`)
 
-**Goal:** Close the validation gap left after OPS-ASSESS-002 (preview + AST only): execute the PLINK2-native assess mini-workflow **without** `-preview` for both test mods so `assess_slice.py` plots and TSVs are materialized under the real `publishDir` tree.
+**Goal:** Close the validation gap left after the 2026-05-14 assess refactor (preview + AST only): execute the PLINK2-native assess mini-workflow **without** `-preview` for both test mods so `assess_slice.py` plots and TSVs are materialized under the real `publishDir` tree.
 
 **Why:** Confirms merged `*_test.plink2` under `process/<mod>/` are readable end-to-end and that Python plotting processes complete under conda `stats`.
 
@@ -232,7 +236,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-16 — WF-DOC-README-001 — Consolidate `workflow/` documentation into `workflow/Genetics/README.md`
+## 2026-05-16 — Consolidate `workflow/` documentation into `workflow/Genetics/README.md`
 
 **Goal:** Keep **one** README under `workflow/` (`workflow/Genetics/README.md`); merge content from `workflow/Genetics/integrated/README.md` and `workflow/Genetics/tmp/README.md`, delete those files, and encode the rule in **`.cursor/rules/workstation-core.mdc`**, **`.cursor/rules/workstation-nextflow.mdc`**, and cross-references (`main.nf`, `nextflow.config`, `tmp/ld_plots_redraw.nf`, `.cursor/skills/todo-drive-close/SKILL.md`).
 
@@ -240,7 +244,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-16 — WF-ROUTER-001 — Narrow VCF/PLINK `params.mod` list in docs and schema
+## 2026-05-16 — Narrow VCF/PLINK `params.mod` list in docs and schema
 
 **Goal:** Align operator docs, CLI help, JSON parameter schema, and engineering checklists with **`workflow/Genetics/main.nf`**: the VCF/PLINK branch now dispatches only **`v1_plink`**, **`test_thin`**, **`test_camp`**, and **`test_common_thin`** (the `wheat_*` integrated branch is unchanged).
 
@@ -252,7 +256,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-17 — OPS-ASSESS-004 — Tier-1 assess mini-workflow revalidation (`todo-drive-close`, assess scope)
+## 2026-05-17 — Tier-1 assess mini-workflow revalidation (`todo-drive-close`, assess scope)
 
 **Goal:** Re-run **`workflow/Genetics/tmp/assess_plink_debug.nf`** for **`test_thin`** and **`test_common_thin`** after recent repo activity so the PLINK2 slice + **`assess_slice.py`** path remains green. **`doc/TODO.md`** §8 assess debug and the tier-1 bullet under §9 were already `[x]`; this session did **not** flip additional checklist boxes (§9 singletons / depth / LD backlog remains open).
 
@@ -267,7 +271,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 | `test_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/28run_assess_revalidate_test_thin` | **pass** — exit 0, 8 succeeded; wall ~1m 14s; aggregate `succeedDuration` ~9m 19s |
 | `test_common_thin` | `/data/home/tusr1/01projects/vmap4/08stats.genome/29run_assess_revalidate_test_common_thin` | **pass** — exit 0, 8 succeeded; wall ~23s; aggregate `succeedDuration` ~1m 9s |
 
-**Outputs:** Same publish layout as **OPS-ASSESS-003**: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/<mod>/` with `.afreq` / `.vmiss` / bin TSVs at assess root; `plots/*.png`, `info/*.tsv`, `logs/*.log` under the mod tree.
+**Outputs:** Same publish layout as the **2026-05-15 full assess runs**: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/assess/<mod>/` with `.afreq` / `.vmiss` / bin TSVs at assess root; `plots/*.png`, `info/*.tsv`, `logs/*.log` under the mod tree.
 
 **Issues:** Graphviz missing for DAG (warn only).
 
@@ -275,7 +279,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-17 — TODO-ASSESS-009 — §9 singleton / MAC tables from PLINK2 `.acount` (`todo-drive-close`, §9 backlog)
+## 2026-05-17 — §9 singleton / MAC tables from PLINK2 `.acount` (`todo-drive-close`, §9 backlog)
 
 **Goal:** Close **`doc/TODO.md`** §9 “Singletons: counts and distribution” with an **implementable** tier: extend the existing assess mini-workflow to use PLINK2 **`--freq counts`** (`.acount` with `ALT_CTS` / `OBS_CT`), derive **MAC** and **MAF**, and publish **singleton fraction / MAC bucket** tables plus bar + histogram figures next to the existing MAF–missing assess plots—still on the **representative-chromosome slice** per subgenome (not genome-wide).
 
@@ -302,7 +306,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-17 — OPS-NAMING-001 — Subgenome-first artefact names; integrated path encodes PLINK source mod
+## 2026-05-17 — Subgenome-first artefact names; integrated path encodes PLINK source mod
 
 **Goal:** Remove **`job`** / redundant **`mod`** prefixes from **assess** and **wheat-from-PLINK** file basenames (subgenome id first, e.g. `A.assess.*`, `A.pca.png`). Keep **folder** semantics: **`assess/<plink_mod>/`**, and **`integrated/<plink_source_mod>/<wheat_task_mod>/`** so two PLINK test mods no longer share one integrated directory.
 
@@ -316,7 +320,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-20 — WHEAT-PCA-TSNE-001 — t-SNE on PLINK2 PCs in `plot_population_structure`
+## 2026-05-20 — t-SNE on PLINK2 PCs in `plot_population_structure`
 
 **Goal:** Restore **t-SNE** alongside PCA for **`wheat_pca_tsne`**: run **sklearn** `TSNE` on the first *K* PLINK PC columns (same idea as before job/mod prefixes were dropped), save **`{subgenome}.tsne.tsv`** + **`{subgenome}.tsne.png`**, without replacing PLINK2 PCA itself.
 
@@ -328,7 +332,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-20 — SUPP — WHEAT-PCA-TSNE-001 — Full NF rerun (`test_thin`, `test_common_thin`)
+## 2026-05-20 — SUPP — Full wheat PCA/t-SNE NF rerun (`test_thin`, `test_common_thin`)
 
 **Goal:** Regenerate **`wheat_pca_tsne`** integrated artefacts after t-SNE code landed.
 
@@ -343,7 +347,7 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 
 ---
 
-## 2026-05-20 — WHEAT-PCA-GROUP-001 — Sample `Group` on PCA/t-SNE plots
+## 2026-05-20 — Sample `Group` on PCA/t-SNE plots
 
 **Goal:** Color PCA and t-SNE scatter plots by germplasm **`Group`** (same `anno_group` path as `ref_ibs` / `test_plink_stats`), and include `Group` in exported TSVs.
 
@@ -357,3 +361,13 @@ Append-only audit log for completed TODO / ops work (per `.cursor/rules/workstat
 | `test_thin` | `…/43run_wheat_pca_grp_test_thin` | **in progress** — `screen wheat43`; prior agent interrupt left no run dirs |
 
 **Outputs (when complete):** `…/integrated/<mod>/wheat_pca_tsne/info/*.pca.tsv` with columns `Sample`, `PC*`, `Group`; plots `*.pca.png` / `*.tsne.png` with legend by group.
+
+---
+
+## 2026-06-04 — Progress log headings: date + English title only
+
+**Goal:** Drop opaque section IDs (`OPS-NF-001`, `TODO-ASSESS-009`, etc.) from `doc/TODO_PROGRESS_LOG.md` and agent rules; use `## YYYY-MM-DD — <short English title>` (and `SUPP` supplements) so entries are self-describing.
+
+**Changes:** Retrofitted existing log headings and table **`Summary`** rows; updated **`.cursor/rules/workstation-core.mdc`** and **`.cursor/skills/todo-drive-close/SKILL.md`**. Checklist **`doc/TODO.md`** still uses **`LogRef:`** calendar dates only (unchanged).
+
+**Validation:** Doc-only.
