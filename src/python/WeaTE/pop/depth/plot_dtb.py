@@ -8,6 +8,10 @@ import seaborn as sns
 from scipy.signal import find_peaks_cwt
 from scipy.signal import find_peaks
 
+TECODE = 'transposon/TEcode'
+THRESHOLD_PATH = 'transposon/vu_reads_depth/threshold.txt'
+
+
 def main():
     summary = pd.concat([chr_main('1A'), chr_main('1B'), chr_main('1D')])
     summary.reset_index(drop=True, inplace=True)
@@ -25,7 +29,7 @@ def main():
     plt.legend(title='Name')
     plt.show()
 
-    with open('../../../resources/transposon/vu_reads_depth/threshold.txt', 'w') as f:
+    with open(THRESHOLD_PATH, 'w') as f:
         for i in range(len(summary)):
             if summary.loc[i, 'threshold']:
                 f.write(summary.loc[i, 'chrom'] + '\t' + summary.loc[i, 'chr'] + '\n')
@@ -64,7 +68,7 @@ def chr_main(chr):
 
     # TE type
     summary['type'] = summary['chrom'].str.split('#').str[1]
-    tecode = pd.read_table("../../../resources/transposon/TEcode", sep=",", header=None)
+    tecode = pd.read_table(TECODE, sep=",", header=None)
     tecode.columns = ['cls', 'new_cls']
     for i in range(0, len(tecode)):
         summary.loc[summary['type'] == tecode['cls'][i], 'type'] = tecode['new_cls'][i]

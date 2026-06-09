@@ -2,7 +2,7 @@
 
 **Documentation:** This file (`docs/GENETICS_WORKFLOW.md`) is the **only** narrative operator guide for this tree. Previous theme trees may live under `old/` for reference; **active** process libraries are **`modules/local/{genotype,dynamic,static,integrated}/`**.
 
-This directory holds the **Genotype** branch of the pipeline: PLINK/PLINK2 preprocessing, per-mod processors, stats (Python/R via `src/`), small **auxiliary** entry scripts under `tmp/`, and **wheat** table/matrix analytics. The text below describes what **`main.nf`** runs and how auxiliary scripts are launched.
+This directory holds the **Genotype** branch of the pipeline: PLINK/PLINK2 preprocessing, per-mod processors, stats (Python/R via `src/`), **composed subworkflows** under `subworkflows/local/`, ops scripts under `subworkflows/tmp/ops/`, and **wheat** table/matrix analytics.
 
 ---
 
@@ -10,10 +10,11 @@ This directory holds the **Genotype** branch of the pipeline: PLINK/PLINK2 prepr
 
 | Item | Role |
 | --- | --- |
-| `main.nf` | Anonymous top-level `workflow { }`: for non-`wheat_*` mods, builds `ch_vcf` via `check_input` from `subworkflows/local/genetics_helpers.nf`, then dispatches on `params.mod`. For `params.mod` starting with `wheat_`, skips VCF input and runs `RUN_WHEAT_INTEGRATED` (`subworkflows/local/wheat_integrated_mode.nf`). |
-| `subworkflows/local/genetics_helpers.nf` | `header()`, `helpMessage()`, and `workflow check_input` (VCF channel + summaries). |
-| `subworkflows/local/plink_genotype_modes.nf` | Composed workflows `RUN_V1_PLINK`, `RUN_TEST_PLINK`, `RUN_TEST_PLINK_CAMP`, `RUN_TEST_COMMON_THIN` (`include` from `modules/local/{genotype,dynamic,static}/`). |
-| `nextflow.config` | Default `params`, resource labels, conda hints. Pass with **absolute** `-c` when launching from arbitrary cwd (required for `tmp/*.nf`). |
+| `main.nf` | Anonymous top-level `workflow { }`: for non-`wheat_*` mods, builds `ch_vcf` via `check_input` from `subworkflows/local/entry/genetics_helpers.nf`, then dispatches on `params.mod`. For `params.mod` starting with `wheat_`, skips VCF input and runs `RUN_WHEAT_INTEGRATED` (`subworkflows/local/wheat/wheat_integrated_study.nf`). |
+| `subworkflows/local/entry/genetics_helpers.nf` | `header()`, `helpMessage()`, and `workflow check_input` (VCF channel + summaries). |
+| `subworkflows/local/plink/plink_genotype_modes.nf` | Composed workflows `RUN_V1_PLINK`, `RUN_TEST_PLINK`, `RUN_TEST_PLINK_CAMP`, `RUN_TEST_COMMON_THIN` (processor + stats only). Router-gap modules: `plink/analysis_extensions.nf`. |
+| `subworkflows/local/entry/partial_router.nf` | Partial reruns via `--partial_task` (assess, stats redraw, wheat-from-plink). |
+| `nextflow.config` | Default `params`, resource labels, conda hints. Pass with **absolute** `-c` when launching auxiliary scripts from arbitrary cwd. |
 
 Typical invocation shape (full examples and chronological runs: **`doc/NF_CMD.md`**):
 
@@ -39,15 +40,85 @@ These branches are wired in the **anonymous** top-level workflow in `main.nf`. P
 
 Single-table wheat modes use `wheat_table_input`; `wheat_gwas` / `wheat_kgwas` use dedicated genotype or k-mer + phenotype params (see **Wheat integrated workflows** below).
 
-Any other `params.mod` falls through to the “no workflow module was chosen” path (no-op aside from input check).
+Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported mods (no silent no-op).
 
 ### Included but not routed (known gap)
 
-`modules/local/genotype/database.nf`, `modules/local/dynamic/kinship.nf`, `modules/local/dynamic/ps.nf`, `modules/local/static/gwas/gwas.nf`, and `modules/local/genotype/hail.nf` are **included** in `plink_genotype_modes.nf` but have **no** `params.mod` branch yet. See **`doc/TODO.md`** §2 (“Router gap”) for the backlog to expose `HAIL`, kinship, population structure, GWAS, and `database` from the main router.
+`analysis_extensions.nf` collects router-gap modules (`database`, `kinship`, `ps`, `GWAS`, `HAIL`) for future `main.nf` branches — they are **not** loaded by the active PLINK router. See **`doc/TODO.md`** §2 (“Router gap”).
 
 ### Process libraries (`modules/local/`)
 
-**Active** Nextflow process definitions live under **`workflow/Genetics/modules/local/genotype/`**, **`.../dynamic/`**, **`.../static/`**, and **`.../integrated/`**. Earlier copies or experiments may remain under **`workflow/Genetics/old/`**; new work should `include` from **`modules/local/...`** only. Cross-theme imports (e.g. GWAS pulling `format_vcf_plink` from genotype) use paths relative to the importing file under `modules/local/`.
+**Active** Nextflow process definitions live under **`workflow/Genetics/modules/local/genotype/`**, **`.../dynamic/`**, **`.../static/`**, and **`.../integrated/`**. Shared DSL helpers live under **`.../infra/`**. Earlier copies or experiments may remain under **`workflow/Genetics/old/`**; new work should `include` from **`modules/local/...`** only. Cross-theme imports (e.g. GWAS pulling `format_vcf_plink` from genotype) use paths relative to the importing file under `modules/local/`.
+
+**Infra library** (`modules/local/infra/`) — cross-cutting Groovy helpers (no `process` blocks):
+
+| File | Contents |
+| --- | --- |
+| `infra/utils.nf` | Index / compose-only barrel (do not `include { def }` from here; use `infra_*.nf` directly) |
+| `infra/infra_tools.nf` | Java setup, software/TIGER/samtools paths, `validatePaths` |
+| `infra/infra_job_config.nf` | `getJobConfig`, calling/pop/chr config, `getVcfIdFromPath` |
+| `infra/infra_tiger.nf` | TIGER JAR config, FastCall server population lists |
+| `infra/infra_ref_v1.nf` | vmap4 IWGSC v1 chr maps, offsets, lengths, taxaBam paths |
+| `infra/infra_plink_reuse.nf` | Merged test pfile reuse tuples (`hasMergedSubgenomeTestPfiles`, …) |
+
+**Genotype processor library** (`modules/local/genotype/processor/`) — heavy `plink2` / TIGER / bcftools compute; workflows only in the barrel file:
+
+| File | Contents |
+| --- | --- |
+| `processor/processor.nf` | Composed workflows `test_plink_processor`, `test_plink_camp`, `test_common_thin_processor`, `plink_processor`, `plink_preprocess`, `vcf_arrange_merge`, `vcf_bcftools_filter` |
+| `processor/processor_vcf.nf` | VCF format, arrange, merge, `format_vcf_plink` |
+| `processor/processor_test.nf` | Test subsampling and subgenome merge |
+| `processor/processor_plink2.nf` | PLINK2 basic info, PCA, tag-SNP prune, CNV awk, LD matrices |
+| `processor/processor_legacy.nf` | Legacy vcftools basic info |
+| `processor/processor_depth.nf` | Population depth (TIGER) |
+| `processor/processor_filter.nf` | Sample/variant PLINK filters; VCF v0 filters |
+| `processor/processor_assess.nf` | Assess compute (`plink2_assess_debug_slice`, `quick_count`, `bcftools_qc_assess`) |
+
+**Genotype stats library** (`modules/local/genotype/stats/`) — plotting and summarization only; no heavy `plink2` compute:
+
+| File | Contents |
+| --- | --- |
+| `stats/stats.nf` | Composed workflows `test_plink_stats`, `plink_stats` (includes all sub-libraries below) |
+| `stats/stats_variant.nf` | Variant QC, MAC, popdep, LD plot processes |
+| `stats/stats_sample.nf` | Sample QC, kinship/IBS, PCA helper processes |
+| `stats/stats_assess.nf` | Assess debug plot processes (`assess_plink_debug_plots`, `dumpnice_vcf_qc_assess`) |
+| `stats/stats_integrated.nf` | Wheat integrated PLINK2 plot/report processes |
+| `stats/stats_chr_report.nf` | Chr variant count tables and thin vs common-thin compare plots |
+
+**Upstream genotype libraries** (not routed from `main.nf` yet — standalone entry scripts; composed in `subworkflows/local/upstream/raw_data_upstream.nf`):
+
+| Path | Entry | Contents |
+| --- | --- | --- |
+| `genotype/calling/` | `calling/caller.nf` | FastCall3 workflows (`run_FastCall3`, `load_lib_files`) + `caller_prep.nf` / `caller_fastcall.nf` |
+| `genotype/align/` | `align/align.nf` | `RUN_ALIGN_USB_TRANSFER` workflow; BAM USB transfer + MD5 (`align_transfer.nf`, `align_md5.nf`); BWA-MEM2 (`align_bwa.nf`) |
+
+**Hail library** (`genotype/hail/`) — included as `HAIL` workflow (router gap; see §2 TODO):
+
+| File | Contents |
+| --- | --- |
+| `hail/hail.nf` | Composed workflow `HAIL` |
+| `hail/hail_io.nf` | `vcf_to_mt_hail`, `filter_hail` |
+| `hail/hail_stats.nf` | QC, kinship, PCA processes |
+| `hail/hail_gwas.nf` | `hail_normal_gwas` |
+
+**Genotype database library** (`genotype/database/`) — VCF → Hail MT + bcftools annotation helpers:
+
+| File | Contents |
+| --- | --- |
+| `database/database.nf` | Composed workflow `database` |
+| `database/database_build.nf` | `build_hail_from_vcf` |
+| `database/database_annotate.nf` | bcftools annotate / tab / BED helpers |
+
+**Static GWAS library** (`modules/local/static/gwas/`):
+
+| File | Contents |
+| --- | --- |
+| `gwas/gwas.nf` | Composed workflow `GWAS` (legacy PLINK1 track) |
+| `gwas/gwas_legacy.nf` | PCA, pheno/covar prep, PLINK1 / GAPIT / rMVP processes |
+| `gwas/gwas_plink2.nf` | `plink2_gwas_glm`, `gcta_gwas` (wheat integrated compute) |
+| `gwas/gwas_plot.nf` | `plot_gwas_association`, `plot_gwas` |
+
+**Include paths:** from `subworkflows/local/*/` use `../../../modules/local/...`; from `modules/local/genotype/*` use `../../infra/<file>.nf`. Partial reruns: launch `subworkflows/local/entry/partial_router.nf` with `--partial_task`, or `include` the smallest `partial/*.nf` / module sub-file.
 
 ---
 
@@ -66,36 +137,74 @@ Hard-filter / common-thin tuning for `test_common_thin` uses `params.hf_maf`, `p
 
 ## Output layout (test jobs)
 
-For test modes (e.g. `params.job` = `test_plink` while `params.mod` is `test_thin` / `test_camp` / `test_common_thin`), **`params.job`** is the **top-level** folder under `params.output_dir`. Genotype outputs go under **`{output_dir}/{job}/process/{mod}/`** (sample, variant, logs, etc.). Stats outputs go under **`{output_dir}/{job}/stats/{mod}/`** (plots, thresholds, info, logs). Assess mini-workflows publish under **`{output_dir}/{job}/assess/{mod}/`**. Wheat integrated plots/tables from merged PLINK2 (`tmp/wheat_integrated_from_plink.nf` / `WHEAT_STUDY_FROM_PLINK`) publish under **`{output_dir}/{job}/integrated/{plink_source_mod}/{wheat_task_mod}/`** (e.g. `integrated/test_thin/wheat_pca_tsne/{info,plots}`). Table-only `wheat_*` modes from **`main.nf`** still use **`{output_dir}/{job}/integrated/{params.mod}/`**. Do not encode `mod` by changing `params.job` alone—the pipeline uses **`params.mod`** under those trees where applicable.
+For test modes (e.g. `params.job` = `test_plink` while `params.mod` is `test_thin` / `test_camp` / `test_common_thin`), **`params.job`** is the **top-level** folder under `params.output_dir`. Genotype outputs go under **`{output_dir}/{job}/process/{mod}/`** (sample, variant, info, logs, etc.). Stats outputs go under **`{output_dir}/{job}/stats/{mod}/`** (plots, thresholds, info, logs). Assess debug (`partial_router.nf --partial_task assess_plink`) uses the same trees: compute artefacts under **`process/{mod}/`**, plots and summary tables under **`stats/{mod}/`**. Wheat integrated plots/tables from merged PLINK2 (`partial_router.nf --partial_task wheat_from_plink` / `WHEAT_STUDY_FROM_PLINK`) publish under **`{output_dir}/{job}/integrated/{plink_source_mod}/{wheat_task_mod}/`** (e.g. `integrated/test_thin/wheat_pca_tsne/{info,plots}`). Table-only `wheat_*` modes from **`main.nf`** still use **`{output_dir}/{job}/integrated/{params.mod}/`**. Do not encode `mod` by changing `params.job` alone—the pipeline uses **`params.mod`** under those trees where applicable.
 
 ---
 
-## Auxiliary entry scripts (`tmp/`)
+## Composed subworkflows (`subworkflows/local/`)
 
-Small workflows in **`workflow/Genetics/tmp/`** reuse the same **`workflow/Genetics/nextflow.config`** as `main.nf`. Pass the config with an **absolute** path so it works no matter what the launch directory is:
+| Folder | Files | Role |
+| --- | --- | --- |
+| `entry/` | `genetics_helpers.nf`, `partial_router.nf` | `main.nf` helpers; partial rerun router (`--partial_task`) |
+| `plink/` | `plink_genotype_modes.nf`, `analysis_extensions.nf` | PLINK router workflows; router-gap module index |
+| `wheat/` | `wheat_integrated_study.nf` | `RUN_WHEAT_INTEGRATED`, `WHEAT_STUDY_FROM_PLINK`, `RUN_WHEAT_FROM_PLINK` |
+| `upstream/` | `raw_data_upstream.nf` | `RUN_ALIGN_USB_TRANSFER`, `run_FastCall3` |
+| `partial/` | `partial_assess.nf`, `partial_stats.nf` | Assess + stats partial workflow bodies |
+
+---
+
+## Auxiliary scripts (`subworkflows/tmp/`)
+
+**Partial reruns** — one entry, no per-task duplicate scripts under `workflow/Genetics/tmp/` (removed 2026-06-09):
 
 ```bash
-nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/ld_plots_redraw.nf \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
   -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
-  ...
+  --partial_task ld_redraw --mod test_thin --output_dir … --job test_plink …
 ```
 
-Entry scripts use `include { ... } from '../modules/local/genotype/...'` paths relative to `tmp/`.
+| `--partial_task` | Workflow | Typical `params.mod` / notes |
+| --- | --- | --- |
+| `assess_plink` | `RUN_ASSESS_PLINK_DEBUG` | `test_thin` / `test_common_thin` |
+| `assess_vcf` | `RUN_ASSESS_VCF_DEBUG` | any mod with `export/*.debug.vcf.gz` |
+| `ld_redraw` | `RUN_LD_PLOTS_REDRAW` | e.g. `test_thin` |
+| `mac_stats` | `RUN_MAC_STATS_FROM_GCOUNT` | test mods or `test_rebulld_lib` |
+| `mac_dist_redraw` | `RUN_MAC_DIST_LOG_REDRAW` | multi-mod batch |
+| `chr_counts` | `RUN_CHR_VARIANT_COUNTS` | per `params.mod` |
+| `chr_compare` | `RUN_CHR_VARIANT_COMPARE` | thin vs common-thin |
+| `rebuild_lib_stats` | `RUN_REBUILLD_LIB_STATS` | `test_rebulld_lib` only |
+| `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` | `test_thin` / `test_common_thin` + `wheat_integrated_mod` |
+
+**Ops** (`subworkflows/tmp/ops/`) — self-contained FTP upload helpers (not genetics analysis):
 
 | Script | Purpose |
 | --- | --- |
-| `tmp/ld_plots_redraw.nf` | Re-run LD decay + cross-chr plot processes from existing `process/<mod>/variant/*.vcor` without rerunning the full processor. |
-| `tmp/assess_plink_debug.nf` | Tier-1 assess on `test_thin` / `test_common_thin`: PLINK2 `--freq counts` / `--missing` on a representative-chr slice of each `*_test.plink2`, MAF-bin TSV from `.acount`, MAC / singleton summaries and QC plots via `assess_slice.py` under `assess/<mod>/plots` and tables under `assess/<mod>/info`. |
-| `tmp/gsa_ftp_upload.nf` | Upload large raw sequencing files (HiFi BAM, Illumina PE, Hi-C FASTQ) to BIG GSA FTP (`submit.big.ac.cn`, default `/GSA/subCRA071073`) with `curl -C -` resume, per-file retry, and a summary TSV under `params.output_dir`. Set `GSA_FTP_PASSWORD` in the environment before launch. |
-| `tmp/gwh_ftp_upload.nf` | Upload genome assembly FASTA to BIG GWH FTP (`submit.big.ac.cn`, default `/GWH/Batch0092978`) with `curl -C -` resume, per-file retry, and a summary TSV under `params.output_dir`. Default source: `Jm229.final.fasta` on s107. Optional `--verify_md5` (default true) or `--verify_only` to stream remote content and compare MD5 with local `md5sum`. Set `GSA_FTP_PASSWORD` in the environment before launch. |
+| `ops/gsa_ftp_upload.nf` | GSA FTP upload (`submit.big.ac.cn`); set `GSA_FTP_PASSWORD`. |
+| `ops/gwh_ftp_upload.nf` | GWH FTP upload; optional `--verify_md5` / `--verify_only`. Set `GSA_FTP_PASSWORD`. |
+
+**Partial task notes** (workflow bodies in `subworkflows/local/partial/`):
+
+| `--partial_task` | Deliverables / behaviour |
+| --- | --- |
+| `ld_redraw` | Re-run LD decay + cross-chr plots from existing `process/<mod>/variant/*.vcor` (no full processor). |
+| `assess_plink` | `plink2_assess_debug_slice` → `process/<mod>/`; `assess_plink_debug_plots` → `stats/<mod>/` via `assess_slice.py`. |
+| `assess_vcf` | Legacy VCF assess on `process/<mod>/export/*.debug.vcf.gz`; prefer PLINK2 when pfiles exist. |
+| `chr_counts` | `process/<mod>/info/<mod>.chr_variant_counts.tsv` + `.by_ref.tsv`. |
+| `chr_compare` | Genome-wide density panels + thin/common fraction bars under `stats/thin_common_compare/`. |
+| `rebuild_lib_stats` | `TEST_PLINK_STATS` on `process/test_rebulld_lib/` chr002 tables; LD plots skipped. |
+| `mac_stats` | MAC bar (0–100) + het-fraction heatmap; `*.variant.mac.mac0.info.tsv` audit for MAC=0. |
+| `mac_dist_redraw` | Re-draw MAC distribution log plots from existing gcount tables. |
+| `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` on existing merged test pfiles (`wheat_integrated_mod` required). |
+
+Historic runs logged under `doc/NF_CMD.md` may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.
 
 ---
 
 ## Wheat integrated workflows (`modules/local/integrated/`)
 
-Table- and matrix-based analyses in **`src/python/genetics/wheat/`** are run from **`main.nf`** when **`params.mod`** starts with **`wheat_`** (VCF `check_input` is skipped). Nextflow module: **`modules/local/integrated/integrated_wheat.nf`** (`workflow integrated_wheat`).
+Wheat integrated modes are run from **`main.nf`** when **`params.mod`** starts with **`wheat_`** (VCF `check_input` is skipped). PLINK2 compute lives in **`processor/processor_plink2.nf`**; plots/reports in **`stats/stats_integrated.nf`**; study wiring in **`subworkflows/local/wheat/wheat_integrated_study.nf`**.
 
-Python matches genotype stats style: each process uses `#!/usr/bin/env python` and **imports** `run_*` from `genetics.wheat.*` (no `python -m` CLI).
+Python matches genotype stats style: inline `#!/usr/bin/env python` imports from **`genetics.genomics.*`** and **`genetics.gwas.association_plot`** (no `python -m` CLI). **`genetics.wheat`** is a deprecated shim only — do not add new imports there.
 
 ### Routing summary
 
@@ -118,7 +227,7 @@ Tuning knobs (defaults in `conf/base.config`): `wheat_snp_qc_*`, `wheat_pca_*`, 
 
 ### Required launch params (wheat)
 
-- `output_dir`, `job`, `user_dir` (Conda `stats` env, same pattern as `modules/local/genotype/stats.nf`)
+- `output_dir`, `job`, `user_dir` (Conda `stats` env, same pattern as `modules/local/genotype/stats/stats.nf`)
 - `mod` as one of the table rows above
 - Paths per mod (e.g. `--wheat_table_input` for single-table tasks)
 
@@ -159,7 +268,7 @@ Authoritative guardrails: **`.cursor/rules/workstation-core.mdc`** and **`.curso
 
 ## Downstream tools
 
-Processes invoke **`src/python`**, **`src/r`**, and **`src/java`** as configured in each `process` block (typically conda `stats` under `params.user_dir` for Python stats). Keep processor vs stats boundaries as in **`workstation-nextflow.mdc`** (heavy `plink2` in `modules/local/genotype/processor.nf`; plotting / summarization in `modules/local/genotype/stats.nf`).
+Processes invoke **`src/python`**, **`src/r`**, and **`src/java`** as configured in each `process` block (typically conda `stats` under `params.user_dir` for Python stats). Keep processor vs stats boundaries as in **`workstation-nextflow.mdc`** (heavy `plink2` in `modules/local/genotype/processor/`; plotting / summarization under `modules/local/genotype/stats/`).
 
 ---
 

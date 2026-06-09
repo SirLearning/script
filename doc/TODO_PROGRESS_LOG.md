@@ -371,3 +371,175 @@ Each entry should read like an **engineering report**: goals, what changed and w
 **Changes:** Retrofitted existing log headings and table **`Summary`** rows; updated **`.cursor/rules/workstation-core.mdc`** and **`.cursor/skills/todo-drive-close/SKILL.md`**. Checklist **`doc/TODO.md`** still uses **`LogRef:`** calendar dates only (unchanged).
 
 **Validation:** Doc-only.
+
+---
+
+## 2026-06-09 — Remove `assess.nf` shim after processor/stats split
+
+**Goal:** Delete the deprecated `workflow/Genetics/modules/local/genotype/assess.nf` re-export shim now that assess compute and plots live in `processor.nf` and `stats.nf`, and drop stale references from agent rules and the checklist.
+
+**Files changed:** removed `modules/local/genotype/assess.nf`; updated `.cursor/rules/workstation-core.mdc`, `doc/TODO.md` (§8 assess bullet + closed progress_overview §2.3.3 parity item).
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` (`test_thin`) — **pass** (exit 0); includes resolve to `processor.nf` + `stats.nf` only. No `include` of `assess.nf` remains in active workflows.
+
+**Outcome:** Assess debug remains available via `tmp/assess_plink_debug.nf` and `tmp/assess_vcf_debug.nf`; publish layout unchanged under `assess/<mod>/`.
+
+---
+
+## 2026-06-09 — Move dynamic selection plots out of `plots.nf`
+
+**Goal:** Remove the standalone `dynamic/plots.nf` orchestrator; colocate selection-statistic plot processes with the dynamic theme and align naming/publish paths with other `dynamic/` modules.
+
+**Changes:** Deleted `modules/local/dynamic/plots.nf` (including its `workflow plots { }` block). Added `modules/local/dynamic/selection.nf` with `plot_fst_boxplot`, `plot_pi_distribution`, `plot_tajima_d_distribution`, and `plot_ideogram_density` (lowercase process names; `publishDir` under `{output_dir}/{job}/population_genetics/selection/plots/…`). Closed **`doc/TODO.md`** §8 `plots.nf` backlog item.
+
+**Validation:** No active workflow `include`d `plots.nf`; **skipped** full Nextflow run (processes not yet wired from `main.nf` router).
+
+**Outcome:** Call plot processes directly from future selection compute workflows via `include { … } from '…/selection.nf'`; no separate plots workflow file.
+
+---
+
+## 2026-06-09 — Merge assess publish paths into process/stats trees
+
+**Goal:** Drop the separate `{job}/assess/{mod}/` output tree; publish assess compute like other genotype work and assess plots/tables like other stats (test vs production distinguished by dataset/`job`, not by folder name).
+
+**Changes:** Updated `publishDir` in `processor.nf` (`plink2_assess_debug_slice`, `quick_count`, `bcftools_qc_assess`, `mk_vcftools_basic_info` logs) → `process/<mod>/{variant,info,logs}`; `stats.nf` (`assess_plink_debug_plots`, `dumpnice_vcf_qc_assess`) → `stats/<mod>/{plots,info,logs}`; `tmp/assess_vcf_debug.nf` default VCF export dir → `process/<mod>/export`. Docs/rules: `GENETICS_WORKFLOW.md`, `workstation-core.mdc`, `workstation-python.mdc`, `todo-drive-close` skill, `doc/TODO.md` §9 tier-1 bullet.
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` for `test_thin` — **pass** (exit 0).
+
+**Outcome:** Existing `/data1/.../test_plink/assess/` on disk is legacy; safe to remove after re-run. New assess debug runs write alongside main `process/` and `stats/` artefacts for the same `mod`.
+
+---
+
+## 2026-06-09 — Repo hygiene and pipeline guardrails (no env/packaging change)
+
+**Goal:** Apply the agreed optimization batch without altering `environment_*.yml` or Python/conda dependency wiring (one-step `conda env create -f …` remains the install path; Hail and heavy tools stay in conda).
+
+**Changes:**
+- Replaced broken `resources` Windows symlink with `resources/README.md` + `transposon/` placeholder layout for WeaTE local assets.
+- Rewrote root `README.md` as a portal (correct `modules/local/` paths, link to `GENETICS_WORKFLOW.md`; clarified `pip install -e .` registers `python_script` only).
+- `main.nf`: unknown `params.mod` now **exit 1** with supported-mod list; `GENETICS_WORKFLOW.md` updated to match.
+- Python: added `infra.utils.errors`; `io.py` loaders and `mac.py` raise on missing/invalid inputs (Nextflow sees non-zero exit); `graph.combine_plots` default output is relative `combined_plot.png`.
+- Tests: `tests/test_io.py`, `tests/test_mac.py`, `pytest.ini`; CI `.github/workflows/ci.yml` (conda `stats` env from existing yml + `pytest`/`ruff`).
+
+**Validation:** `conda run -n stats pytest tests/ -q` — **pass** (11 tests). `ruff check` on touched Python — **pass**.
+
+**Outcome:** No change to conda YAML dependency lists; collaborators still use `conda env create -f environment_stats.yml` then `pip install -e .` as before.
+
+---
+
+## 2026-06-09 — P3: stats.nf split, tmp governance, wheat shim warnings
+
+**Goal:** Continue repo optimization without changing conda/Python dependency wiring: make large Nextflow stats modules navigable, document `tmp/` auxiliary scripts, and surface `genetics.wheat` deprecation at import time.
+
+**Changes:**
+- Split `modules/local/genotype/stats.nf` (1013 lines) into themed libraries: `stats_variant.nf`, `stats_sample.nf`, `stats_assess.nf`, `stats_integrated.nf`, `stats_chr_report.nf`; `stats.nf` now holds composed workflows only (~125 lines).
+- Updated `tmp/*.nf` and `wheat_integrated_study.nf` includes to reference the smallest sub-library; fixed duplicate `ch_gcount` / redundant `variant_mac_stats` call in `tmp/test_rebulld_lib_stats.nf`.
+- Added `workflow/Genetics/tmp/README.md` (script index, lifecycle, promotion backlog).
+- `genetics.wheat`: `_deprecation.py` + import-time `DeprecationWarning` on all shim modules; `GENETICS_WORKFLOW.md` wheat section now cites `genetics.genomics.*` as canonical.
+- `variant_utils.py`: removed dead `if df is None` branches (loaders now raise).
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` (`test_thin`) — **pass** (exit 0). `conda run -n stats pytest tests/ -q` — **pass** (11 tests).
+
+**Outcome:** Partial reruns import targeted stats sub-files; full pipelines still use `stats.nf` workflows. `genetics.wheat` imports remain working but warn once per module.
+
+---
+
+## 2026-06-09 — Move genotype stats modules into `genotype/stats/`
+
+**Goal:** Keep `modules/local/genotype/` navigable by grouping all stats workflows and process libraries under one subfolder.
+
+**Changes:** Moved `stats.nf`, `stats_variant.nf`, `stats_sample.nf`, `stats_assess.nf`, `stats_integrated.nf`, `stats_chr_report.nf` → `modules/local/genotype/stats/`; updated `stats/stats.nf` to `include` from `../utils.nf`. Refreshed `include` paths in `plink_genotype_modes.nf`, `wheat_integrated_study.nf`, all `tmp/*.nf`, `GENETICS_WORKFLOW.md`, `tmp/README.md`, `doc/TODO.md`, and `.cursor/rules` (nextflow/python/core). Added `genotype/stats/README.md`.
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` (`test_thin`) — **pass** (exit 0).
+
+**Outcome:** Canonical stats path is `genotype/stats/`; composed workflows remain in `genotype/stats/stats.nf`.
+
+---
+
+## 2026-06-09 — Consolidate docs: one repo README, Genetics narrative in docs/
+
+**Goal:** Enforce single portal `README.md` at repo root; all `workflow/Genetics/` operator text lives in `docs/GENETICS_WORKFLOW.md` only.
+
+**Changes:** Deleted `workflow/Genetics/tmp/README.md`, `modules/local/genotype/stats/README.md`, and `resources/README.md`; merged their content into `GENETICS_WORKFLOW.md` (Genetics operator text) and root `README.md` (`resources/` layout). Updated `workstation-nextflow.mdc` to forbid nested READMEs under `workflow/Genetics/`.
+
+**Validation:** N/A (doc-only).
+
+**Outcome:** `tmp/` and `genotype/stats/` have no standalone README; use `GENETICS_WORKFLOW.md` for operator narrative.
+
+---
+
+## 2026-06-09 — Split genotype processor into `genotype/processor/`
+
+**Goal:** Mirror the `stats/` refactor: move ~1500-line monolithic `processor.nf` into themed sub-libraries under `modules/local/genotype/processor/`, keep composed DSL2 workflows in a thin barrel file, and preserve the processor vs stats compute/plot boundary.
+
+**Changes:** Removed flat `genotype/processor.nf`; added `processor/processor.nf` (workflows) plus `processor_vcf.nf`, `processor_test.nf`, `processor_plink2.nf`, `processor_legacy.nf`, `processor_depth.nf`, `processor_filter.nf`, `processor_assess.nf`. Updated `include` paths in `plink_genotype_modes.nf`, `wheat_integrated_study.nf` (direct `processor_plink2.nf`), `static/gwas.nf` (`processor_vcf.nf`), `tmp/assess_*.nf` (`processor_assess.nf`). Refreshed `GENETICS_WORKFLOW.md`, `.cursor/rules` (nextflow/core/python), `todo-drive-close` skill, and `doc/TODO.md` §3–§4 / boundary bullet.
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview`) — **pass** (exit 0). `nextflow run …/main.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview2`) — **pass** (exit 0); processor + stats processes resolve from new paths.
+
+**Outcome:** Canonical processor path is `genotype/processor/`; subworkflows import `processor/processor.nf` for full workflows; partial reruns and cross-theme imports use the smallest `processor_*.nf` file.
+
+---
+
+## 2026-06-09 — Move shared DSL helpers to `modules/local/infra/`
+
+**Goal:** Relocate cross-cutting `genotype/utils.nf` (~729 lines) into a theme-neutral `infra/` folder under `modules/local/`, matching the `processor/` and `stats/` split pattern.
+
+**Changes:** Removed `genotype/utils.nf`; added `infra/utils.nf` (barrel) plus `infra_tools.nf`, `infra_job_config.nf`, `infra_tiger.nf`, `infra_ref_v1.nf`, `infra_plink_reuse.nf`. Updated `include` paths in `processor/processor.nf`, `processor_vcf.nf`, `processor_depth.nf`, `stats/stats.nf`, `genetics_helpers.nf`, `wheat_integrated_study.nf`, `caller.nf`. Documented layout in `GENETICS_WORKFLOW.md` and `workstation-nextflow.mdc`; closed `doc/TODO.md` modules-index bullet.
+
+**Validation:** `nextflow run …/tmp/assess_plink_debug.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview3`) — **pass** (exit 0). `nextflow run …/main.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview4`) — **pass** (exit 0).
+
+**Outcome:** Shared helpers live under `modules/local/infra/`; genotype modules import the smallest `infra_*.nf` file. Python parity for ref maps remains in `src/python/infra/wheat/ref_v1.py`.
+
+---
+
+## 2026-06-09 — Split upstream calling/align and static GWAS modules
+
+**Goal:** Continue module governance after `processor/` / `stats/` / `infra/` — relocate large standalone genotype entry scripts and align `static/gwas` with the documented `gwas/` layout.
+
+**Changes:** Moved `caller.nf` (852 lines) → `genotype/calling/` (`caller.nf` + `caller_prep.nf` + `caller_fastcall.nf`); `align.nf` (390 lines) → `genotype/align/` (`align.nf` + `align_md5.nf` + `align_bwa.nf` + `align_transfer.nf`); flat `static/gwas.nf` → `static/gwas/` (`gwas.nf` workflow barrel + `gwas_legacy.nf`, `gwas_plink2.nf`, `gwas_plot.nf`). Consolidated duplicate `include` lines in `plink_genotype_modes.nf`. Updated `wheat_integrated_study.nf`, rules, and `GENETICS_WORKFLOW.md`.
+
+**Validation:** `nextflow run …/main.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview6`) — **pass** (exit 0). `nextflow run …/calling/caller.nf -preview --help` — **pass** (exit 0).
+
+**Outcome:** Upstream FastCall3 and align tracks are under themed subfolders; wheat GWAS imports target `gwas_plink2.nf` / `gwas_plot.nf` directly. Composing `align` + `calling` into a `subworkflows/local/raw_data.nf` router remains open (`doc/TODO.md` §2).
+
+---
+
+## 2026-06-09 — Hail/database split and raw-data subworkflow
+
+**Goal:** Finish genotype root cleanup (`hail.nf`, `database.nf` still flat) and compose upstream align + calling under one subworkflow file for future `main.nf` routing.
+
+**Changes:** Split `hail.nf` → `genotype/hail/` (`hail.nf`, `hail_io.nf`, `hail_stats.nf`, `hail_gwas.nf`); `database.nf` → `genotype/database/` (`database.nf`, `database_build.nf`, `database_annotate.nf`). Extracted `RUN_ALIGN_USB_TRANSFER` workflow in `align/align.nf`. Added `subworkflows/local/raw_data_upstream.nf` (includes `RUN_ALIGN_USB_TRANSFER`, `run_FastCall3`). Updated `plink_genotype_modes.nf`, `GENETICS_WORKFLOW.md`, `doc/TODO.md` §2.
+
+**Validation:** `nextflow run …/main.nf -preview` (`test_thin`, cwd `/data/home/tusr1/01projects/vmap4/00nf_preview9`) — **pass** (exit 0).
+
+**Outcome:** `genotype/` root has no monolithic NF modules left except none—all themed subfolders. `static/database.nf` (DBone / phenotype ops) merge with genotype database remains open (`doc/TODO.md` §2).
+
+---
+
+## 2026-06-09 — Promote tmp partial reruns to subworkflows/local
+
+**Goal:** Move channel-wiring logic out of `tmp/*.nf` into reusable named workflows under `subworkflows/local/`; slim `plink_genotype_modes.nf` to PLINK-only includes.
+
+**Changes:** Added `partial_assess.nf` (`RUN_ASSESS_PLINK_DEBUG`, `RUN_ASSESS_VCF_DEBUG`), `partial_stats.nf` (LD/MAC/chr/rebuild partial workflows), `analysis_extensions.nf` (router-gap `DATABASE`, `KINSHIP`, `PS`, `GWAS`, `HAIL`). Rewrote eight `tmp/*.nf` files as thin `workflow { RUN_*() }` wrappers. Removed unused includes from `plink_genotype_modes.nf`; consolidated `main.nf` and `genetics_helpers.nf` includes. Updated `GENETICS_WORKFLOW.md`, `workstation-nextflow.mdc`, `doc/TODO.md` §2.
+
+**Validation:** `nextflow run …/main.nf -preview` (`test_thin`) — **pass**. `tmp/assess_plink_debug.nf -preview` and `tmp/ld_plots_redraw.nf -preview` — **pass** (exit 0).
+
+**Outcome:** `tmp/` is launch-only; partial-rerun logic is testable/reusable from `subworkflows/local/partial_*.nf` without duplicating module `include` paths.
+
+---
+
+## 2026-06-09 — Remove `workflow/Genetics/tmp/`; layer `subworkflows/local/`
+
+**Goal:** Keep `modules/local/`; relocate scratch/ops scripts beside `local/`; delete redundant genetics tmp entry scripts; organize composed subworkflows into themed subfolders.
+
+**Changes:**
+
+- Deleted **`workflow/Genetics/tmp/`** genetics scripts (assess, LD/MAC/chr/rebuild, wheat-from-plink wrappers) whose logic already lives in **`subworkflows/local/partial/`** and **`subworkflows/local/wheat/`**.
+- Moved FTP ops to **`subworkflows/tmp/ops/`** (`gsa_ftp_upload.nf`, `gwh_ftp_upload.nf`).
+- Layered **`subworkflows/local/`** into `entry/`, `plink/`, `wheat/`, `upstream/`, `partial/`.
+- Added **`entry/partial_router.nf`** as the single partial-rerun launcher (`--partial_task`).
+- Updated **`main.nf`** includes, **`GENETICS_WORKFLOW.md`**, **`nextflow_schema.json`** (`partial_task`), **`.cursor/rules`** (core/nextflow/python), **`todo-drive-close`** skill, **`doc/TODO.md`** §2/§8/§9, and **`doc/NF_CMD.md`** migration note (historic `tmp/` blocks retained).
+
+**Validation:** cwd `/data/home/tusr1/01projects/vmap4/00nf_preview11` — `nextflow run …/main.nf -preview` (`test_thin`) **pass**; `partial_router.nf -preview --partial_task assess_plink` **pass** (exit 0).
+
+**Outcome:** Partial reruns use one router entry; `subworkflows/local/` layout matches functional areas; only FTP helpers remain under `subworkflows/tmp/`.

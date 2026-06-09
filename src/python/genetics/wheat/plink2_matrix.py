@@ -9,6 +9,10 @@ import random
 
 import pandas as pd
 
+from genetics.wheat._deprecation import warn_deprecated_shim
+
+warn_deprecated_shim("plink2_matrix", "genetics.genomics.plink (avoid sklearn matrix GWAS)")
+
 from infra.utils.io import load_df_generic, save_df_to_tsv
 
 _META_COLS = {'FID', 'PAT', 'MAT', 'SEX', 'PHENOTYPE'}

@@ -1,11 +1,14 @@
 import pandas as pd
-import numpy as np
-# import scanpy as sc
 import os
 import sys
 import gzip
 import re
-from typing import Dict, Optional, Iterable
+import logging
+from typing import Optional
+
+from infra.utils.errors import DataLoadError, fail
+
+logger = logging.getLogger(__name__)
 
 
 def _open(path: str):
@@ -32,30 +35,39 @@ def detect_delimiter(first_line: str) -> Optional[str]:
 def load_df_generic(input_file, header='infer', col_names=None):
     """
     Reads a file into a DataFrame, auto-detecting delimiter (TSV/CSV/GZ).
+
+    Raises:
+        FileNotFoundError: when ``input_file`` does not exist.
+        DataLoadError: when parsing fails.
     """
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
-    
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
+
     try:
-        # Detect delimiter from header
         with _open(input_file) as f:
             first_line = f.readline()
-        
+
         sep = detect_delimiter(first_line)
-        
-        # Determine engine/options
-        # compression='infer' works for .gz automatically
-        # delim_whitespace=True if sep is None
-        
+
         if sep is None:
-            return pd.read_csv(input_file, sep=r'\s+', header=header, names=col_names, compression='infer')
-        else:
-            return pd.read_csv(input_file, sep=sep, header=header, names=col_names, compression='infer')
-            
+            return pd.read_csv(
+                input_file,
+                sep=r'\s+',
+                header=header,
+                names=col_names,
+                compression='infer',
+            )
+        return pd.read_csv(
+            input_file,
+            sep=sep,
+            header=header,
+            names=col_names,
+            compression='infer',
+        )
+    except (FileNotFoundError, DataLoadError):
+        raise
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_df_from_excel(path, sheet_name=0, header=0):
@@ -71,20 +83,18 @@ def save_df_to_tsv(df, output_file, float_format='%.4f'):
     Saves a Pandas DataFrame to a TSV file.
     Automatically creates parent directories.
     """
-    try:
-        if df is None:
-            print(f"[Warning] DataFrame is None, skipping save to {output_file}")
-            return
+    if df is None:
+        fail(f"DataFrame is None; cannot save to {output_file}")
 
-        # Ensure parent directory exists
+    try:
         parent_dir = os.path.dirname(output_file)
         if parent_dir and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
-            
+
         df.to_csv(output_file, sep='\t', index=False, float_format=float_format)
-        print(f"[Info] Saved data to {output_file}")
+        logger.info("Saved data to %s", output_file)
     except Exception as e:
-        print(f"[Error] Failed to save to {output_file}: {e}")
+        fail(f"Failed to save to {output_file}: {e}")
 
 
 def save_sample_df_to_tsv(
@@ -109,73 +119,53 @@ def save_sample_df_to_tsv(
 
 
 def load_df_from_tsv(input_file):
-    """
-    Reads a TSV file into a DataFrame.
-    """
+    """Reads a TSV file into a DataFrame."""
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
     try:
         return pd.read_csv(input_file, sep='\t')
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_df_from_tsv_no_header(input_file, col_names):
-    """
-    Reads a TSV file without header into a DataFrame.
-    """
+    """Reads a TSV file without header into a DataFrame."""
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
     try:
         return pd.read_csv(input_file, sep='\t', header=None, names=col_names)
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_df_from_csv(input_file):
-    """
-    Reads a CSV file into a DataFrame.
-    """
+    """Reads a CSV file into a DataFrame."""
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
     try:
         return pd.read_csv(input_file)
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_df_from_space_sep(input_file):
-    """
-    Reads a space-separated file into a DataFrame.
-    """
+    """Reads a space-separated file into a DataFrame."""
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
     try:
         return pd.read_csv(input_file, sep=r'\s+')
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_df_from_space_sep_no_header(input_file, col_names):
-    """
-    Reads a space-separated file without header into a DataFrame.
-    """
+    """Reads a space-separated file without header into a DataFrame."""
     if not os.path.exists(input_file):
-        print(f"[Warning] File not found: {input_file}")
-        return None
+        fail(f"File not found: {input_file}", exc=FileNotFoundError)
     try:
         return pd.read_csv(input_file, sep=r'\s+', header=None, names=col_names)
     except Exception as e:
-        print(f"[Error] Failed to read {input_file}: {e}")
-        return None
+        fail(f"Failed to read {input_file}: {e}")
 
 
 def load_adata_from_plink_raw(raw_file):

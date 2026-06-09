@@ -537,3 +537,159 @@ nextflow run /data/dazheng/git/script/workflow/Genetics/tmp/gwh_ftp_upload.nf \
   --output_dir /data/dazheng/01projects/gwh_upload/Jm229/02verify \
   --verify_only
 ```
+
+---
+
+### 2026-06-09 — Per-chromosome variant counts (`tmp/chr_variant_counts.nf`), `test_common_thin`
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/46run_chr_variant_counts_test_common_thin`. Outcome: exit 0, **1** succeeded (~16s). Published `test_common_thin.chr_variant_counts.tsv` and `.by_ref.tsv` under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin/info/` (total **1,914,487** variants across PLINK chr 0–44).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/46run_chr_variant_counts_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/chr_variant_counts.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin \
+  --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin
+```
+
+---
+
+### 2026-06-09 — Per-chromosome variant counts (`tmp/chr_variant_counts.nf`), `test_thin` + `test_common_thin` (parallel)
+
+Working directories: `…/47run_chr_variant_counts_test_thin`, `…/48run_chr_variant_counts_test_common_thin`. Outcome: both **exit 0**, **1** succeeded each (~19s wall, launched in parallel). Published under `…/test_plink/process/{test_thin,test_common_thin}/info/` and `…/logs/`:
+
+| `mod` | Total variants |
+| --- | --- |
+| `test_thin` | **2,820,532** |
+| `test_common_thin` | **1,914,487** |
+
+```bash
+# test_thin
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/47run_chr_variant_counts_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/chr_variant_counts.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin \
+  --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin
+
+# test_common_thin (parallel in a second shell)
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/48run_chr_variant_counts_test_common_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/chr_variant_counts.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_common_thin \
+  --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin
+```
+
+---
+
+### 2026-06-09 — `test_thin` vs `test_common_thin` chr variant compare plots (`tmp/chr_variant_compare_plots.nf`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/51run_chr_variant_compare_plots`. Outcome: exit 0, **1** succeeded (~16s). Line plot (variant count by ref chromosome) and bar plot (`test_common_thin / test_thin` fraction 0–1) under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/thin_common_compare/{plots,info,logs}/`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/51run_chr_variant_compare_plots && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/chr_variant_compare_plots.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink
+```
+
+---
+
+### 2026-06-09 — `test_thin` vs `test_common_thin` genome 1 Mb density plots (refresh)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/52run_chr_variant_compare_mb_density`. Outcome: exit 0, **1** succeeded (~22s). Line plot uses **1 Mb bins** along PLINK 0–44 vmap4 sequence order (~14,548 bins); bar plot unchanged. Outputs under `…/test_plink/stats/thin_common_compare/` (`*.variant.genome_mb_density.line.png`, `*.variant.genome_mb_density.info.tsv`, `*.variant.common_fraction.bar.png`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/52run_chr_variant_compare_mb_density && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/chr_variant_compare_plots.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink
+```
+
+---
+
+### 2026-06-09 — `test_rebulld_lib` stats from migrated chr002 process tables
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/56run_test_rebulld_lib_stats`. Outcome: exit 0, **8** succeeded (~49m). Migrated legacy `rebuild/` artefacts into `test_plink/process/test_rebulld_lib/` and `stats/test_rebulld_lib/`; reran `TEST_PLINK_STATS` sample + variant QC (LD plots skipped — single chr002 ~46M variants). Outputs: `stats/test_rebulld_lib/{plots,info,logs,thresholds}/chr002.*`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/56run_test_rebulld_lib_stats && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/test_rebulld_lib_stats.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_rebulld_lib
+```
+
+---
+
+### 2026-06-09 — Variant MAC stats (`tmp/mac_stats_from_gcount.nf`), `test_thin` / `test_common_thin` / `test_rebulld_lib`
+
+Working directories: `…/57run_mac_stats_test_thin`, `…/58run_mac_stats_test_common_thin`, `…/59run_mac_stats_test_rebulld_lib`. Outcome: **exit 0** — `test_thin` **4/4** (~37s), `test_common_thin` **4/4** (~19s retry), `test_rebulld_lib` **1/1** (~20m). Publishes per dataset under `stats/<mod>/{info,plots,thresholds,logs}/`: `*.variant.mac.info.tsv` (all MAC→site counts), `*.variant.mac.dist.1_100.png`, `*.variant.mac.heatmap_hobs.1_100.png`, `*.variant.mac.th.tsv`. Note: `test_common_thin` has no sites with MAC 1–100 after common filtering (min MAC ≈615); plots are zero-filled / placeholder heatmaps.
+
+```bash
+# example: test_thin
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/57run_mac_stats_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/mac_stats_from_gcount.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```
+
+---
+
+### 2026-06-09 — Partial rerun path migration (`partial_router.nf`)
+
+**Note:** Genetics partial reruns no longer use `workflow/Genetics/tmp/*.nf` (removed). Use **`subworkflows/local/entry/partial_router.nf`** with **`--partial_task`** (`assess_plink`, `assess_vcf`, `ld_redraw`, `mac_stats`, `mac_dist_redraw`, `chr_counts`, `chr_compare`, `rebuild_lib_stats`, `wheat_from_plink`). FTP-only scripts moved to **`subworkflows/tmp/ops/`**. Historic command blocks above still reference old `tmp/` paths for audit.
+
+**Example** (`assess_plink`, `test_thin`):
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/23run_assess_plink2_debug_stub && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task assess_plink \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --mod test_thin
+```

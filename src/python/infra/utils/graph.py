@@ -25,8 +25,8 @@ def _finite_for_vline(val) -> bool:
 
 def combine_plots(
     images,
-    output_file = "/data/home/tusr1/git/script/out/combined_plot.png",
-    orientation = 'h'
+    output_file="combined_plot.png",
+    orientation='h',
 ):
     """
     Combines multiple images into a single figure.
@@ -107,6 +107,7 @@ def plot_multi_line_series(
     figure_size=(10, 6),
     xlim=None,
     ylim=None,
+    rotate_xlabels=None,
 ):
     """
     Plot multiple numeric y-series against one x column (line plot).
@@ -144,6 +145,8 @@ def plot_multi_line_series(
         plt.xlim(xlim)
     if ylim is not None:
         plt.ylim(ylim)
+    if rotate_xlabels is not None:
+        plt.xticks(rotation=rotate_xlabels, ha="right")
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Saved plot to {filename}")
@@ -607,6 +610,7 @@ def plot_bar_chart(
     color='steelblue',
     figure_size=(10, 5),
     dpi=300,
+    rotate_xlabels=None,
 ):
     """
     Plots a simple bar chart with value labels on top.
@@ -640,6 +644,11 @@ def plot_bar_chart(
         else:
             lbl = f"{v:.0f}" if v >= 10 else f"{v:.2f}"
         ax.text(i, v + label_pad, lbl, ha='center', va='bottom', fontsize=TICK_FONT_SIZE)
+
+    if rotate_xlabels is not None:
+        ax.tick_params(axis='x', rotation=rotate_xlabels)
+        for label in ax.get_xticklabels():
+            label.set_ha('right')
 
     # fig.tight_layout()
     fig.savefig(filename, dpi=dpi, bbox_inches='tight')
@@ -837,7 +846,8 @@ def plot_heatmap_custom(
     data_matrix, x_labels, y_labels,
     title, filename,
     xlabel=None, ylabel=None,
-    cmap='viridis', cbar_label=''
+    cmap='viridis', cbar_label='',
+    x_tick_step=None,
 ):
     """
     Plots a heatmap from a matrix.
@@ -852,7 +862,7 @@ def plot_heatmap_custom(
     
     # Adjust ticks
     n_x = len(x_labels)
-    step_x = max(1, n_x // 10)
+    step_x = x_tick_step if x_tick_step is not None else max(1, n_x // 10)
     xticks = np.arange(0, n_x, step_x)
     ax.set_xticks(xticks + 0.5)
     ax.set_xticklabels([x_labels[i] for i in xticks], rotation=0)
@@ -1125,6 +1135,112 @@ def plot_scatter_with_outliers(
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved scatter plot with outliers to {filename}")
+
+
+def _consecutive_ref_name_blocks(data, ref_name_col='ref_name', x_col='bin_index'):
+    """Merge consecutive rows with the same ref_name into axis annotation blocks."""
+    blocks = []
+    if data is None or data.empty:
+        return blocks
+    cur_ref = data.iloc[0][ref_name_col]
+    start = data.iloc[0][x_col]
+    prev_x = start
+    for _, row in data.iloc[1:].iterrows():
+        x = row[x_col]
+        ref = row[ref_name_col]
+        if ref != cur_ref:
+            blocks.append({'ref_name': cur_ref, 'start_bin': start, 'end_bin': prev_x})
+            cur_ref = ref
+            start = x
+        prev_x = x
+    blocks.append({'ref_name': cur_ref, 'start_bin': start, 'end_bin': prev_x})
+    return blocks
+
+
+def _decorate_genome_ref_block_axis(ax, blocks, n_bins, show_labels=True, block_alpha=0.06):
+    """Shade ref-chromosome blocks, draw boundaries, and label ref names (no numeric x ticks)."""
+    for i, block in enumerate(blocks):
+        left = block['start_bin'] - 0.5
+        right = block['end_bin'] + 0.5
+        if i % 2 == 0:
+            ax.axvspan(left, right, color='gray', alpha=block_alpha, linewidth=0, zorder=0)
+        if i > 0:
+            ax.axvline(left, color='0.75', linewidth=0.6, zorder=0)
+    if show_labels:
+        tick_pos = [(b['start_bin'] + b['end_bin']) / 2.0 for b in blocks]
+        tick_lbl = [b['ref_name'] for b in blocks]
+        ax.set_xticks(tick_pos)
+        ax.set_xticklabels(tick_lbl, rotation=45, ha='right', fontsize=TICK_FONT_SIZE)
+    else:
+        ax.set_xticklabels([])
+    ax.set_xlim(-0.5, max(n_bins - 0.5, 0.5))
+
+
+def plot_genome_binned_density_panels(
+    data,
+    x_col,
+    ref_name_col,
+    panel_specs,
+    filename,
+    suptitle=None,
+    x_label='Chromosome',
+    y_label='Variants per Mb',
+    bin_size_mb=5,
+    figure_size=(18, 8),
+    block_alpha=0.06,
+    linewidth=0.8,
+):
+    """
+    Stack one line panel per series along a binned genome axis with ref-chromosome blocks.
+
+    ``data`` must contain ``x_col`` (bin index), ``ref_name_col`` (e.g. chr1A), and one
+    numeric column per entry in ``panel_specs`` (keys: ``y_col``, ``title``, optional ``color``).
+    X-axis shows ref names at block centres; numeric bin / bp positions are not drawn.
+    """
+    import os
+
+    sns.set_style('white')
+    blocks = _consecutive_ref_name_blocks(data, ref_name_col=ref_name_col, x_col=x_col)
+    n_bins = int(data[x_col].max()) + 1 if not data.empty else 0
+
+    y_max = 1.0
+    for spec in panel_specs:
+        y_max = max(y_max, float(data[spec['y_col']].max()))
+    y_max *= 1.05
+
+    n_panels = len(panel_specs)
+    fig, axes = plt.subplots(n_panels, 1, figsize=figure_size, sharex=True)
+    if n_panels == 1:
+        axes = [axes]
+
+    for i, (ax, spec) in enumerate(zip(axes, panel_specs)):
+        y_col = spec['y_col']
+        color = spec.get('color', 'steelblue')
+        ax.plot(data[x_col], data[y_col], color=color, linewidth=linewidth)
+        ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_title(spec.get('title', y_col), fontsize=TITLE_FONT_SIZE)
+        ax.set_ylim(0, y_max)
+        ax.tick_params(axis='y', which='major', labelsize=TICK_FONT_SIZE)
+        _decorate_genome_ref_block_axis(
+            ax,
+            blocks,
+            n_bins,
+            show_labels=(i == n_panels - 1),
+            block_alpha=block_alpha,
+        )
+
+    axes[-1].set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+
+    if suptitle:
+        fig.suptitle(suptitle, fontsize=TITLE_FONT_SIZE, y=1.01)
+    fig.tight_layout()
+
+    parent_dir = os.path.dirname(filename)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    fig.savefig(filename, dpi=300, bbox_inches='tight')
+    print(f'Saved genome density panels to {filename}')
+    plt.close(fig)
 
 
 if __name__ == "__main__":

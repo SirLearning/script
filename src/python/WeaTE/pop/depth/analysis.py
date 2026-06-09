@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 
 TEcode = 'transposon/TEcode'
+THRESHOLD_PATH = 'transposon/vu_reads_depth/threshold.txt'
 
 
 def main():
@@ -66,7 +67,7 @@ def main():
     plt.show()
 
     # 5. reads_pct of TEs after threshold
-    threshold = pd.read_table('../../../resources/transposon/vu_reads_depth/threshold.txt', header=None)
+    threshold = pd.read_table(THRESHOLD_PATH, header=None)
     threshold.columns = ['chrom', 'chr']
     th = depth
     for i in range(len(threshold)):

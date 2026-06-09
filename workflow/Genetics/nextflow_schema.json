@@ -61,7 +61,11 @@
     },
     "wheat_integrated_mod": {
       "type": ["string", "null"],
-      "description": "Wheat analytic mod when using tmp/wheat_integrated_from_plink.nf (e.g. wheat_pca_tsne); params.mod stays the PLINK source mod."
+      "description": "Wheat analytic mod for partial_task wheat_from_plink (e.g. wheat_pca_tsne); params.mod stays the PLINK source mod."
+    },
+    "partial_task": {
+      "type": ["string", "null"],
+      "description": "Partial rerun selector for subworkflows/local/entry/partial_router.nf: assess_plink, assess_vcf, ld_redraw, mac_stats, mac_dist_redraw, chr_counts, chr_compare, rebuild_lib_stats, wheat_from_plink."
     },
     "wheat_tagsnp_max_tags": { "type": "integer", "default": 1000 },
     "wheat_tagsnp_ld_threshold": { "type": "number", "default": 0.8 },
@@ -85,6 +89,7 @@
     "c_black": { "type": "string", "description": "ANSI black (terminal log styling)." },
     "c_green": { "type": "string", "description": "ANSI green (terminal log styling)." },
     "c_yellow": { "type": "string", "description": "ANSI yellow (terminal log styling)." },
+    "c_red": { "type": "string", "description": "ANSI red (terminal log styling)." },
     "c_blue": { "type": "string", "description": "ANSI blue (terminal log styling)." },
     "c_purple": { "type": "string", "description": "ANSI magenta (terminal log styling)." },
     "c_cyan": { "type": "string", "description": "ANSI cyan (terminal log styling)." },

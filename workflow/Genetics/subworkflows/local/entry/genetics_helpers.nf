@@ -6,9 +6,11 @@ nextflow.enable.dsl=2
  * functions and the check_input workflow.
  */
 
-include { getJobConfig } from '../../modules/local/genotype/utils.nf'
-include { getVcfIdFromPath } from '../../modules/local/genotype/utils.nf'
-include { getRefV1SubChr } from '../../modules/local/genotype/utils.nf'
+include {
+    getJobConfig
+    getVcfIdFromPath
+} from '../../../modules/local/infra/infra_job_config.nf'
+include { getRefV1SubChr } from '../../../modules/local/infra/infra_ref_v1.nf'
 
 def header() {
     return """

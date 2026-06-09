@@ -1,140 +1,110 @@
 # Genetics Analysis Pipeline & Script Library
 
-This project contains a complete genetics data analysis pipeline (based on Nextflow) and accompanying Python/R/Java script libraries. The project integrates whole genome sequencing data processing, variant calling, population genetics analysis, and GWAS features.
+Nextflow workflows, Python/R/Java libraries, and engineering docs for large-scale crop genetics (VMap4 / wheat variation library).
 
-## 📂 Project Structure
+**Canonical operator guide:** [`workflow/Genetics/docs/GENETICS_WORKFLOW.md`](workflow/Genetics/docs/GENETICS_WORKFLOW.md)  
+**Backlog:** [`doc/TODO.md`](doc/TODO.md) · **Run log:** [`doc/NF_CMD.md`](doc/NF_CMD.md) · **Agent rules:** [`AGENTS.md`](AGENTS.md)
+
+---
+
+## Project layout
 
 ```
 .
-├── environment_*.yml       # Conda environment configuration files
-├── setup.py               # Python package installation script
-├── README.md              # Project documentation
-├── src/                   # Source code directory
-│   ├── python/            # Python core library (python_script)
-│   │   ├── genetics/      # Genetics analysis modules (genomics, gwas, phenotype, etc.)
-│   │   ├── infra/         # Infrastructure and tools (server, stats, utils)
-│   │   └── WeaTE/         # Transposon analysis module
-│   ├── r/                 # R statistics and plotting scripts
-│   └── java/              # Java tools (e.g., BamHeader, TaxaBamMap)
-├── workflow/              # Nextflow workflows
-│   ├── Genetics/          # Core genetics analysis pipelines
-│   │   ├── genotype/      # Genotype processing (alignment, calling, statistics)
-│   │   ├── static/        # Static analysis (GWAS, phenotype)
-│   │   ├── dynamic/       # Dynamic/Population analysis (Kinship, XP-CLR)
-│   │   └── main.nf        # Main entry script
-│   └── ALiYun/            # Alibaba Cloud WDL workflow backup
-└── note/                  # Analysis notes (Jupyter Notebooks)
+├── environment_*.yml          # Conda envs (one-step create per task)
+├── setup.py                   # Editable install of src/python (python_script)
+├── src/
+│   ├── python/                # genetics, infra, WeaTE
+│   ├── r/
+│   └── java/
+├── workflow/Genetics/
+│   ├── main.nf                # Entry router (--mod)
+│   ├── modules/local/         # Active process libraries (genotype/stats/ for stats workflows)
+│   ├── subworkflows/
+│   │   ├── local/             # Composed workflows (entry/, plink/, wheat/, partial/, …)
+│   │   └── tmp/ops/           # Ops-only scripts (FTP upload)
+│   ├── conf/                  # nextflow.config fragments
+│   ├── docs/                  # Operator narrative (GENETICS_WORKFLOW.md)
+│   └── tests/                 # Nextflow test harness config
+├── doc/                       # TODO, progress log, NF command log
+└── note/                      # Analysis notes
 ```
 
-## 🛠️ Environment Setup
+Legacy theme trees may remain under `workflow/Genetics/old/` for reference only.
 
-This project relies on Conda for environment management and provides multiple dedicated environments for different tasks.
+---
 
-### 1. Create Conda Environments
+## Environment setup
 
-Create the appropriate environment based on your task requirements:
+Environments are created **once from the repo-root YAML files** (no extra dependency manifests required).
 
-*   **`run`**: Workflow execution environment (Nextflow, Screen)
-    ```bash
-    conda env create -f environment_run.yml
-    ```
-*   **`stats`**: Main statistical analysis environment (Python 3.12, Hail, Plink, Samtools, Bcftools)
-    *   *Used for script development and most Python analysis tasks*
-    ```bash
-    conda env create -f environment_stats.yml
-    ```
-*   **`stats_r`**: R language statistics and plotting environment (R 4.3.1, Tidyverse, BioConductor)
-    ```bash
-    conda env create -f environment_stats_r.yml
-    ```
-*   **`tiger`**: Compute-intensive task environment (BWA-MEM2, Samtools)
-    *   *Used for alignment and variant calling*
-    ```bash
-    conda env create -f environment_tiger.yml
-    ```
-*   **`dbone`**: Database and basic operations environment
-    ```bash
-    conda env create -f environment_dbone.yml
-    ```
+| Env | File | Role |
+| --- | --- | --- |
+| `run` | `environment_run.yml` | Nextflow, screen |
+| `stats` | `environment_stats.yml` | Python 3.12, PLINK/PLINK2, bcftools, Hail (conda + pip), stats stack |
+| `stats_r` | `environment_stats_r.yml` | R plotting / BioConductor |
+| `tiger` | `environment_tiger.yml` | Alignment / variant calling |
+| `dbone` | `environment_dbone.yml` | DBone / basic ops |
 
-### 2. Install Python Package
+```bash
+conda env create -f environment_stats.yml
+conda activate stats
+pip install -e .    # registers python_script; conda yml already provides runtime deps
+```
 
-To enable calls to code under `src/python` within the environment, you need to install this project in editable mode in the **stats** environment (or other environments requiring Python scripts):
+`pip install -e .` only installs the **in-repo package** so Nextflow and scripts can `import genetics` / `import infra`. Heavy tools (Hail, PLINK2, bcftools, compilers) stay in the conda YAML by design.
+
+---
+
+## Running the Genetics pipeline
+
+Entry point: `workflow/Genetics/main.nf`. Always pass an **absolute** path to `nextflow.config` when launching from a project run folder.
+
+```bash
+conda activate run
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir … --user_dir … --src_dir … \
+  --output_dir … --mod test_thin --job myjob
+```
+
+| `params.mod` | Track |
+| --- | --- |
+| `v1_plink` | Production PLINK processor + stats |
+| `test_thin` / `test_camp` / `test_common_thin` | Test PLINK processors + stats |
+| `wheat_*` | Integrated wheat table/matrix analytics (no VCF channel) |
+
+Partial reruns use `workflow/Genetics/subworkflows/local/entry/partial_router.nf` with `--partial_task`; ops FTP scripts live under `subworkflows/tmp/ops/` — see **GENETICS_WORKFLOW.md**.
+
+Production runs on the vmap4 workstation use dedicated folders under `/data/home/tusr1/01projects/vmap4/` (not the git repo root). See `.cursor/rules/workstation-core.mdc`.
+
+---
+
+## Python library (`src/python`)
+
+| Package | Role |
+| --- | --- |
+| `genetics.genomics` | Sample/variant QC, LD, PLINK result I/O, assess plots |
+| `genetics.gwas` | Association result plotting |
+| `infra.utils.io` / `graph` | Shared parsing and plotting (reuse before adding task wrappers) |
+| `infra.server` | File copy, integrity checks |
+| `WeaTE` | Wheat transposon analysis |
+
+`genetics.wheat` is a deprecated re-export shim; new code should import from `genetics.genomics.*`.
+
+**WeaTE transposon inputs:** Scripts under `src/python/WeaTE/` expect a project-local `transposon/` tree (e.g. `TEcode`, `np.stats`, `vu_reads_depth/`) relative to the run working directory—not a repo-level `resources/` folder.
+
+---
+
+## Tests
+
+Lightweight unit tests live under `tests/` (no extra env files — use the existing `stats` conda env):
 
 ```bash
 conda activate stats
-pip install -e .
-```
-This will install the `python_script` package and its dependencies (pandas, numpy, scipy, seaborn, hail, etc.).
-
-## 🚀 Workflows
-
-The main workflow scripts are located in the `workflow/Genetics` directory.
-
-### Genotype
-Path: `workflow/Genetics/genotype/`
-
-*   **`align.nf`**: Sequence alignment workflow. Includes FASTQ QC, BWA-MEM2 alignment, Samtools sort/dedup/index, and Mosdepth depth calculation.
-    *   *New Feature*: Includes smart USB file distribution (`cp_based_on_usb_size`), which can copy files in parallel using multiple threads based on available disk space.
-*   **`stats.nf`**: Genotype statistics workflow. Integrates Python scripts to compute and plot metrics such as missing rates, heterozygosity, IBS, King kinship, etc.
-*   **`caller.nf`**: Variant calling workflow.
-*   **`hail.nf`**: Distributed data processing related to Hail.
-
-### Static (Association Analysis)
-Path: `workflow/Genetics/static/`
-
-*   **`gwas/`**: Genome-wide association study workflow.
-*   **`phenotype/`**: Phenotype data processing and statistics.
-
-### Dynamic (Population/Evolution Analysis)
-Path: `workflow/Genetics/dynamic/`
-
-*   **`kinship.nf`**: Kinship analysis.
-*   **`xp_clr.nf`**: Selective sweep analysis.
-
-### Integrated Wheat Genetics (WWWG2B + WatSeqAnalysis style)
-Path: `workflow/Genetics/integrated/`
-
-*   **`snp_qc/`**: SNP calling QC post-filtering workflow.
-*   **`hapmap/`**: HAPMAP block construction workflow.
-*   **`pca_tsne/`**: Population structure analysis with PCA and t-SNE.
-*   **`gwas/`**: Python GWAS workflow and QQ/Manhattan-like visualization.
-*   **`tagsnp/`**: tagSNP selection workflow.
-*   **`cnv/`**: CNV detection from normalized depth matrix.
-*   **`kgwas/`**: k-mer GWAS workflow.
-*   **`genetic_map/`**: Genetic map analysis workflow.
-
-## 📦 Source Code Library (Src)
-
-### Python (`src/python`)
-Core logic is encapsulated in the `python_script` package:
-*   **`genetics.genomics`**: Genomics analysis (Sample QC, Variant QC, IBS, Kinship, etc.).
-*   **`infra.server.cp`**: Contains smart file copying logic (`run_copy_process`) for use by Nextflow pipelines.
-*   **`infra.utils.graph`**: General plotting utility library.
-*   **`WeaTE`**: Wheat transposon analysis specialized module.
-
-### R (`src/r`)
-Contains R scripts for GWAS result visualization (Manhattan/QQ plots), PCA visualization, etc.
-
-### Java (`src/java`)
-Contains utility classes for handling BAM headers (`BamHeader.java`) and Taxa mapping (`TaxaBamMap.java`).
-
-## 📝 Usage Examples
-
-### Run Alignment Workflow
-```bash
-conda activate run
-nextflow run workflow/Genetics/genotype/align.nf \
-    --fastq_dir ./raw_data \
-    --reference ref.fa \
-    -profile tiger
+pip install pytest ruff
+pytest
+ruff check src/python tests
 ```
 
-### Run Statistics Workflow
-```bash
-conda activate run
-nextflow run workflow/Genetics/genotype/stats.nf \
-    --output_dir ./results \
-    -profile stats
-```
-*(Note: Please adjust parameters according to the specific `nextflow.config` file)*
+CI runs the same checks via `.github/workflows/ci.yml`.

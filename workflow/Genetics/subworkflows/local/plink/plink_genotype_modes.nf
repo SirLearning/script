@@ -5,17 +5,16 @@ nextflow.enable.dsl=2
  * Process definitions live under workflow/Genetics/modules/local/{genotype,dynamic,static,integrated}/.
  */
 
-include { plink_processor as PLINK_PROCESSOR } from '../../modules/local/genotype/processor.nf'
-include { plink_stats as PLINK_STATS } from '../../modules/local/genotype/stats.nf'
-include { test_plink_processor as TEST_PLINK_PROCESSOR } from '../../modules/local/genotype/processor.nf'
-include { test_plink_camp as TEST_PLINK_CAMP_PROCESSOR } from '../../modules/local/genotype/processor.nf'
-include { test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR } from '../../modules/local/genotype/processor.nf'
-include { test_plink_stats as TEST_PLINK_STATS } from '../../modules/local/genotype/stats.nf'
-include { database as DATABASE } from '../../modules/local/genotype/database.nf'
-include { kinship as KINSHIP } from '../../modules/local/dynamic/kinship.nf'
-include { population_structure as POPULATION_STRUCTURE } from '../../modules/local/dynamic/ps.nf'
-include { GWAS } from '../../modules/local/static/gwas.nf'
-include { HAIL } from '../../modules/local/genotype/hail.nf'
+include {
+    plink_processor as PLINK_PROCESSOR
+    test_plink_processor as TEST_PLINK_PROCESSOR
+    test_plink_camp as TEST_PLINK_CAMP_PROCESSOR
+    test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR
+} from '../../../modules/local/genotype/processor/processor.nf'
+include {
+    plink_stats as PLINK_STATS
+    test_plink_stats as TEST_PLINK_STATS
+} from '../../../modules/local/genotype/stats/stats.nf'
 
 workflow RUN_V1_PLINK {
     take:

@@ -2,7 +2,7 @@
 
 Master checklist for the variation-library / vmap4 genetics workstream. Completed items stay checked for audit. Log completions in `doc/TODO_PROGRESS_LOG.md`.
 
-**Structure:** Sections follow the **runtime order** in `workflow/Genetics/main.nf` → `genotype/processor.nf` → `genotype/stats.nf`: entry router → shared preprocess → per-`mod` processor workflows → stats. Upstream science (methodology) sits in **§1**; backlog analyses not yet wired into NF sit in **§9**.
+**Structure:** Sections follow the **runtime order** in `workflow/Genetics/main.nf` → `genotype/processor/processor.nf` → `genotype/stats/stats.nf`: entry router → shared preprocess → per-`mod` processor workflows → stats. Upstream science (methodology) sits in **§1**; backlog analyses not yet wired into NF sit in **§9**.
 
 ---
 
@@ -80,16 +80,16 @@ Cross-cutting science and QC policy before or beside the PLINK/Hail machinery.
 - [ ] Confirm `43run_wheat_pca_grp_test_thin` (`test_thin` Group coloring) exited 0 and record it in `doc/NF_CMD.md` / `doc/TODO_PROGRESS_LOG.md` (progress_overview §6.1)
 - [ ] Write the fixed-input interpretation note for MAF-missing, LD, PCA/t-SNE, and singleton/MAC relationships under `test_plink/process` (progress_overview §6.1)
 - [ ] Decide whether test tracks (`stats` / LD / assess / integrated) should move to `v1_plink`, or explicitly mark them test-only (progress_overview §5.1)
-- [ ] Extract `align.nf` + `caller.nf` into a raw-data subworkflow (progress_overview §2.1.1 / §6.2)
-- [ ] Stabilize `plink_genotype_modes` as an independent subworkflow (progress_overview §2.1.2 / §6.2)
+- [x] Extract `align/` + `calling/` into `subworkflows/local/raw_data_upstream.nf` (`RUN_ALIGN_USB_TRANSFER`, `run_FastCall3`; `main.nf` router still open) (LogRef: 2026-06-09)
+- [x] Stabilize `plink_genotype_modes` as an independent subworkflow — PLINK-only includes; router-gap modules moved to `analysis_extensions.nf` (LogRef: 2026-06-09)
 - [ ] Stabilize `wheat_integrated_study` as an independent subworkflow (progress_overview §2.1.3 / §6.2)
-- [ ] Merge `genotype/database.nf` with static `database.nf` and keep a single DBone wiring entry point (progress_overview §2.3 / §6.1)
-- [ ] Evaluate which tmp tracks (`assess_plink_debug`, `ld_plots_redraw`, `wheat_integrated_from_plink`) should be promoted to formal subworkflows (progress_overview §6.2)
-- [ ] Add a modules index to `[[4.process]]`, including `utils.nf` (progress_overview §2.3.3)
+- [ ] Merge `genotype/database/` with `static/database.nf` and keep a single DBone wiring entry point (progress_overview §2.3 / §6.1)
+- [x] Promote assess/stats partial tracks to `partial_assess.nf` / `partial_stats.nf`; single `partial_router.nf` entry; removed `workflow/Genetics/tmp/` genetics scripts; ops-only scripts under `subworkflows/tmp/ops/` (LogRef: 2026-06-09).
+- [x] Add a modules index to `[[4.process]]`, including `infra/` helpers (was `genotype/utils.nf`; LogRef: 2026-06-09)
 
 ---
 
-## 3. Shared preprocess — `plink_preprocess` (`processor.nf`)
+## 3. Shared preprocess — `plink_preprocess` (`processor/processor.nf`)
 
 Used by test and `v1` tracks unless `process_dir` short-circuits pfile/VCF paths.
 
@@ -97,7 +97,7 @@ Used by test and `v1` tracks unless `process_dir` short-circuits pfile/VCF paths
 
 ---
 
-## 4. Processor — test mods (`genotype/processor.nf`)
+## 4. Processor — test mods (`genotype/processor/processor.nf`)
 
 Sub-workflows run **in this order** inside each test path: **input pfiles** → **(optional thin / hard-filter)** → **group A/B/D/Others** → **`merge_subgenome_test_pfile`** → **`mk_plink_basic_info*`** → **`calc_plink_ld_unphased`** → **`calc_plink_ld_crosschr_random`**.
 
@@ -122,7 +122,7 @@ Sub-workflows run **in this order** inside each test path: **input pfiles** → 
 
 ---
 
-## 5. Stats — `test_plink_stats` (`genotype/stats.nf`)
+## 5. Stats — `test_plink_stats` (`genotype/stats/stats.nf`)
 
 Runs **after** any of **§4.1–4.3** (`main.nf` mods `test_thin`, `test_camp`, `test_common_thin`). Order in code: **sample** pipelines → **variant** stats → **LD** plots.
 
@@ -151,7 +151,7 @@ Runs **after** any of **§4.1–4.3** (`main.nf` mods `test_thin`, `test_camp`, 
 
 - [x] `plink_preprocess` → per-chr pfile/VCF
 - [x] Either reuse `process_dir` artifacts **or** `mk_plink_basic_info` + Tiger `calc_population_depth` → `popdep`
-- [ ] Keep processor/stats boundary: all `plink2` heavy steps stay in `processor.nf` (**workstation-nextflow** rule)
+- [x] Keep processor/stats boundary: all `plink2` heavy steps stay under `genotype/processor/` (**workstation-nextflow** rule; split 2026-06-09)
 
 ### 6.2 `plink_stats`
 
@@ -190,10 +190,10 @@ Downstream of caller + library merge; parameters touch `nextflow.config` / futur
 
 ## 8. Parallel / legacy modules (not on current router)
 
-- [x] **Assess (debug):** `genotype/assess.nf` + `tmp/assess_plink_debug.nf` for `test_thin` / `test_common_thin` — PLINK2 slice `--freq counts`/`--missing`, MAF bins from `.acount`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); MAC/singleton tables 2026-05-17; full `main.nf` router integration still optional. Full non-preview runs re-validated 2026-05-15 — `doc/TODO_PROGRESS_LOG.md`, `doc/NF_CMD.md`.
-- [x] Hail scaffold: `genotype/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
-- [ ] Confirm whether `plots.nf` was deleted or merged into `stats.nf` (progress_overview §2.3.1)
-- [ ] Check whether the `assess.nf` progress record matches the repository and notes (progress_overview §2.3.3)
+- [x] **Assess (debug):** compute in `genotype/processor/processor_assess.nf`, plots in `genotype/stats/stats_assess.nf`; launch via `partial_router.nf --partial_task assess_plink` (PLINK2) or `assess_vcf` (legacy VCF). For `test_thin` / `test_common_thin` — PLINK2 slice `--freq counts`/`--missing`, MAF bins from `.acount`, Python plots via `assess_slice.py` (LogRef: 2026-05-14); MAC/singleton tables 2026-05-17; full `main.nf` router integration still optional.
+- [x] Hail scaffold: `genotype/hail/hail.nf` + `src/python/genetics/hail/*` — await **§2** router + mod docs
+- [x] `dynamic/plots.nf` removed; selection plots moved to `dynamic/selection.nf` (`plot_fst_boxplot`, `plot_pi_distribution`, `plot_tajima_d_distribution`, `plot_ideogram_density`; no orchestrating workflow)
+- [x] Check whether the `assess.nf` progress record matches the repository and notes (progress_overview §2.3.3) — resolved: `assess.nf` removed; processes live in `genotype/processor/` / `genotype/stats/`, wired from `tmp/assess_*.nf` (LogRef: 2026-06-09)
 
 ---
 
@@ -203,7 +203,7 @@ Science and plots **beyond** the current `test_plink_stats` / `plink_stats` wiri
 
 - [x] Assess inputs: fixed test dir only; do not rebuild test VCFs (LogRef: 2026-04-22)
 - [x] Core plot: variance vs depth (aberrant sites / repeats)
-- [x] Tier-1 assess debug (both mods): `workflow/Genetics/tmp/assess_plink_debug.nf` — per-subgenome PLINK2 representative chr (`A=1`, `B=3`, `D=5`, `Others=0`) on `*_test.plink2`, `--freq counts`/`--missing`, MAF-bin TSV from `.acount`, `src/python/genetics/genomics/variant/assess_slice.py` + `infra.utils.graph` under `assess/<mod>/plots` and `assess/<mod>/info` (LogRef: 2026-05-14, singleton/MAC summaries 2026-05-17)
+- [x] Tier-1 assess debug (both mods): `partial_router.nf --partial_task assess_plink` — per-subgenome PLINK2 representative chr (`A=1`, `B=3`, `D=5`, `Others=0`) on `*_test.plink2`, `--freq counts`/`--missing`, MAF-bin TSV from `.acount`, `assess_slice.py` + `infra.utils.graph`; compute under `process/<mod>/`, plots/tables under `stats/<mod>/` (LogRef: 2026-05-14, singleton/MAC summaries 2026-05-17; publish merge 2026-06-09)
 - [x] Singletons: counts and distribution — PLINK2 `--freq counts` (`.acount`) + `assess_slice.py` MAC buckets, singleton fraction TSV, MAC bar/histogram (representative-chr slice; LogRef: 2026-05-17)
 	- [x] Debug slice: MAF-bin counts + joined MAF / MAC / `F_MISS` from PLINK2 `.acount`/`.vmiss` + Python QC plots (`assess_slice.py`; FORMAT/GQ not on pfile path — placeholder summary retained)
 	- [ ] Effect on LD

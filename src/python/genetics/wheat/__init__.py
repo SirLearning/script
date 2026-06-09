@@ -1,4 +1,14 @@
-"""Deprecated: use genetics.genomics.* and genetics.gwas.association_plot instead."""
+"""Deprecated package: use genetics.genomics.* and genetics.gwas.association_plot."""
+
+import warnings
+
+from genetics.wheat._deprecation import warn_deprecated_shim
+
+warn_deprecated_shim(
+    "__init__",
+    "genetics.genomics / genetics.gwas (see genetics.wheat.<module> docstrings)",
+)
+warnings.filterwarnings("default", category=DeprecationWarning, module=r"genetics\.wheat.*")
 
 from genetics.genomics.plink.results_io import *  # noqa: F403
 from genetics.genomics.sample.pca_structure import plot_population_structure

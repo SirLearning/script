@@ -120,6 +120,91 @@ def _build_maps():
 # Initialize
 _build_maps()
 
+# PLINK numeric chromosome id -> vmap4 ref name (mirrors getRefV1ChrName in infra_ref_v1.nf).
+_REF_V1_PLINK_TO_NAME = {
+    0: "chrUn",
+    1: "chr1A", 2: "chr1A",
+    3: "chr1B", 4: "chr1B",
+    5: "chr1D", 6: "chr1D",
+    7: "chr2A", 8: "chr2A",
+    9: "chr2B", 10: "chr2B",
+    11: "chr2D", 12: "chr2D",
+    13: "chr3A", 14: "chr3A",
+    15: "chr3B", 16: "chr3B",
+    17: "chr3D", 18: "chr3D",
+    19: "chr4A", 20: "chr4A",
+    21: "chr4B", 22: "chr4B",
+    23: "chr4D", 24: "chr4D",
+    25: "chr5A", 26: "chr5A",
+    27: "chr5B", 28: "chr5B",
+    29: "chr5D", 30: "chr5D",
+    31: "chr6A", 32: "chr6A",
+    33: "chr6B", 34: "chr6B",
+    35: "chr6D", 36: "chr6D",
+    37: "chr7A", 38: "chr7A",
+    39: "chr7B", 40: "chr7B",
+    41: "chr7D", 42: "chr7D",
+    43: "Mit",
+    44: "Chl",
+}
+
+
+def get_ref_v1_chr_name(chr_id):
+    """Return vmap4 reference chromosome name for a PLINK numeric chromosome id."""
+    key = int(chr_id)
+    name = _REF_V1_PLINK_TO_NAME.get(key)
+    if name is None:
+        raise ValueError(f"Unknown PLINK chromosome id: {chr_id}")
+    return name
+
+
+def all_ref_v1_plink_chr_ids():
+    """Return sorted PLINK chromosome ids 0-44."""
+    return sorted(_REF_V1_PLINK_TO_NAME.keys())
+
+
+def _ref_v1_plink_display_order_key(chr_id):
+    """Order: chrUn (0), PLINK 1-42, Mit (43), Chl (44)."""
+    cid = int(chr_id)
+    if cid == 0:
+        return (0, 0)
+    if cid == 43:
+        return (2, 0)
+    if cid == 44:
+        return (2, 1)
+    return (1, cid)
+
+
+def get_ref_v1_plink_chr_length(chr_id):
+    length = _chrIDLengthMap.get(int(chr_id))
+    if length is None:
+        raise ValueError(f'Unknown PLINK chromosome id: {chr_id}')
+    return length
+
+
+def get_ref_v1_genome_segment_layout():
+    """
+    Lay PLINK chr 0-44 end-to-end in vmap4 display order for genome-wide coordinates.
+
+    Returns (segments, total_bp) where each segment has plink_chr, ref_name,
+    start_bp, end_bp, length_bp.
+    """
+    order = sorted(all_ref_v1_plink_chr_ids(), key=_ref_v1_plink_display_order_key)
+    segments = []
+    start = 0
+    for cid in order:
+        length = _chrIDLengthMap[cid]
+        segments.append({
+            'plink_chr': cid,
+            'ref_name': get_ref_v1_chr_name(cid),
+            'start_bp': start,
+            'end_bp': start + length,
+            'length_bp': length,
+        })
+        start += length
+    return segments, start
+
+
 # ==================================================================================
 # Public API
 # ==================================================================================

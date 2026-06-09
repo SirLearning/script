@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: "3.12"
+          activate-environment: stats
+          environment-file: environment_stats.yml
+
+      - name: Install editable package and test tools
+        shell: bash -l {0}
+        run: |
+          pip install -e .
+          pip install pytest ruff
+
+      - name: Ruff
+        shell: bash -l {0}
+        run: ruff check src/python tests
+
+      - name: Pytest
+        shell: bash -l {0}
+        run: pytest -q

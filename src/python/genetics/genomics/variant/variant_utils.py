@@ -8,7 +8,6 @@ def load_df_from_plink_variant(filepath):
     """
     print(f"[Info] Loading VMISS: {filepath}")
     df = load_df_from_tsv(filepath)
-    if df is None: return None
 
     # Clean header (remove #)
     df.columns = [c.replace('#', '') if isinstance(c, str) else c for c in df.columns]
@@ -38,7 +37,6 @@ def load_df_from_plink_variant(filepath):
 def load_df_from_plink_hardy(filepath):
     print(f"[Info] Loading Hardy: {filepath}")
     df = load_df_from_space_sep(filepath)
-    if df is None: return None
     df.columns = [c.replace('#', '') if isinstance(c, str) else c for c in df.columns]
     return df
 
@@ -46,7 +44,6 @@ def load_df_from_plink_hardy(filepath):
 def load_df_from_plink_gcount(filepath):
     print(f"[Info] Loading GCount: {filepath}")
     df = load_df_from_space_sep(filepath)
-    if df is None: return None
     df.columns = [c.replace('#', '') if isinstance(c, str) else c for c in df.columns]
     return df
 
