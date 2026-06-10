@@ -76,7 +76,26 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
 
 Partial reruns use `workflow/Genetics/subworkflows/local/entry/partial_router.nf` with `--partial_task`; ops FTP scripts live under `subworkflows/tmp/ops/` — see **GENETICS_WORKFLOW.md**.
 
-Production runs on the vmap4 workstation use dedicated folders under `/data/home/tusr1/01projects/vmap4/` (not the git repo root). See `.cursor/rules/workstation-core.mdc`.
+### vmap4 run workspace (not the git repo)
+
+All production Nextflow runs and project-scale analysis use a **two-level** layout under `/data/home/tusr1/01projects/vmap4/`:
+
+```text
+01projects/vmap4/
+  08stats.genome/                      # task module (stats, assess, partial genetics)
+    01run/                             # full-pipeline attempts
+    23run_assess_plink2_debug_stub/    # partial_router --partial_task assess_plink
+    57run_mac_stats_test_thin/
+    63run_mac_dist_log_redraw/
+    …                                  # NN = monotonic; slug describes the attempt
+```
+
+1. Pick the **task module** folder (`08stats.genome` for stats/assess/LD/MAC/chr/wheat partial work).
+2. List siblings, choose the next **`NN`**, create **`NNrun_<slug>`**, `cd` there.
+3. Run with **absolute** paths to `main.nf` or `partial_router.nf` and `nextflow.config`.
+4. Log cwd + command in `doc/NF_CMD.md`.
+
+Authoritative policy: `.cursor/rules/workstation-core.mdc` and `workflow/Genetics/docs/GENETICS_WORKFLOW.md` § “Where and how to run”.
 
 ---
 

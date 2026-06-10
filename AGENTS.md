@@ -38,6 +38,9 @@ These are not agent rules, but agents should cite them when running or extending
 
 ## Minimal agent behavior
 
-- Follow **workstation-core** for language (English in versioned text), minimal diffs, and operational guardrails (repo vs vmap4 run dirs, conda `run`, immutable vmap4 inputs).
+- Follow **workstation-core** for language (English in versioned text), minimal diffs, and operational guardrails.
+- **Repo vs run:** edit under `/data/home/tusr1/git/script`; execute Nextflow and project analysis under `/data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>/` (e.g. `08stats.genome/57run_mac_stats_test_thin`).
+- **Pipeline layout:** `modules/local/` (process libs); `subworkflows/local/{entry,plink,wheat,upstream,partial}/`; partial reruns via `partial_router.nf --partial_task`; ops FTP under `subworkflows/tmp/ops/`. No `workflow/Genetics/tmp/` or repo `resources/`.
+- **Conda:** `run` for Nextflow; `stats` for Python stats / pytest; immutable inputs under `/data1/dazheng_tusr1/vmap4.VCF.v1`.
 - Do not `git commit` unless the user explicitly asks.
-- Before editing [`.cursor/rules/`](.cursor/rules/) or [`.cursor/skills/`](.cursor/skills/), confirm the user wants agent policy changed—not just application code.
+- Before editing [`.cursor/rules/`](.cursor/rules/) or [`.cursor/skills/`](.cursor/skills/), confirm the user wants agent policy changed—unless the user explicitly requests a policy update (as in “update AI config”).

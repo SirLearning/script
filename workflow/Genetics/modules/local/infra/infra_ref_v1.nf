@@ -211,6 +211,36 @@ def getRefV1ChrOffset(chr) {
     return chrOffsets[chr]
 }
 
+def getRefFastaForChr_v1(chr, home_dir) {
+    def normalized = chr.toString().replaceFirst(/^chr/, '')
+
+    def subGenomeRefs = [
+        "A": "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz",
+        "B": "${home_dir}/00data/03ref/05B/b_iwgscV1.fa.gz",
+        "D": "${home_dir}/00data/03ref/04D/d_iwgscV1.fa.gz",
+        "ALL": "${home_dir}/00data/03ref/01A/a_iwgscV1.fa.gz"
+    ]
+
+    def groupA = getRefV1SubChr("A")
+    def groupB = getRefV1SubChr("B")
+    def groupD = getRefV1SubChr("D")
+    def groupOthers = getRefV1SubChr("Others")
+
+    def sub_genome
+    if (groupA.contains(normalized)) {
+        sub_genome = "A"
+    } else if (groupB.contains(normalized)) {
+        sub_genome = "B"
+    } else if (groupD.contains(normalized)) {
+        sub_genome = "D"
+    } else if (groupOthers.contains(normalized)) {
+        sub_genome = "ALL"
+    } else {
+        throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
+    }
+    return subGenomeRefs[sub_genome]
+}
+
 def getRefV1ChrLength(chr) {
     def chrLengths = [
         "0": "480980714",

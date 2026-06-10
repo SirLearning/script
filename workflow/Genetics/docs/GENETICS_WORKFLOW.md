@@ -257,10 +257,42 @@ Log production runs in **`doc/NF_CMD.md`** per repo convention.
 
 ## Where and how to run (workstation policy)
 
-- Launch Nextflow and other long pipeline commands from a **task-specific run folder** under **`/data/home/tusr1/01projects/vmap4/...`** (not from the git repo root). Use monotonically increasing numeric run directories where your team convention applies (e.g. `08stats.genome/NNrun_…`).
-- Use conda env **`run`** for Nextflow (`source ~/.bashrc && conda activate run`, or equivalent).
-- For **long** production-style runs, use **`screen`** (or equivalent); short debug / `-preview` runs are exempt.
-- Treat **`/data1/dazheng_tusr1/vmap4.VCF.v1`** test assets as **read-only**; use prepared paths documented in **`doc/TODO.md`**.
+**Do not run from the git repo.** Use the vmap4 project workspace with a **two-level** folder layout:
+
+| Level | Path pattern | Example |
+| --- | --- | --- |
+| Project root | `/data/home/tusr1/01projects/vmap4/` | All runtime work lives here |
+| Task module | `<NN><area>.<topic>/` | `08stats.genome/` — stats, assess, LD/MAC/chr partials, wheat-from-plink |
+| Run attempt | `<NN>run` or `<NN>run_<slug>/` | `57run_mac_stats_test_thin`, `23run_assess_plink2_debug_stub` |
+
+**Before each new run:**
+
+1. `cd /data/home/tusr1/01projects/vmap4/<module>/`
+2. List existing `*run*` folders; set `NN` to max + 1 (zero-padded: `01`, `02`, … `63`, …).
+3. `mkdir -p <NN>run_<descriptive_slug>` and `cd` into it.
+4. Launch with absolute repo paths, e.g.:
+   - Full router: `…/workflow/Genetics/main.nf`
+   - Partial: `…/subworkflows/local/entry/partial_router.nf --partial_task <name>`
+   - Always: `-c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config`
+5. Append **cwd + full command** to **`doc/NF_CMD.md`**.
+
+**Conventions**
+
+- **Do not reuse** an old run folder for a fresh attempt — create the next `NNrun_…`.
+- **Conda `run`** for Nextflow; **`stats`** for Python stats processes inside NF.
+- **`screen`** for long production runs; `-preview` / small debug exempt.
+- **Read-only inputs:** `/data1/dazheng_tusr1/vmap4.VCF.v1` (see **`doc/TODO.md`** for prepared `test_plink/process` paths).
+- **Ephemeral preview dirs** (`00nf_preview*`) under `vmap4/` are OK for syntax smoke tests.
+
+**Partial-task → typical slug examples**
+
+| `--partial_task` | Example run folder under `08stats.genome/` |
+| --- | --- |
+| `assess_plink` | `24run_assess_plink2_full_test_thin` |
+| `ld_redraw` | `16run_ld_plots_redraw_test_thin` |
+| `mac_stats` | `57run_mac_stats_test_thin` |
+| `chr_compare` | `51run_chr_variant_compare_plots` |
+| `wheat_from_plink` | `43run_wheat_pca_grp_test_thin` |
 
 Authoritative guardrails: **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation-nextflow.mdc`**.
 

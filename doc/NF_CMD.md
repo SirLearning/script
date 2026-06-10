@@ -676,7 +676,7 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/tmp/mac_stats_from_gc
 
 ### 2026-06-09 — Partial rerun path migration (`partial_router.nf`)
 
-**Note:** Genetics partial reruns no longer use `workflow/Genetics/tmp/*.nf` (removed). Use **`subworkflows/local/entry/partial_router.nf`** with **`--partial_task`** (`assess_plink`, `assess_vcf`, `ld_redraw`, `mac_stats`, `mac_dist_redraw`, `chr_counts`, `chr_compare`, `rebuild_lib_stats`, `wheat_from_plink`). FTP-only scripts moved to **`subworkflows/tmp/ops/`**. Historic command blocks above still reference old `tmp/` paths for audit.
+**Note:** Genetics partial reruns no longer use `workflow/Genetics/tmp/*.nf` (removed). Use **`subworkflows/local/entry/partial_router.nf`** with **`--partial_task`** (`assess_plink`, `assess_vcf`, `ld_redraw`, `mac_stats`, `mac_dist_redraw`, `chr_counts`, `chr_compare`, `rebuild_lib_stats`, `wheat_from_plink`, `abstract_mq_50_bams`). FTP-only scripts moved to **`subworkflows/tmp/ops/`**. Historic command blocks above still reference old `tmp/` paths for audit.
 
 **Example** (`assess_plink`, `test_thin`):
 
@@ -693,3 +693,122 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
   --job test_plink \
   --mod test_thin
 ```
+
+---
+
+### 2026-06-10 — `abstract_mq_50_bams` (chr002 validation, 50 BAMs)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/03run_abstract_mq_50_bams` (screen `mq50_chr2`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/05reliable.lib/03run_abstract_mq_50_bams && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task abstract_mq_50_bams \
+  --mod abstract_mq_50_bams \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data/home/tusr1/01projects/vmap4/05reliable.lib/03run_abstract_mq_50_bams \
+  --job abstract_mq_50_bams \
+  --chr 2
+```
+
+All chromosomes (omit `--chr`; use a new numbered run folder):
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/05reliable.lib/<NNrun_abstract_mq_50_bams_allchr> && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task abstract_mq_50_bams \
+  --mod abstract_mq_50_bams \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data/home/tusr1/01projects/vmap4/05reliable.lib/<NNrun_abstract_mq_50_bams_allchr> \
+  --job abstract_mq_50_bams
+```
+
+Output: `process/abstract_mq_50_bams/reference/chrNNN.site_mq.ref.txt.gz` (full-chr grid: chrom, pos, MQ or `.`) plus `*.site_mq.ref.info.tsv`.
+
+---
+
+### 2026-06-10 — SUPP — `abstract_mq_50_bams` full-chromosome MQ reference (not variant targets)
+
+**Change:** `calc_site_mq_bcftools` scans `-r CHR:1-LEN` (free mpileup), pads to PopDep-like length, publishes **`process/abstract_mq_50_bams/reference/chrNNN.site_mq.ref.txt.gz`**. Does **not** use legacy variant list `2_1_122798052.pos.txt`. Params: `mq_pad_all_positions`, `mq_ref_gzip`, `mq_keep_sparse`.
+
+**Note:** Re-run chr002+ after stopping the prior `03run_abstract_mq_50_bams` screen job (old output name `variant/*.site_mq.txt`).
+
+---
+
+### 2026-06-10 — `abstract_mq_50_bams` all chromosomes (50 BAMs, full-chr reference)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/04run_abstract_mq_50_bams_ref` (screen `mq50_allchr`, 45 tasks, `maxForks=4`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/05reliable.lib/04run_abstract_mq_50_bams_ref && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task abstract_mq_50_bams \
+  --mod abstract_mq_50_bams \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data/home/tusr1/01projects/vmap4/05reliable.lib/04run_abstract_mq_50_bams_ref \
+  --job abstract_mq_50_bams \
+  -process.withLabel:site_mq_bcftools.maxForks=4
+```
+
+Log: `run_logs/nextflow.mq50_allchr.log`. Outputs: `process/abstract_mq_50_bams/reference/chr{000..044}.site_mq.ref.txt.gz`.
+
+---
+
+### 2026-06-10 — `abstract_mq_50_bams` all chromosomes (rerun after code update)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/06run_abstract_mq_50_bams_ref` (screen `mq50_allchr`, 45 tasks, `maxForks=4` in `resources.config`).
+
+Stopped prior attempt: `04run_abstract_mq_50_bams_ref` (old code: single `*.site_mq.txt`, `sort -u`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/05reliable.lib/06run_abstract_mq_50_bams_ref && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task abstract_mq_50_bams \
+  --mod abstract_mq_50_bams \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data/home/tusr1/01projects/vmap4/05reliable.lib/06run_abstract_mq_50_bams_ref \
+  --job abstract_mq_50_bams
+```
+
+Log: `run_logs/nextflow.mq50_allchr.log`. Outputs: `process/abstract_mq_50_bams/reference/chrNNN.site_mq.calls.tsv.gz` (CHROM POS REF ALT MQ) and `chrNNN.site_mq.ref.txt.gz` (full-chr grid).
+
+---
+
+### 2026-06-10 — `abstract_mq_50_bams` all chromosomes (I16 mpileup-only, float MQ)
+
+Stopped prior attempt: `06run_abstract_mq_50_bams_ref` (screen `mq50_allchr`, bcftools call + giant `*.calls.vcf`).
+
+Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/08run_abstract_mq_50_bams_i16` (screen `mq50_i16_allchr`, 45 tasks, `maxForks=4`).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/05reliable.lib/08run_abstract_mq_50_bams_i16 && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task abstract_mq_50_bams \
+  --mod abstract_mq_50_bams \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data/home/tusr1/01projects/vmap4/05reliable.lib/08run_abstract_mq_50_bams_i16 \
+  --job abstract_mq_50_bams
+```
+
+Log: `run_logs/nextflow.mq50_i16_allchr.log`. MQ from mpileup INFO/I16 mean MAPQ (float, no bcftools call). Outputs: `chrNNN.site_mq.calls.tsv.gz` + `chrNNN.site_mq.ref.txt.gz`.
+

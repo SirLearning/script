@@ -41,5 +41,17 @@ This pipeline uses an **nf-core-like folder split** (`conf/`, `modules/`, `subwo
 - **No inline fallback defaults in processes:** In `.nf` process scripts, reference parameters directly (e.g., `${params.xxx}`) and do not use inline fallback expressions like `${params.xxx ?: ...}`. Override values at launch time via CLI/config, not inside process code.
 - **Use task cpus for Python parallelism:** For Python analytics processes that support internal parallel computation, drive worker count from Nextflow task resources (e.g., pass `${task.cpus}`) instead of adding separate worker params in `nextflow.config`.
 - **Output path contract for test mods (strict):** For test jobs (e.g., `test_plink`), keep `job` as the top-level folder and place outputs under `job/process/<mod>/...` and `job/stats/<mod>/...` (including `plots`, `logs`, `thresholds`, `sample`, `variant` subfolders). Do not encode `mod` by mutating `params.job`.
-- **Run-folder numbering policy (strict):** Under task run roots (e.g., `/data/home/tusr1/01projects/vmap4/08stats.genome`), create new Nextflow run folders with monotonically increasing numeric prefixes (`01...`, `02...`, `03...`, etc.). Do not reuse old run folders for fresh attempts.
+- **vmap4 run workspace (strict):** See **workstation-core** guardrails 9–10. Pattern:
+  ```text
+  /data/home/tusr1/01projects/vmap4/
+    08stats.genome/                    # task module (stats / assess / partial genetics)
+      01run/                           # early full-pipeline attempts
+      23run_assess_plink2_debug_stub/  # partial_router --partial_task assess_plink
+      57run_mac_stats_test_thin/       # partial_router --partial_task mac_stats
+      63run_mac_dist_log_redraw/
+      …                                # NN increments; slug = purpose [_mod]
+  ```
+  Before every new run: list the module dir, choose next `NN`, `mkdir` a new folder, `cd` there, log **cwd** in `doc/NF_CMD.md` and `doc/TODO_PROGRESS_LOG.md`. Entry scripts always use **absolute** paths to repo NF files and `-c …/nextflow.config`.
+- **Partial router:** `subworkflows/local/entry/partial_router.nf` with `--partial_task`; use **`if` / `else if`** in `workflow { }` blocks — **`switch` is invalid** in Nextflow DSL2 workflows.
+- **Barrel includes:** `infra/utils.nf` and theme barrels (e.g. `gwas/gwas.nf`) are index-only — `include { def }` Groovy helpers from the defining `infra_*.nf` / `*_*.nf` file directly.
 - **Runtime log watchdog + incremental recovery:** During long `nextflow` test runs, monitor the run log file (e.g., `run_logs/nextflow.*.log`) continuously. If a process error appears, diagnose from log/work dir first, then prefer rerunning only failed steps by reusing completed upstream results (e.g., `-resume` and unchanged successful work), instead of deleting outputs and restarting the full pipeline. Only start a fresh full rerun when incremental recovery is not feasible.

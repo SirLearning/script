@@ -18,7 +18,7 @@ Use this skill when executing a **work session** whose goal is to pick up **unfi
 
 Follow **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation-nextflow.mdc`** in full. In particular:
 
-- **Repo vs run:** Edit source only under `/data/home/tusr1/git/script`. Run Nextflow, Python tests tied to vmap4 runs, and heavy commands from **`/data/home/tusr1/01projects/vmap4/...`** task run folders (not from the git repo root).
+- **Repo vs run:** Edit source only under `/data/home/tusr1/git/script`. Run Nextflow and vmap4-tied analysis from **`/data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>/`** (two-level layout; see workstation-core guardrail 9). Example module: `08stats.genome/` with runs like `57run_mac_stats_test_thin`. Create a **new** numbered folder per attempt; never reuse an old run dir.
 - **Conda:** Use conda env **`run`** for Nextflow and related runtime (`source ~/.bashrc && conda activate run`).
 - **Long Nextflow:** Start real pipeline runs inside **`screen`** (or equivalent). Small tests / debug runs are exempt.
 - **vmap4 inputs:** Treat `/data1/dazheng_tusr1/vmap4.VCF.v1` as **read-only**. For prepared test data, use **`/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process`** and existing prefixes (e.g. `A_test.`).
@@ -48,7 +48,7 @@ Follow **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation
 ### 4) Validate (iterate until pass or blocked)
 
 - Run the **smallest** commands that prove the change (tests, `-resume` NF slice, lint).
-- Execute from the correct **`/data/home/tusr1/01projects/vmap4/...`** subfolder when the rules require it.
+- Execute from the correct **`/data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>`** folder. If none exists yet for this attempt, create it first (`mkdir -p`, pick next `NN` from sibling listing).
 - On failure: inspect logs/work dirs, fix, re-run. Document **partial validation** honestly in the progress log if blocked.
 
 ### 5) Close the checklist (same session as the shipped work)
