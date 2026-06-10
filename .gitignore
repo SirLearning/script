@@ -27,6 +27,3 @@ __pycache__/
 
 # CodeGraph local index (regenerate with: codegraph init -i)
 .codegraph/
-
-# for secrets
-.lulab/
