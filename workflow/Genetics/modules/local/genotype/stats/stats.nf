@@ -6,6 +6,9 @@ include {
     variant_missing_stats
     variant_maf_stats
     variant_mac_stats
+    variant_mac_maf_reg
+    variant_mac_missing_reg
+    variant_mac_missing_reg_bin50_sample
     variant_mac_dist_log_redraw
     variant_popdep_mahalanobis
     variant_ld_decay_plot
@@ -96,6 +99,9 @@ workflow test_plink_stats {
     def vmiss_out = variant_missing_stats(vmiss)
     def maf_out = variant_maf_stats(afreq)
     variant_mac_stats(gcount)
+    variant_mac_maf_reg(gcount)
+    variant_mac_missing_reg(gcount.combine(vmiss, by: [0, 1]))
+    variant_mac_missing_reg_bin50_sample(gcount.combine(vmiss, by: [0, 1]))
     variant_ld_decay_plot(ld)
     variant_ld_crosschr_plot(ld_cross)
 

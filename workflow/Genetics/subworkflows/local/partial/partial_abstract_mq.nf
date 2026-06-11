@@ -40,6 +40,16 @@ workflow RUN_ABSTRACT_MQ_50_BAMS {
         ? [params.chr.toString().replaceFirst(/^chr/, '')]
         : getRefV1SubChr('ALL')
 
+    if (params.mq_chr_exclude) {
+        def exclude = params.mq_chr_exclude.toString().split(/[,\\s]+/).collect { it.replaceFirst(/^chr/, '').trim() }.findAll { it }
+        chr_list = chr_list.findAll { c -> !exclude.contains(c.toString()) }
+        log.info "abstract_mq_50_bams: excluding chromosomes ${exclude} (mq_chr_exclude)"
+    }
+
+    if (chr_list.isEmpty()) {
+        error 'RUN_ABSTRACT_MQ_50_BAMS: no chromosomes left after mq_chr_exclude filter.'
+    }
+
     log.info "abstract_mq_50_bams: full-chromosome mpileup reference (NOT variant-target list)"
     log.info "abstract_mq_50_bams: BAM list ${bam_list}"
     log.info "abstract_mq_50_bams: chromosomes ${chr_list}"

@@ -279,8 +279,8 @@ Log production runs in **`doc/NF_CMD.md`** per repo convention.
 **Conventions**
 
 - **Do not reuse** an old run folder for a fresh attempt — create the next `NNrun_…`.
-- **Conda `run`** for Nextflow; **`stats`** for Python stats processes inside NF.
-- **`screen`** for long production runs; `-preview` / small debug exempt.
+- **Conda `run`** for Nextflow and **`screen`** (use `screen` from env `run` via `conda activate run`; not system `/usr/bin/screen`); **`stats`** for Python stats processes inside NF.
+- **`screen`** for long production runs (`conda activate run` before `screen`; re-activate inside the session); `-preview` / small debug exempt.
 - **Read-only inputs:** `/data1/dazheng_tusr1/vmap4.VCF.v1` (see **`doc/TODO.md`** for prepared `test_plink/process` paths).
 - **Ephemeral preview dirs** (`00nf_preview*`) under `vmap4/` are OK for syntax smoke tests.
 

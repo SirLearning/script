@@ -92,6 +92,101 @@ process variant_mac_stats {
     """
 }
 
+process variant_mac_maf_reg {
+    tag "variant mac vs maf reg: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(gcount)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.th.tsv"), emit: th
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.mac_maf_reg.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.mac import ana_mac_maf_reg
+
+    print(f"Processing MAC vs MAF regression for ${chr}...")
+    ana_mac_maf_reg("${gcount}", "${id}.variant.mac_maf")
+    """
+}
+
+process variant_mac_missing_reg {
+    tag "variant mac vs missing reg: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(gcount), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.th.tsv"), emit: th
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.mac_miss_reg.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.mac import ana_mac_missing_reg
+
+    print(f"Processing MAC vs missing regression for ${chr}...")
+    ana_mac_missing_reg("${gcount}", "${vmiss}", "${id}.variant.mac_miss")
+    """
+}
+
+process variant_mac_missing_reg_bin50_sample {
+    tag "variant mac_miss bin50 sample: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/thresholds", mode: 'copy', pattern: "*.bin50sample.th.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.reg.bin50s.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.reg.mac_an.bin50s.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.R_mac.bin50s.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(gcount), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.reg.bin50s.png"), emit: plots_reg
+    tuple val(id), val(chr), path("*.reg.mac_an.bin50s.png"), emit: plots_mac_an_bin50s
+    tuple val(id), val(chr), path("*.R_mac.bin50s.png"), emit: plots_R_mac
+    tuple val(id), val(chr), path("*.bin50sample.th.tsv"), emit: th
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.mac_miss_bin50s.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.mac import ana_mac_missing_reg_bin50_sample
+
+    print(f"MAC vs missing bin50-sample plots for ${chr}...")
+    ana_mac_missing_reg_bin50_sample("${gcount}", "${vmiss}", "${id}.variant.mac_miss")
+    """
+}
+
 process variant_mac_dist_log_redraw {
     tag "variant mac dist log: ${id} (${plink_mod})"
     publishDir "${params.output_dir}/${params.job}/stats/${plink_mod}/plots", mode: 'copy', pattern: "*.log.png"

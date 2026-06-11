@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
  * Wired from partial_router.nf (--partial_task ld_redraw | mac_stats | mac_dist_redraw | chr_counts | chr_compare | rebuild_lib_stats).
  */
 
-include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_dist_log_redraw } from '../../../modules/local/genotype/stats/stats_variant.nf'
+include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw } from '../../../modules/local/genotype/stats/stats_variant.nf'
 include { report_plink_chr_variant_counts; plot_thin_common_chr_variant_compare } from '../../../modules/local/genotype/stats/stats_chr_report.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from '../../../modules/local/genotype/stats/stats.nf'
 
@@ -49,16 +49,60 @@ workflow RUN_MAC_STATS_FROM_GCOUNT {
 
     if (params.mod in ['test_thin', 'test_common_thin']) {
         def subgenomes = ['A', 'B', 'D', 'Others']
-        def ch = channel.from(
+        def ch_gcount = channel.from(
             subgenomes.collect { sg ->
                 tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.gcount"))
             }
         )
-        variant_mac_stats(ch)
+        def ch_vmis = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.vmiss"))
+            }
+        )
+        variant_mac_stats(ch_gcount)
+        variant_mac_maf_reg(ch_gcount)
+        variant_mac_missing_reg(ch_gcount.combine(ch_vmis, by: [0, 1]))
     } else if (params.mod == 'test_rebulld_lib') {
-        variant_mac_stats(channel.of(tuple('chr002', '2', file("${proc}/chr002.info.gcount"))))
+        def ch_gcount = channel.of(tuple('chr002', '2', file("${proc}/chr002.info.gcount")))
+        def ch_vmis = channel.of(tuple('chr002', '2', file("${proc}/chr002.info.vmiss")))
+        variant_mac_stats(ch_gcount)
+        variant_mac_maf_reg(ch_gcount)
+        variant_mac_missing_reg(ch_gcount.combine(ch_vmis, by: [0, 1]))
     } else {
         error "RUN_MAC_STATS_FROM_GCOUNT: unsupported mod ${params.mod}."
+    }
+}
+
+workflow RUN_MAC_MISS_BIN50_SAMPLE {
+    main:
+    if (!params.mod) {
+        error 'params.mod is required (e.g. test_thin, test_common_thin, test_rebulld_lib).'
+    }
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+
+    if (params.mod in ['test_thin', 'test_common_thin']) {
+        def subgenomes = ['A', 'B', 'D', 'Others']
+        def ch_gcount = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.gcount"))
+            }
+        )
+        def ch_vmis = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.vmiss"))
+            }
+        )
+        variant_mac_missing_reg_bin50_sample(ch_gcount.combine(ch_vmis, by: [0, 1]))
+    } else if (params.mod == 'test_rebulld_lib') {
+        def ch_gcount = channel.of(tuple('chr002', '2', file("${proc}/chr002.info.gcount")))
+        def ch_vmis = channel.of(tuple('chr002', '2', file("${proc}/chr002.info.vmiss")))
+        variant_mac_missing_reg_bin50_sample(ch_gcount.combine(ch_vmis, by: [0, 1]))
+    } else {
+        error "RUN_MAC_MISS_BIN50_SAMPLE: unsupported mod ${params.mod}."
     }
 }
 

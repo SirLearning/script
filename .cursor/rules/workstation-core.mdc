@@ -14,7 +14,7 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
 3. **Read before edit:** Before changing `src/python/infra/utils/io.py` or `src/python/infra/utils/graph.py`, read the current file contents from the workspace; do not rely on memory.
 4. **Fail-safe:** If you cannot apply edits through the editor, stop and ask the user instead of using shell workarounds.
 5. **No unilateral file deletion:** Before deleting any file (workspace, artifacts, or via shell), ask the user for explicit approval; do not delete on your own initiative.
-6. **Nextflow in `screen`:** For real pipeline runs under `workflow/Genetics/` (or other Nextflow entry points), start the run inside a `screen` (or equivalent persistent session) so it survives disconnects. **Exception:** small-scale tests and interactive debugging runs do not require `screen`.
+6. **Nextflow in conda `run` + `screen`:** For real pipeline runs under `workflow/Genetics/` (or other Nextflow entry points), start the run inside a **`screen` session from conda env `run`** so it survives disconnects and shares the same toolchain as `nextflow`. **Exception:** small-scale tests and interactive debugging runs do not require `screen`.
 7. **vmap4 test data is immutable:** During vmap4 tasks (e.g., runs like `workflow/Genetics/main.nf` around the documented command block), treat all files under `/data1/dazheng_tusr1/vmap4.VCF.v1` as read-only input assets; never modify, rename, move, regenerate, or delete them.
 8. **Use fixed vmap4 test inputs:** For test execution, always use existing files under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process` (including A/B/D subgenomes and `Others`). Respect existing prefixes such as `A_test.` for `plink`/`plink2` test files and run tests against these prepared inputs instead of creating replacement test datasets.
 9. **vmap4 run workspace (two-level layout):** All pipeline runs, partial reruns, and project-scale Python/R analysis execute under **`/data/home/tusr1/01projects/vmap4/`** — never from `/data/home/tusr1/git/script`. Use a **task-module folder** (level 1) then a **numbered run folder** (level 2):
@@ -23,7 +23,17 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
    - **Create before launch:** `mkdir -p /data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>`, `cd` there, then run. Pick `NN` = one higher than the highest existing run folder in that module; **do not reuse** old run dirs for fresh attempts.
    - **Exception:** repo unit tests (`pytest`, `ruff` from repo root against `tests/`) and `-preview` smoke checks may use ephemeral dirs like `00nf_preview*` under `vmap4/`.
 10. **Repo is source-only, vmap4 is run-only:** `/data/home/tusr1/git/script` — edit code, rules, docs only. `/data/home/tusr1/01projects/vmap4/...` — `nextflow` work dirs, logs, run-local scratch, WeaTE `transposon/` inputs when applicable.
-11. **Use `run` conda env for `screen` + Nextflow runtime:** When launching via `screen` and when executing `nextflow` (and related runtime commands), ensure the active conda environment is `run` (e.g., `source ~/.bashrc && conda activate run`). Use conda **`stats`** for Python stats tooling and **`pytest`/`ruff`** in CI or local unit tests.
+11. **Conda envs (`run` vs `stats`):** Use conda **`run`** for **`screen`**, **`nextflow`**, and related pipeline runtime (bcftools/plink2 invoked by NF processes on the host when applicable). Use conda **`stats`** for Python stats tooling and **`pytest`/`ruff`** in CI or local unit tests.
+12. **`screen` must come from conda `run` (mandatory):** `screen` is installed in env `run` via repo-root `environment_run.yml`. **Do not** use the system `/usr/bin/screen` for production or long-lived pipeline sessions.
+    - **Always** `source ~/.bashrc && conda activate run` **before** any `screen -S`, `screen -dmS`, or `screen -r` used to launch or attach pipeline work.
+    - After attach, **re-activate** `run` inside the session (`conda activate run`) — non-login shells may not inherit conda.
+    - **Canonical detached launch** (agents and `doc/NF_CMD.md` examples):
+      ```bash
+      source ~/.bashrc && conda activate run && \
+      screen -dmS <session> bash -lc 'source ~/.bashrc && conda activate run && cd <run_dir> && <command>'
+      ```
+    - **Interactive attach:** `source ~/.bashrc && conda activate run && screen -S <session>`, then inside the window: `conda activate run` before `nextflow run ...`.
+    - When logging runs, include the full `screen ... bash -lc '...'` wrapper (see `workstation-nextflow.mdc`).
 
 # First principles
 

@@ -820,11 +820,68 @@ Stop `08run` after the four large in-flight chromosomes finish (chr000, chr029, 
 
 Resource change (`conf/resources.config`, label `site_mq_bcftools`): `cpus=4`, `memory=64.GB`, `maxForks=16` (was 32 / 256.GB / 4).
 
-Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/09run_abstract_mq_50_bams_i16` (screen e.g. `mq50_i16_resume`). Reuses `08run` work dir and publish tree (`--output_dir` → 08run).
+**Resume note:** Launch cwd must be **`08run`** (not `09run`) for `-resume`; `-work-dir` alone does not restore cache. Also skip already-published chr via `--mq_chr_exclude` because `cpus` 32→4 changes task hash and would rerun completed chromosomes.
+
+Working directory (launch cwd): `/data/home/tusr1/01projects/vmap4/05reliable.lib/08run_abstract_mq_50_bams_i16` (screen `mq50_i16_resume`). Log tee: `09run_.../run_logs/nextflow.mq50_i16_resume.log`. Publish tree: `08run/abstract_mq_50_bams/process/abstract_mq_50_bams/reference/`.
 
 ```bash
-screen -S mq50_i16_resume
-/data/home/tusr1/01projects/vmap4/05reliable.lib/09run_abstract_mq_50_bams_i16/resume_from_08.sh
+source ~/.bashrc && conda activate run && \
+screen -dmS mq50_i16_resume bash -c 'source ~/miniconda3/etc/profile.d/conda.sh && conda activate run && /data/home/tusr1/01projects/vmap4/05reliable.lib/09run_abstract_mq_50_bams_i16/resume_from_08.sh'
 ```
 
-Log: `09run_.../run_logs/nextflow.mq50_i16_resume.log`. Completed chromosomes from 08 are skipped via `-resume`; remaining 39 tasks run at `maxForks=16`.
+Skip list: `--mq_chr_exclude '0,2,18,24,29,41,44'` (38 remaining tasks). Log: `09run_.../run_logs/nextflow.mq50_i16_resume.log`.
+
+---
+
+### 2026-06-11 — MAC vs missing regression (`mac_stats`), `test_rebulld_lib` (background)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/67run_mac_miss_reg_test_rebulld_lib`. Screen session: `mac_miss_rebulld`. Reruns `variant_mac_stats` + `variant_mac_missing_reg` on chr002 gcount/vmiss (includes full-range and MAC 0–100 / 0–500 / 0–1000 regression plots). Publishes under `test_plink/stats/test_rebulld_lib/{info,plots,thresholds,logs}/`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS mac_miss_rebulld bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/08stats.genome/67run_mac_miss_reg_test_rebulld_lib && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task mac_stats --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_rebulld_lib 2>&1 | tee run_logs/nextflow.mac_miss_reg_test_rebulld_lib.log'
+```
+
+Log: `67run_mac_miss_reg_test_rebulld_lib/run_logs/nextflow.mac_miss_reg_test_rebulld_lib.log`. Attach: `source ~/.bashrc && conda activate run && screen -r mac_miss_rebulld`.
+
+---
+
+### 2026-06-11 — MAC vs MAF regression (`mac_stats` + `variant_mac_maf_reg`)
+
+Working directories: `70run_mac_maf_reg_test_thin` (**12/12**, ~2m), `71run_mac_maf_reg_test_common_thin` (**12/12**, ~1m), `72run_mac_maf_reg_test_rebulld_lib` (screen `mac_maf_rebulld`, background). Publishes `{id}.variant.mac_maf.reg.png` plus `.reg.mac0_{100,500,1000}.png` under `stats/<mod>/plots/` (MAF from `.gcount` only).
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/70run_mac_maf_reg_test_thin && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --partial_task mac_stats --mod test_thin --job test_plink \
+  --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1
+```
+
+`test_rebulld_lib` (background):
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS mac_maf_rebulld bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/08stats.genome/72run_mac_maf_reg_test_rebulld_lib && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task mac_stats --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_rebulld_lib 2>&1 | tee run_logs/nextflow.log'
+```
+
+---
+
+### 2026-06-11 — MAC miss bin50 refactor (full MAC only + mac_an full in bin50 task)
+
+Working directory: `81run_mac_miss_bin50s_v2_test_thin` (**4/4**, ~1m35s). Bin50 outputs use full MAC range only (no `mac0_100/500/1000` subsets).
+
+**Note (later same day):** Removed duplicate `mac_miss_full` partial task and `reg.full.*` MAC vs F_MISS plots; canonical full-data regression is `variant_mac_missing_reg` → `reg.png` / `reg.mac0_{100,500,1000}.png` via `mac_stats` or main `TEST_PLINK_STATS`.
+
+---
+
+### 2026-06-11 — MAC miss naming cleanup + R_mac full-data plots
+
+Working directories: `82run_mac_miss_reg_rmac_test_thin` (`mac_stats`, **12/12**, ~3m15s), `83run_mac_miss_bin50s_v3_test_thin` (`mac_miss_bin50_sample`, **4/4**, ~2m15s).
+
+**Full-data** (`variant_mac_missing_reg` / `mac_stats`): `reg.png`, `reg.mac0_{100,500,1000}.png`, `reg.mac_an.png`, `reg.mac_an.mac0_{100,500,1000}.png`, `R_mac.png`, `R_mac.mac0_{100,500,1000}.png`.
+
+**Bin50 sample** (`mac_miss_bin50_sample`): `reg.bin50s.png`, `reg.mac_an.bin50s.png`, `R_mac.bin50s.png` only (no `full`/`all` suffixes).

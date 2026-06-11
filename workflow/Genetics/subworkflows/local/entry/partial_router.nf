@@ -4,15 +4,16 @@ nextflow.enable.dsl=2
  * Single entry for partial reruns (assess, stats redraw, wheat-from-plink).
  * Launch: nextflow run .../subworkflows/local/entry/partial_router.nf -c .../nextflow.config --partial_task <name> ...
  *
- * Tasks: assess_plink | assess_vcf | ld_redraw | mac_stats | mac_dist_redraw |
- *        chr_counts | chr_compare | rebuild_lib_stats | wheat_from_plink |
- *        abstract_mq_50_bams
+ * Tasks: assess_plink | assess_vcf | ld_redraw | mac_stats | mac_miss_bin50_sample |
+ *        mac_dist_redraw | chr_counts | chr_compare |
+ *        rebuild_lib_stats | wheat_from_plink | abstract_mq_50_bams
  */
 
 include { RUN_ASSESS_PLINK_DEBUG; RUN_ASSESS_VCF_DEBUG } from '../partial/partial_assess.nf'
 include {
     RUN_LD_PLOTS_REDRAW
     RUN_MAC_STATS_FROM_GCOUNT
+    RUN_MAC_MISS_BIN50_SAMPLE
     RUN_MAC_DIST_LOG_REDRAW
     RUN_CHR_VARIANT_COUNTS
     RUN_CHR_VARIANT_COMPARE
@@ -24,9 +25,9 @@ include { RUN_WHEAT_FROM_PLINK } from '../wheat/wheat_integrated_study.nf'
 workflow {
     if (!params.partial_task) {
         error """partial_router.nf: --partial_task is required. Choices:
-          assess_plink, assess_vcf, ld_redraw, mac_stats, mac_dist_redraw,
-          chr_counts, chr_compare, rebuild_lib_stats, wheat_from_plink,
-          abstract_mq_50_bams"""
+          assess_plink, assess_vcf, ld_redraw, mac_stats, mac_miss_bin50_sample,
+          mac_dist_redraw, chr_counts, chr_compare,
+          rebuild_lib_stats, wheat_from_plink, abstract_mq_50_bams"""
     }
 
     if (params.partial_task == 'assess_plink') {
@@ -37,6 +38,8 @@ workflow {
         RUN_LD_PLOTS_REDRAW()
     } else if (params.partial_task == 'mac_stats') {
         RUN_MAC_STATS_FROM_GCOUNT()
+    } else if (params.partial_task == 'mac_miss_bin50_sample') {
+        RUN_MAC_MISS_BIN50_SAMPLE()
     } else if (params.partial_task == 'mac_dist_redraw') {
         RUN_MAC_DIST_LOG_REDRAW()
     } else if (params.partial_task == 'chr_counts') {
