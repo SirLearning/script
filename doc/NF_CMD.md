@@ -812,3 +812,19 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 
 Log: `run_logs/nextflow.mq50_i16_allchr.log`. MQ from mpileup INFO/I16 mean MAPQ (float, no bcftools call). Outputs: `chrNNN.site_mq.calls.tsv.gz` + `chrNNN.site_mq.ref.txt.gz`.
 
+---
+
+### 2026-06-10 — `abstract_mq_50_bams` resume (I16, 16-way I/O-bound tuning)
+
+Stop `08run` after the four large in-flight chromosomes finish (chr000, chr029, chr033, chr041); chr002 and chr018 are already done. Do **not** delete `08run/work/`.
+
+Resource change (`conf/resources.config`, label `site_mq_bcftools`): `cpus=4`, `memory=64.GB`, `maxForks=16` (was 32 / 256.GB / 4).
+
+Working directory: `/data/home/tusr1/01projects/vmap4/05reliable.lib/09run_abstract_mq_50_bams_i16` (screen e.g. `mq50_i16_resume`). Reuses `08run` work dir and publish tree (`--output_dir` → 08run).
+
+```bash
+screen -S mq50_i16_resume
+/data/home/tusr1/01projects/vmap4/05reliable.lib/09run_abstract_mq_50_bams_i16/resume_from_08.sh
+```
+
+Log: `09run_.../run_logs/nextflow.mq50_i16_resume.log`. Completed chromosomes from 08 are skipped via `-resume`; remaining 39 tasks run at `maxForks=16`.

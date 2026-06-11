@@ -543,3 +543,48 @@ Each entry should read like an **engineering report**: goals, what changed and w
 **Validation:** cwd `/data/home/tusr1/01projects/vmap4/00nf_preview11` — `nextflow run …/main.nf -preview` (`test_thin`) **pass**; `partial_router.nf -preview --partial_task assess_plink` **pass** (exit 0).
 
 **Outcome:** Partial reruns use one router entry; `subworkflows/local/` layout matches functional areas; only FTP helpers remain under `subworkflows/tmp/`.
+
+---
+
+## 2026-06-10 — Site MQ reference pipeline (`abstract_mq_50_bams`, I16 mpileup-only)
+
+**Goal:** Build a reproducible Nextflow partial task to produce per-chromosome site-level mean MAPQ for 50 BAMs across the full vmap4 reference (PopDep-length grid), replacing legacy manual `01test/*.site_mq.txt` runs that targeted ~29.8M variant-coordinate rows per chr. Clarify duplicate `(chr,pos)` rows in old outputs (mix of technical duplicates and multi-record bcftools call contexts) and avoid multi‑GB intermediate VCF I/O.
+
+**Intent vs legacy:** Legacy `05reliable.lib/01test/chr002*.site_mq.txt` aligned with pos list `2_1_122798052.pos.txt` (~sparse pileup sites), not the 122.8M PopDep grid. New workflow scans `-r CHR:1-LEN`, pads uncovered coordinates with `.`, and does **not** read the variant pos list. Comparison notes live in `05reliable.lib/01test/chr002_mq_50_vs_500_report.md`.
+
+**Repo changes:**
+
+| Area | Files | Rationale |
+|------|-------|-----------|
+| Process | `workflow/Genetics/modules/local/genotype/processor/processor_mq.nf` | `calc_site_mq_bcftools`: **mpileup → query I16 → awk** mean MAPQ; **removed `bcftools call`** and `*.calls.vcf` disk write. MQ = `(I16[9]+I16[11])/(I16[1..4])`, **float** (`mq_decimal_places`, default 6). |
+| Subworkflow | `subworkflows/local/partial/partial_abstract_mq.nf` | `RUN_ABSTRACT_MQ_50_BAMS`; fixed `String.format('chr%03d', …)` (was invalid `sprintf`). |
+| Router | `subworkflows/local/entry/partial_router.nf` | `--partial_task abstract_mq_50_bams`. |
+| Infra | `modules/local/infra/infra_ref_v1.nf` | `getRefFastaForChr_v1` for per-chr FASTA. |
+| Config | `conf/base.config`, `conf/resources.config` | `mq_bam_list_file`, `mq_mpileup_max_depth=250`, `mq_pad_all_positions`, `mq_ref_gzip`, `mq_decimal_places`; label `site_mq_bcftools` (32 CPU, 256GB, `maxForks=4`). |
+| Python | `src/python/genetics/genomics/variant/mq.py` | `load_mq_data()` (3-col ref grid), `load_mq_calls()` (5-col float MQ). |
+
+**Evolution (same day):** Early iterations used `mpileup | call | query %INFO/MQ` with integer MQ and a monolithic `*.site_mq.txt` after `sort -u` (dropping same-POS multi-call rows). Intermediate design added dual publish: `*.site_mq.calls.tsv.gz` (CHROM POS REF ALT MQ) + padded `*.site_mq.ref.txt.gz`. Final design drops **call** entirely: REF/ALT come from mpileup; MQ is site-level mean MAPQ from I16 (not per-call allele context). `INFO/MQ` from call is integer-only in bcftools 1.23; I16 self-compute enables fractional MQ (e.g. 38.134 vs 38).
+
+**Published layout** (`process/abstract_mq_50_bams/reference/`, per chr):
+
+| File | Columns | Role |
+|------|---------|------|
+| `chrNNN.site_mq.calls.tsv.gz` | CHROM, POS, REF, ALT, MQ | One row per mpileup site (ALT may include `<*>` or comma-separated alleles). Always gzip’d. |
+| `chrNNN.site_mq.ref.txt.gz` | CHROM, POS, MQ | Full-chr grid when `mq_pad_all_positions=true`; `.` = no coverage. Gzip when `mq_ref_gzip=true`. |
+| `chrNNN.site_mq.ref.info.tsv` | metrics | Row counts, I16 formula, decimal places, file paths. |
+| logs under `process/abstract_mq_50_bams/logs/` | — | `*.site_mq.log` per chr. |
+
+**Write behaviour:** Pipeline is streaming (no VCF), but **`sort` buffers** before `awk` writes `*.site_mq.calls.tsv`; file size stays ~0 until mpileup finishes for that chr, then gzip and ref pad run. `publishDir` copies only after each task completes.
+
+**Validation:**
+
+| Step | Cwd / note | Outcome |
+|------|------------|---------|
+| `partial_router.nf -preview --chr 2` | `05reliable.lib/07run_preview_mq_i16` | **pass** |
+| I16 vs call MQ spot check | chr2:100000–100010, 50 BAMs | Float I16 MQ ≈ integer call MQ (e.g. 38.134 vs 38) |
+| 1 Mb benchmark (50 BAM, 8 threads) | chr2:50M–51M | mpileup-only vs mpileup+call pipe ~**201 s vs 204 s** (~same CPU); call+VCF disk path impractical at scale (06run chr2 VCF grew to **>8 GB** before stop) |
+| Full-genome production | see `doc/NF_CMD.md` §2026-06-10 I16 | **in progress** at log time |
+
+**Runs (vmap4 `05reliable.lib/`):** Stopped **`06run_abstract_mq_50_bams_ref`** (screen `mq50_allchr`, call + giant work `*.calls.vcf`, 0/45 completed under heavy load). Launched **`08run_abstract_mq_50_bams_i16`** (screen `mq50_i16_allchr`, 45 chr, `maxForks=4`). Command and log path: **`doc/NF_CMD.md`**, heading **`### 2026-06-10 — abstract_mq_50_bams all chromosomes (I16 mpileup-only, float MQ)`**; log `run_logs/nextflow.mq50_i16_allchr.log`.
+
+**Outcome:** Site MQ extraction is wired as a partial task with lower disk footprint than call-based VCF materialization; downstream QC items in `doc/TODO.md` (MQ vs missing-rate scatter, low-MQ site filters) can consume `*.site_mq.ref.txt.gz` or `*.site_mq.calls.tsv.gz` once **`08run`** finishes. Full-genome publish verification remains **open** until all 45 chr tasks succeed.
