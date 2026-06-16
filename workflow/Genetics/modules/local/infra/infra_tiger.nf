@@ -13,7 +13,7 @@ def getServerPopulations(tbm_gen_server) {
     return serverPopulations[tbm_gen_server]
 }
 
-def getTigerJarConfig(tiger_jar_name, home_dir) {
+def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
     def tiger_jar_versions = [
         "TIGER_F3_2M_scan_20260129.jar": [
             java_version: "java17",
@@ -46,15 +46,22 @@ def getTigerJarConfig(tiger_jar_name, home_dir) {
         "TIGER_PD_20260130.jar": [
             java_version: "java17", 
             app_name: "PopDep"
+        ],
+        "TIGER_PD_20260615.jar": [
+            java_version: "java17",
+            app_name: "PopDepFull"
         ]
     ]
 
     def config = tiger_jar_versions[tiger_jar_name]
+    if (!config) {
+        throw new IllegalArgumentException("Unknown TIGER jar: ${tiger_jar_name}")
+    }
     def tigerJar = file("${home_dir}/lib/${tiger_jar_name}")
     
     return [
         path: tigerJar,
-        app_name: config.app_name,
+        app_name: app_name_override ?: config.app_name,
         java_version: config.java_version
     ]
 }

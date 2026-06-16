@@ -5,7 +5,7 @@ nextflow.enable.dsl=2
  * Wired from partial_router.nf (--partial_task ld_redraw | mac_stats | mac_dist_redraw | chr_counts | chr_compare | rebuild_lib_stats).
  */
 
-include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw } from '../../../modules/local/genotype/stats/stats_variant.nf'
+include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw; variant_mq_missing_reg; variant_popdep_missing_reg } from '../../../modules/local/genotype/stats/stats_variant.nf'
 include { report_plink_chr_variant_counts; plot_thin_common_chr_variant_compare } from '../../../modules/local/genotype/stats/stats_chr_report.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from '../../../modules/local/genotype/stats/stats.nf'
 
@@ -106,6 +106,64 @@ workflow RUN_MAC_MISS_BIN50_SAMPLE {
     }
 }
 
+workflow RUN_MQ_MISSING_REG {
+    main:
+    if (!params.mod) {
+        error 'params.mod is required (e.g. test_thin, test_common_thin).'
+    }
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+
+    if (params.mod in ['test_thin', 'test_common_thin']) {
+        def subgenomes = ['A', 'B', 'D', 'Others']
+        def ch_mq = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.mq.info.tsv"))
+            }
+        )
+        def ch_vmis = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.vmiss"))
+            }
+        )
+        variant_mq_missing_reg(ch_mq.combine(ch_vmis, by: [0, 1]))
+    } else {
+        error "RUN_MQ_MISSING_REG: unsupported mod ${params.mod}."
+    }
+}
+
+workflow RUN_POPDEP_MISSING_REG {
+    main:
+    if (!params.mod) {
+        error 'params.mod is required (e.g. test_thin, test_common_thin).'
+    }
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+
+    if (params.mod in ['test_thin', 'test_common_thin']) {
+        def subgenomes = ['A', 'B', 'D', 'Others']
+        def ch_popdep = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.popdep.info.tsv"))
+            }
+        )
+        def ch_vmis = channel.from(
+            subgenomes.collect { sg ->
+                tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.vmiss"))
+            }
+        )
+        variant_popdep_missing_reg(ch_popdep.combine(ch_vmis, by: [0, 1]))
+    } else {
+        error "RUN_POPDEP_MISSING_REG: unsupported mod ${params.mod}."
+    }
+}
+
 workflow RUN_MAC_DIST_LOG_REDRAW {
     main:
     if (!params.output_dir || !params.job) {
@@ -200,5 +258,7 @@ workflow RUN_REBUILLD_LIB_STATS {
         channel.of(tuple(id, chr, file("${proc}/variant/${id}.info.gcount"))),
         channel.of(tuple(id, chr, file("${proc}/variant/${id}.info.afreq"))),
         channel.of(tuple(id, chr, file("${proc}/variant/${id}.info.hardy"))),
+        channel.empty(),
+        channel.empty(),
     )
 }

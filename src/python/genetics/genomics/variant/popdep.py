@@ -6,6 +6,155 @@ import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
+import os
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
+# ==================================================================================
+# Frozen reference paths and variant annotation (mirror site MQ workflow)
+# ==================================================================================
+
+def popdep_chr_ref_path(popdep_dir: str, chrom: int) -> str:
+    """Path to frozen per-chromosome TIGER popdepth grid under ``{popdep_dir}/variant/``."""
+    return os.path.join(popdep_dir, "variant", f"chr{int(chrom):03d}.popdep.txt")
+
+
+def save_variant_popdep_info(df: pd.DataFrame, output_path: str) -> None:
+    """Write variant popdepth table with PLINK-style ``#CHROM`` header."""
+    out = df.copy()
+    if "CHROM" in out.columns and "#CHROM" not in out.columns:
+        out = out.rename(columns={"CHROM": "#CHROM"})
+    cols = ["#CHROM", "ID", "POS", "Depth_Mean", "Depth_SD", "Depth_CV"]
+    out = out[[c for c in cols if c in out.columns]]
+    save_df_to_tsv(out, output_path)
+
+
+def _lookup_popdep_positions(popdep_path: str, wanted_positions: list[int]) -> dict[int, tuple[float, float]]:
+    """Load Depth_Mean/Depth_SD for requested positions from a dense 1..N popdep grid."""
+    if not wanted_positions:
+        return {}
+    wanted_set = set(wanted_positions)
+    max_pos = max(wanted_positions)
+    result: dict[int, tuple[float, float]] = {}
+    if not os.path.isfile(popdep_path):
+        print(f"[Warn] Popdep reference missing: {popdep_path}")
+        return result
+    with open(popdep_path, "r", encoding="utf-8") as handle:
+        header = handle.readline()
+        if not header:
+            return result
+        for line in handle:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 3:
+                continue
+            pos = int(parts[0])
+            if pos in wanted_set:
+                result[pos] = (float(parts[1]), float(parts[2]))
+            if pos >= max_pos and len(result) == len(wanted_set):
+                break
+    return result
+
+
+def _lookup_popdep_for_chromosome(
+    chrom: int,
+    items: list[tuple[int, str]],
+    popdep_dir: str,
+) -> list[dict]:
+    popdep_path = popdep_chr_ref_path(popdep_dir, chrom)
+    positions = [pos for pos, _variant_id in items]
+    popdep_map = _lookup_popdep_positions(popdep_path, positions)
+    rows: list[dict] = []
+    for pos, variant_id in items:
+        depth = popdep_map.get(pos)
+        depth_mean = np.nan
+        depth_sd = np.nan
+        depth_cv = np.nan
+        if depth is not None:
+            depth_mean, depth_sd = depth
+            if depth_mean > 0:
+                depth_cv = depth_sd / depth_mean
+        rows.append(
+            {
+                "CHROM": chrom,
+                "ID": variant_id,
+                "POS": pos,
+                "Depth_Mean": depth_mean,
+                "Depth_SD": depth_sd,
+                "Depth_CV": depth_cv,
+            }
+        )
+    return rows
+
+
+def _annotate_popdep_chromosome_worker(args: tuple) -> tuple[int, list[dict]]:
+    chrom, items, popdep_dir = args
+    rows = _lookup_popdep_for_chromosome(chrom, items, popdep_dir)
+    return chrom, rows
+
+
+def annotate_variants_popdep_from_pvar(
+    pvar_path: str,
+    popdep_dir: str,
+    output_path: str,
+    max_workers: int | None = None,
+) -> None:
+    """
+    Annotate merged subgenome PLINK2 variants with population depth from frozen main_raw grids.
+
+    Reads ``{popdep_dir}/variant/chrNNN.popdep.txt`` (TIGER dense Position grid).
+    Writes ``{subgenome}.popdep.info.tsv`` with columns
+    ``#CHROM, ID, POS, Depth_Mean, Depth_SD, Depth_CV`` (NaN when reference depth is missing).
+    """
+    print(f"[Info] Annotating popdep from pvar={pvar_path} popdep_dir={popdep_dir}")
+    by_chrom: dict[int, list[tuple[int, str]]] = defaultdict(list)
+    with open(pvar_path, "r", encoding="utf-8") as handle:
+        for line in handle:
+            if line.startswith("#"):
+                continue
+            parts = line.rstrip("\n").split("\t", 4)
+            chrom = int(parts[0])
+            pos = int(parts[1])
+            variant_id = parts[2]
+            by_chrom[chrom].append((pos, variant_id))
+
+    for chrom in by_chrom:
+        by_chrom[chrom].sort(key=lambda item: item[0])
+
+    chromosomes = sorted(by_chrom.keys())
+    n_workers = max_workers or min(len(chromosomes), os.cpu_count() or 1)
+    n_workers = max(1, n_workers)
+
+    rows_by_chrom: dict[int, list[dict]] = {}
+    if n_workers == 1 or len(chromosomes) == 1:
+        for chrom in chromosomes:
+            _, rows = _annotate_popdep_chromosome_worker(
+                (chrom, by_chrom[chrom], popdep_dir)
+            )
+            rows_by_chrom[chrom] = rows
+    else:
+        print(
+            f"[Info] Parallel popdep lookup across {len(chromosomes)} chromosomes (workers={n_workers})"
+        )
+        tasks = [(chrom, by_chrom[chrom], popdep_dir) for chrom in chromosomes]
+        with ProcessPoolExecutor(max_workers=n_workers) as pool:
+            futures = {
+                pool.submit(_annotate_popdep_chromosome_worker, task): task[0]
+                for task in tasks
+            }
+            for future in as_completed(futures):
+                chrom, rows = future.result()
+                rows_by_chrom[chrom] = rows
+
+    rows: list[dict] = []
+    for chrom in chromosomes:
+        rows.extend(rows_by_chrom[chrom])
+
+    out_df = pd.DataFrame(rows)
+    n_numeric = int(out_df["Depth_Mean"].notna().sum())
+    save_variant_popdep_info(out_df, output_path)
+    print(
+        f"[Info] Wrote {len(out_df)} variant popdep rows ({n_numeric} numeric) to {output_path}"
+    )
 
 # ==================================================================================
 # Data Loading Helpers
@@ -34,6 +183,27 @@ def load_popdep_data(filepath):
         df['Depth_SD'] / df['Depth_Mean'], 
         np.nan
     )
+    return df
+
+def load_df_from_tsv_popdep_info(filepath: str) -> pd.DataFrame | None:
+    """Load variant-level ``*.popdep.info.tsv`` and normalize to popdep analysis columns."""
+    print(f"[Info] Loading variant popdep info: {filepath}")
+    df = load_df_from_space_sep(filepath)
+    if df is None:
+        return None
+    df.columns = [c.replace("#", "") if isinstance(c, str) else c for c in df.columns]
+    if "POS" in df.columns and "Position" not in df.columns:
+        df = df.rename(columns={"POS": "Position"})
+    req_cols = ["Position", "Depth_Mean", "Depth_SD"]
+    if not all(c in df.columns for c in req_cols):
+        print(f"[Error] Missing columns in popdep info. Required: {req_cols}")
+        return None
+    if "Depth_CV" not in df.columns:
+        df["Depth_CV"] = np.where(
+            df["Depth_Mean"] > 0,
+            df["Depth_SD"] / df["Depth_Mean"],
+            np.nan,
+        )
     return df
 
 # ==================================================================================
@@ -125,9 +295,15 @@ def ana_popdep_missing_reg(
 ):
     """
     Analyzes relationship between Depth Metrics and Variant Missing Rate.
+
+    ``popdep_file`` may be a full per-chromosome TIGER grid or a variant-level
+    ``*.popdep.info.tsv`` sidecar produced by ``annotate_variants_popdep_from_pvar``.
     """
     # 1. Load
-    df_dep = load_popdep_data(popdep_file)
+    if str(popdep_file).endswith(".popdep.info.tsv"):
+        df_dep = load_df_from_tsv_popdep_info(popdep_file)
+    else:
+        df_dep = load_popdep_data(popdep_file)
     df_miss = load_df_from_plink_variant(vmiss_file) # Using renamed function
     if df_dep is None or df_miss is None: return
 

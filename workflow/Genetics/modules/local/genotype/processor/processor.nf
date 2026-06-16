@@ -7,6 +7,8 @@ include {
     listMergedSubgenomeTestPfileTuples
     listMergedSubgenomeTestBfileTuples
 } from '../../infra/infra_plink_reuse.nf'
+include { hasVariantMqForMergedTests } from '../../infra/infra_mq_reuse.nf'
+include { hasVariantPopdepForMergedTests } from '../../infra/infra_popdep_reuse.nf'
 
 include {
     format_vcf_bgzip
@@ -36,7 +38,9 @@ include {
 
 include { mk_vcftools_basic_info } from './processor_legacy.nf'
 
-include { calc_population_depth } from './processor_depth.nf'
+include { calc_population_depth; annotate_subgenome_variant_popdep } from './processor_depth.nf'
+
+include { annotate_subgenome_variant_mq } from './processor_mq.nf'
 
 include {
     filter_sample_plink
@@ -142,6 +146,28 @@ workflow test_plink_processor {
         merge_bfile = merge_out.bfile
     }
 
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
     emit:
     vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
     merged_bfile = merge_bfile
@@ -154,6 +180,8 @@ workflow test_plink_processor {
     hardy = basic_info_out.hardy
     ld = ld_out.ld
     ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
 }
 
 workflow test_plink_camp {
@@ -225,6 +253,28 @@ workflow test_plink_camp {
         merge_bfile = merge_out.bfile
     }
 
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
     emit:
     vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
     merged_bfile = merge_bfile
@@ -237,6 +287,8 @@ workflow test_plink_camp {
     hardy = basic_info_out.hardy
     ld = ld_out.ld
     ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
 } 
 
 workflow test_common_thin_processor {
@@ -321,6 +373,28 @@ workflow test_common_thin_processor {
         merge_bfile = merge_out.bfile
     }
 
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
     emit:
     vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
     merged_bfile = merge_bfile
@@ -333,6 +407,8 @@ workflow test_common_thin_processor {
     hardy = basic_info_out.hardy
     ld = ld_out.ld
     ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
 }
 
 workflow plink_processor {
@@ -362,7 +438,8 @@ workflow plink_processor {
             hardy: [ id, chr, hardy ]
         }
         popdep_out = preprocess_out.gz_vcf.multiMap { id, chr, _vcf ->
-            def popdep = file("${params.process_dir}/variant/${id}.popdep.txt")
+            def root = params.popdep_dir ?: params.process_dir
+            def popdep = file("${root}/variant/${id}.popdep.txt")
             popdep: [ id, chr, popdep ]
         }
     } else {
@@ -370,8 +447,8 @@ workflow plink_processor {
         basic_info_out = mk_plink_basic_info(preprocess_out.pfile)
 
         // 3. calculate population depth using TIGER
-        def pd_config = getTigerJarConfig("TIGER_PD_20260130.jar", params.home_dir)
-        ch_tiger_config = channel.of([ pd_config.path, pd_config.app_name, pd_config.java_version ])
+        def pd_config = getTigerJarConfig(params.popdep_tiger_jar, params.home_dir, params.popdep_tiger_app)
+        ch_tiger_config = channel.value(tuple(pd_config.path, pd_config.app_name, pd_config.java_version))
         popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
     }
 

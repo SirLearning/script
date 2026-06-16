@@ -833,6 +833,22 @@ Skip list: `--mq_chr_exclude '0,2,18,24,29,41,44'` (38 remaining tasks). Log: `0
 
 ---
 
+### 2026-06-14 — `abstract_mq_50_bams` frozen publish under test_plink/process
+
+All 45 chr published to **`/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams/{reference,logs}/`**. Workflow now uses **`params.mq_dir`** (not `output_dir/job/process/mod`). Re-runs skip existing `*.site_mq.ref.*` when **`mq_force_rerun=false`**. Use **`--job test_plink`** for operator consistency; main pipeline does not invoke this partial task.
+
+```bash
+nextflow run .../partial_router.nf -c .../nextflow.config \
+  --partial_task abstract_mq_50_bams --mod abstract_mq_50_bams --job test_plink \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src \
+  -preview
+```
+
+Python: `from genetics.genomics.variant.mq import site_mq_ref_path, site_mq_calls_path, load_mq_data`
+
+---
+
 ### 2026-06-11 — MAC vs missing regression (`mac_stats`), `test_rebulld_lib` (background)
 
 Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/67run_mac_miss_reg_test_rebulld_lib`. Screen session: `mac_miss_rebulld`. Reruns `variant_mac_stats` + `variant_mac_missing_reg` on chr002 gcount/vmiss (includes full-range and MAC 0–100 / 0–500 / 0–1000 regression plots). Publishes under `test_plink/stats/test_rebulld_lib/{info,plots,thresholds,logs}/`.
@@ -885,3 +901,42 @@ Working directories: `82run_mac_miss_reg_rmac_test_thin` (`mac_stats`, **12/12**
 **Full-data** (`variant_mac_missing_reg` / `mac_stats`): `reg.png`, `reg.mac0_{100,500,1000}.png`, `reg.mac_an.png`, `reg.mac_an.mac0_{100,500,1000}.png`, `R_mac.png`, `R_mac.mac0_{100,500,1000}.png`.
 
 **Bin50 sample** (`mac_miss_bin50_sample`): `reg.bin50s.png`, `reg.mac_an.bin50s.png`, `R_mac.bin50s.png` only (no `full`/`all` suffixes).
+
+---
+
+### 2026-06-15 — `main_raw_popdepth` chr36 smoke (`10stats.genome`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/01run_main_raw_popdepth` (screen `popdep_chr36`). New stats module root: **`10stats.genome/`** (numbered runs from `01`; `08stats.genome` kept for history). Process label **`popdep_tiger`**: 16 CPUs, 64 GB, `maxForks=1`. Publish: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/variant/chr036.popdep.txt`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_chr36 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/01run_main_raw_popdepth && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --chr 36 --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.popdep_chr36.log'
+```
+
+**Follow-up (full 44 chr, after chr36 OK):** same cwd, drop `--chr`, add `-resume`, new screen e.g. `popdep_all`:
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_all bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/01run_main_raw_popdepth && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src -resume 2>&1 | tee run_logs/nextflow.popdep_all.log'
+```
+
+Existing `*.popdep.txt` under `main_raw/variant/` are skipped (`popdep_force_rerun=false`).
+
+---
+
+### 2026-06-15 — `PopDepFull` chr36 benchmark (`10stats.genome`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark` (screen `popdepfull_chr36`). Jar `TIGER_PD_20260615.jar`, app `PopDepFull`, `-e 32`, `Xmx128G`, `maxForks=1`. Benchmark publish: `02run_popdepfull_chr36_benchmark/publish/variant/` (production `main_raw/variant/` unchanged).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdepfull_chr36 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark && bash run_logs/monitor_io.sh run_logs/io_monitor.tsv & nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config -c /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark/popdepfull_benchmark.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --chr 36 --popdep_tiger_jar TIGER_PD_20260615.jar --popdep_tiger_app PopDepFull --popdep_force_rerun true --popdep_publish_dir /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark/publish --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.popdepfull_chr36.log'
+```
+
+**Production full sweep (after benchmark OK):** `03run_main_raw_popdepth_full`, drop `--chr` and `--popdep_publish_dir`, keep PopDepFull params, add `-resume`:
+
+```bash
+--popdep_tiger_jar TIGER_PD_20260615.jar
+--popdep_tiger_app PopDepFull
+--popdep_force_rerun false
+```

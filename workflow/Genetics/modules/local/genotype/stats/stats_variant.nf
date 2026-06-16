@@ -214,6 +214,64 @@ process variant_mac_dist_log_redraw {
     """
 }
 
+process variant_mq_missing_reg {
+    tag "variant mq vs missing reg: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(mq), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.mq_miss_reg.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.mq import ana_mq_missing_reg
+
+    print(f"Processing MQ vs missing regression for ${chr}...")
+    ana_mq_missing_reg("${mq}", "${vmiss}", "${id}.variant.mq_miss")
+    """
+}
+
+process variant_popdep_missing_reg {
+    tag "variant popdep vs missing reg: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(popdep), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.popdep_miss_reg.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.popdep import ana_popdep_missing_reg
+
+    print(f"Processing popdep vs missing regression for ${chr}...")
+    ana_popdep_missing_reg("${popdep}", "${vmiss}", "${id}.variant.popdep_miss")
+    """
+}
+
 process variant_popdep_mahalanobis {
     tag "variant popdep mahalanobis: ${chr}"
     publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: "copy", pattern: "*.info.tsv"

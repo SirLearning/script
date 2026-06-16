@@ -18,6 +18,18 @@
     "chr": { "type": ["string", "null"] },
     "help": { "type": "boolean", "default": false, "description": "Print usage and exit when true." },
     "process_dir": { "type": ["string", "null"] },
+    "mq_dir": {
+      "type": "string",
+      "default": "/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams",
+      "description": "Frozen site-MQ reference root (reference/, logs/). Partial task abstract_mq_50_bams only."
+    },
+    "mq_force_rerun": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, rebuild MQ even if *.site_mq.ref.* already exists under mq_dir/reference."
+    },
+    "mq_chr_exclude": { "type": ["string", "null"] },
+    "mq_bam_list_file": { "type": "string" },
 
     "wheat_table_input": { "type": ["string", "null"] },
     "wheat_gwas_genotype": { "type": ["string", "null"] },

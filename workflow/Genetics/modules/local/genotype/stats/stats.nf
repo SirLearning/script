@@ -10,6 +10,8 @@ include {
     variant_mac_missing_reg
     variant_mac_missing_reg_bin50_sample
     variant_mac_dist_log_redraw
+    variant_mq_missing_reg
+    variant_popdep_missing_reg
     variant_popdep_mahalanobis
     variant_ld_decay_plot
     variant_ld_crosschr_plot
@@ -59,6 +61,8 @@ workflow test_plink_stats {
     gcount
     afreq
     hardy
+    mq
+    popdep
 
     main:
     // prepare input
@@ -102,6 +106,8 @@ workflow test_plink_stats {
     variant_mac_maf_reg(gcount)
     variant_mac_missing_reg(gcount.combine(vmiss, by: [0, 1]))
     variant_mac_missing_reg_bin50_sample(gcount.combine(vmiss, by: [0, 1]))
+    variant_mq_missing_reg(mq.combine(vmiss, by: [0, 1]))
+    variant_popdep_missing_reg(popdep.combine(vmiss, by: [0, 1]))
     variant_ld_decay_plot(ld)
     variant_ld_crosschr_plot(ld_cross)
 

@@ -27,3 +27,11 @@ __pycache__/
 
 # CodeGraph local index (regenerate with: codegraph init -i)
 .codegraph/
+
+# Nextflow session artefacts (must live under vmap4 run dirs, not in repo)
+.work/
+work/
+.nextflow/
+.nextflow.log
+.nextflow.log.*
+pipeline_info/

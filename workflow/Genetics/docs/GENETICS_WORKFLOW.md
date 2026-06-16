@@ -127,6 +127,8 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 | Parameter | When to set | Notes |
 | --- | --- | --- |
 | `process_dir` | Reuse prebuilt per-chromosome or merged test pfiles | When merged `A_test.plink2` … `Others_test.plink2` exist under `{process_dir}`, test processors **skip** thin/merge and rebuild basic info + LD only. See frozen test paths in **`doc/TODO.md`** §2. |
+| `mq_dir` | Site MQ reference (partial only) | Frozen **`{mq_dir}/reference/chrNNN.site_mq.{ref,calls}.*`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams`. Built once via **`--partial_task abstract_mq_50_bams --job test_plink`**; skipped when refs exist (`mq_force_rerun=false`). Downstream Python: `genetics.genomics.variant.mq.site_mq_ref_path()`. |
+| `popdep_dir` | Population depth reference (partial + test annotate) | Frozen **`{popdep_dir}/variant/chrNNN.popdep.txt`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw`. Built once via **`--partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink`** (TIGER per chr from `{popdep_dir}/chrNNN.vcf.gz`); skipped when refs exist (`popdep_force_rerun=false`). Test modes extract **`process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv`** via `annotate_subgenome_variant_popdep`. Python: `genetics.genomics.variant.popdep.popdep_chr_ref_path()`. |
 | `camp` | **`test_camp` only** | Path to cohort map TSV (e.g. `camp_vmap4_map.tsv`). Required for that mod. |
 | `chr` | Optional | Comma-separated chromosome filter after job config builds the VCF channel. |
 | `wheat_table_input`, `wheat_gwas_*`, `wheat_kgwas_*` | **`params.mod` starts with `wheat_`** | See **Wheat integrated workflows** below. Requires `user_dir` for the `stats` Conda env (same as genotype stats processes). |
@@ -173,6 +175,10 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `chr_counts` | `RUN_CHR_VARIANT_COUNTS` | per `params.mod` |
 | `chr_compare` | `RUN_CHR_VARIANT_COMPARE` | thin vs common-thin |
 | `rebuild_lib_stats` | `RUN_REBUILLD_LIB_STATS` | `test_rebulld_lib` only |
+| `mq_missing_reg` | `RUN_MQ_MISSING_REG` | `test_thin` / `test_common_thin`; needs `*.mq.info.tsv` |
+| `popdep_missing_reg` | `RUN_POPDEP_MISSING_REG` | `test_thin` / `test_common_thin`; needs `*.popdep.info.tsv` |
+| `abstract_mq_50_bams` | `RUN_ABSTRACT_MQ_50_BAMS` | `--mod abstract_mq_50_bams`; one-off site MQ build |
+| `main_raw_popdepth` | `RUN_MAIN_RAW_POPDEPTH` | `--mod main_raw_popdepth`; one-off TIGER popdepth per chr → `main_raw/variant/` |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` | `test_thin` / `test_common_thin` + `wheat_integrated_mod` |
 
 **Ops** (`subworkflows/tmp/ops/`) — self-contained FTP upload helpers (not genetics analysis):
@@ -194,6 +200,10 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `rebuild_lib_stats` | `TEST_PLINK_STATS` on `process/test_rebulld_lib/` chr002 tables; LD plots skipped. |
 | `mac_stats` | MAC bar (0–100) + het-fraction heatmap; `*.variant.mac.mac0.info.tsv` audit for MAC=0. |
 | `mac_dist_redraw` | Re-draw MAC distribution log plots from existing gcount tables. |
+| `mq_missing_reg` | MQ vs missing regression plots from `*.mq.info.tsv` + vmiss. |
+| `popdep_missing_reg` | Depth vs missing regression plots from `*.popdep.info.tsv` + vmiss. |
+| `abstract_mq_50_bams` | Full-chr bcftools mpileup site MQ → `{mq_dir}/reference/`. |
+| `main_raw_popdepth` | Full-chr TIGER popdepth → `{popdep_dir}/variant/chrNNN.popdep.txt`. |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` on existing merged test pfiles (`wheat_integrated_mod` required). |
 
 Historic runs logged under `doc/NF_CMD.md` may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.

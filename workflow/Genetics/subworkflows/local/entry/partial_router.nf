@@ -5,8 +5,8 @@ nextflow.enable.dsl=2
  * Launch: nextflow run .../subworkflows/local/entry/partial_router.nf -c .../nextflow.config --partial_task <name> ...
  *
  * Tasks: assess_plink | assess_vcf | ld_redraw | mac_stats | mac_miss_bin50_sample |
- *        mac_dist_redraw | chr_counts | chr_compare |
- *        rebuild_lib_stats | wheat_from_plink | abstract_mq_50_bams
+ *        mac_dist_redraw | mq_missing_reg | popdep_missing_reg | chr_counts | chr_compare |
+ *        rebuild_lib_stats | wheat_from_plink | abstract_mq_50_bams | main_raw_popdepth
  */
 
 include { RUN_ASSESS_PLINK_DEBUG; RUN_ASSESS_VCF_DEBUG } from '../partial/partial_assess.nf'
@@ -15,19 +15,22 @@ include {
     RUN_MAC_STATS_FROM_GCOUNT
     RUN_MAC_MISS_BIN50_SAMPLE
     RUN_MAC_DIST_LOG_REDRAW
+    RUN_MQ_MISSING_REG
+    RUN_POPDEP_MISSING_REG
     RUN_CHR_VARIANT_COUNTS
     RUN_CHR_VARIANT_COMPARE
     RUN_REBUILLD_LIB_STATS
 } from '../partial/partial_stats.nf'
 include { RUN_ABSTRACT_MQ_50_BAMS } from '../partial/partial_abstract_mq.nf'
+include { RUN_MAIN_RAW_POPDEPTH } from '../partial/partial_main_raw_popdepth.nf'
 include { RUN_WHEAT_FROM_PLINK } from '../wheat/wheat_integrated_study.nf'
 
 workflow {
     if (!params.partial_task) {
         error """partial_router.nf: --partial_task is required. Choices:
           assess_plink, assess_vcf, ld_redraw, mac_stats, mac_miss_bin50_sample,
-          mac_dist_redraw, chr_counts, chr_compare,
-          rebuild_lib_stats, wheat_from_plink, abstract_mq_50_bams"""
+          mac_dist_redraw, mq_missing_reg, popdep_missing_reg, chr_counts, chr_compare,
+          rebuild_lib_stats, wheat_from_plink, abstract_mq_50_bams, main_raw_popdepth"""
     }
 
     if (params.partial_task == 'assess_plink') {
@@ -42,6 +45,10 @@ workflow {
         RUN_MAC_MISS_BIN50_SAMPLE()
     } else if (params.partial_task == 'mac_dist_redraw') {
         RUN_MAC_DIST_LOG_REDRAW()
+    } else if (params.partial_task == 'mq_missing_reg') {
+        RUN_MQ_MISSING_REG()
+    } else if (params.partial_task == 'popdep_missing_reg') {
+        RUN_POPDEP_MISSING_REG()
     } else if (params.partial_task == 'chr_counts') {
         RUN_CHR_VARIANT_COUNTS()
     } else if (params.partial_task == 'chr_compare') {
@@ -52,6 +59,8 @@ workflow {
         RUN_WHEAT_FROM_PLINK()
     } else if (params.partial_task == 'abstract_mq_50_bams') {
         RUN_ABSTRACT_MQ_50_BAMS()
+    } else if (params.partial_task == 'main_raw_popdepth') {
+        RUN_MAIN_RAW_POPDEPTH()
     } else {
         error "Unknown partial_task: ${params.partial_task}"
     }

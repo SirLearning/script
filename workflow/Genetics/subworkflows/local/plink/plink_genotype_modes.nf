@@ -46,7 +46,9 @@ workflow RUN_TEST_PLINK {
         processor_out.vmiss,
         processor_out.gcount,
         processor_out.afreq,
-        processor_out.hardy)
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep)
 }
 
 workflow RUN_TEST_PLINK_CAMP {
@@ -64,7 +66,9 @@ workflow RUN_TEST_PLINK_CAMP {
         processor_out.vmiss,
         processor_out.gcount,
         processor_out.afreq,
-        processor_out.hardy)
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep)
 }
 workflow RUN_TEST_COMMON_THIN {
     take:
@@ -80,6 +84,8 @@ workflow RUN_TEST_COMMON_THIN {
         processor_out.vmiss,
         processor_out.gcount,
         processor_out.afreq,
-        processor_out.hardy)
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep)
 }
 

@@ -14,8 +14,8 @@ nextflow.enable.dsl=2
 
 process calc_site_mq_bcftools {
     tag "site_mq: ${id}"
-    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/reference", mode: 'copy', pattern: "*.site_mq.*"
-    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    publishDir "${params.mq_dir}/reference", mode: 'copy', pattern: "*.site_mq.*"
+    publishDir "${params.mq_dir}/logs", mode: 'copy', pattern: "*.site_mq.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
     label 'site_mq_bcftools'
 
@@ -138,5 +138,41 @@ process calc_site_mq_bcftools {
     printf 'MqDecimalPlaces\\t${mq_dec}\\n' >> ${id}.site_mq.ref.info.tsv
 
     echo "Site MQ completed: calls=${id}.site_mq.calls.tsv.gz ref=\${ref_path}"
+    """
+}
+
+process annotate_subgenome_variant_mq {
+    tag "annotate variant MQ: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/variant", mode: 'copy', pattern: "*.mq.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.mq.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.mq.info.tsv"), emit: mq
+    path "${chr}.mq.log", emit: log
+
+    script:
+    def mq_workers = params.mq_tabix_workers ?: 0
+    def mq_workers_py = (mq_workers as int) > 0 ? "${mq_workers}" : "None"
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.mq.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.mq import annotate_variants_mq_from_pvar
+
+    workers = ${mq_workers_py}
+    print(f"Annotating variant MQ for ${id} (${chr}) from ${params.mq_dir} (tabix, workers={workers}) ...")
+    annotate_variants_mq_from_pvar(
+        "${pvar}",
+        "${params.mq_dir}",
+        "${id}.mq.info.tsv",
+        max_workers=workers,
+        use_tabix=True,
+    )
     """
 }

@@ -41,15 +41,14 @@ This pipeline uses an **nf-core-like folder split** (`conf/`, `modules/`, `subwo
 - **No inline fallback defaults in processes:** In `.nf` process scripts, reference parameters directly (e.g., `${params.xxx}`) and do not use inline fallback expressions like `${params.xxx ?: ...}`. Override values at launch time via CLI/config, not inside process code.
 - **Use task cpus for Python parallelism:** For Python analytics processes that support internal parallel computation, drive worker count from Nextflow task resources (e.g., pass `${task.cpus}`) instead of adding separate worker params in `nextflow.config`.
 - **Output path contract for test mods (strict):** For test jobs (e.g., `test_plink`), keep `job` as the top-level folder and place outputs under `job/process/<mod>/...` and `job/stats/<mod>/...` (including `plots`, `logs`, `thresholds`, `sample`, `variant` subfolders). Do not encode `mod` by mutating `params.job`.
-- **vmap4 run workspace (strict):** See **workstation-core** guardrails 9–10. Pattern:
+- **Three directories (strict):** See **workstation-core** guardrail **10**. Summary: **code** = `git/script`; **Nextflow session** = `01projects/vmap4/<module>/<NNrun_*>/` (`.nextflow`, `work/`, `pipeline_info/`); **publish / frozen data** = `/data1/dazheng_tusr1/vmap4.VCF.v1/…` via `params.output_dir`, `params.popdep_dir`, `publishDir`. Never run `nextflow` from the repo root (including `-preview`).
+- **vmap4 run workspace (strict):** See **workstation-core** guardrails **9–11**. Pattern:
   ```text
   /data/home/tusr1/01projects/vmap4/
-    08stats.genome/                    # task module (stats / assess / partial genetics)
-      01run/                           # early full-pipeline attempts
-      23run_assess_plink2_debug_stub/  # partial_router --partial_task assess_plink
-      57run_mac_stats_test_thin/       # partial_router --partial_task mac_stats
-      63run_mac_dist_log_redraw/
-      …                                # NN increments; slug = purpose [_mod]
+    08stats.genome/                    # task module (legacy stats runs)
+    10stats.genome/                    # task module (new stats runs from NN=01)
+      01run_main_raw_popdepth/        # partial_router --partial_task main_raw_popdepth
+      02run_popdepfull_chr36_benchmark/
   ```
   Before every new run: list the module dir, choose next `NN`, `mkdir` a new folder, `cd` there, log **cwd** in `doc/NF_CMD.md` and `doc/TODO_PROGRESS_LOG.md`. Entry scripts always use **absolute** paths to repo NF files and `-c …/nextflow.config`.
 - **Partial router:** `subworkflows/local/entry/partial_router.nf` with `--partial_task`; use **`if` / `else if`** in `workflow { }` blocks — **`switch` is invalid** in Nextflow DSL2 workflows.
