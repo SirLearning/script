@@ -38,7 +38,7 @@ include {
 
 include { mk_vcftools_basic_info } from './processor_legacy.nf'
 
-include { calc_population_depth; annotate_subgenome_variant_popdep } from './processor_depth.nf'
+include { calc_population_depth; popdep_tiger_gz_to_bgzip_tabix; annotate_subgenome_variant_popdep } from './processor_depth.nf'
 
 include { annotate_subgenome_variant_mq } from './processor_mq.nf'
 
@@ -449,7 +449,8 @@ workflow plink_processor {
         // 3. calculate population depth using TIGER
         def pd_config = getTigerJarConfig(params.popdep_tiger_jar, params.home_dir, params.popdep_tiger_app)
         ch_tiger_config = channel.value(tuple(pd_config.path, pd_config.app_name, pd_config.java_version))
-        popdep_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
+        popdep_gz_out = calc_population_depth(preprocess_out.gz_vcf, ch_tiger_config)
+        popdep_out = popdep_tiger_gz_to_bgzip_tabix(popdep_gz_out.tiger_gz)
     }
 
 

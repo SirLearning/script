@@ -933,10 +933,120 @@ source ~/.bashrc && conda activate run && \
 screen -dmS popdepfull_chr36 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark && bash run_logs/monitor_io.sh run_logs/io_monitor.tsv & nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config -c /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark/popdepfull_benchmark.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --chr 36 --popdep_tiger_jar TIGER_PD_20260615.jar --popdep_tiger_app PopDepFull --popdep_force_rerun true --popdep_publish_dir /data/home/tusr1/01projects/vmap4/10stats.genome/02run_popdepfull_chr36_benchmark/publish --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.popdepfull_chr36.log'
 ```
 
-**Production full sweep (after benchmark OK):** `03run_main_raw_popdepth_full`, drop `--chr` and `--popdep_publish_dir`, keep PopDepFull params, add `-resume`:
+**Production full sweep (after benchmark OK):** `05run_main_raw_popdepth_full`, drop `--chr` and `--popdep_publish_dir`, keep PopDepFull params:
 
 ```bash
 --popdep_tiger_jar TIGER_PD_20260615.jar
 --popdep_tiger_app PopDepFull
 --popdep_force_rerun false
 ```
+
+### 2026-06-16 — `main_raw_popdepth` full PopDepFull sweep (`10stats.genome/06run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/06run_main_raw_popdepth_full` (screen `popdepfull_all`). PopDepFull, `maxForks=2`, 32 CPU / 128 GB per task. Publish BGZF+tabix grids to `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/variant/chrNNN.popdep.txt.bgz` (+ `.tbi`); logs under `.../main_raw/logs/`. Skips chr32 (no `chr032.vcf.gz`).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdepfull_all bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/06run_main_raw_popdepth_full && date -Iseconds | tee run_logs/start.txt && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --popdep_tiger_jar TIGER_PD_20260615.jar --popdep_tiger_app PopDepFull --popdep_tiger_max_forks 2 --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.log; echo $? | tee run_logs/exit_code.txt; date -Iseconds | tee run_logs/end.txt'
+```
+
+### 2026-06-16 — `main_raw_popdepth` PopDepCrossChr production (`10stats.genome/07run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/07run_main_raw_popdepth_crosschr` (screen `popdep_crosschr`). Single JVM task: `TIGER_PD_20260616.jar`, app `PopDepCrossChr`, 64 CPU / 256 GB (`popdep_tiger_crosschr` label). One BAM pass per taxon for all chr; publish BGZF+tabix to `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/variant/chrNNN.popdep.txt.bgz` (+ `.tbi`); logs under `.../main_raw/logs/`. Skips chr32 (no `chr032.vcf.gz`). Replaces stopped 06run PopDepFull sweep.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_crosschr bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/07run_main_raw_popdepth_crosschr && date -Iseconds | tee run_logs/start.txt && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --popdep_tiger_jar TIGER_PD_20260616.jar --popdep_tiger_app PopDepCrossChr --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.log; echo $? | tee run_logs/exit_code.txt; date -Iseconds | tee run_logs/end.txt'
+```
+
+### 2026-06-16 — `main_raw_popdepth` PopDepCrossChr v2 (`10stats.genome/08run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/08run_main_raw_popdepth_crosschr` (screen `popdep_crosschr_v2`). Updated `TIGER_PD_20260616.jar` (segmentIndex long fix + length file `Chr\\tLength\\tnTaxa`). Single task: `tb.ALL.txt`, 3-column length (nTaxa 7675/7594/7738/8285 by A/B/D/Others), **16 threads / 384 GB**. Publish to `main_raw/variant/chrNNN.popdep.txt.bgz` (+ `.tbi`); skip chr32.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_crosschr_v2 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/08run_main_raw_popdepth_crosschr && date -Iseconds | tee run_logs/start.txt && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink --popdep_tiger_jar TIGER_PD_20260616.jar --popdep_tiger_app PopDepCrossChr --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src 2>&1 | tee run_logs/nextflow.log; echo $? | tee run_logs/exit_code.txt; date -Iseconds | tee run_logs/end.txt'
+```
+
+### 2026-06-16 — PopDepCrossChr thread benchmark (`10stats.genome/09run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/09run_popdep_crosschr_threads_bench` (screen `popdep_bench9`). Sequential **60 min** runs for threads **8, 16, 24, 32, 48, 64, 96, 128** (`384G`, `TIGER_PD_20260616.jar`, skip chr32). Bench publish under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_bench_popdep_crosschr_threads/e{threads}/`. Summary: `run_logs/bench_summary.tsv`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_bench9 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/09run_popdep_crosschr_threads_bench && bash run_all_bench.sh 2>&1 | tee run_logs/run_all.log'
+```
+
+### 2026-06-17 — PopDepFull vs PopDepCrossChr head-to-head (`10stats.genome/10run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/10run_popdep_head2head`. Production **ABD** BAMs via taxa panels `bench_assets/tb.N3_micro.txt` (3 taxa) and `tb.N20.txt` (20 taxa); tiers T1 (seek, CrossChr `-e 1` vs Full `maxForks=1`), T2 (throughput, `-e 8` vs `maxForks=2`), optional T3 chr36-only (biased). Publish under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_bench_popdep_head2head/`. Summary: `run_logs/head2head_summary.tsv`. New params: `--popdep_taxa_bam_file`, `--popdep_chr_list`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+cd /data/home/tusr1/01projects/vmap4/10stats.genome/10run_popdep_head2head && \
+bash run_all_head2head.sh 2>&1 | tee run_logs/run_all.log
+```
+
+Optional: `HEAD2HEAD_TIERS=1,2,3` to include chr36-only biased tier; `HEAD2HEAD_JAR=TIGER_PD_YYYYMMDD.jar` when testing optimized builds.
+
+### 2026-06-17 — PopDep truncated extract + head2head (`10stats.genome/10run`)
+
+Extract cwd: `.../10run_popdep_head2head/bench_assets` — `N_TAXA=20 REGION_BP=10000000 bash extract_popdep_bench_bams.sh` (~112 min, 13G under `00data/popdep_bench/chr10000000/`).
+
+Bench cwd: `.../10run_popdep_head2head` (screen `popdep_h2h_trunc`). Truncated T1+T2: `N_TAXA=20 HEAD2HEAD_TIERS=1,2 bash run_truncated_head2head.sh`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_h2h_trunc bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/10run_popdep_head2head && N_TAXA=20 HEAD2HEAD_TIERS=1,2 bash run_truncated_head2head.sh 2>&1 | tee run_logs/run_truncated_all.log'
+```
+
+### 2026-06-17 — PopDep truncated head2head 11run (bgzip/tabix split)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/11run_popdep_head2head_bgz_split`. Re-run of truncated **10 Mb × 44 chr × 20 taxa** T1+T2 after `popdep_tiger_gz_to_bgzip_tabix` was split from TIGER compute. **10run results retained** for comparison (`10run_popdep_head2head/run_logs/head2head_summary.tsv`). Publish under `.../_bench_popdep_head2head/11run_bgz_split/trunc_10000000_N20/` (distinct from 10run `.../trunc_10000000_N20/`). Shared BAMs: `00data/popdep_bench/chr10000000/`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_h2h_11run bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/11run_popdep_head2head_bgz_split && N_TAXA=20 HEAD2HEAD_TIERS=1,2 bash run_truncated_head2head.sh 2>&1 | tee run_logs/run_truncated_all.log'
+```
+
+### 2026-06-17 — PopDep CrossChr flatMap fix + 11run bench retry
+
+**Fix:** `partial_main_raw_popdepth.nf` — `calc_population_depth_crosschr.out.tiger_gz` is a file list; fan-out to `popdep_tiger_gz_to_bgzip_tabix` via `.flatMap` (was `.map` + `getName` on `ArrayList`).
+
+**Smoke (pass):** `-resume` on `11run.../t1_crosschr_micro` — TIGER cached, 44× `popdep_bgz_tabix` exit 0; 44 `*.popdep.txt.bgz` under publish `.../t1_crosschr_micro/variant/`.
+
+screen -dmS popdep_h2h_11run bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/11run_popdep_head2head_bgz_split && N_TAXA=20 HEAD2HEAD_TIERS=1,2 bash run_truncated_head2head.sh 2>&1 | tee run_logs/run_truncated_all.log'
+```
+
+### 2026-06-17 — 11run T2-only monitor补跑
+
+Cwd: `10stats.genome/11run_popdep_head2head_bgz_split`. New `monitor_head2head.sh` (wait for TIGER + full NF lifecycle). **T2 only** (`HEAD2HEAD_TIERS=2`, N20 truncated); prior timing rows in `run_logs/head2head_summary_timing_only.tsv`. Screen `popdep_h2h_t2mon`. Use `HEAD2HEAD_BUST_CACHE=1` so Nextflow re-executes TIGER (not resume-only).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_h2h_t2mon bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/11run_popdep_head2head_bgz_split && N_TAXA=20 HEAD2HEAD_TIERS=2 HEAD2HEAD_BUST_CACHE=1 bash run_truncated_head2head.sh 2>&1 | tee run_logs/run_t2_monitor.log'
+```
+
+### 2026-06-18 — PopDep bench N200 truncated BAM extract (32 parallel)
+
+Extract cwd / log: `10stats.genome/12run_popdep_extract_n200`. Data: `00data/popdep_bench/chr10000000_N200/` (44 chr × 10 Mb, 200 ABD taxa). Screen `popdep_extract_n200`. Script: `10run_popdep_head2head/bench_assets/extract_popdep_bench_bams.sh`. **Retry:** `SAMTOOLS_THREADS=32 EXTRACT_JOBS=4` (4 parallel taxa × samtools `view`/`index -@32` ≈ 128 threads).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_extract_n200 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/12run_popdep_extract_n200 && N_TAXA=200 REGION_BP=10000000 EXTRACT_JOBS=4 SAMTOOLS_THREADS=32 bash /data/home/tusr1/01projects/vmap4/10stats.genome/10run_popdep_head2head/bench_assets/extract_popdep_bench_bams.sh 2>&1 | tee -a run_logs/extract_n200.log'
+```
+
+### 2026-06-18 — N200 PopDep bench harness + `popdep_tiger_threads` smoke
+
+Repo: `params.popdep_tiger_threads`, `params.popdep_tiger_memory_gb`; `resources.config` wires them to `popdep_tiger` cpus/memory; `partial_main_raw_popdepth.nf` logs resolved PopDepFull settings.
+
+**Param smoke (pass):** cwd `10stats.genome/13run_popdep_n200_bench` — `bash verify_tiger_threads_smoke.sh` (chr36, N200 `tb.N200.txt`). Confirmed Nextflow log `PopDepFull: threads=32|64 … maxForks=2|1` and `work/…/.command.sh` TIGER `-e 32` / `-e 64`.
+
+**Full bench (sequential, not yet launched):** same cwd, screen recommended.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n200_bench bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/13run_popdep_n200_bench && bash run_n200_bench.sh 2>&1 | tee run_logs/run_all.log'
+```
+
+Phases: T1 PopDepFull `fork2×32` then `fork1×64`; T2 PopDepCrossChr threads 8→128 (128G, run to completion). Publish `_bench_popdep_n200/trunc_10000000_N200/`. Summaries: `run_logs/full_fork_summary.tsv`, `run_logs/crosschr_threads_summary.tsv`.

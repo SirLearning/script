@@ -21,11 +21,57 @@ When instructions conflict, prefer the **most specific** rule for the path or ta
 | [`.cursor/rules/workstation-nextflow.mdc`](.cursor/rules/workstation-nextflow.mdc) | `workflow/**/*.nf`, `workflow/Genetics/docs/**` |
 | [`.cursor/rules/workstation-python.mdc`](.cursor/rules/workstation-python.mdc) | `src/python/**/*.py` |
 
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on `SirLearning/script` (via `gh` CLI). See [`doc/agents/issue-tracker.md`](doc/agents/issue-tracker.md).
+
+### Triage labels
+
+Default mattpocock/skills vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See [`doc/agents/triage-labels.md`](doc/agents/triage-labels.md).
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` and `doc/adr/` at repo root (created lazily by `/grill-with-docs`). See [`doc/agents/domain.md`](doc/agents/domain.md).
+
 ## Skills (`.cursor/skills/`)
 
-| File | When |
-|------|------|
-| [`.cursor/skills/todo-drive-close/SKILL.md`](.cursor/skills/todo-drive-close/SKILL.md) | User asks to work through `doc/TODO.md`, close backlog items, or update progress / NF run logs |
+### Project-specific
+
+| Skill | When |
+|-------|------|
+| [todo-drive-close](.cursor/skills/todo-drive-close/SKILL.md) | Work through `doc/TODO.md`, close backlog items, or update progress / NF run logs |
+
+### [mattpocock/skills](https://github.com/mattpocock/skills) — setup (run once)
+
+| Skill | When |
+|-------|------|
+| [setup-matt-pocock-skills](.cursor/skills/setup-matt-pocock-skills/SKILL.md) | Reconfigure issue tracker, triage labels, or domain doc layout |
+
+### Engineering (daily)
+
+| Skill | When |
+|-------|------|
+| [grill-with-docs](.cursor/skills/grill-with-docs/SKILL.md) | **Before new features** — align on design, update `CONTEXT.md` and ADRs |
+| [tdd](.cursor/skills/tdd/SKILL.md) | Red-green-refactor test-driven development |
+| [diagnose](.cursor/skills/diagnose/SKILL.md) | Structured debugging for hard bugs |
+| [improve-codebase-architecture](.cursor/skills/improve-codebase-architecture/SKILL.md) | Find deepening opportunities; run periodically on the codebase |
+| [to-prd](.cursor/skills/to-prd/SKILL.md) | Turn conversation into a PRD (GitHub issue) |
+| [to-issues](.cursor/skills/to-issues/SKILL.md) | Break a plan into vertical-slice GitHub issues |
+| [triage](.cursor/skills/triage/SKILL.md) | Triage issues through the label state machine |
+| [zoom-out](.cursor/skills/zoom-out/SKILL.md) | Higher-level context on unfamiliar code |
+| [prototype](.cursor/skills/prototype/SKILL.md) | Throwaway prototype to flesh out a design |
+
+### Productivity
+
+| Skill | When |
+|-------|------|
+| [grill-me](.cursor/skills/grill-me/SKILL.md) | Grilling session for non-code plans |
+| [caveman](.cursor/skills/caveman/SKILL.md) | Ultra-compressed communication (~75% fewer tokens) |
+| [handoff](.cursor/skills/handoff/SKILL.md) | Compact conversation into a handoff doc |
+| [teach](.cursor/skills/teach/SKILL.md) | Multi-session teaching workspace |
+| [write-a-skill](.cursor/skills/write-a-skill/SKILL.md) | Author new skills with proper structure |
 
 Add new skills under `.cursor/skills/` and link them here—keep `AGENTS.md` as an index, not the skill body.
 

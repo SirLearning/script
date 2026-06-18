@@ -1,22 +1,216 @@
-from .variant_utils import load_df_from_plink_variant
-from genetics.genomics.variant.mq import load_mq_data
-from infra.utils.io import load_df_from_space_sep, save_df_to_tsv
-from infra.utils.graph import plot_distribution_with_stats, plot_regression_comparison, plot_mean_variance_fit, plot_qq_residuals, plot_scatter_with_outliers
+import fcntl
+import gzip
+import os
+import subprocess
+import tempfile
+from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
-import os
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, as_completed
+
+from genetics.genomics.variant.mq import load_mq_data
+from infra.utils.graph import (
+    plot_distribution_with_stats,
+    plot_mean_variance_fit,
+    plot_qq_residuals,
+    plot_regression_comparison,
+    plot_scatter_with_outliers,
+)
+from infra.utils.io import load_df_from_space_sep, save_df_to_tsv
+
+from .variant_utils import load_df_from_plink_variant
 
 # ==================================================================================
 # Frozen reference paths and variant annotation (mirror site MQ workflow)
 # ==================================================================================
 
+def popdep_chr_ref_bgz_path(popdep_dir: str, chrom: int) -> Path:
+    """BGZF popdepth grid for tabix random access."""
+    return Path(popdep_dir) / "variant" / f"chr{int(chrom):03d}.popdep.txt.bgz"
+
+
+def popdep_chr_ref_tbi_path(popdep_dir: str, chrom: int) -> Path:
+    """Tabix index for the BGZF popdepth grid."""
+    return Path(f"{popdep_chr_ref_bgz_path(popdep_dir, chrom)}.tbi")
+
+
 def popdep_chr_ref_path(popdep_dir: str, chrom: int) -> str:
     """Path to frozen per-chromosome TIGER popdepth grid under ``{popdep_dir}/variant/``."""
-    return os.path.join(popdep_dir, "variant", f"chr{int(chrom):03d}.popdep.txt")
+    variant = Path(popdep_dir) / "variant"
+    bgz = variant / f"chr{int(chrom):03d}.popdep.txt.bgz"
+    if bgz.exists():
+        return str(bgz)
+    txt = variant / f"chr{int(chrom):03d}.popdep.txt"
+    if txt.exists():
+        return str(txt)
+    gz = variant / f"chr{int(chrom):03d}.popdep.txt.gz"
+    if gz.exists():
+        return str(gz)
+    return str(txt)
+
+
+def ensure_popdep_ref_tabix(chr_id: str, popdep_dir: str) -> Path:
+    """
+    Ensure BGZF + tabix index exist for one chromosome popdepth grid.
+
+    New builds publish ``*.popdep.txt.bgz`` directly. Legacy plain ``*.popdep.txt``
+    or ``*.popdep.txt.gz`` refs are converted once to BGZF (+ ``.tbi``).
+    """
+    chrom = int(chr_id.replace("chr", ""))
+    bgz = popdep_chr_ref_bgz_path(popdep_dir, chrom)
+    tbi = popdep_chr_ref_tbi_path(popdep_dir, chrom)
+    if bgz.exists() and tbi.exists():
+        return bgz
+
+    ref_path = Path(popdep_chr_ref_path(popdep_dir, chrom))
+    if ref_path.suffix == ".bgz" and ref_path.exists():
+        subprocess.run(
+            ["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", "-f", str(ref_path)],
+            check=True,
+        )
+        return ref_path
+    if not ref_path.exists():
+        raise FileNotFoundError(f"Popdep reference missing: {ref_path}")
+
+    bgz.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = bgz.with_suffix(".bgz.lock")
+    with open(lock_path, "a", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        if bgz.exists() and tbi.exists():
+            return bgz
+
+        print(f"[Info] Building BGZF + tabix for {chr_id} from {ref_path} (one-time)...")
+        ref_str = str(ref_path)
+        if ref_str.endswith(".bgz"):
+            return ref_path
+        if ref_str.endswith(".gz"):
+            decompress = subprocess.Popen(
+                ["gunzip", "-c", ref_str],
+                stdout=subprocess.PIPE,
+                text=True,
+            )
+            with open(bgz, "wb") as out_handle:
+                bgzip_proc = subprocess.Popen(
+                    ["bgzip", "-c"],
+                    stdin=subprocess.PIPE,
+                    stdout=out_handle,
+                )
+                assert decompress.stdout is not None
+                header = decompress.stdout.readline()
+                bgzip_proc.stdin.write(f"Chrom\t{header}".encode("utf-8"))
+                for line in decompress.stdout:
+                    bgzip_proc.stdin.write(f"{chrom}\t".encode("utf-8") + line.encode("utf-8"))
+                bgzip_proc.stdin.close()
+                bgzip_proc.wait()
+            decompress.wait()
+            if decompress.returncode != 0:
+                raise RuntimeError(f"gunzip failed for {ref_path} (exit {decompress.returncode})")
+            if bgzip_proc.returncode != 0:
+                raise RuntimeError(f"bgzip failed for {chr_id}")
+        else:
+            with open(ref_str, encoding="utf-8") as src_handle, open(bgz, "wb") as out_handle:
+                bgzip_proc = subprocess.Popen(["bgzip", "-c"], stdin=subprocess.PIPE, stdout=out_handle)
+                header = src_handle.readline()
+                bgzip_proc.stdin.write(f"Chrom\t{header}".encode("utf-8"))
+                for line in src_handle:
+                    bgzip_proc.stdin.write(f"{chrom}\t".encode("utf-8") + line.encode("utf-8"))
+                bgzip_proc.stdin.close()
+                bgzip_proc.wait()
+                if bgzip_proc.returncode != 0:
+                    raise RuntimeError(f"bgzip failed for {chr_id}")
+
+        subprocess.run(
+            ["tabix", "-S", "1", "-s", "1", "-b", "2", "-e", "2", str(bgz)],
+            check=True,
+        )
+        print(f"[Info] Tabix ready: {bgz} (+ .tbi)")
+        return bgz
+
+
+def _tabix_popdep_lookup(
+    chrom: int,
+    positions: list[int],
+    bgz_path: Path,
+) -> dict[int, tuple[float, float]]:
+    """Batch tabix fetch for sorted variant positions on one chromosome grid."""
+    if not positions:
+        return {}
+
+    result: dict[int, tuple[float, float]] = {}
+    regions_file = tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".popdep.regions.tsv",
+        delete=False,
+        encoding="utf-8",
+    )
+    chrom_s = str(chrom)
+    try:
+        for pos in positions:
+            regions_file.write(f"{chrom_s}\t{pos}\t{pos}\n")
+        regions_file.close()
+
+        proc = subprocess.run(
+            ["tabix", "-R", regions_file.name, str(bgz_path)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode not in (0, 1):
+            raise RuntimeError(
+                f"tabix failed for {bgz_path}: {proc.stderr.strip() or proc.stdout.strip()}"
+            )
+        for line in proc.stdout.splitlines():
+            if not line.strip():
+                continue
+            parts = line.rstrip().split("\t")
+            if len(parts) >= 4:
+                pos_s, mean_s, sd_s = parts[1], parts[2], parts[3]
+            else:
+                pos_s, mean_s, sd_s = parts[0], parts[1], parts[2]
+            result[int(pos_s)] = (float(mean_s), float(sd_s))
+    finally:
+        os.unlink(regions_file.name)
+
+    return result
+
+
+def _stream_popdep_lookup(
+    popdep_path: str,
+    wanted_positions: list[int],
+) -> dict[int, tuple[float, float]]:
+    """Fallback merge-join when tabix sidecar is unavailable."""
+    if not wanted_positions:
+        return {}
+    wanted_set = set(wanted_positions)
+    max_pos = max(wanted_positions)
+    result: dict[int, tuple[float, float]] = {}
+    if not os.path.isfile(popdep_path):
+        print(f"[Warn] Popdep reference missing: {popdep_path}")
+        return result
+
+    open_fn = gzip.open if popdep_path.endswith((".gz", ".bgz")) else open
+    with open_fn(popdep_path, "rt", encoding="utf-8") as handle:
+        header = handle.readline()
+        if not header:
+            return result
+        header_cols = header.rstrip("\n").split("\t")
+        pos_idx = 1 if header_cols and header_cols[0] == "Chrom" else 0
+        mean_idx = pos_idx + 1
+        sd_idx = pos_idx + 2
+        for line in handle:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) <= sd_idx:
+                continue
+            pos = int(parts[pos_idx])
+            if pos in wanted_set:
+                result[pos] = (float(parts[mean_idx]), float(parts[sd_idx]))
+            if pos >= max_pos and len(result) == len(wanted_set):
+                break
+    return result
 
 
 def save_variant_popdep_info(df: pd.DataFrame, output_path: str) -> None:
@@ -29,40 +223,22 @@ def save_variant_popdep_info(df: pd.DataFrame, output_path: str) -> None:
     save_df_to_tsv(out, output_path)
 
 
-def _lookup_popdep_positions(popdep_path: str, wanted_positions: list[int]) -> dict[int, tuple[float, float]]:
-    """Load Depth_Mean/Depth_SD for requested positions from a dense 1..N popdep grid."""
-    if not wanted_positions:
-        return {}
-    wanted_set = set(wanted_positions)
-    max_pos = max(wanted_positions)
-    result: dict[int, tuple[float, float]] = {}
-    if not os.path.isfile(popdep_path):
-        print(f"[Warn] Popdep reference missing: {popdep_path}")
-        return result
-    with open(popdep_path, "r", encoding="utf-8") as handle:
-        header = handle.readline()
-        if not header:
-            return result
-        for line in handle:
-            parts = line.rstrip("\n").split("\t")
-            if len(parts) < 3:
-                continue
-            pos = int(parts[0])
-            if pos in wanted_set:
-                result[pos] = (float(parts[1]), float(parts[2]))
-            if pos >= max_pos and len(result) == len(wanted_set):
-                break
-    return result
-
-
 def _lookup_popdep_for_chromosome(
     chrom: int,
     items: list[tuple[int, str]],
     popdep_dir: str,
+    use_tabix: bool,
 ) -> list[dict]:
-    popdep_path = popdep_chr_ref_path(popdep_dir, chrom)
     positions = [pos for pos, _variant_id in items]
-    popdep_map = _lookup_popdep_positions(popdep_path, positions)
+    if use_tabix:
+        try:
+            bgz = ensure_popdep_ref_tabix(f"chr{chrom:03d}", popdep_dir)
+            popdep_map = _tabix_popdep_lookup(chrom, positions, bgz)
+        except (FileNotFoundError, RuntimeError, subprocess.CalledProcessError) as exc:
+            print(f"[Warning] Tabix lookup failed for chr{chrom:03d} ({exc}); falling back to stream scan.")
+            popdep_map = _stream_popdep_lookup(popdep_chr_ref_path(popdep_dir, chrom), positions)
+    else:
+        popdep_map = _stream_popdep_lookup(popdep_chr_ref_path(popdep_dir, chrom), positions)
     rows: list[dict] = []
     for pos, variant_id in items:
         depth = popdep_map.get(pos)
@@ -87,8 +263,8 @@ def _lookup_popdep_for_chromosome(
 
 
 def _annotate_popdep_chromosome_worker(args: tuple) -> tuple[int, list[dict]]:
-    chrom, items, popdep_dir = args
-    rows = _lookup_popdep_for_chromosome(chrom, items, popdep_dir)
+    chrom, items, popdep_dir, use_tabix = args
+    rows = _lookup_popdep_for_chromosome(chrom, items, popdep_dir, use_tabix)
     return chrom, rows
 
 
@@ -97,15 +273,16 @@ def annotate_variants_popdep_from_pvar(
     popdep_dir: str,
     output_path: str,
     max_workers: int | None = None,
+    use_tabix: bool = True,
 ) -> None:
     """
     Annotate merged subgenome PLINK2 variants with population depth from frozen main_raw grids.
 
-    Reads ``{popdep_dir}/variant/chrNNN.popdep.txt`` (TIGER dense Position grid).
-    Writes ``{subgenome}.popdep.info.tsv`` with columns
+    Uses BGZF+tabix on ``*.popdep.txt.bgz`` when available (built at freeze time or once from legacy
+    ``*.popdep.txt`` / ``*.popdep.txt.gz``). Writes ``{subgenome}.popdep.info.tsv`` with columns
     ``#CHROM, ID, POS, Depth_Mean, Depth_SD, Depth_CV`` (NaN when reference depth is missing).
     """
-    print(f"[Info] Annotating popdep from pvar={pvar_path} popdep_dir={popdep_dir}")
+    print(f"[Info] Annotating popdep from pvar={pvar_path} popdep_dir={popdep_dir} tabix={use_tabix}")
     by_chrom: dict[int, list[tuple[int, str]]] = defaultdict(list)
     with open(pvar_path, "r", encoding="utf-8") as handle:
         for line in handle:
@@ -128,14 +305,14 @@ def annotate_variants_popdep_from_pvar(
     if n_workers == 1 or len(chromosomes) == 1:
         for chrom in chromosomes:
             _, rows = _annotate_popdep_chromosome_worker(
-                (chrom, by_chrom[chrom], popdep_dir)
+                (chrom, by_chrom[chrom], popdep_dir, use_tabix)
             )
             rows_by_chrom[chrom] = rows
     else:
         print(
             f"[Info] Parallel popdep lookup across {len(chromosomes)} chromosomes (workers={n_workers})"
         )
-        tasks = [(chrom, by_chrom[chrom], popdep_dir) for chrom in chromosomes]
+        tasks = [(chrom, by_chrom[chrom], popdep_dir, use_tabix) for chrom in chromosomes]
         with ProcessPoolExecutor(max_workers=n_workers) as pool:
             futures = {
                 pool.submit(_annotate_popdep_chromosome_worker, task): task[0]
@@ -163,10 +340,19 @@ def annotate_variants_popdep_from_pvar(
 def load_popdep_data(filepath):
     """
     Loads population depth file.
-    Expected columns: Position, Depth_Mean, Depth_SD (space separated)
+    Expected columns: Position, Depth_Mean, Depth_SD (tab-separated; plain, gzip, or BGZF).
     """
     print(f"[Info] Loading PopData: {filepath}")
-    df = load_df_from_space_sep(filepath)
+    path_str = str(filepath)
+    try:
+        if path_str.endswith((".gz", ".bgz")):
+            with gzip.open(path_str, "rt", encoding="utf-8") as handle:
+                df = pd.read_csv(handle, sep=r"\s+")
+        else:
+            df = load_df_from_space_sep(path_str)
+    except Exception as exc:
+        print(f"[Error] Failed to read popdep file {path_str}: {exc}")
+        return None
     if df is None: return None
     
     # Validation

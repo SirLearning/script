@@ -50,6 +50,10 @@ def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
         "TIGER_PD_20260615.jar": [
             java_version: "java17",
             app_name: "PopDepFull"
+        ],
+        "TIGER_PD_20260616.jar": [
+            java_version: "java17",
+            app_name: "PopDepCrossChr"
         ]
     ]
 

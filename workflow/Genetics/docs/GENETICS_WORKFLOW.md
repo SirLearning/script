@@ -70,7 +70,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 | `processor/processor_test.nf` | Test subsampling and subgenome merge |
 | `processor/processor_plink2.nf` | PLINK2 basic info, PCA, tag-SNP prune, CNV awk, LD matrices |
 | `processor/processor_legacy.nf` | Legacy vcftools basic info |
-| `processor/processor_depth.nf` | Population depth (TIGER) |
+| `processor/processor_depth.nf` | Population depth (TIGER): `calc_population_depth` (PopDepFull, per chr), `calc_population_depth_crosschr` (PopDepCrossChr), shared `popdep_tiger_gz_to_bgzip_tabix` (gzip → BGZF + tabix, label `popdep_bgz_tabix`) |
 | `processor/processor_filter.nf` | Sample/variant PLINK filters; VCF v0 filters |
 | `processor/processor_assess.nf` | Assess compute (`plink2_assess_debug_slice`, `quick_count`, `bcftools_qc_assess`) |
 
@@ -128,7 +128,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 | --- | --- | --- |
 | `process_dir` | Reuse prebuilt per-chromosome or merged test pfiles | When merged `A_test.plink2` … `Others_test.plink2` exist under `{process_dir}`, test processors **skip** thin/merge and rebuild basic info + LD only. See frozen test paths in **`doc/TODO.md`** §2. |
 | `mq_dir` | Site MQ reference (partial only) | Frozen **`{mq_dir}/reference/chrNNN.site_mq.{ref,calls}.*`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams`. Built once via **`--partial_task abstract_mq_50_bams --job test_plink`**; skipped when refs exist (`mq_force_rerun=false`). Downstream Python: `genetics.genomics.variant.mq.site_mq_ref_path()`. |
-| `popdep_dir` | Population depth reference (partial + test annotate) | Frozen **`{popdep_dir}/variant/chrNNN.popdep.txt`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw`. Built once via **`--partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink`** (TIGER per chr from `{popdep_dir}/chrNNN.vcf.gz`); skipped when refs exist (`popdep_force_rerun=false`). Test modes extract **`process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv`** via `annotate_subgenome_variant_popdep`. Python: `genetics.genomics.variant.popdep.popdep_chr_ref_path()`. |
+| `popdep_dir` | Population depth reference (partial + test annotate) | Frozen **`{popdep_dir}/variant/chrNNN.popdep.txt.bgz`** (+ `.tbi`) under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw`. Legacy plain `*.popdep.txt` is still accepted for reuse/skip. Built once via **`--partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink`** (default **`PopDepCrossChr`** in `TIGER_PD_20260616.jar`: one `tb.ALL` BAM pass, length file **`Chr\\tLength\\tnTaxa`** aligned with PopDepFull `tb.A`/`tb.B`/`tb.D`/`tb.ALL`; **`popdep_crosschr_threads`** default 16, **`popdep_crosschr_memory_gb`** default 384; override **`--popdep_tiger_app PopDepFull`** for per-chr scans); skipped when refs exist (`popdep_force_rerun=false`). Test modes extract **`process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv`** via `annotate_subgenome_variant_popdep` (tabix lookup). Python: `genetics.genomics.variant.popdep.popdep_chr_ref_path()`. Bench: **`popdep_taxa_bam_file`**, **`popdep_chr_list`**, **`popdep_tiger_max_forks`** — see **`10stats.genome/10run_popdep_head2head/`**. |
 | `camp` | **`test_camp` only** | Path to cohort map TSV (e.g. `camp_vmap4_map.tsv`). Required for that mod. |
 | `chr` | Optional | Comma-separated chromosome filter after job config builds the VCF channel. |
 | `wheat_table_input`, `wheat_gwas_*`, `wheat_kgwas_*` | **`params.mod` starts with `wheat_`** | See **Wheat integrated workflows** below. Requires `user_dir` for the `stats` Conda env (same as genotype stats processes). |
@@ -203,7 +203,7 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `mq_missing_reg` | MQ vs missing regression plots from `*.mq.info.tsv` + vmiss. |
 | `popdep_missing_reg` | Depth vs missing regression plots from `*.popdep.info.tsv` + vmiss. |
 | `abstract_mq_50_bams` | Full-chr bcftools mpileup site MQ → `{mq_dir}/reference/`. |
-| `main_raw_popdepth` | Full-chr TIGER popdepth → `{popdep_dir}/variant/chrNNN.popdep.txt`. |
+| `main_raw_popdepth` | Full-chr TIGER popdepth → `{popdep_dir}/variant/chrNNN.popdep.txt.bgz` (+ tabix `.tbi`). |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` on existing merged test pfiles (`wheat_integrated_mod` required). |
 
 Historic runs logged under `doc/NF_CMD.md` may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.

@@ -62,6 +62,55 @@ def getPopDepTaxaBamFile_v1(chr, home_dir) {
     return tb_file
 }
 
+def getPopDepTaxaBamFileAll_v1(home_dir) {
+    return "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt"
+}
+
+def getPopDepSubGenomeForChr_v1(chr) {
+    def normalized = chr.toString().replaceFirst(/^chr/, '')
+
+    def groupA = getRefV1SubChr("A")
+    def groupB = getRefV1SubChr("B")
+    def groupD = getRefV1SubChr("D")
+    def groupOthers = getRefV1SubChr("Others")
+
+    if (groupA.contains(normalized)) {
+        return "A"
+    }
+    if (groupB.contains(normalized)) {
+        return "B"
+    }
+    if (groupD.contains(normalized)) {
+        return "D"
+    }
+    if (groupOthers.contains(normalized)) {
+        return "ALL"
+    }
+    throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
+}
+
+def countPopDepTaxaFile_v1(home_dir, sub_genome) {
+    def tbPaths = [
+        "A": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.A.txt",
+        "B": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.B.txt",
+        "D": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.D.txt",
+        "ALL": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt",
+    ]
+    def path = tbPaths[sub_genome]
+    if (!path) {
+        throw new IllegalArgumentException("Unknown PopDep sub_genome: ${sub_genome}")
+    }
+    def tbFile = file(path)
+    if (!tbFile.exists()) {
+        throw new FileNotFoundException("PopDep taxa-BAM file not found: ${path}")
+    }
+    return tbFile.readLines().size() - 1
+}
+
+def getPopDepNTaxaForChr_v1(chr, home_dir) {
+    return countPopDepTaxaFile_v1(home_dir, getPopDepSubGenomeForChr_v1(chr))
+}
+
 def getRefV1SubChr(sub_genome) {
     def subGenomeChrMap = [
         "A": ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"],

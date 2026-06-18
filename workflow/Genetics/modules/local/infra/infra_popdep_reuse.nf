@@ -6,8 +6,13 @@ def popdepChrPath(popdep_dir, id) {
     return file("${popdep_dir}/variant/${id}.popdep.txt")
 }
 
+def popdepChrBgzPath(popdep_dir, id) {
+    return file("${popdep_dir}/variant/${id}.popdep.txt.bgz")
+}
+
 def hasPopdepForChr(popdep_dir, id) {
-    return popdepChrPath(popdep_dir, id).exists()
+    return popdepChrBgzPath(popdep_dir, id).exists() ||
+        popdepChrPath(popdep_dir, id).exists()
 }
 
 def countPopdeps(popdep_dir) {
@@ -15,7 +20,11 @@ def countPopdeps(popdep_dir) {
     if (!variant_dir.isDirectory()) {
         return 0
     }
-    variant_dir.list({ _dir, name -> name.endsWith('.popdep.txt') } as FilenameFilter)?.length ?: 0
+    def bgz = variant_dir.list({ _dir, name -> name.endsWith('.popdep.txt.bgz') } as FilenameFilter)?.length ?: 0
+    if (bgz > 0) {
+        return bgz
+    }
+    return variant_dir.list({ _dir, name -> name.endsWith('.popdep.txt') && !name.endsWith('.popdep.txt.bgz') } as FilenameFilter)?.length ?: 0
 }
 
 // True when process_dir/variant already has per-subgenome popdepth annotation (*.popdep.info.tsv).
