@@ -77,13 +77,14 @@ _CENTROMERE_FILE_S = (
 _chrIDChromosomeMap = {}
 _chrIDLengthMap = {}
 _chromosomeHalfLengthMap = {}
+_refSegmentIntervalMap = {}
 _centromereStartMap = {}
 _centromereEndMap = {}
 
 
 def _build_maps():
     global _chrIDChromosomeMap, _chrIDLengthMap, _chromosomeHalfLengthMap
-    global _centromereStartMap, _centromereEndMap
+    global _refSegmentIntervalMap, _centromereStartMap, _centromereEndMap
 
     # 1. Parse Position File
     lines = _POSITION_FILE_S.split('\n')
@@ -93,10 +94,18 @@ def _build_maps():
         
         chrID = int(temp[0])
         length = int(temp[2])
-        chrom = temp[3].replace("chr", "")
+        ref_name = temp[3]
+        chrom = ref_name.replace("chr", "")
+        ref_start = int(temp[4])
+        ref_end = int(temp[5])
         
         _chrIDChromosomeMap[chrID] = chrom
         _chrIDLengthMap[chrID] = length
+        _refSegmentIntervalMap[chrID] = {
+            'ref_name': ref_name,
+            'ref_start': ref_start,
+            'ref_end': ref_end,
+        }
         
         # In Java: if (i%2 != 0) continue; 
         # Java loop was 0-indexed on the array of lines.
@@ -266,6 +275,89 @@ def get_centromere_start(chromosome):
 
 def get_centromere_end(chromosome):
     return _centromereEndMap.get(chromosome)
+
+
+def _normalize_ref_chromosome_name(chromosome):
+    """Return vmap4 chromosome token without ``chr`` prefix (e.g. ``1A``)."""
+    chrom = str(chromosome)
+    return chrom[3:] if chrom.startswith('chr') else chrom
+
+
+def _ref_segment_intervals_for_chromosome(chromosome):
+    """Return PLINK segment intervals sorted by reference start for one ref chromosome."""
+    ref_name = f'chr{_normalize_ref_chromosome_name(chromosome)}'
+    intervals = [
+        (plink_chr, meta)
+        for plink_chr, meta in _refSegmentIntervalMap.items()
+        if meta['ref_name'] == ref_name
+    ]
+    intervals.sort(key=lambda item: item[1]['ref_start'])
+    return intervals
+
+
+def _local_pos_on_ref_segment(ref_start, position):
+    """Map a 1-based reference position to a 1-based position on one PLINK segment."""
+    if ref_start == 0:
+        return int(position)
+    return int(position) - ref_start
+
+
+def chromosome_position_to_global_bp(chromosome, position):
+    """
+    Map a 1-based position on a vmap4 reference chromosome to genome-wide bp (0-based).
+
+    Uses the reference interval columns from the vmap4 position table instead of
+    ``get_chr_id`` / ``get_pos_on_chr_id`` (half-length split), which mis-assign
+    many centromere coordinates to the wrong PLINK segment.
+    """
+    pos = int(position)
+    segments, _ = get_ref_v1_genome_segment_layout()
+    seg_by_plink = {seg['plink_chr']: seg for seg in segments}
+
+    for plink_chr, meta in _ref_segment_intervals_for_chromosome(chromosome):
+        ref_start = meta['ref_start']
+        ref_end = meta['ref_end']
+        if ref_start == 0:
+            in_segment = pos <= ref_end
+        else:
+            in_segment = ref_start < pos <= ref_end
+        if not in_segment:
+            continue
+        local_pos = _local_pos_on_ref_segment(ref_start, pos)
+        return seg_by_plink[plink_chr]['start_bp'] + local_pos - 1
+
+    ref_name = f'chr{_normalize_ref_chromosome_name(chromosome)}'
+    raise ValueError(
+        f'Position {pos} is outside known segments for {ref_name}',
+    )
+
+
+def get_ref_v1_centromere_bin_spans(bin_size_bp):
+    """
+    Return centromere intervals as bin-index spans for genome-wide plots.
+
+    Each entry has ref_name (e.g. chr1A), start_bin, end_bin (inclusive), and
+    start_mb / end_mb on the reference chromosome.
+    """
+    bin_size_bp = int(bin_size_bp)
+    spans = []
+    for chrom in get_chromosomes():
+        c_start = get_centromere_start(chrom)
+        c_end = get_centromere_end(chrom)
+        if c_start is None or c_end is None:
+            continue
+        g_start = chromosome_position_to_global_bp(chrom, c_start)
+        g_end = chromosome_position_to_global_bp(chrom, c_end)
+        if g_end < g_start:
+            g_start, g_end = g_end, g_start
+        spans.append({
+            'ref_name': f'chr{chrom}',
+            'start_bin': int(g_start // bin_size_bp),
+            'end_bin': int(g_end // bin_size_bp),
+            'start_mb': c_start / 1e6,
+            'end_mb': c_end / 1e6,
+        })
+    return spans
 
 def get_chr_id_length(chrID):
     return _chrIDLengthMap.get(chrID)

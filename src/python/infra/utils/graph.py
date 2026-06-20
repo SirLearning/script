@@ -1176,6 +1176,14 @@ def _decorate_genome_ref_block_axis(ax, blocks, n_bins, show_labels=True, block_
     ax.set_xlim(-0.5, max(n_bins - 0.5, 0.5))
 
 
+def _shade_centromere_bin_spans(ax, spans, alpha=0.18, color='#2ca02c', zorder=1):
+    """Highlight centromere intervals on a binned genome axis."""
+    for span in spans:
+        left = span['start_bin'] - 0.5
+        right = span['end_bin'] + 0.5
+        ax.axvspan(left, right, color=color, alpha=alpha, linewidth=0, zorder=zorder)
+
+
 def plot_genome_binned_density_panels(
     data,
     x_col,
@@ -1189,6 +1197,9 @@ def plot_genome_binned_density_panels(
     figure_size=(18, 8),
     block_alpha=0.06,
     linewidth=0.8,
+    show_centromere=True,
+    centromere_spans=None,
+    centromere_alpha=0.18,
 ):
     """
     Stack one line panel per series along a binned genome axis with ref-chromosome blocks.
@@ -1196,12 +1207,21 @@ def plot_genome_binned_density_panels(
     ``data`` must contain ``x_col`` (bin index), ``ref_name_col`` (e.g. chr1A), and one
     numeric column per entry in ``panel_specs`` (keys: ``y_col``, ``title``, optional ``color``).
     X-axis shows ref names at block centres; numeric bin / bp positions are not drawn.
+
+    When ``show_centromere`` is True, vmap4 centromere intervals are shaded in green
+    (auto-loaded from ``infra.wheat.ref_v1`` unless ``centromere_spans`` is supplied).
     """
     import os
+    from matplotlib.patches import Patch
 
     sns.set_style('white')
     blocks = _consecutive_ref_name_blocks(data, ref_name_col=ref_name_col, x_col=x_col)
     n_bins = int(data[x_col].max()) + 1 if not data.empty else 0
+
+    if show_centromere and centromere_spans is None:
+        from infra.wheat.ref_v1 import get_ref_v1_centromere_bin_spans
+
+        centromere_spans = get_ref_v1_centromere_bin_spans(int(bin_size_mb * 1_000_000))
 
     y_max = 1.0
     for spec in panel_specs:
@@ -1213,14 +1233,10 @@ def plot_genome_binned_density_panels(
     if n_panels == 1:
         axes = [axes]
 
+    centromere_color = '#2ca02c'
     for i, (ax, spec) in enumerate(zip(axes, panel_specs)):
         y_col = spec['y_col']
         color = spec.get('color', 'steelblue')
-        ax.plot(data[x_col], data[y_col], color=color, linewidth=linewidth)
-        ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
-        ax.set_title(spec.get('title', y_col), fontsize=TITLE_FONT_SIZE)
-        ax.set_ylim(0, y_max)
-        ax.tick_params(axis='y', which='major', labelsize=TICK_FONT_SIZE)
         _decorate_genome_ref_block_axis(
             ax,
             blocks,
@@ -1228,6 +1244,31 @@ def plot_genome_binned_density_panels(
             show_labels=(i == n_panels - 1),
             block_alpha=block_alpha,
         )
+        if show_centromere and centromere_spans:
+            _shade_centromere_bin_spans(
+                ax,
+                centromere_spans,
+                alpha=centromere_alpha,
+                color=centromere_color,
+            )
+        ax.plot(data[x_col], data[y_col], color=color, linewidth=linewidth, zorder=2)
+        ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_title(spec.get('title', y_col), fontsize=TITLE_FONT_SIZE)
+        ax.set_ylim(0, y_max)
+        ax.tick_params(axis='y', which='major', labelsize=TICK_FONT_SIZE)
+        if show_centromere and centromere_spans and i == n_panels - 1:
+            centromere_patch = Patch(
+                facecolor=centromere_color,
+                alpha=centromere_alpha,
+                edgecolor='none',
+                label='Centromere',
+            )
+            ax.legend(
+                handles=[centromere_patch],
+                loc='upper right',
+                fontsize=LEGEND_FONT_SIZE,
+                framealpha=0.85,
+            )
 
     axes[-1].set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
 

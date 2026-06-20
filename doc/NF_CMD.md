@@ -1050,3 +1050,47 @@ screen -dmS popdep_n200_bench bash -lc 'source ~/.bashrc && conda activate run &
 ```
 
 Phases: T1 PopDepFull `fork2×32` then `fork1×64`; T2 PopDepCrossChr threads 8→128 (128G, run to completion). Publish `_bench_popdep_n200/trunc_10000000_N200/`. Summaries: `run_logs/full_fork_summary.tsv`, `run_logs/crosschr_threads_summary.tsv`.
+
+### 2026-06-18 — `test_thin` vs `test_common_thin` chr compare plots (centromere shading)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/08stats.genome/94run_chr_compare_centromere`. Outcome: exit 0, **1** succeeded (~1m 7s). Refreshed genome density line plot with vmap4 centromere bands under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/thin_common_compare/plots/test_thin_vs_test_common_thin.variant.genome_mb_density.line.png`.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/08stats.genome/94run_chr_compare_centromere && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/entry/partial_router.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --partial_task chr_compare
+```
+
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --partial_task chr_compare
+```
+
+### 2026-06-19 — N200 PopDep bench preflight (14run, checkpoint ci=10)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/14run_popdep_n200_bench`. Outcome: **skipped remaining smoke** after `checkpoint.bin` appeared under `_smoke_preflight/crosschr_ckpt/checkpoint` with `-ci 10` (TIGER log: `Checkpoint written after 10 / 200 taxa`). Jar `TIGER_PD_20260619.jar`; taxa map `tb.N200.taxaBamMap.txt`.
+
+### 2026-06-19 — N200 PopDep bench full run (14run, TIGER_PD_20260619)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/14run_popdep_n200_bench`. Screen session `popdep_n200_14run`. Phases: PopDepFull `fork2×32` / `fork1×64`; CrossChr e8–e128; extras `crosschr_e64_shuffle`, `crosschr_e64_ckpt_ci100`. Publish `_bench_popdep_n200_14run/trunc_10000000_N200/`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n200_14run bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/14run_popdep_n200_bench && bash run_n200_bench.sh 2>&1 | tee -a run_logs/run_all.log'
+```
+
+### 2026-06-19 — `main_raw_popdepth` PopDepCrossChr production (`10stats.genome/15run`)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/15run_main_raw_popdepth_crosschr`. Screen `popdep_crosschr_15run`. Full **main_raw** (~8285 taxa, skip chr32): **`TIGER_PD_20260619.jar`**, **96 threads / 640 GB**, **`-o shuffle`**, checkpoint **`-ci 500`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/checkpoint/popdep_crosschr`. Monitor `run_logs/monitor.tsv` every **600 s** (sdb). Publish `main_raw/variant/chrNNN.popdep.txt.bgz`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_crosschr_15run bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/15run_main_raw_popdepth_crosschr && bash run_popdep_crosschr.sh 2>&1 | tee run_logs/run_all.log'
+```

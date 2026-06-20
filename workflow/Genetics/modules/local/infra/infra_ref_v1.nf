@@ -35,10 +35,10 @@ def getPopDepTaxaBamFile_v1(chr, home_dir) {
     def normalized = chr.toString().replaceFirst(/^chr/, '')
 
     def subGenomeConfigs = [
-        "A": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.A.txt",
-        "B": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.B.txt",
-        "D": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.D.txt",
-        "ALL": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt"
+        "A": "${home_dir}/00data/05taxaBamMap/all.A.taxaBamMap.txt",
+        "B": "${home_dir}/00data/05taxaBamMap/all.B.taxaBamMap.txt",
+        "D": "${home_dir}/00data/05taxaBamMap/all.D.taxaBamMap.txt",
+        "ALL": "${home_dir}/00data/05taxaBamMap/all.ALL.taxaBamMap.txt"
     ]
 
     def groupA = getRefV1SubChr("A")
@@ -63,7 +63,7 @@ def getPopDepTaxaBamFile_v1(chr, home_dir) {
 }
 
 def getPopDepTaxaBamFileAll_v1(home_dir) {
-    return "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt"
+    return "${home_dir}/00data/05taxaBamMap/all.ALL.taxaBamMap.txt"
 }
 
 def getPopDepSubGenomeForChr_v1(chr) {
@@ -91,10 +91,10 @@ def getPopDepSubGenomeForChr_v1(chr) {
 
 def countPopDepTaxaFile_v1(home_dir, sub_genome) {
     def tbPaths = [
-        "A": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.A.txt",
-        "B": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.B.txt",
-        "D": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.D.txt",
-        "ALL": "${home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt",
+        "A": "${home_dir}/00data/05taxaBamMap/all.A.taxaBamMap.txt",
+        "B": "${home_dir}/00data/05taxaBamMap/all.B.taxaBamMap.txt",
+        "D": "${home_dir}/00data/05taxaBamMap/all.D.taxaBamMap.txt",
+        "ALL": "${home_dir}/00data/05taxaBamMap/all.ALL.taxaBamMap.txt",
     ]
     def path = tbPaths[sub_genome]
     if (!path) {

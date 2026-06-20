@@ -3,7 +3,8 @@ nextflow.enable.dsl=2
 /*
  * Build per-chromosome TIGER population depth grids (full reference scan, not variant targets).
  *
- * PopDepCrossChr: one JVM pass over all BAMs (tb.ALL); length file Chr/Length/nTaxa per PopDepFull tb.A/B/D/ALL.
+ * PopDepCrossChr: one JVM pass over all BAMs (all.ALL.taxaBamMap.txt); length file Chr/Length/nTaxa
+ * per subgenome taxaBamMap (A/B/D/ALL). Optional TIGER -o (taxa order) and -k/-ci (checkpoint/resume).
  * PopDepFull / PopDepCrossChr TIGER steps emit per-chr *.popdep.txt.gz; shared popdep_tiger_gz_to_bgzip_tabix
  * converts gzip → BGZF + tabix (label popdep_bgz_tabix, parallel per chr).
  *
@@ -20,6 +21,7 @@ include { calc_population_depth_crosschr } from '../../../modules/local/genotype
 include { popdep_tiger_gz_to_bgzip_tabix } from '../../../modules/local/genotype/processor/processor_depth.nf'
 include { getRefV1SubChr } from '../../../modules/local/infra/infra_ref_v1.nf'
 include { countPopDepTaxaFile_v1 } from '../../../modules/local/infra/infra_ref_v1.nf'
+include { getPopDepTaxaBamFileAll_v1 } from '../../../modules/local/infra/infra_ref_v1.nf'
 include { getTigerJarConfig } from '../../../modules/local/infra/infra_tiger.nf'
 include {
     hasPopdepForChr
@@ -90,8 +92,9 @@ workflow RUN_MAIN_RAW_POPDEPTH {
         log.info "main_raw_popdepth: TIGER ${params.popdep_tiger_jar} app=${pd_config.app_name}"
         ch_tiger_config = channel.value(tuple(pd_config.path, pd_config.app_name, pd_config.java_version))
         if (pd_config.app_name == 'PopDepCrossChr') {
-            def tb_path = params.popdep_taxa_bam_file ?: "${params.home_dir}/00data/05taxaBamMap/vmap4_v1/tb.ALL.txt"
-            log.info "PopDepCrossChr: scan ${tb_path}; per-chr nTaxa A=${countPopDepTaxaFile_v1(params.home_dir, 'A')} B=${countPopDepTaxaFile_v1(params.home_dir, 'B')} D=${countPopDepTaxaFile_v1(params.home_dir, 'D')} Others/ALL=${countPopDepTaxaFile_v1(params.home_dir, 'ALL')}; threads=${params.popdep_crosschr_threads} memory=${params.popdep_crosschr_memory_gb}G"
+            def tb_path = params.popdep_taxa_bam_file ?: getPopDepTaxaBamFileAll_v1(params.home_dir)
+            def ckpt = params.popdep_crosschr_checkpoint_dir ?: 'off'
+            log.info "PopDepCrossChr: scan ${tb_path}; per-chr nTaxa A=${countPopDepTaxaFile_v1(params.home_dir, 'A')} B=${countPopDepTaxaFile_v1(params.home_dir, 'B')} D=${countPopDepTaxaFile_v1(params.home_dir, 'D')} Others/ALL=${countPopDepTaxaFile_v1(params.home_dir, 'ALL')}; threads=${params.popdep_crosschr_threads} memory=${params.popdep_crosschr_memory_gb}G taxa_order=${params.popdep_crosschr_taxa_order} checkpoint=${ckpt} checkpoint_interval=${params.popdep_crosschr_checkpoint_interval}"
             calc_population_depth_crosschr(channel.value(chr_list), ch_tiger_config)
             ch_crosschr_gz = calc_population_depth_crosschr.out.tiger_gz
                 .flatMap { gzs ->
@@ -108,7 +111,7 @@ workflow RUN_MAIN_RAW_POPDEPTH {
                 : 32
             def full_mem_gb = params.popdep_tiger_memory_gb != null
                 ? "${params.popdep_tiger_memory_gb}".toInteger()
-                : 128
+                : 640
             log.info "PopDepFull: threads=${full_threads} memory=${full_mem_gb}G maxForks=${params.popdep_tiger_max_forks}"
             ch_vcf = channel.from(chr_list).map { chr ->
                 def chr_int = chr.toString().toInteger()

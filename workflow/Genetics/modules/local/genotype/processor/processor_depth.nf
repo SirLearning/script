@@ -28,6 +28,21 @@ def popdepLogPublishDir() {
         : "${params.output_dir}/${params.job}/process"
 }
 
+def popdepCrossChrTigerExtraArgs() {
+    def order = params.popdep_crosschr_taxa_order.toString()
+    if (!(order in ['interleave', 'shuffle', 'sorted'])) {
+        throw new IllegalArgumentException(
+            "popdep_crosschr_taxa_order must be interleave, shuffle, or sorted (got: ${order})"
+        )
+    }
+    def lines = ["-o ${order}"]
+    if (params.popdep_crosschr_checkpoint_dir) {
+        lines << "-k ${params.popdep_crosschr_checkpoint_dir}"
+        lines << "-ci ${params.popdep_crosschr_checkpoint_interval}"
+    }
+    return lines.collect { "        ${it} \\" }.join('\n')
+}
+
 process calc_population_depth {
     tag "prepare popdepth: ${chr}"
     publishDir "${popdepLogPublishDir()}", mode: 'copy', pattern: "*.log"
@@ -112,8 +127,9 @@ process calc_population_depth_crosschr {
 
     echo -e 'Chr\\tLength\\tnTaxa' > chromosomeLength.txt
     ${chr_length_lines}
-    echo "Chromosome length file (Chr, Length, nTaxa per PopDepFull tb.A/B/D/ALL):"
+    echo "Chromosome length file (Chr, Length, nTaxa per subgenome taxaBamMap):"
     cat chromosomeLength.txt
+    echo "PopDepCrossChr TIGER extras: taxa_order=${params.popdep_crosschr_taxa_order} checkpoint=${params.popdep_crosschr_checkpoint_dir ?: 'off'} interval=${params.popdep_crosschr_checkpoint_interval}"
 
     java -Xmx${task.memory.toGiga()}G -jar ${tiger_jar} \\
         -app PopDepCrossChr \\
@@ -121,6 +137,7 @@ process calc_population_depth_crosschr {
         -b chromosomeLength.txt \\
         -d samtools \\
         -e ${task.cpus} \\
+${popdepCrossChrTigerExtraArgs()}
         -f crosschr_out/
 
     for chr in ${chr_bash}; do
