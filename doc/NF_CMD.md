@@ -1094,3 +1094,336 @@ Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/15run_main_
 source ~/.bashrc && conda activate run && \
 screen -dmS popdep_crosschr_15run bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/15run_main_raw_popdepth_crosschr && bash run_popdep_crosschr.sh 2>&1 | tee run_logs/run_all.log'
 ```
+
+---
+
+### 2026-06-21 — CS_mp_2018_8X FastCall3 `scan_only` debug (chr2)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/04runScreens/07run_cs_mp2018_scan_debug`. Outcome: **pass** (~4 min, exit 0). Single sample **CS_mp_2018_8X**; taxaBamMap line extracted from canonical `ABD.taxaBamMap.txt` → `chr1.A.taxaBamMap.txt`. vLib read-only from `04runScreens/all/vLib`. chr2 VCF **99.97%** `./.` (`DP=0`) — root cause traced to mpileup excluding non–proper-pair reads (see progress log 2026-06-22).
+
+```bash
+RUN=/data/home/tusr1/01projects/vmap4/04runScreens/07run_cs_mp2018_scan_debug
+cd "$RUN"
+source ~/.bashrc && conda activate run
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/modules/local/genotype/calling/caller.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir "$RUN" \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir "$RUN" \
+  --job chr1 \
+  --mod scan_only \
+  --chr 2 \
+  --server s243 \
+  --vlib_dir /data/home/tusr1/01projects/vmap4/04runScreens/all/vLib \
+  --gen_dir "$RUN/chr1/gen" \
+  --tiger_jar TIGER_F3_20251121.jar
+```
+
+---
+
+### 2026-06-22 — CS_mp_2018_8X BAM proper-pair relabel (scheme B, non-Nextflow)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag`. Input: `00data/02bam/bam1/ABD/CS_mp_2018_8X.bam` (~72 GB). Output: `CS_mp_2018_8X.properflag.bam` (~66 GB). **64 threads**; launched in `screen -S cs_mp_properflag`. Outcome: **pass** (~1 h 25 min). Properly paired **78.49%** (was ~0.0003%). Logs: `logs/properflag_*.log`, `logs/flagstat_properflag_*.txt`.
+
+```bash
+source ~/.bashrc && conda activate run
+screen -dmS cs_mp_properflag bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag && THREADS=64 bash run_properflag.sh 2>&1 | tee logs/full_properflag_launch.log'
+```
+
+chr2 pilot (subset) before full BAM:
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag
+source ~/.bashrc && conda activate run
+samtools view -b -@ 64 /data/home/tusr1/01projects/vmap4/00data/02bam/bam1/ABD/CS_mp_2018_8X.bam 2 -o pilot_chr2_input.bam
+samtools index -@ 64 pilot_chr2_input.bam
+THREADS=64 bash run_properflag.sh pilot_chr2_input.bam pilot_chr2_properflag.bam
+```
+
+---
+
+### 2026-06-22 — CS_mp_2018_8X same-chr TLEN QC (non-Nextflow, `stats` env)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag/tlen_qc`. BAM: `CS_mp_2018_8X.properflag.bam`. **64 threads** for `samtools view`. Key outputs: `same_chr_tlen_0-5kb_bin20bp.tsv/png`, stacked proper/improper plot, GMM deconv plot, FR vs RF overlay.
+
+```bash
+source ~/.bashrc && conda activate stats
+RUN=/data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag
+python3 "$RUN/plot_same_chr_tlen_fine.py" "$RUN/CS_mp_2018_8X.properflag.bam" \
+  --bin-size 20 --max-tlen 5000 --threads 64 \
+  --out-tsv "$RUN/tlen_qc/same_chr_tlen_0-5kb_bin20bp.tsv" \
+  --out-png "$RUN/tlen_qc/same_chr_tlen_0-5kb_bin20bp.png"
+python3 "$RUN/plot_same_chr_tlen_stacked.py" "$RUN/CS_mp_2018_8X.properflag.bam" \
+  --bin-size 20 --max-tlen 5000 --threads 64 \
+  --out-tsv "$RUN/tlen_qc/same_chr_tlen_0-5kb_bin20bp_stacked.tsv" \
+  --out-png "$RUN/tlen_qc/same_chr_tlen_0-5kb_bin20bp_stacked.png"
+python3 "$RUN/deconv_tlen_gmm.py" "$RUN/tlen_qc/same_chr_tlen_0-5kb_bin20bp.tsv" \
+  --out-dir "$RUN/tlen_qc"
+```
+
+---
+
+### 2026-06-23 — Sample cov hybrid heatmaps and plot regeneration (Python, `stats` env)
+
+Working directory: repo root not required; reads published info TSVs under data1. Outcome: **pass** — hybrid log10(Depth) heatmaps for A/B/D/Others; standard heatmaps and GAM panels regenerated for `test_thin` and `test_common_thin`. Registry: `doc/project_knowledge/domain/sample_cov_stats.yaml`.
+
+```bash
+source ~/.bashrc && conda activate stats
+export PYTHONPATH=/data/home/tusr1/git/script/src/python
+BASE=/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats
+
+# Hybrid: F_MISS from test_thin, IBS_Ref from test_common_thin, shared Coverage
+python <<'PY'
+from pathlib import Path
+from genetics.genomics.sample.cov import heatmap_thin_miss_common_ibs
+base = Path("/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats")
+for mod in ["A", "B", "D", "Others"]:
+    thin = base / "test_thin/info" / f"{mod}.sample.cov.ibs_depth_miss.info.tsv"
+    common = base / "test_common_thin/info" / f"{mod}.sample.cov.ibs_depth_miss.info.tsv"
+    prefix = base / "test_thin/plots" / f"{mod}.sample.cov"
+    heatmap_thin_miss_common_ibs(str(thin), str(common), output_prefix=str(prefix))
+PY
+
+# Full regen: standard heatmaps + LOESS + GAM + ABD panels (both datasets)
+python <<'PY'
+from pathlib import Path
+import shutil
+from genetics.genomics.sample.cov import heatmap_ibs_depth_missing, compare_subgenome_ibs_depth_gam
+base_root = Path("/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats")
+for job in ["test_thin", "test_common_thin"]:
+    base = base_root / job
+    for mod in ["A", "B", "D", "Others"]:
+        info = base / "info" / f"{mod}.sample.cov.ibs_depth_miss.info.tsv"
+        heatmap_ibs_depth_missing(tsv_file=str(info), output_prefix=str(base / "plots" / f"{mod}.sample.cov"), save_info=False)
+    abd = [str(base / "info" / f"{m}.sample.cov.ibs_depth_miss.info.tsv") for m in ["A", "B", "D"]]
+    compare_subgenome_ibs_depth_gam(abd, output_prefix=str(base / "plots" / "ABD.sample.cov"))
+    summary = base / "plots" / "ABD.sample.cov.gam_subgenome_summary.info.tsv"
+    if summary.exists():
+        shutil.move(summary, base / "info" / summary.name)
+PY
+```
+
+Note: the 2026-06-23 entry above referenced `sample_cov_stats.yaml`; that file was removed — publish layout is **`doc/project_knowledge/domain/data_publish_tree.yaml`** only.
+
+---
+
+### 2026-06-23 — `sg_cov_replot.nf` (Watkins mosdepth → subgenome depth refresh)
+
+Republish **`*.sample.sg_cov.*`** stats after copying Watkins mosdepth into `00data/04depth/09Watkins` and rebuilding `sg_mean_depth` taxaBamMap files. Entry: **`workflow/Genetics/subworkflows/tmp/sg_cov_replot.nf`**.
+
+**test_thin** — working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/17run_sg_cov_replot_watkins`. Outcome: exit 0, **5** succeeded (4× `sample_sg_coverage_stats` + 1× `plot_subgenome_gam_ibs_depth_compare_sg`), ~6m 47s.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/10stats.genome/17run_sg_cov_replot_watkins && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/sg_cov_replot.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin \
+  --mod test_thin \
+  --job test_plink
+```
+
+**test_common_thin** — working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/18run_sg_cov_replot_watkins_common`. Outcome: exit 0, **5** succeeded, ~8m 57s.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/10stats.genome/18run_sg_cov_replot_watkins_common && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/sg_cov_replot.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin \
+  --mod test_common_thin \
+  --job test_plink
+```
+
+Published under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/{info,plots,thresholds,logs}/` with prefix `{A,B,D,Others}.sample.sg_cov` and `ABD.sample.sg_cov.gam_*`.
+
+---
+
+### 2026-06-23 — `sg_cov_hybrid_thinmiss_commonibs.nf` (hybrid thinmiss + common IBS heatmaps)
+
+Hybrid heatmap for **subgenome mosdepth depth** (`sg_cov`): F_MISS from `test_thin`, IBS from `test_common_thin`, Y-axis log10(subgenome depth). Entry: **`workflow/Genetics/subworkflows/tmp/sg_cov_hybrid_thinmiss_commonibs.nf`**.
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/20run_sg_cov_hybrid_thinmiss`. Outcome: exit 0, **4** succeeded (A/B/D/Others), ~29s.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/10stats.genome/20run_sg_cov_hybrid_thinmiss && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/sg_cov_hybrid_thinmiss_commonibs.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --thin_stats_mod test_thin \
+  --common_stats_mod test_common_thin
+```
+
+Published under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/`:
+
+- `{A,B,D,Others}.sample.sg_cov.heatmap_thinmiss_commonibs.logdepth.png`
+- `{A,B,D,Others}.sample.sg_cov.hybrid_thinmiss_commonibs.info.tsv`
+- matching logs under `logs/`
+
+---
+
+### 2026-06-23 — `sg_cov_gam_residual.nf` (GAM residual outlier diagnostics)
+
+GAM te residual analysis for **sg_cov**: residual = observed F_MISS − predicted F_MISS; flag top `gam_residual_outlier_frac` (default 2%) by |residual|; group bar charts + highlighted scatter plots. Entry: **`workflow/Genetics/subworkflows/tmp/sg_cov_gam_residual.nf`**.
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/21run_sg_cov_gam_residual`. Outcome: exit 0, **4** succeeded, ~8m 2s.
+
+```bash
+cd /data/home/tusr1/01projects/vmap4/10stats.genome/21run_sg_cov_gam_residual && \
+source ~/.bashrc && conda activate run && \
+nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/sg_cov_gam_residual.nf \
+  -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config \
+  --home_dir /data/home/tusr1/01projects/vmap4 \
+  --user_dir /data/home/tusr1 \
+  --src_dir /data/home/tusr1/git/script/src \
+  --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 \
+  --job test_plink \
+  --stats_mod test_thin \
+  --gam_residual_outlier_frac 0.02
+```
+
+Published under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/` for `{A,B,D,Others}`:
+
+- `info/{mod}.sample.sg_cov.gam_residual.info.tsv`
+- `plots/{mod}.sample.sg_cov.gam_residual_outlier_group_frac.bar.png`
+- `plots/{mod}.sample.sg_cov.gam_residual_outlier_rate_by_group.bar.png`
+- `plots/{mod}.sample.sg_cov.gam_residual_outliers_vs_logdepth.png`
+- `plots/{mod}.sample.sg_cov.gam_residual_outliers_vs_ibs.png`
+
+---
+
+### 2026-06-25 — PopDepCrossChr N1000 GAM-credible deep panel (full genome)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/30run_popdep_n1000_gam_credible`. Screen `popdep_n1000_gam`. **1000** taxa from GAM credible band (`tb.N1000_gam_credible_deep.taxaBamMap.txt`); **44** chr (skip chr32); **`TIGER_PD_20260619.jar`**, PopDepCrossChr **96 threads / 640 GB**, taxa order **shuffle**, checkpoint **`-ci 500`**. Publish: `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n1000_gam_credible/variant/chrNNN.popdep.txt.bgz` (+ `.tbi`); logs under `.../_popdep_n1000_gam_credible/logs/`. Monitor: `run_logs/monitor.tsv` every 600 s.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n1000_gam bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/30run_popdep_n1000_gam_credible && bash run_popdep_n1000_gam_credible.sh 2>&1 | tee run_logs/run_all.log'
+```
+
+Attach / progress:
+
+```bash
+source ~/.bashrc && conda activate run && screen -r popdep_n1000_gam
+tail -f /data/home/tusr1/01projects/vmap4/10stats.genome/30run_popdep_n1000_gam_credible/run_logs/monitor.tsv
+grep -i 'Finished taxa' /data/home/tusr1/01projects/vmap4/10stats.genome/30run_popdep_n1000_gam_credible/work/*/popdep_crosschr.log 2>/dev/null | tail -3
+```
+
+---
+
+### 2026-06-25 — PopDepCrossChr N500 gam-credible deep (64 threads, ci=100)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/31run_popdep_n500_gam_credible`. Screen `popdep_n500_gam`. **500** taxa (`tb.N500_gam_credible_deep.taxaBamMap.txt`, WGS depth **9.26–48.08×**); **44** chr (skip chr32); **`TIGER_PD_20260619.jar`**, PopDepCrossChr **64 threads / 640 GB**, shuffle, checkpoint **`-ci 100`** under **`/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible/checkpoint/popdep_crosschr`** (separate from `main_raw/checkpoint/popdep_crosschr` ~8285 taxa and `_popdep_n1000_gam_credible/`). Publish: `.../_popdep_n500_gam_credible/variant/`.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_gam bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/31run_popdep_n500_gam_credible && bash run_popdep_n500_gam_credible.sh 2>&1 | tee run_logs/run_all.log'
+```
+
+Monitor:
+
+```bash
+tail -f /data/home/tusr1/01projects/vmap4/10stats.genome/31run_popdep_n500_gam_credible/run_logs/monitor.tsv
+grep -i 'Finished taxa\|Checkpoint written' /data/home/tusr1/01projects/vmap4/10stats.genome/31run_popdep_n500_gam_credible/work/*/popdep_crosschr.log 2>/dev/null | tail -5
+```
+
+---
+
+### 2026-06-28 — PopDepFull N500 chr32 only (PopDepFull supplement)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/32run_popdep_n500_chr32_popdepfull`. Screen `popdep_n500_chr32`. **500** taxa (`tb.N500_gam_credible_deep.taxaBamMap.txt`); **chr32 only**; **`TIGER_PD_20260619.jar`**, **PopDepFull** (not CrossChr) **32 threads / 640 GB**, `maxForks=2`. Input VCF gate: `main_raw/chr032.vcf.gz` (symlink to job-root). Publish merges into `.../_popdep_n500_gam_credible/variant/chr032.popdep.txt.bgz` (+ `.tbi`).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_chr32 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/32run_popdep_n500_chr32_popdepfull && bash run_popdep_n500_chr32_popdepfull.sh 2>&1 | tee run_logs/run_all.log'
+```
+
+Monitor:
+
+```bash
+tail -f /data/home/tusr1/01projects/vmap4/10stats.genome/32run_popdep_n500_chr32_popdepfull/run_logs/monitor.tsv
+grep -i 'Finished taxa' /data/home/tusr1/01projects/vmap4/10stats.genome/32run_popdep_n500_chr32_popdepfull/work/*/popdep_32.log 2>/dev/null | tail -5
+```
+
+---
+
+### 2026-06-28 — Single-sample mosdepth D_0132 (10 threads)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/12depth/01run_D_0132_mosdepth`. Screen `mosdepth_D_0132`. **1** BAM (`D_0132.bam` + `.bai` staged); **10** threads via `conf/mosdepth_single_bam.config`. Publish: `00data/04depth/04D/D_0132.bam.mosdepth.*`. Also created `final.{A,B,D,ALL}.taxaBamMap.txt` under `00data/05taxaBamMap/` (copy of `all.*` with **D_0132** inserted at coverage **9.44×**).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS mosdepth_D_0132 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/12depth/01run_D_0132_mosdepth && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/mosdepth_single_bam.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config -c /data/home/tusr1/git/script/workflow/Genetics/conf/mosdepth_single_bam.config --user_dir /data/home/tusr1 --home_dir /data/home/tusr1/01projects/vmap4 --depth_publish_dir /data/home/tusr1/01projects/vmap4/00data/04depth/04D --bam_list /data/home/tusr1/01projects/vmap4/12depth/01run_D_0132_mosdepth/bam_list.tsv -process.cache=false 2>&1 | tee run_logs/nextflow_run4.log'
+```
+
+Outcome: **1 succeeded**, ~3m46s; `D_0132.bam.mosdepth.summary.txt` total mean **9.44**.
+
+---
+
+### 2026-06-28 — Single-sample mosdepth ABD_0915 + ABD_0938 (10 threads)
+
+Working directory: `/data/home/tusr1/01projects/vmap4/12depth/02run_ABD_0915_0938_mosdepth`. Screen `mosdepth_ABD0915_0938`. **2** BAMs; publish `00data/04depth/03ABD/`. Rebuilt `final.{A,B,D,ALL}.taxaBamMap.txt` from `all.*` with **ABD_0915** / **ABD_0938** in all four maps (D_0132 retained in `final.D` / `final.ALL`).
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS mosdepth_ABD0915_0938 bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/12depth/02run_ABD_0915_0938_mosdepth && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/mosdepth_single_bam.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config -c /data/home/tusr1/git/script/workflow/Genetics/conf/mosdepth_single_bam.config --user_dir /data/home/tusr1 --home_dir /data/home/tusr1/01projects/vmap4 --depth_publish_dir /data/home/tusr1/01projects/vmap4/00data/04depth/03ABD --bam_list /data/home/tusr1/01projects/vmap4/12depth/02run_ABD_0915_0938_mosdepth/bam_list.tsv -process.cache=false 2>&1 | tee run_logs/nextflow_run1.log'
+```
+
+Outcome: **2 succeeded**, ~8m43s; `ABD_0915` total mean **6.41**, `ABD_0938` total mean **6.23** (summary files now 47 lines incl. `total`).
+
+---
+
+### 2026-06-28 — N500 popdep variant annotate + stats (test_thin / test_common_thin)
+
+Four runs under `10stats.genome/` using tmp `popdep_annotate.nf` + `popdep_stats.nf`. Reference: `--popdep_dir .../_popdep_n500_gam_credible`. Publish: `--job test_plink`.
+
+| Run folder | Screen | Mod | Entry | Outcome |
+|------------|--------|-----|-------|---------|
+| `33run_popdep_n500_annotate_thin` | `popdep_n500_ann_thin` | `test_thin` | `popdep_annotate.nf` | **4/4** ~7m20s → `process/test_thin/variant/*.popdep.info.tsv` |
+| `34run_popdep_n500_stats_thin` | `popdep_n500_stats_thin` | `test_thin` | `popdep_stats.nf` | Mahalanobis **4/4**; missing_reg **3/4** (`Others` vmiss `Position` KeyError) |
+| `35run_popdep_n500_annotate_common_thin` | `popdep_n500_ann_common` | `test_common_thin` | `popdep_annotate.nf` | **4/4** ~2m24s |
+| `36run_popdep_n500_stats_common_thin` | `popdep_n500_stats_common` | `test_common_thin` | `popdep_stats.nf` | Mahalanobis **4/4**; missing_reg **3/4** (`Others` same vmiss issue) |
+
+Run 1 (annotate thin):
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_ann_thin bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/33run_popdep_n500_annotate_thin && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/popdep_annotate.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_thin --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin --popdep_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible 2>&1 | tee run_logs/nextflow.popdep_n500_annotate_thin.log'
+```
+
+Run 2 (stats thin):
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_stats_thin bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/34run_popdep_n500_stats_thin && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/popdep_stats.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_thin 2>&1 | tee run_logs/nextflow.popdep_n500_stats_thin.log'
+```
+
+Run 3 (annotate common_thin):
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_ann_common bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/35run_popdep_n500_annotate_common_thin && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/popdep_annotate.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_common_thin --process_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin --popdep_dir /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible 2>&1 | tee run_logs/nextflow.popdep_n500_annotate_common_thin.log'
+```
+
+Run 4 (stats common_thin):
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep_n500_stats_common bash -lc 'source ~/.bashrc && conda activate run && cd /data/home/tusr1/01projects/vmap4/10stats.genome/36run_popdep_n500_stats_common_thin && nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/tmp/popdep_stats.nf -c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config --home_dir /data/home/tusr1/01projects/vmap4 --user_dir /data/home/tusr1 --src_dir /data/home/tusr1/git/script/src --output_dir /data1/dazheng_tusr1/vmap4.VCF.v1 --job test_plink --mod test_common_thin 2>&1 | tee run_logs/nextflow.popdep_n500_stats_common_thin.log'
+```
+
+Publish layout: `test_plink/process/{mod}/variant/*.popdep.info.tsv`; `test_plink/stats/{mod}/plots/*.variant.popdep_miss.reg_*.png` (A/B/D only); `test_plink/stats/{mod}/info/*.variant.mahalanobis.info.tsv` + `plots/*.mahalanobis.png` (all subgenomes).

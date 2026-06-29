@@ -1,0 +1,46 @@
+kind: ontology
+id: three_directories
+title: Repo vs Nextflow run cwd vs publish data
+updated: "2026-06-22"
+description: >-
+  Three filesystem roles for Genetics / vmap4 work. Agent operational guardrails
+  live in .cursor/rules/workstation-core.mdc; this file records paths and contents.
+
+entities:
+  - id: CodeRepo
+    type: filesystem_root
+    path: /data/home/tusr1/git/script
+    contains: [workflow/, src/, doc/, tests/, .cursor/]
+    must_not_contain: [work/, .nextflow/, pipeline_info/, published BAM/VCF/TSV outputs]
+
+  - id: NextflowRunCwd
+    type: filesystem_root
+    path_pattern: /data/home/tusr1/01projects/vmap4/{module}/{NNrun_*}/
+    contains: [.nextflow/, .nextflow.log*, work/, pipeline_info/, run_logs/, run-local *.config]
+    must_not_contain: [pipeline source edits, publishDir artefacts]
+
+  - id: PublishDataRoot
+    type: filesystem_root
+    path: /data1/dazheng_tusr1/vmap4.VCF.v1
+    contains: ["{job}/process/", "{job}/stats/", frozen refs, checkpoints]
+    must_not_contain: [Nextflow work/ hashes, .nextflow session state]
+    immutable_test_inputs: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process
+
+relations:
+  - subject: NextflowRunCwd
+    predicate: launches_from
+    object: CodeRepo
+    via: absolute paths to main.nf / partial_router.nf and nextflow.config
+
+  - subject: publishDir
+    predicate: writes_to
+    object: PublishDataRoot
+    via: params.output_dir
+
+policies:
+  - id: every_nf_run_cd_first
+    statement: Every nextflow run (including -preview) must cd to a numbered run folder under 01projects/vmap4 first.
+
+  - id: two_level_run_layout
+    statement: >-
+      Level 1 = task module (e.g. 10stats.genome/). Level 2 = NNrun_<slug> (monotonic NN, do not reuse).

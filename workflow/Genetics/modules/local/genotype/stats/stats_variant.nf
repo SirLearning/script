@@ -245,7 +245,6 @@ process variant_mq_missing_reg {
 
 process variant_popdep_missing_reg {
     tag "variant popdep vs missing reg: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
     publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
     publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
@@ -254,7 +253,6 @@ process variant_popdep_missing_reg {
     tuple val(id), val(chr), path(popdep), path(vmiss)
 
     output:
-    tuple val(id), val(chr), path("*.info.tsv"), emit: info
     tuple val(id), val(chr), path("*.png"), emit: plots
     tuple val(id), val(chr), path("*.log"), emit: logs
 
@@ -274,9 +272,9 @@ process variant_popdep_missing_reg {
 
 process variant_popdep_mahalanobis {
     tag "variant popdep mahalanobis: ${chr}"
-    publishDir "${params.output_dir}/${params.job}/stats/thresholds", mode: "copy", pattern: "*.info.tsv"
-    publishDir "${params.output_dir}/${params.job}/stats/plots", mode: "copy", pattern: "*.png"
-    publishDir "${params.output_dir}/${params.job}/stats/logs", mode: "copy", pattern: "*.log"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
     conda "${params.user_dir}/miniconda3/envs/stats"
 
     input:

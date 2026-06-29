@@ -1,0 +1,45 @@
+kind: workspace_module
+id: vmap4_04runScreens
+title: FastCall scan screens and CS_mp BAM QC
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/04runScreens
+purpose: >
+  FastCall3 scan timing experiments, single-sample scan debug, and BAM
+  post-processing QC (proper-pair relabel, TLEN histograms).
+
+shared_assets:
+  - path: all/vLib
+    role: Read-only variant library for scan runs
+
+runs:
+  - folder: 07run_cs_mp2018_scan_debug
+    summary: CS_mp_2018_8X single-sample FastCall3 scan_only (chr2)
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_only, chr: 2, job: chr1}
+    artefacts:
+      - chr1/gen/VCF/chr002.vcf.gz
+      - setup_taxaBamMap.sh
+    nf_cmd_ref: doc/NF_CMD.md — 2026-06-21 CS_mp scan_only
+
+  - folder: 08run_cs_mp2018_properflag
+    summary: CS_mp_2018_8X BAM proper-pair relabel and TLEN QC scripts
+    artefacts:
+      - CS_mp_2018_8X.properflag.bam
+      - relabel_proper_pair.py
+      - run_properflag.sh
+      - validate_mpileup.sh
+      - tlen_qc/
+    nf_cmd_ref: doc/NF_CMD.md — 2026-06-22 proper-pair relabel and TLEN QC
+
+  - folder: all
+    role: Production-scale scan job assets (vLib, configs)
+
+  - folder: rebuild
+    role: Rebuild scan pipeline trials
+
+other_folders:
+  - 01blib_scan_time1
+  - 02run
+  - 03scan.step2
+  - 05rerun.lib
+  - 06run.32

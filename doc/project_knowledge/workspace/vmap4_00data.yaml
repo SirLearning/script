@@ -1,0 +1,28 @@
+kind: workspace_module
+id: vmap4_00data
+title: vmap4 00data frozen inputs
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/00data
+
+folders:
+  - id: "01test"
+    role: Small test assets
+  - id: "02bam"
+    role: Alignment BAMs
+    layout: bam1/{pop}/*.bam
+    example:
+      sample: CS_mp_2018_8X
+      path: bam1/ABD/CS_mp_2018_8X.bam
+  - id: "03ref"
+    role: Reference genomes and indexes
+  - id: "04depth"
+    role: Depth-related auxiliary data
+  - id: "05taxaBamMap"
+    role: Canonical taxa→BAM maps
+    files: ["A.taxaBamMap.txt", "B.taxaBamMap.txt", "D.taxaBamMap.txt", "ABD.taxaBamMap.txt", "ALL.taxaBamMap.txt", "all.*.taxaBamMap.txt", "final.*.taxaBamMap.txt"]
+    knowledge: domain/taxa_bam_map.yaml
+  - id: popdep_bench
+    role: Truncated BAM panels for PopDep benchmarks
+    subpaths:
+      - chr10000000/
+      - chr10000000_N200/

@@ -27,7 +27,7 @@ process plot_plink2_population_structure {
         "${eigenvec}",
         "${eigenval}",
         "${output_prefix}",
-        group_file="${params.output_dir}/sample_group.txt",
+        group_file="${params.output_dir}/meta_data/sample_group.txt",
         tsne_n_input_pcs=${params.wheat_tsne_n_input_pcs},
         tsne_max_iter=${params.wheat_tsne_max_iter},
         tsne_random_state=${params.wheat_tsne_random_state},

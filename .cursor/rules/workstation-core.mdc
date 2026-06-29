@@ -7,13 +7,15 @@ alwaysApply: true
 
 You are an expert bioinformatics software engineer for the **Genetics Analysis Pipeline & Library** (`script`). Write, update, and debug code following this repo’s architecture and conventions.
 
+**Project knowledge** (taxaBamMap paths, vmap4 run-folder registry, data layout, **resource file semantics**) lives in **`doc/KNOWLEDGE_README.md`** and **`doc/project_knowledge/`** — not in `.cursor/rules/`. Routine stats/plot outputs under the publish tree, analysis parameters, and plot-derived conclusions stay in artefacts / logs / notes, not in project_knowledge. See guardrail **14** for when to read and when to update the registry.
+
 # Operational guardrails (critical)
 
 1. **No shell redirection for source files:** Never use `cat`, `echo`, `sed`, or `tee` with `>` / `>>` to create or change source files.
 2. **Use workspace file edits only:** Change files with Cursor’s native editing (e.g. apply_patch / structured edits), not terminal redirection, so diffs stay reviewable.
 3. **Read before edit:** Before changing `src/python/infra/utils/io.py` or `src/python/infra/utils/graph.py`, read the current file contents from the workspace; do not rely on memory.
 4. **Fail-safe:** If you cannot apply edits through the editor, stop and ask the user instead of using shell workarounds.
-5. **No unilateral file deletion:** Before deleting any file (workspace, artifacts, or via shell), ask the user for explicit approval; do not delete on your own initiative.
+5. **No unilateral deletion or destructive shell (critical):** Before **any** operation that removes, truncates, or replaces existing files or directories — including `rm`, `rmdir`, `find -delete`, `mv` onto an existing path, `truncate`, `git clean`, or ad-hoc “cleanup” loops — anywhere on the **repo**, **vmap4 run dirs**, **`/data1/...` publish**, or other **artifacts**, the agent must obtain the user's **explicit approval in the same message** that names what will be deleted or moved. **Do not run** such commands autonomously, including “fix publish layout” scripts. Print suggested commands for the user to run locally instead. **`nextflow run`** with `publishDir` (or a tmp `subworkflows/tmp/*.nf` replot entry) is the approved way to (re)write publish-tree outputs when the user requests a run or replot — not shell cleanup on data1.
 6. **Nextflow in conda `run` + `screen`:** For real pipeline runs under `workflow/Genetics/` (or other Nextflow entry points), start the run inside a **`screen` session from conda env `run`** so it survives disconnects and shares the same toolchain as `nextflow`. **Exception:** small-scale tests and interactive debugging runs do not require `screen`.
 7. **vmap4 test data is immutable:** During vmap4 tasks (e.g., runs like `workflow/Genetics/main.nf` around the documented command block), treat all files under `/data1/dazheng_tusr1/vmap4.VCF.v1` as read-only input assets; never modify, rename, move, regenerate, or delete them.
 8. **Use fixed vmap4 test inputs:** For test execution, always use existing files under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process` (including A/B/D subgenomes and `Others`). Respect existing prefixes such as `A_test.` for `plink`/`plink2` test files and run tests against these prepared inputs instead of creating replacement test datasets.
@@ -45,6 +47,17 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
       ```
     - **Interactive attach:** `source ~/.bashrc && conda activate run && screen -S <session>`, then inside the window: `conda activate run` before `nextflow run ...`.
     - When logging runs, include the full `screen ... bash -lc '...'` wrapper (see `workstation-nextflow.mdc`).
+14. **Project knowledge — read before guess; update when the registry changes:**
+    - **Look up first** when you need prior **run folders**, **task modules**, **canonical resource paths** (BAM, taxaBamMap, refs, publish trees), or **what an input file role is** — do not infer from chat memory, grep alone, or archive logs. Start at **`doc/KNOWLEDGE_README.md`**, then **`doc/project_knowledge/manifest.yaml`**, then the listed `domain/` or `workspace/` YAML. If a fact is missing, **verify on disk or in repo source** (workflow params, publish tree).
+    - **Do not read archive logs for task facts:** **`doc/NF_CMD.md`**, **`doc/TODO_PROGRESS_LOG.md`**, and **`doc/TODO.md`** are human append-only records — often stale, incomplete, or wrong. Agents must **not** load them when planning runs, answering “where is X?”, or explaining missing outputs — unless the user **explicitly** asks for command replay, TODO closure, or log archaeology. Still **append** to those files when rules/skills require logging after a run or closed checklist item.
+    - **Update promptly** when the session **creates a new numbered run folder**, **registers a new vmap4 module**, or **establishes a new stable path / naming convention for resources** (e.g. a new `00data` subfolder, a canonical map file, a benchmark publish subpath). Append to the relevant **`doc/project_knowledge/workspace/*.yaml`** or **`domain/*.yaml`**; register new files in **`manifest.yaml`**; add an index row in **`KNOWLEDGE_README.md`** if needed. Keep entries **registry-only** — no analysis conclusions, plot interpretations, or per-task output catalogues.
+    - **Do not register routine pipeline outputs** already covered by **`domain/data_publish_tree.yaml`** (e.g. stats PNG/TSV under `{job}/stats/{mod}/plots|info|…`), analysis parameters, or plot recipes — those live in published artefacts and logs, not project_knowledge.
+    - **Same session as the run or path change** when possible (or via **`.cursor/skills/session-to-agent-docs/SKILL.md`** when the user asks to capture the conversation). Do not leave new runs only in `NF_CMD` without a matching workspace YAML entry.
+15. **Publish tree writes — Nextflow or tmp `.nf` only (critical):**
+    - **Never** create, overwrite, or copy artefacts into the **data/publish** tree (`params.output_dir`, typically `/data1/.../vmap4.VCF.v1/{job}/process|stats/…`) via ad-hoc Python/shell (`shutil.copy`, `cp`, `tee`, inline plot scripts that target data1 directly, etc.).
+    - **Allowed:** (a) a normal or partial Nextflow run whose processes use **`publishDir`**; (b) a dedicated **temporary** entry under **`workflow/Genetics/subworkflows/tmp/*.nf`** (plot-only / republish mini-workflows) launched from a **vmap4 run folder** with **`nextflow run … -c …/nextflow.config`** and logged in **`doc/NF_CMD.md`**.
+    - Repo Python may write to **run cwd** or **`01projects/vmap4/00data/`** resource paths; **`run_sg_cov_stats_batch.py`** and similar helpers must **not** copy into publish — use **`subworkflows/tmp/sg_cov_replot.nf`** instead.
+    - **Library Python** under `src/python/` must not embed publish-tree paths, `argparse` CLIs that target data1, or `if __name__ == "__main__"` entry points for pipeline outputs — pass paths from **Nextflow `params`** / process inputs only (see **`subworkflows/tmp/*_replot.nf`**).
 
 # First principles
 
@@ -62,7 +75,7 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - `src/python/`: core — `Genetics`, `Infra`, `WeaTE`.
 - `src/r/`, `src/java/`: R and Java tools.
 - `note/`: notes and docs.
-- `doc/`: versioned **TODO** master list (`TODO.md`), append-only **progress log** (`TODO_PROGRESS_LOG.md`), and **Nextflow run log** (`NF_CMD.md`).
+- `doc/`: versioned **TODO** master list (`TODO.md`), append-only **progress log** (`TODO_PROGRESS_LOG.md`), **Nextflow run log** (`NF_CMD.md`), and **structured project knowledge** (`KNOWLEDGE_README.md`, `project_knowledge/*.yaml`).
 - Root `*.yml`: Conda envs (`EnvStats`, `EnvRun`, `EnvTiger`). **`pytest.ini`** — pytest discovers `tests/` with `pythonpath = src/python`. **CI:** `.github/workflows/ci.yml` (ruff + pytest on push/PR).
 - **No repo `resources/`:** WeaTE and ad-hoc scripts read **`transposon/`** relative to the **run cwd** under `vmap4/`, not a versioned repo folder.
 

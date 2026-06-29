@@ -1,0 +1,63 @@
+kind: domain_concept
+id: main_raw_variant_assets
+title: main_raw per-chromosome inputs (VCF, plink, popdep)
+version: "1.0"
+
+root: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw
+
+summary: >
+  Co-located variant assets for the main_raw mod. PopDepCrossChr scans BAMs only;
+  the partial workflow still optionally gates chromosomes on VCF presence under
+  popdep_dir unless popdep_skip_vcf_check is true.
+
+chromosomes:
+  reference_set: ALL
+  count: 45
+  ids: "chr000–chr044 (see getRefV1SubChr ALL in infra_ref_v1.nf)"
+
+vcf:
+  expected_path: "{root}/chrNNN.vcf.gz"
+  present_under_main_raw: 45
+  missing_under_main_raw: []
+  chr032:
+    path: "{root}/chr032.vcf.gz"
+    symlink_target: /data1/dazheng_tusr1/vmap4.VCF.v1/chr032.vcf.gz
+    added: "2026-06-28 — co-located under main_raw (was only at test_plink/process/ and job root)"
+  verified: "2026-06-28 — 45/45 chrNNN.vcf.gz under main_raw including chr032 symlink"
+
+plink:
+  chr032_present: true
+  files:
+    - chr032.plink.bed
+    - chr032.plink.bim
+    - chr032.plink.fam
+    - chr032.plink2.pgen
+    - chr032.plink2.pvar
+    - chr032.plink2.psam
+
+popdep:
+  app_default: PopDepCrossChr
+  compute_inputs: [taxaBamMap, BAM, reference length file]
+  vcf_not_used_by_tiger: true
+  workflow_vcf_gate: >
+    partial_main_raw_popdepth.nf drops chr without {popdep_dir}/chrNNN.vcf.gz when
+    popdep_skip_vcf_check is false — independent of PopDepCrossChr BAM scan.
+  historical_chr32_exclusion: >
+    30run/31run PopDepCrossChr passed --popdep_chr_exclude 32; N500 publish therefore
+    had 44 chr until 32run PopDepFull chr32 supplement.
+  include_chr32_checklist:
+    - Do not pass popdep_chr_exclude 32
+    - chr032.vcf.gz must exist under popdep_dir ( satisfied as of 2026-06-28 )
+
+popdep_publish:
+  main_raw: "{root}/variant/chrNNN.popdep.txt.bgz"
+  gam_credible_n500: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible/variant/
+  gam_credible_n500_runs:
+    - run: 31run_popdep_n500_gam_credible
+      app: PopDepCrossChr
+      chr: "000–044 minus 032 (44 files)"
+      completed: "2026-06-27"
+    - run: 32run_popdep_n500_chr32_popdepfull
+      app: PopDepFull
+      chr: "032 only"
+      status: launched_2026-06-28

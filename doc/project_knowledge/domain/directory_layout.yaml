@@ -1,0 +1,49 @@
+kind: domain_concept
+id: directory_layout
+title: Three-directory layout (code / run / publish)
+version: "1.0"
+description: >
+  Where source code, Nextflow session state, and published genetics artefacts
+  live. Agent guardrails enforce separation; this file documents what each root
+  stores.
+
+roots:
+  - id: code_repo
+    path: /data/home/tusr1/git/script
+    contains: [workflow, src, doc, tests, .cursor]
+    must_not_contain:
+      - work/
+      - .nextflow/
+      - pipeline_info/
+      - published TSV/PNG/BAM/VCF outputs
+
+  - id: run_cwd
+    path_pattern: /data/home/tusr1/01projects/vmap4/{module}/{NNrun_*}/
+    contains:
+      - .nextflow/
+      - work/
+      - pipeline_info/
+      - run_logs/
+      - run-local *.config
+    must_not_contain:
+      - pipeline source edits
+      - publishDir artefacts (those go to data1)
+
+  - id: data_publish
+    path: /data1/dazheng_tusr1/vmap4.VCF.v1
+    contains:
+      - "{job}/process/…"
+      - "{job}/stats/…"
+      - frozen refs (main_raw/variant/*.popdep.txt, MQ refs, etc.)
+    must_not_contain:
+      - Nextflow work/ hashes
+      - .nextflow session state
+    immutable: true
+
+run_workspace:
+  root: /data/home/tusr1/01projects/vmap4
+  layout: "{module}/{NNrun_<slug>}/"
+  numbering: Monotonic NN per module; do not reuse old run dirs for fresh attempts.
+
+params:
+  output_dir: Points at data/publish tree (typically data1 vmap4.VCF.v1 or job subfolder)

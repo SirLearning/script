@@ -129,6 +129,23 @@ def _build_maps():
 # Initialize
 _build_maps()
 
+# PLINK segment ids per subgenome (mirrors getRefV1SubChr in infra_ref_v1.nf).
+REF_V1_SUBGENOME_SEGMENT_CHR_IDS = {
+    "A": ["1", "2", "7", "8", "13", "14", "19", "20", "25", "26", "31", "32", "37", "38"],
+    "B": ["3", "4", "9", "10", "15", "16", "21", "22", "27", "28", "33", "34", "39", "40"],
+    "D": ["5", "6", "11", "12", "17", "18", "23", "24", "29", "30", "35", "36", "41", "42"],
+    "Others": ["0", "43", "44"],
+}
+
+
+def get_ref_v1_subgenome_segment_chr_ids(subgenome):
+    """Return mosdepth ``chrom`` ids (0–44 strings) for subgenome A, B, D, or Others."""
+    key = str(subgenome)
+    if key not in REF_V1_SUBGENOME_SEGMENT_CHR_IDS:
+        raise ValueError(f"Unknown subgenome: {subgenome}")
+    return list(REF_V1_SUBGENOME_SEGMENT_CHR_IDS[key])
+
+
 # PLINK numeric chromosome id -> vmap4 ref name (mirrors getRefV1ChrName in infra_ref_v1.nf).
 _REF_V1_PLINK_TO_NAME = {
     0: "chrUn",

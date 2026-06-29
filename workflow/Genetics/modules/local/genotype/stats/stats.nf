@@ -29,6 +29,8 @@ include {
     sample_germplasm_dedup
     plink_pca
     PLOT_PLINK_PCA
+    plot_subgenome_gam_ibs_depth_compare
+    plot_subgenome_gam_ibs_depth_compare_sg
 } from './stats_sample.nf'
 
 include { vcftools_vcf_qc_r; assess_plink_debug_plots; dumpnice_vcf_qc_assess } from './stats_assess.nf'
@@ -67,7 +69,7 @@ workflow test_plink_stats {
     main:
     // prepare input
     def idxstats = file("${params.output_dir}/vmap4_v1_idxstat_summary.txt")
-    def group_file = file("${params.output_dir}/sample_group.txt")
+    def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
     def tbm_dir = file("${params.home_dir}/00data/05taxaBamMap")
     def dbone_dir = file("${params.user_dir}/git/DBone/Service/src/main/resources/raw/20251208")
     def tbm = smiss.map { id, chr, _smiss_path ->
@@ -86,7 +88,27 @@ workflow test_plink_stats {
     }
     // 1 sample stats
     def miss_out = sample_missing_stats(smiss)
-    def cov_out = sample_coverage_stats(smiss, tbm)
+    def cov_out = sample_coverage_stats(group_file, smiss, tbm, scount)
+    plot_subgenome_gam_ibs_depth_compare(
+        cov_out.info
+            .map { id, chr, infos ->
+                def files = infos instanceof List ? infos : [infos]
+                tuple(id, files.find { f -> f.name.endsWith('.sample.cov.ibs_depth_miss.info.tsv') })
+            }
+            .filter { id, info -> id in ['A', 'B', 'D'] && info != null }
+            .map { id, info -> info }
+            .collect()
+    )
+    plot_subgenome_gam_ibs_depth_compare_sg(
+        cov_out.info
+            .map { id, chr, infos ->
+                def files = infos instanceof List ? infos : [infos]
+                tuple(id, files.find { f -> f.name.endsWith('.sample.sg_cov.ibs_depth_miss.info.tsv') })
+            }
+            .filter { id, info -> id in ['A', 'B', 'D'] && info != null }
+            .map { id, info -> info }
+            .collect()
+    )
     def het_out = sample_heterozygosity_stats(scount, smiss)
     def mr_out = sample_mapping_rate_stats(idxstats, group_file, smiss)
     // 1.1 kinship

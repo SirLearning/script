@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+import matplotlib.colors as mcolors
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -11,6 +12,135 @@ X_LABEL_FONT_SIZE = 14
 Y_LABEL_FONT_SIZE = 14
 TICK_FONT_SIZE = 12
 LEGEND_FONT_SIZE = 12
+
+# Missing-rate heatmaps: red = low missing (better), blue = high missing (worse).
+MISSING_RATE_CMAP = "coolwarm_r"
+
+# Signed GAM residual scatter: vivid blue / gray at 0 / vivid red (used with TwoSlopeNorm).
+RESIDUAL_SIGNED_CMAP = mcolors.LinearSegmentedColormap.from_list(
+    "residual_signed_vivid",
+    [
+        (0.00, "#08306b"),
+        (0.30, "#2171b5"),
+        (0.46, "#6baed6"),
+        (0.50, "#bdbdbd"),
+        (0.54, "#fc9272"),
+        (0.70, "#cb181d"),
+        (1.00, "#67000d"),
+    ],
+)
+
+# Canonical sample_group.txt categories — fixed hue order and colors across all stats plots.
+SAMPLE_GROUP_ORDER = (
+    "A",
+    "AB",
+    "ABD",
+    "D",
+    "HZNU",
+    "Nature",
+    "S",
+    "WAP",
+    "Watkins",
+    "Unknown",
+)
+SAMPLE_GROUP_UNKNOWN_COLOR = (0.5, 0.5, 0.5)
+
+DEFAULT_AXIS_PADDING_FRACTION = 0.05
+
+
+def padded_axis_limits(values, fraction=DEFAULT_AXIS_PADDING_FRACTION):
+    """
+    Return (lo, hi) spanning finite data with proportional padding on each side.
+
+    When all values are identical, use a small absolute span so the axis is still visible.
+    """
+    s = pd.to_numeric(pd.Series(values), errors="coerce").replace(
+        [np.inf, -np.inf], np.nan
+    ).dropna()
+    if s.empty:
+        return None
+    lo, hi = float(s.min()), float(s.max())
+    span = hi - lo
+    if span == 0:
+        span = max(abs(lo), abs(hi), 1.0) * 0.01
+    pad = span * fraction
+    return lo - pad, hi + pad
+
+
+def sample_group_palette() -> dict[str, tuple]:
+    """Fixed Group → color map (seaborn ``deep``, same family as default categorical plots)."""
+    colors = sns.color_palette("deep", len(SAMPLE_GROUP_ORDER))
+    return dict(zip(SAMPLE_GROUP_ORDER, colors))
+
+
+def sample_group_hue_config(values) -> tuple[list[str], dict[str, tuple]]:
+    """
+    Return ``(hue_order, palette)`` for a ``Group`` column.
+
+    Groups in ``SAMPLE_GROUP_ORDER`` keep stable colors; any extra labels get husl fallbacks.
+    """
+    base = sample_group_palette()
+    present = {str(v) for v in pd.Series(values).dropna().unique()}
+    hue_order = [g for g in SAMPLE_GROUP_ORDER if g in present]
+    extras = sorted(g for g in present if g not in SAMPLE_GROUP_ORDER)
+    if extras:
+        for g, c in zip(extras, sns.color_palette("husl", len(extras))):
+            base[g] = c
+        hue_order.extend(extras)
+    palette_map = {g: base.get(g, SAMPLE_GROUP_UNKNOWN_COLOR) for g in hue_order}
+    return hue_order, palette_map
+
+
+def _hue_kwargs_for_sample_group(df: pd.DataFrame, group_col: str) -> dict:
+    """Seaborn ``hue_order`` / ``palette`` when ``group_col`` is the sample ``Group`` column."""
+    if group_col != "Group" or group_col not in df.columns:
+        return {}
+    hue_order, palette_map = sample_group_hue_config(df[group_col])
+    return {"hue_order": hue_order, "palette": palette_map}
+
+
+def draw_x_interval_backgrounds(
+    ax,
+    intervals: list[dict],
+    *,
+    xlim: tuple[float, float] | None = None,
+    zorder: int = 0,
+) -> list:
+    """
+    Shade vertical intervals on ``ax`` (e.g. copy-number classes on rel_depth).
+
+    Each interval dict: ``label``, ``lo``, ``hi``, optional ``color``, ``alpha``.
+    Returns legend handles (matplotlib Patch objects).
+    """
+    import matplotlib.patches as mpatches
+
+    handles = []
+    x_hi_cap = xlim[1] if xlim is not None else None
+    x_lo_cap = xlim[0] if xlim is not None else None
+    for spec in intervals:
+        lo = float(spec["lo"])
+        hi = float(spec["hi"])
+        if x_lo_cap is not None:
+            lo = max(lo, x_lo_cap)
+        if x_hi_cap is not None and np.isfinite(hi):
+            hi = min(hi, x_hi_cap)
+        if not np.isfinite(hi):
+            hi = x_hi_cap if x_hi_cap is not None else lo + 1.0
+        if hi <= lo:
+            continue
+        color = spec.get("color", "#eeeeee")
+        alpha = spec.get("alpha", 0.35)
+        ax.axvspan(lo, hi, color=color, alpha=alpha, linewidth=0, zorder=zorder)
+        handles.append(
+            mpatches.Patch(
+                facecolor=color,
+                alpha=alpha,
+                edgecolor="0.5",
+                linewidth=0.5,
+                label=str(spec.get("label", f"{lo}-{hi}")),
+            )
+        )
+    return handles
 
 
 def _finite_for_vline(val) -> bool:
@@ -352,11 +482,15 @@ def plot_stacked_distribution(
     y_label="Count", 
     log_scale=False,
     bins=100,
-    figure_size=(10,6)
+    figure_size=(10,6),
+    xlim=None,
+    auto_xlim=True,
+    background_intervals: list[dict] | None = None,
 ):
     """
     Plots a stacked histogram distribution split by a group column.
     Includes Mean and Median vertical lines.
+    Optional ``background_intervals`` shades the x-axis (drawn beneath bars).
     """
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -366,55 +500,90 @@ def plot_stacked_distribution(
     if x_label is None:
         x_label = col
 
-    plt.figure(figsize=figure_size)
-    
+    fig, ax = plt.subplots(figsize=figure_size)
+    bg_handles: list = []
+    if background_intervals:
+        bg_handles = draw_x_interval_backgrounds(ax, background_intervals, xlim=xlim, zorder=0)
+
+    plot_bins = bins
+    binrange = None
+    if xlim is not None:
+        binrange = xlim
+        if isinstance(bins, int):
+            plot_bins = np.linspace(xlim[0], xlim[1], bins + 1)
+
     # Histogram with Stacked Groups
-    ax = sns.histplot(data=df, x=col, hue=group_col, multiple='stack', 
-                      bins=bins, linewidth=0.1)
+    hue_kw = _hue_kwargs_for_sample_group(df, group_col)
+    ax = sns.histplot(
+        data=df,
+        x=col,
+        hue=group_col,
+        multiple='stack',
+        bins=plot_bins,
+        binrange=binrange,
+        linewidth=0.1,
+        ax=ax,
+        **hue_kw,
+    )
     
     # Statistics Lines
-    handles, labels = [], []
+    handles, labels = list(bg_handles), [h.get_label() for h in bg_handles]
     
     # Extract existing legend handles (Groups) if present
     if ax.get_legend():
         try:
-            handles = ax.get_legend().legend_handles
+            handles.extend(ax.get_legend().legend_handles)
             texts = ax.get_legend().get_texts()
-            labels = [t.get_text() for t in texts]
+            labels.extend(t.get_text() for t in texts)
             ax.get_legend().remove()
-        except:
-            pass # Fallback if legend structure is unexpected
+        except Exception:
+            pass
     
     # Add Stats Lines
     if mean_val is not None:
-        l1 = plt.axvline(x=mean_val, color='blue', linestyle='--', linewidth=1, label=f'Mean: {mean_val:.4f}')
+        l1 = ax.axvline(x=mean_val, color='blue', linestyle='--', linewidth=1, label=f'Mean: {mean_val:.4f}')
         handles.append(l1)
         labels.append(l1.get_label())
         
     if median_val is not None:
-        l2 = plt.axvline(x=median_val, color='orange', linestyle=':', linewidth=1.5, label=f'Median: {median_val:.4f}')
+        l2 = ax.axvline(x=median_val, color='orange', linestyle=':', linewidth=1.5, label=f'Median: {median_val:.4f}')
         handles.append(l2)
         labels.append(l2.get_label())
     
-    plt.title(title, fontsize=TITLE_FONT_SIZE)
-    plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
-    plt.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
     
     if log_scale:
-        plt.yscale('log')
-        plt.ylabel(f"{y_label} (Log Scale)", fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_yscale('log')
+        ax.set_ylabel(f"{y_label} (Log Scale)", fontsize=Y_LABEL_FONT_SIZE)
     else:
-        plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+
+    if xlim is not None:
+        ax.set_xlim(xlim)
+    elif auto_xlim and col in df.columns:
+        lim = padded_axis_limits(df[col])
+        if lim is not None:
+            ax.set_xlim(lim)
         
     if handles:
-        plt.legend(handles=handles, labels=labels, title=f'{group_col} & Stats', 
-                   loc='upper left', bbox_to_anchor=(0.0, -0.15), 
-                   fontsize=LEGEND_FONT_SIZE, title_fontsize=LEGEND_FONT_SIZE, frameon=False)
+        legend_title = 'CN class & Groups' if background_intervals else f'{group_col} & Stats'
+        ax.legend(
+            handles=handles,
+            labels=labels,
+            title=legend_title,
+            loc='upper left',
+            bbox_to_anchor=(0.0, -0.18),
+            fontsize=LEGEND_FONT_SIZE,
+            title_fontsize=LEGEND_FONT_SIZE,
+            frameon=False,
+            ncol=2 if background_intervals else 1,
+        )
     
-    # plt.tight_layout()
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
+    fig.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved plot to {filename}")
-    plt.close()
+    plt.close(fig)
 
 
 def plot_joint_regression(
@@ -426,6 +595,8 @@ def plot_joint_regression(
     y_label, 
     filename,
     title=None,
+    x_lim=None,
+    y_lim=None,
     figure_size=(10,6)
 ):
     """
@@ -465,10 +636,11 @@ def plot_joint_regression(
     
     # Plotting: JointGrid
     g = sns.JointGrid(data=local_valid, x=x_col, y=y_col, height=figure_size[1], ratio=5)
+    hue_kw = _hue_kwargs_for_sample_group(local_valid, group_col)
 
     # 1. Main Scatter Plot
     sns.scatterplot(data=local_valid, x=x_col, y=y_col, hue=group_col,
-                    alpha=0.6, s=20, edgecolor='none', ax=g.ax_joint, legend='full')
+                    alpha=0.6, s=20, edgecolor='none', ax=g.ax_joint, legend='full', **hue_kw)
     
     # 2. Add Regression Lines
     x_min, x_max = local_valid[x_col].min(), local_valid[x_col].max()
@@ -500,13 +672,29 @@ def plot_joint_regression(
     
     # 3. Marginals (Stacked Histograms)
     sns.histplot(data=local_valid, x=x_col, hue=group_col, multiple='stack', 
-                 bins=100, linewidth=0.1, ax=g.ax_marg_x, legend=False)
+                 bins=100, linewidth=0.1, ax=g.ax_marg_x, legend=False, **hue_kw)
     sns.histplot(data=local_valid, y=y_col, hue=group_col, multiple='stack', 
-                 bins=50, linewidth=0.1, ax=g.ax_marg_y, legend=False)
+                 bins=50, linewidth=0.1, ax=g.ax_marg_y, legend=False, **hue_kw)
 
     g.ax_joint.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
     g.ax_joint.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
     g.ax_joint.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
+
+    if x_lim is not None:
+        g.ax_joint.set_xlim(x_lim)
+    else:
+        x_lim = padded_axis_limits(local_valid[x_col])
+        if x_lim is not None:
+            g.ax_joint.set_xlim(x_lim)
+    if y_lim is not None:
+        g.ax_joint.set_ylim(y_lim)
+    else:
+        y_lim = padded_axis_limits(local_valid[y_col])
+        if y_lim is not None:
+            g.ax_joint.set_ylim(y_lim)
+
+    g.ax_marg_x.set_xlim(g.ax_joint.get_xlim())
+    g.ax_marg_y.set_ylim(g.ax_joint.get_ylim())
     
     if title:
         plt.suptitle(title, y=0.98, fontsize=TITLE_FONT_SIZE)
@@ -656,6 +844,46 @@ def plot_bar_chart(
     plt.close(fig)
 
 
+def plot_categorical_bar_chart(
+    categories: list[str],
+    values: list[float],
+    title: str,
+    ylabel: str,
+    filename: str,
+    *,
+    colors: list | None = None,
+    ylim: tuple[float, float] | None = None,
+    value_formatter=None,
+    figure_size=(10, 5),
+    rotate_xlabels: int | None = 45,
+):
+    """Bar chart with per-category colors and value labels (counts or percentages)."""
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=figure_size)
+    bar_colors = colors if colors is not None else ["steelblue"] * len(categories)
+    ax.bar(categories, values, color=bar_colors, alpha=0.85, edgecolor="white", linewidth=0.5)
+    ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if ylim is not None:
+        ax.set_ylim(ylim)
+    ymax = max(values) if values else 0.0
+    label_pad = ymax * 0.02 if ymax > 1.0 else 0.02
+    fmt = value_formatter or (lambda v: f"{v:.0f}" if v >= 10 else f"{v:.1f}")
+    for i, v in enumerate(values):
+        ax.text(i, v + label_pad, fmt(v), ha="center", va="bottom", fontsize=TICK_FONT_SIZE)
+    if rotate_xlabels is not None:
+        ax.tick_params(axis="x", rotation=rotate_xlabels)
+        for label in ax.get_xticklabels():
+            label.set_ha("right")
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved bar chart: {filename}")
+    plt.close(fig)
+
+
 def plot_gwas_qq(
     expected,
     observed,
@@ -702,10 +930,15 @@ def plot_correlation_with_regression(
     title, filename, 
     x_label=None, y_label=None,
     color='gray', line_color='red',
-    figure_size=(10,6)
+    figure_size=(10,6),
+    xlim=None, ylim=None,
+    group_col=None,
 ):
     """
     Plots a scatter plot with linear regression line and statistics (slope, intercept, R^2).
+
+    When ``group_col`` is set (e.g. ``Group``), points are colored by that column using
+    the canonical sample_group palette; the regression line is fit on all points.
     """
     import seaborn as sns
     import matplotlib.pyplot as plt
@@ -716,7 +949,9 @@ def plot_correlation_with_regression(
     if x_label is None: x_label = x_col
     if y_label is None: y_label = y_col
 
-    clean_data = data[[x_col, y_col]].dropna()
+    use_hue = group_col and group_col in data.columns
+    cols = [x_col, y_col] + ([group_col] if use_hue else [])
+    clean_data = data[cols].replace([np.inf, -np.inf], np.nan).dropna()
     x = clean_data[x_col]
     y = clean_data[y_col]
 
@@ -728,17 +963,24 @@ def plot_correlation_with_regression(
     r_squared = np.corrcoef(x, y)[0, 1] ** 2
 
     plt.figure(figsize=figure_size)
-    sns.regplot(
-        x=x_col, y=y_col, data=data,
-        scatter_kws={'alpha':0.4, 's':10, 'color': color, 'label': 'Data Points'},
-        line_kws={'color': line_color, 'label': 'Linear Regression'}
-    )
+    if use_hue:
+        hue_kw = _hue_kwargs_for_sample_group(clean_data, group_col)
+        sns.scatterplot(
+            data=clean_data, x=x_col, y=y_col, hue=group_col,
+            alpha=0.45, s=12, edgecolor='w', **hue_kw,
+        )
+        sns.regplot(
+            data=clean_data, x=x_col, y=y_col, scatter=False,
+            line_kws={'color': line_color, 'label': 'Linear Regression'},
+        )
+    else:
+        sns.regplot(
+            x=x_col, y=y_col, data=clean_data,
+            scatter_kws={'alpha':0.4, 's':10, 'color': color, 'label': 'Data Points'},
+            line_kws={'color': line_color, 'label': 'Linear Regression'}
+        )
 
     stats_text = f'$y = {slope:.4f}x + {intercept:.4f}$\n$R^2 = {r_squared:.4f}$'
-    # Move stats text to be part of legend or just keep as text?
-    # User said all legends outside left. Stats text is technically annotation.
-    # I'll keep it as annotation inside or move it? Usually stats are inside. 
-    # But removing grid/background makes inside cleaner.
     plt.text(
         0.05, 0.9, stats_text,
         transform=plt.gca().transAxes, 
@@ -750,14 +992,20 @@ def plot_correlation_with_regression(
     plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
     plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
     plt.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
-    plt.ylim(0, 1)
+    if ylim is not None:
+        plt.ylim(*ylim)
+    if xlim is not None:
+        plt.xlim(*xlim)
     
-    plt.legend(loc='upper left', bbox_to_anchor=(0.0, -0.15), fontsize=LEGEND_FONT_SIZE, frameon=False)
-    # plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend(
+        loc='upper left', bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE, frameon=False,
+        title=group_col if use_hue else None,
+    )
     
-    # plt.tight_layout()
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Plot saved to {filename}")
+    plt.close()
 
 
 def plot_dual_regression(
@@ -876,6 +1124,480 @@ def plot_heatmap_custom(
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.savefig(filename, dpi=300)
     print(f"Heatmap saved to: {filename}")
+    plt.close()
+
+
+def plot_binned_mean_heatmap(
+    df,
+    x_col,
+    y_col,
+    value_col,
+    x_label,
+    y_label,
+    cbar_label,
+    title,
+    filename,
+    n_x_bins=50,
+    n_y_bins=50,
+    x_edges=None,
+    y_edges=None,
+    cmap=MISSING_RATE_CMAP,
+    vmin=None,
+    vmax=None,
+    figure_size=(10, 8),
+    x_tick_step=None,
+    y_tick_step=None,
+    x_label_fmt="{:.2f}",
+    y_label_fmt="{:.0f}",
+    y_log10=False,
+):
+    """
+    2D heatmap of mean ``value_col`` over ``(x_col, y_col)`` bins.
+
+    Rows are ``y_col`` (high values at the top). ``cmap`` defaults to ``MISSING_RATE_CMAP``
+    (reversed coolwarm): red = low values, blue = high values (lower missing rate is better).
+
+    When ``y_log10`` is True, samples with ``y_col`` <= 0 are dropped and binning
+    uses log10(y) with padded edges in log space.
+    """
+    sns.set_style("white")
+
+    work = df[[x_col, y_col, value_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    if y_log10:
+        work = work[work[y_col] > 0].copy()
+        work["_y_plot"] = np.log10(work[y_col].astype(float))
+        y_bin_source = "_y_plot"
+    else:
+        work = work.copy()
+        y_bin_source = y_col
+
+    if len(work) < 10:
+        print(f"Not enough valid data for binned heatmap: {filename}")
+        return
+
+    x_lo, x_hi = float(work[x_col].min()), float(work[x_col].max())
+    y_lo, y_hi = float(work[y_bin_source].min()), float(work[y_bin_source].max())
+    x_span = x_hi - x_lo or max(abs(x_lo), 1.0) * 0.01
+    y_span = y_hi - y_lo or max(abs(y_lo), 1.0) * 0.01
+    x_pad = x_span * DEFAULT_AXIS_PADDING_FRACTION
+    y_pad = y_span * DEFAULT_AXIS_PADDING_FRACTION
+
+    if x_edges is None:
+        x_edges = np.linspace(x_lo - x_pad, x_hi + x_pad, n_x_bins + 1)
+    if y_edges is None:
+        y_edges = np.linspace(y_lo - y_pad, y_hi + y_pad, n_y_bins + 1)
+
+    binned = work.copy()
+    binned["_x_bin"] = pd.cut(binned[x_col], bins=x_edges, include_lowest=True)
+    binned["_y_bin"] = pd.cut(binned[y_bin_source], bins=y_edges, include_lowest=True)
+    matrix_df = binned.pivot_table(
+        index="_y_bin", columns="_x_bin", values=value_col, aggfunc="mean", observed=True
+    )
+    if matrix_df.empty:
+        print(f"No binned cells for heatmap: {filename}")
+        return
+
+    matrix_df = matrix_df.sort_index(ascending=False)
+    matrix = matrix_df.to_numpy(dtype=float)
+    x_labels = [x_label_fmt.format(interval.mid) for interval in matrix_df.columns]
+    y_labels = [y_label_fmt.format(interval.mid) for interval in matrix_df.index]
+
+    if vmin is None:
+        vmin = float(np.nanmin(matrix))
+    if vmax is None:
+        vmax = float(np.nanmax(matrix))
+    if vmin == vmax:
+        vmax = vmin + 1e-6
+
+    plt.figure(figsize=figure_size)
+    ax = sns.heatmap(
+        matrix,
+        cmap=cmap,
+        vmin=vmin,
+        vmax=vmax,
+        mask=np.isnan(matrix),
+        cbar_kws={"label": cbar_label},
+        linewidths=0,
+    )
+    ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+
+    n_x = len(x_labels)
+    step_x = x_tick_step if x_tick_step is not None else max(1, n_x // 10)
+    xticks = np.arange(0, n_x, step_x)
+    ax.set_xticks(xticks + 0.5)
+    ax.set_xticklabels([x_labels[i] for i in xticks], rotation=0, fontsize=TICK_FONT_SIZE)
+
+    n_y = len(y_labels)
+    step_y = y_tick_step if y_tick_step is not None else max(1, n_y // 10)
+    yticks = np.arange(0, n_y, step_y)
+    ax.set_yticks(yticks + 0.5)
+    ax.set_yticklabels([y_labels[i] for i in yticks], rotation=0, fontsize=TICK_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved binned mean heatmap to {filename}")
+    plt.close()
+
+
+def _fit_loess_curve(x, y, frac=0.2, n_grid=200):
+    """Return sorted (x_line, y_line) from statsmodels LOWESS."""
+    from statsmodels.nonparametric.smoothers_lowess import lowess
+
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    mask = np.isfinite(x) & np.isfinite(y)
+    x, y = x[mask], y[mask]
+    if len(x) < 10:
+        return None, None
+    order = np.argsort(x)
+    x, y = x[order], y[order]
+    smoothed = lowess(y, x, frac=frac, return_sorted=True)
+    x_line = np.linspace(float(x.min()), float(x.max()), n_grid)
+    y_line = np.interp(x_line, smoothed[:, 0], smoothed[:, 1])
+    return x_line, y_line
+
+
+def plot_loess_scatter(
+    df,
+    x_col,
+    y_col,
+    x_label,
+    y_label,
+    filename,
+    title=None,
+    y_lim=(0, 1),
+    x_lim=None,
+    frac=0.2,
+    scatter_alpha=0.15,
+    scatter_size=10,
+    line_color="#c0392b",
+    line_width=2.5,
+    figure_size=(10, 6),
+):
+    """
+    Scatter with a single LOESS smooth (statsmodels LOWESS).
+    """
+    sns.set_style("white")
+
+    work = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    if len(work) < 10:
+        print(f"Not enough valid data for LOESS plot: {filename}")
+        return
+
+    x_line, y_line = _fit_loess_curve(work[x_col], work[y_col], frac=frac)
+    if x_line is None:
+        print(f"LOESS fit failed for {filename}")
+        return
+
+    plt.figure(figsize=figure_size)
+    plt.scatter(
+        work[x_col],
+        work[y_col],
+        alpha=scatter_alpha,
+        s=scatter_size,
+        color="#1f77b4",
+        edgecolors="none",
+        label="Samples",
+    )
+    plt.plot(x_line, y_line, color=line_color, linewidth=line_width, label="LOESS")
+
+    if title:
+        plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    plt.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if x_lim is not None:
+        plt.xlim(x_lim)
+    else:
+        lim = padded_axis_limits(work[x_col])
+        if lim is not None:
+            plt.xlim(lim)
+    if y_lim is not None:
+        plt.ylim(y_lim)
+
+    plt.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.12),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved LOESS plot to {filename}")
+    plt.close()
+
+
+def plot_loess_scatter_strata(
+    df,
+    x_col,
+    y_col,
+    strata,
+    x_label,
+    y_label,
+    filename,
+    title=None,
+    y_lim=(0, 1),
+    x_lim=None,
+    frac=0.2,
+    scatter_alpha=0.08,
+    scatter_size=8,
+    line_width=2.5,
+    figure_size=(10, 6),
+):
+    """
+    Overlay LOESS curves for multiple row subsets of ``df``.
+
+    ``strata`` is a list of dicts with keys ``label``, ``mask`` (boolean Series/array),
+    and optional ``color``.
+    """
+    sns.set_style("white")
+
+    base = df.replace([np.inf, -np.inf], np.nan)
+    if base[[x_col, y_col]].dropna().shape[0] < 10:
+        print(f"Not enough valid data for stratified LOESS plot: {filename}")
+        return
+
+    palette = sns.color_palette("deep", max(len(strata), 3))
+    plt.figure(figsize=figure_size)
+
+    plotted = 0
+    for i, spec in enumerate(strata):
+        label = spec["label"]
+        mask = spec["mask"]
+        color = spec.get("color", palette[i % len(palette)])
+        sub = base.loc[mask, [x_col, y_col]].dropna()
+        if len(sub) < 10:
+            print(f"[Warning] Skipping stratum '{label}': only {len(sub)} samples")
+            continue
+        plt.scatter(
+            sub[x_col],
+            sub[y_col],
+            alpha=scatter_alpha,
+            s=scatter_size,
+            color=color,
+            edgecolors="none",
+        )
+        x_line, y_line = _fit_loess_curve(sub[x_col], sub[y_col], frac=frac)
+        if x_line is None:
+            continue
+        plt.plot(x_line, y_line, color=color, linewidth=line_width, label=label)
+        plotted += 1
+
+    if plotted == 0:
+        print(f"No strata had enough samples for LOESS: {filename}")
+        plt.close()
+        return
+
+    if title:
+        plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    plt.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if x_lim is not None:
+        plt.xlim(x_lim)
+    else:
+        lim = padded_axis_limits(base[x_col].dropna())
+        if lim is not None:
+            plt.xlim(lim)
+    if y_lim is not None:
+        plt.ylim(y_lim)
+
+    plt.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.12),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved stratified LOESS plot to {filename}")
+    plt.close()
+
+
+def plot_gam_tensor_surface(
+    x_grid,
+    y_grid,
+    z_grid,
+    x_label,
+    y_label,
+    cbar_label,
+    title,
+    filename,
+    cmap=MISSING_RATE_CMAP,
+    vmin=0.0,
+    vmax=1.0,
+    figure_size=(10, 8),
+):
+    """Contour/heatmap of a bivariate GAM tensor-product surface."""
+    sns.set_style("white")
+
+    plt.figure(figsize=figure_size)
+    ax = plt.gca()
+    cf = ax.contourf(x_grid, y_grid, z_grid, levels=40, cmap=cmap, vmin=vmin, vmax=vmax)
+    cbar = plt.colorbar(cf, ax=ax)
+    cbar.set_label(cbar_label, fontsize=Y_LABEL_FONT_SIZE)
+    cbar.ax.tick_params(labelsize=TICK_FONT_SIZE)
+    ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved GAM tensor surface to {filename}")
+    plt.close()
+
+
+def plot_gam_partial_curve(
+    x_line,
+    y_line,
+    x_label,
+    y_label,
+    filename,
+    title=None,
+    y_lim=(0, 1),
+    line_color="#c0392b",
+    line_width=2.5,
+    figure_size=(10, 6),
+    reference_note=None,
+):
+    """1D GAM partial effect curve (optionally annotated with conditioning note)."""
+    sns.set_style("white")
+
+    plt.figure(figsize=figure_size)
+    plt.plot(x_line, y_line, color=line_color, linewidth=line_width, label="GAM partial")
+    if title:
+        plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    plt.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if y_lim is not None:
+        plt.ylim(y_lim)
+    lim = padded_axis_limits(x_line)
+    if lim is not None:
+        plt.xlim(lim)
+    if reference_note:
+        plt.text(
+            0.02,
+            0.02,
+            reference_note,
+            transform=plt.gca().transAxes,
+            fontsize=TICK_FONT_SIZE,
+            va="bottom",
+            ha="left",
+        )
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved GAM partial curve to {filename}")
+    plt.close()
+
+
+def _finalize_panel_figure(fig, suptitle=None, **adjust_kwargs):
+    """Apply subplot margins and place suptitle just above subplot row titles."""
+    top = adjust_kwargs.get("top", 0.87)
+    fig.subplots_adjust(**adjust_kwargs)
+    if suptitle:
+        fig.suptitle(suptitle, fontsize=TITLE_FONT_SIZE, y=min(top + 0.085, 0.98))
+
+
+def plot_contourf_panels(
+    panels,
+    x_label,
+    y_label,
+    cbar_label,
+    filename,
+    suptitle=None,
+    cmap=MISSING_RATE_CMAP,
+    vmin=0.0,
+    vmax=1.0,
+    figure_size=(18, 5.5),
+):
+    """
+    Side-by-side contour panels sharing one color scale.
+
+    Each entry in ``panels`` is a dict with keys ``x_grid``, ``y_grid``, ``z_grid``, ``title``.
+    """
+    sns.set_style("white")
+    n = len(panels)
+    fig, axes = plt.subplots(1, n, figsize=figure_size)
+    if n == 1:
+        axes = [axes]
+
+    mappable = None
+    for ax, spec in zip(axes, panels):
+        cf = ax.contourf(
+            spec["x_grid"],
+            spec["y_grid"],
+            spec["z_grid"],
+            levels=40,
+            cmap=cmap,
+            vmin=vmin,
+            vmax=vmax,
+        )
+        mappable = cf
+        ax.set_title(spec.get("title", ""), fontsize=LEGEND_FONT_SIZE, pad=6)
+        ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+        if ax is axes[0]:
+            ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+        ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+
+    panel_adjust = dict(left=0.08, right=0.79, top=0.87, bottom=0.13, wspace=0.16)
+    _finalize_panel_figure(fig, suptitle=suptitle, **panel_adjust)
+
+    if mappable is not None:
+        cbar_ax = fig.add_axes([0.825, 0.13, 0.012, 0.68])
+        cbar = fig.colorbar(mappable, cax=cbar_ax)
+        cbar.set_label(cbar_label, fontsize=Y_LABEL_FONT_SIZE, labelpad=10)
+        cbar.ax.tick_params(labelsize=TICK_FONT_SIZE)
+
+    plt.savefig(filename, dpi=300, pad_inches=0.06)
+    print(f"Saved contour panel figure to {filename}")
+    plt.close()
+
+
+def plot_line_panels(
+    panels,
+    x_label,
+    y_label,
+    filename,
+    suptitle=None,
+    y_lim=(0, 1),
+    figure_size=(18, 5),
+    line_width=2.5,
+):
+    """Side-by-side line panels (e.g. GAM partial effects per subgenome)."""
+    sns.set_style("white")
+    n = len(panels)
+    fig, axes = plt.subplots(1, n, figsize=figure_size)
+    if n == 1:
+        axes = [axes]
+
+    palette = sns.color_palette("deep", n)
+    for ax, spec, color in zip(axes, panels, palette):
+        ax.plot(spec["x"], spec["y"], color=color, linewidth=line_width)
+        ax.set_title(spec.get("title", ""), fontsize=LEGEND_FONT_SIZE, pad=6)
+        ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+        if ax is axes[0]:
+            ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+        ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+        if y_lim is not None:
+            ax.set_ylim(y_lim)
+        lim = padded_axis_limits(spec["x"])
+        if lim is not None:
+            ax.set_xlim(lim)
+        note = spec.get("note")
+        if note:
+            ax.text(
+                0.02,
+                0.02,
+                note,
+                transform=ax.transAxes,
+                fontsize=TICK_FONT_SIZE,
+                va="bottom",
+                ha="left",
+            )
+
+    panel_adjust = dict(left=0.08, right=0.98, top=0.87, bottom=0.13, wspace=0.16)
+    _finalize_panel_figure(fig, suptitle=suptitle, **panel_adjust)
+    plt.savefig(filename, dpi=300, pad_inches=0.04)
+    print(f"Saved line panel figure to {filename}")
     plt.close()
 
 
@@ -999,9 +1721,10 @@ def plot_scatter_with_thresholds(
     use_hue = group_col and group_col in data.columns
     if use_hue:
         plot_data = data[[x_col, y_col, group_col]].replace([np.inf, -np.inf], np.nan).dropna()
+        hue_kw = _hue_kwargs_for_sample_group(plot_data, group_col)
         sns.scatterplot(
             data=plot_data, x=x_col, y=y_col,
-            hue=group_col, alpha=alpha, s=s, edgecolor='w',
+            hue=group_col, alpha=alpha, s=s, edgecolor='w', **hue_kw,
         )
     else:
         plot_data = data
@@ -1135,6 +1858,195 @@ def plot_scatter_with_outliers(
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Saved scatter plot with outliers to {filename}")
+
+
+def plot_scatter_continuous_color(
+    data,
+    x_col,
+    y_col,
+    color_col,
+    title,
+    filename,
+    xlabel=None,
+    ylabel=None,
+    cbar_label=None,
+    cmap="coolwarm",
+    center=0.0,
+    color_pad_fraction=DEFAULT_AXIS_PADDING_FRACTION,
+    center_fade_alpha=False,
+    center_min_alpha=0.08,
+    center_fade_power=0.55,
+    alpha=0.55,
+    s=22,
+    figure_size=(10, 8),
+    dpi=300,
+):
+    """
+    Scatter plot with point color mapped to a continuous column (diverging cmap by default).
+
+    Color limits default to data min/max plus ``color_pad_fraction`` padding on each side.
+    When ``center`` falls inside that range, a two-slope norm keeps the neutral color at
+    ``center`` (e.g. zero residual).
+
+    With ``center_fade_alpha=True``, marker alpha increases with distance from ``center`` so
+    values near zero appear gray and transparent while extremes stay vivid.
+    """
+    import matplotlib.pyplot as plt
+    import os
+
+    sns.set_style("white")
+
+    plot_df = data[[x_col, y_col, color_col]].dropna()
+    if plot_df.empty:
+        print(f"[Warning] plot_scatter_continuous_color: no data for {filename}")
+        return
+
+    cvals = plot_df[color_col].astype(float).to_numpy()
+    cmin, cmax = float(cvals.min()), float(cvals.max())
+    span = cmax - cmin
+    pad = span * color_pad_fraction if span > 0 else max(abs(cmin), abs(cmax), 1e-9) * color_pad_fraction
+    vmin = cmin - pad
+    vmax = cmax + pad
+
+    if center is not None and vmin < center < vmax:
+        norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=center, vmax=vmax)
+    else:
+        if center is None and cmin >= 0:
+            vmin = max(0.0, cmin - pad)
+        norm = mcolors.Normalize(vmin=vmin, vmax=vmax)
+
+    if isinstance(cmap, str):
+        colormap = plt.get_cmap(cmap)
+    else:
+        colormap = cmap
+
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=figure_size)
+
+    if center_fade_alpha and center is not None:
+        neg_span = center - vmin
+        pos_span = vmax - center
+        frac = np.where(
+            cvals >= center,
+            np.divide(cvals - center, pos_span, out=np.zeros_like(cvals), where=pos_span > 0),
+            np.divide(center - cvals, neg_span, out=np.zeros_like(cvals), where=neg_span > 0),
+        )
+        frac = np.clip(frac, 0.0, 1.0)
+        point_alpha = center_min_alpha + (1.0 - center_min_alpha) * np.power(frac, center_fade_power)
+        rgba = colormap(norm(cvals))
+        rgba[:, 3] = point_alpha
+        ax.scatter(
+            plot_df[x_col],
+            plot_df[y_col],
+            c=rgba,
+            s=s,
+            linewidths=0,
+        )
+        sm = plt.cm.ScalarMappable(cmap=colormap, norm=norm)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, ax=ax)
+    else:
+        sc = ax.scatter(
+            plot_df[x_col],
+            plot_df[y_col],
+            c=cvals,
+            cmap=colormap,
+            norm=norm,
+            s=s,
+            alpha=alpha,
+            linewidths=0,
+        )
+        cbar = fig.colorbar(sc, ax=ax)
+
+    cbar.set_label(
+        cbar_label if cbar_label else color_col,
+        fontsize=Y_LABEL_FONT_SIZE,
+    )
+    cbar.ax.tick_params(labelsize=TICK_FONT_SIZE)
+
+    ax.set_xlabel(xlabel if xlabel else x_col, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel if ylabel else y_col, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+
+    fig.savefig(filename, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved continuous-color scatter to {filename}")
+
+
+def plot_scatter_with_outliers_sized(
+    data,
+    x_col,
+    y_col,
+    outlier_col,
+    size_col,
+    title,
+    filename,
+    xlabel=None,
+    ylabel=None,
+    color_normal="royalblue",
+    color_outlier="red",
+    alpha=0.45,
+    size_range=(10, 140),
+    figure_size=(10, 8),
+    dpi=300,
+):
+    """
+    Scatter with normal/outlier colors (like ``plot_scatter_with_outliers``) and marker
+    size scaled by ``size_col`` (typically |residual|).
+    """
+    import matplotlib.pyplot as plt
+    import os
+
+    sns.set_style("white")
+
+    plot_df = data[[x_col, y_col, outlier_col, size_col]].dropna()
+    if plot_df.empty:
+        print(f"[Warning] plot_scatter_with_outliers_sized: no data for {filename}")
+        return
+
+    sizes_raw = plot_df[size_col].astype(float)
+    lo, hi = float(sizes_raw.min()), float(sizes_raw.max())
+    if hi <= lo:
+        point_sizes = np.full(len(plot_df), np.mean(size_range))
+    else:
+        scale = (sizes_raw - lo) / (hi - lo)
+        point_sizes = size_range[0] + scale * (size_range[1] - size_range[0])
+
+    folder = os.path.dirname(filename)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+
+    fig, ax = plt.subplots(figsize=figure_size)
+    for is_out, color, label in (
+        (False, color_normal, "Normal"),
+        (True, color_outlier, "Outlier"),
+    ):
+        mask = plot_df[outlier_col].astype(bool) == is_out
+        if not mask.any():
+            continue
+        ax.scatter(
+            plot_df.loc[mask, x_col],
+            plot_df.loc[mask, y_col],
+            s=point_sizes[mask],
+            alpha=alpha,
+            color=color,
+            label=label,
+            linewidths=0,
+        )
+
+    ax.set_xlabel(xlabel if xlabel else x_col, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel if ylabel else y_col, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.legend(loc="best", fontsize=LEGEND_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+
+    fig.savefig(filename, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+    print(f"Saved outlier-sized scatter to {filename}")
 
 
 def _consecutive_ref_name_blocks(data, ref_name_col='ref_name', x_col='bin_index'):

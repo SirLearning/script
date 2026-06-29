@@ -1,0 +1,32 @@
+kind: ontology
+id: publish_tree
+title: Published output layout (vmap4.VCF.v1)
+updated: "2026-06-22"
+description: Typical publishDir shapes under params.output_dir.
+
+entities:
+  - id: ProcessTree
+    type: directory_pattern
+    path_pattern: "{job}/process/{mod}/"
+    children: [variant/, info/, logs/, integrated/]
+
+  - id: StatsTree
+    type: directory_pattern
+    path_pattern: "{job}/stats/{mod}/"
+    children: [plots/, info/, logs/, thresholds/]
+
+  - id: MainRawPopdep
+    type: data_asset
+    path_pattern: "{job}/process/main_raw/variant/chrNNN.popdep.txt.bgz"
+    related: ["{job}/process/main_raw/checkpoint/popdep_crosschr/"]
+
+examples:
+  - job: test_plink
+    mod: main_raw
+    artefact: variant/chr036.popdep.txt.bgz
+    full_path: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/variant/
+
+  - job: test_plink
+    mod: test_thin
+    assess_plots: stats/test_thin/plots/
+    full_path: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/

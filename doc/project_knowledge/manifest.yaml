@@ -1,0 +1,42 @@
+# Registry of structured project knowledge files.
+# Generators and agents should read this manifest first, then load listed paths.
+version: "1.0"
+project: Genetics/script
+home_dir: /data/home/tusr1/01projects/vmap4
+publish_root: /data1/dazheng_tusr1/vmap4.VCF.v1
+code_repo: /data/home/tusr1/git/script
+
+# Domain concepts — stable facts about files, populations, and layout (not agent policy)
+domain:
+  - path: domain/taxa_bam_map.yaml
+    summary: taxaBamMap population membership, paths, and job concat scope
+  - path: domain/directory_layout.yaml
+    summary: Three roots — code repo, vmap4 run cwd, data1 publish tree
+  - path: domain/data_publish_tree.yaml
+    summary: vmap4 00data layout and data1 publish folder conventions
+  - path: domain/main_raw_variant_assets.yaml
+    summary: main_raw chr VCF/plink inventory, chr032 paths, PopDepCrossChr vs VCF gate
+
+# Workspace — vmap4 task modules and numbered run folders
+workspace:
+  - path: workspace/vmap4_root.yaml
+    summary: Top-level vmap4 module index
+  - path: workspace/vmap4_00data.yaml
+    summary: Frozen inputs under 00data (BAM, taxaBamMap, refs)
+  - path: workspace/vmap4_10stats_genome.yaml
+    summary: PopDep / main_raw_popdepth runs (current stats module)
+  - path: workspace/vmap4_08stats_genome.yaml
+    summary: Legacy stats module (assess, LD, wheat, chr compare; many runs)
+  - path: workspace/vmap4_04runScreens.yaml
+    summary: FastCall scan screens, CS_mp debug runs, proper-pair relabel
+  - path: workspace/vmap4_11aneuploidy.yaml
+    summary: Mosdepth aneuploidy benchmark runs and publish layout
+  - path: workspace/vmap4_12depth.yaml
+    summary: Single-sample mosdepth reruns (12depth module)
+
+# Append-only operational logs (not YAML; cross-linked from workspace entries)
+operational_logs:
+  - path: doc/NF_CMD.md
+    role: Full replay commands for Nextflow and long shell jobs
+  - path: doc/TODO_PROGRESS_LOG.md
+    role: Engineering narrative, pass/fail, rationale

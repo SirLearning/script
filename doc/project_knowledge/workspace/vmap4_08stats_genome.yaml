@@ -1,0 +1,38 @@
+kind: workspace_module
+id: vmap4_08stats_genome
+title: Legacy stats partial runs
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/08stats.genome
+status: historical
+purpose: >
+  Pre-2026-06 stats module: test_thin / test_common_thin partial reruns for
+  restats, LD decay plots, assess (PLINK2), wheat PCA/t-SNE, MAC stats, chr
+  compare, and related harness work. Superseded for new PopDep work by
+  10stats.genome (see workspace/vmap4_10stats_genome.yaml).
+
+partial_tasks:
+  - assess_plink
+  - ld_decay (and related variant stats)
+  - wheat_from_plink
+  - chr_compare
+  - mac_stats
+  - variant_mac_missing_reg
+
+run_count: 90+
+notable_runs:
+  - folder: 11run_test_thin_restats
+    summary: test_thin full restats smoke
+    nf_cmd_ref: doc/NF_CMD.md — 2026-06 (test_thin restats)
+  - folder: 24run_assess_plink2_full_test_thin
+    summary: PLINK2 assess compute + Python plots for test_thin
+  - folder: 41run_wheat_pca_tsne_test_thin
+    summary: Wheat PCA + t-SNE integrated study slice
+  - folder: 57run_mac_stats_test_thin
+    summary: MAC / missing-rate stats and plots
+  - folder: 94run_chr_compare_centromere
+    summary: test_thin vs test_common_thin genome density compare with centromere bands
+    nf_cmd_ref: doc/NF_CMD.md — 2026-06-18 chr compare plots
+
+note: >
+  Full per-run inventory not duplicated here; search doc/NF_CMD.md for
+  "08stats.genome" or list the module directory on the workstation.

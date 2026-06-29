@@ -588,3 +588,155 @@ Each entry should read like an **engineering report**: goals, what changed and w
 **Runs (vmap4 `05reliable.lib/`):** Stopped **`06run_abstract_mq_50_bams_ref`** (screen `mq50_allchr`, call + giant work `*.calls.vcf`, 0/45 completed under heavy load). Launched **`08run_abstract_mq_50_bams_i16`** (screen `mq50_i16_allchr`, 45 chr, `maxForks=4`). Command and log path: **`doc/NF_CMD.md`**, heading **`### 2026-06-10 — abstract_mq_50_bams all chromosomes (I16 mpileup-only, float MQ)`**; log `run_logs/nextflow.mq50_i16_allchr.log`.
 
 **Outcome:** Site MQ extraction is wired as a partial task with lower disk footprint than call-based VCF materialization; downstream QC items in `doc/TODO.md` (MQ vs missing-rate scatter, low-MQ site filters) can consume `*.site_mq.ref.txt.gz` or `*.site_mq.calls.tsv.gz` once **`08run`** finishes. Full-genome publish verification remains **open** until all 45 chr tasks succeed.
+
+---
+
+## 2026-06-22 — CS_mp FastCall3 scan missing-rate root cause (mpileup / proper pair)
+
+**Goal:** Explain why sample **CS_mp_2018_8X** (`ABD` BAM) shows ~**99.97%** `./.` on chr2 FastCall3 `scan_only` despite non-zero `samtools depth`; decide whether re-alignment or BAM post-processing is the practical fix.
+
+**Findings:**
+
+- **Not** primarily missing coverage: at exemplar site **2:8827**, `samtools depth=5` but default mpileup depth **0** → VCF `./.` `DP=0`.
+- **Primary cause:** TIGER FastCall3 scan uses `samtools mpileup --no-output-ends -B -q 30 -Q 20` **without `-A`**. Default mpileup excludes **non–proper-pair** reads. Original ABD BAM: **~0.05%** proper pair on chr2; **~99.95%** paired but improper.
+- **Library context:** pooled **800 bp PE + Nextera MP (2–4 / 5–7 / 8–10 kb)**; same-chr \|TLEN\| distribution dominated by **~2 kb** mode (**~98%** of same-chr pairs in **900–4000 bp**). FR/RF each **~50%**, same shape — orientation does not separate peaks.
+- **Secondary filter:** `scan_min_MQ=30` removes low-MAPQ bases after pairs enter pileup (e.g. site **952**, all MAPQ=0).
+- **Scan ref routing:** A-subgenome ref for A-group chromosomes via `getChrConfig` is **expected**; not the main defect.
+- **taxaBamMap:** see **`doc/project_knowledge/domain/taxa_bam_map.yaml`** — `CS_mp_2018_8X` must come from **`ABD.taxaBamMap.txt`**, not hand-written `A.taxaBamMap.txt` (extract script: `07run_cs_mp2018_scan_debug/setup_taxaBamMap.sh`).
+
+**Scan params (`base.config`):**
+
+| Param | Default | Maps to |
+|-------|---------|---------|
+| `scan_min_MQ` | 30 | mpileup `-q` |
+| `scan_min_BQ` | 20 | mpileup `-Q` |
+| `scan_error_rate` | 0.05 | TIGER `-h` (GL; not direct DP=0 when pileup empty) |
+| (hardcoded in NF) | `-e 0` | mpileup `-B` (BAQ off) |
+
+Replay mpileup with the same flags as `fastcall3_scan`:  
+`samtools mpileup --no-output-ends -B -q 30 -Q 20 -f <subgenome_ref> <BAM> -l <pos.txt>`  
+Use **`-l` only** (no `-r` region) when replaying library pos lists. Without **`-aa`**, zero-depth sites are omitted from mpileup output.
+
+**Scheme B (implemented):** Post-alignment **PROPER_PAIR relabel** on existing BAM — coordinate-sorted BAM → name-sort → relabel flag `0x2` → coord-sort → index. Mate **same chr** (`=`) and `|TLEN|` in windows `600–1200`, `1800–4500`, `4500–7500`, `7500–10500` bp → set proper; diff chr or out-of-window → clear. Scripts under **`08run_cs_mp2018_properflag/`** (`relabel_proper_pair.py`, `run_properflag.sh`, `validate_mpileup.sh`; `THREADS=64`). Output **`CS_mp_2018_8X.properflag.bam`** (~78% properly paired genome-wide). Exemplar **2:8827**: mpileup depth **0 → 4** without `-A` after relabel. **Re-align alone (bwa-mem2)** does not fix mixed MP+PE without split libraries or mpileup `-A`.
+
+**Validation:**
+
+| Step | cwd | Result |
+|------|-----|--------|
+| chr2 `scan_only` debug | `04runScreens/07run_cs_mp2018_scan_debug` | **pass**; 29.8M `./.` / 29.8M sites |
+| mpileup `-A` vs default @ 2:8827 | BAM QC shell | default **0**, `-A` **5** |
+| chr2 pilot properflag | `08run_cs_mp2018_properflag` | **pass**; chr2 proper **79.5%**; mpileup @ 8827 **4** without `-A` |
+| full BAM properflag (`screen`) | `08run_cs_mp2018_properflag` | **pass**; genome proper **78.49%** → `CS_mp_2018_8X.properflag.bam` |
+| TLEN 0–5 kb 20 bp bins + stacked proper/improper | `08run_cs_mp2018_properflag/tlen_qc` | **pass**; 315.5M pairs ≤5 kb; **83.1%** proper / **16.9%** improper in range |
+
+**TLEN QC (same-chr read1 primary):** Histograms under `08run_cs_mp2018_properflag/tlen_qc/`; **20 bp** bins, 0–5 kb; includes proper and non-proper same-chr pairs (no `-f 2` unless stated). Diff-chr pairs always **TLEN = 0** (~**4.7%** of read1 pairs). Dominant same-chr mode **~1.9–2.5 kb** (2–4 kb MP); stacked plot `same_chr_tlen_0-5kb_bin20bp_stacked.png`; GMM deconv `same_chr_tlen_0-5kb_deconv_gmm.png`.
+
+**Run directories:**
+
+| Run | Path |
+|-----|------|
+| Scan debug chr2 | `/data/home/tusr1/01projects/vmap4/04runScreens/07run_cs_mp2018_scan_debug/` |
+| Proper-pair relabel | `/data/home/tusr1/01projects/vmap4/04runScreens/08run_cs_mp2018_properflag/` |
+| Input BAM | `/data/home/tusr1/01projects/vmap4/00data/02bam/bam1/ABD/CS_mp_2018_8X.bam` |
+
+Commands: **`doc/NF_CMD.md`** headings **`2026-06-21 — CS_mp_2018_8X FastCall3 scan_only`**, **`2026-06-22 — proper-pair relabel`**, **`2026-06-22 — TLEN QC`**.
+
+**Deliverables:**
+
+| Artefact | Location |
+|----------|----------|
+| Scan VCF / pos / log | `07run_cs_mp2018_scan_debug/chr1/gen/` |
+| Properflag BAM + `.bai` | `08run_cs_mp2018_properflag/CS_mp_2018_8X.properflag.bam` |
+| TLEN histograms, GMM deconv, stacked plot | `08run_cs_mp2018_properflag/tlen_qc/` |
+| Session-capture skill | `.cursor/skills/session-to-agent-docs/SKILL.md` |
+| taxaBamMap knowledge | `doc/project_knowledge/domain/taxa_bam_map.yaml` |
+
+**Next steps (open):** Update `ABD.taxaBamMap.txt` (or scan extract) to **`.properflag.bam`**; rerun chr2 scan; compare `./.` rate. Evaluate TIGER **`mpileup -A`** vs scheme B long-term. Optional: widen **1200–1800 bp** proper-pair window (~16% same-chr pairs in gap).
+
+---
+
+## 2026-06-23 — Sample cov heatmaps, GAM panels, hybrid IBS/missing merge
+
+**Goal:** Extend sample coverage QC plots (IBS × depth × missing rate), fix A/B/D GAM panel layout, invert missing-rate colormap (red = better), and add a cross-job hybrid heatmap combining `test_thin` missing with `test_common_thin` IBS.
+
+**Repo changes:**
+
+| Area | Change |
+|------|--------|
+| `src/python/infra/utils/graph.py` | `MISSING_RATE_CMAP = "coolwarm_r"`; panel helpers `plot_contourf_panels` / `plot_line_panels` use manual margins + dedicated colorbar axis; `_finalize_panel_figure` for compact suptitle spacing |
+| `src/python/genetics/genomics/sample/cov.py` | `heatmap_thin_miss_common_ibs()` merges thin `F_MISS` + common `IBS_Ref`; hybrid info TSV written under `info/` |
+| `environment_stats.yml` | `pygam` dependency (GAM surfaces) |
+
+**Validation:** Python regen from published info TSVs under data1 — **pass**. Coverage verified identical between `test_thin` and `test_common_thin` (max diff 0). Hybrid merge inner-joins all samples per subgenome (7675/7594/7738/8275 for A/B/D/Others). Commands: **`doc/NF_CMD.md`**, heading **`2026-06-23 — Sample cov hybrid heatmaps`**.
+
+**Deliverables (publish tree):**
+
+| Artefact | Location |
+|----------|----------|
+| Standard heatmaps + GAM (per mod) | `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/plots/{mod}.sample.cov.*` |
+| Hybrid logdepth heatmap | `…/test_thin/plots/{mod}.sample.cov.heatmap_thinmiss_commonibs.logdepth.png` |
+| Hybrid merged info | `…/test_thin/info/{mod}.sample.cov.hybrid_thinmiss_commonibs.info.tsv` |
+| A/B/D GAM panels | `…/plots/ABD.sample.cov.gam_*.panels.png` |
+| Registry | `doc/project_knowledge/domain/sample_cov_stats.yaml` |
+
+**Not in registry:** per-sample QC flags (low coverage / high missing lists) — analysis only; see chat or ad-hoc TSV if needed.
+
+**Next steps (open):** Wire hybrid heatmap into Nextflow `stats_sample.nf` if routine production output is desired; optional A/B/D hybrid panel figure.
+
+---
+
+## 2026-06-23 — SUPP — sample_cov_stats mod vs subgenome terminology fix
+
+**Goal:** Correct registry terminology after session capture conflated Nextflow **`mod`** (`test_thin`, `test_common_thin`) with **subgenome** partitions (`A`, `B`, `D`, `Others`).
+
+**Changes:** `doc/project_knowledge/domain/sample_cov_stats.yaml` — renamed path placeholders to `{mod}` / `{subgenome}`; added `terminology` block. Reverted `data_publish_tree.yaml` stats layout to `{mod}` (removed erroneous `{dataset}` / `stats_datasets`). Extended `session-to-agent-docs` skill with **preserve existing project knowledge** guardrail.
+
+**Validation:** YAML only; no pipeline rerun.
+
+---
+
+## 2026-06-23 — SUPP — Remove sample_cov_stats from project knowledge
+
+**Goal:** Align registry scope with user policy: project_knowledge records **resources and layout**, not routine pipeline outputs or analysis catalogues.
+
+**Changes:** Deleted `doc/project_knowledge/domain/sample_cov_stats.yaml`; removed manifest / `KNOWLEDGE_README` index row and `data_publish_tree` cross-ref. Tightened scope in `KNOWLEDGE_README.md`, `session-to-agent-docs` skill, and `workstation-core` guardrail 14 — stats PNG/TSV under `{job}/stats/{mod}/` are implied by publish layout, not per-task YAML.
+
+**Validation:** File removal + doc updates only.
+
+---
+
+## 2026-06-23 — sg_cov hybrid thinmiss + common IBS heatmaps
+
+**Intent:** Mirror genome-wide `*.sample.cov.heatmap_thinmiss_commonibs.logdepth.png` for **subgenome mosdepth** stats (`*.sample.sg_cov.*`): F_MISS from `test_thin`, IBS from `test_common_thin`, Y = log10(subgenome depth).
+
+**Repo:** `heatmap_thin_miss_common_ibs()` in `cov.py` already supported `sg_cov` axis labels; added `sample_hybrid_thinmiss_commonibs_heatmap` process in `stats_sample.nf` and tmp entry `subworkflows/tmp/sg_cov_hybrid_thinmiss_commonibs.nf`. Input collision (same basename from two stats trees) fixed by passing absolute paths as `val()` instead of staged `path()`.
+
+**Run:** cwd `/data/home/tusr1/01projects/vmap4/10stats.genome/20run_sg_cov_hybrid_thinmiss` — **pass** (4/4 mods). Log: `doc/NF_CMD.md` § `sg_cov_hybrid_thinmiss_commonibs.nf`.
+
+**Deliverables** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/`:
+
+| Artefact | Path pattern |
+|----------|----------------|
+| Hybrid heatmap | `plots/{A,B,D,Others}.sample.sg_cov.heatmap_thinmiss_commonibs.logdepth.png` |
+| Merged info | `info/{mod}.sample.sg_cov.hybrid_thinmiss_commonibs.info.tsv` |
+
+Example merge (mod A): 7675 samples, Pearson(Coverage, F_MISS) ≈ −0.57.
+
+---
+
+## 2026-06-23 — sg_cov GAM residual outlier diagnostics
+
+**Intent:** From te(IBS, log10 subgenome depth) GAM (pseudo-R² ≈ 0.98), flag the top 2% |residual| samples (observed − predicted missing), summarize enrichment by `Group`, and highlight outliers on log(depth)/IBS vs missing scatter plots.
+
+**Repo:** `_gam_missing_residual_outlier_analysis()` + `gam_residual_outlier_diagnostics_from_info()` in `cov.py` (also wired into routine `_gam_missing_ibs_depth_analysis`); process `sample_gam_residual_outlier_plots`; tmp entry `subworkflows/tmp/sg_cov_gam_residual.nf`.
+
+**Run:** cwd `/data/home/tusr1/01projects/vmap4/10stats.genome/21run_sg_cov_gam_residual` — **pass** (4/4). Log: `doc/NF_CMD.md` § `sg_cov_gam_residual.nf`.
+
+**Deliverables** (per subgenome under `test_plink/stats/test_thin/`):
+
+| Artefact | Pattern |
+|----------|---------|
+| Residual table | `info/{mod}.sample.sg_cov.gam_residual.info.tsv` |
+| Outlier group composition | `plots/{mod}.sample.sg_cov.gam_residual_outlier_group_frac.bar.png` |
+| Outlier rate by group | `plots/{mod}.sample.sg_cov.gam_residual_outlier_rate_by_group.bar.png` |
+| Highlighted scatters | `plots/{mod}.sample.sg_cov.gam_residual_outliers_vs_{logdepth,ibs}.png` |

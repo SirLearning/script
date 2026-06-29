@@ -1,0 +1,46 @@
+kind: workspace_registry
+id: vmap4_root
+title: vmap4 top-level task modules
+version: "1.0"
+root: /data/home/tusr1/01projects/vmap4
+
+modules:
+  - id: "00data"
+    role: Frozen project inputs (BAM, refs, taxaBamMap)
+    knowledge: domain/data_publish_tree.yaml
+
+  - id: "04runScreens"
+    role: FastCall scan / screen timing / CS_mp BAM QC runs
+    knowledge: workspace/vmap4_04runScreens.yaml
+
+  - id: "08stats.genome"
+    role: Legacy stats partial runs (assess, LD, wheat, MAC, chr compare)
+    status: historical
+    knowledge: workspace/vmap4_08stats_genome.yaml
+    note: New stats work uses 10stats.genome from NN=01.
+
+  - id: "10stats.genome"
+    role: Current PopDep / main_raw_popdepth module
+    knowledge: workspace/vmap4_10stats_genome.yaml
+
+  - id: "11aneuploidy"
+    role: Mosdepth aneuploidy benchmark scan (mosdepth_aneuploidy_scan.nf)
+    knowledge: workspace/vmap4_11aneuploidy.yaml
+
+  - id: "05reliable.lib"
+    role: Site MQ (abstract_mq_50_bams) and library QC
+
+  - id: "03chr1Run"
+    role: chr1-scale caller / production trials
+
+  - id: "02runScreens"
+    role: Early scan screen experiments
+
+  - id: "06transfer.watkins"
+    role: Watkins transfer pipeline work
+
+  - id: "07germ.check"
+    role: Germplasm check workflows
+
+  - id: "09dbone.build"
+    role: DBone database build (related project)

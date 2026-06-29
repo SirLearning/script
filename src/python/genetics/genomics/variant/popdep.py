@@ -534,8 +534,14 @@ def ana_popdep_mahalanobis(popdep_file, output_prefix, threshold_p_value=0.99):
     sets an outlier threshold, saves the result, and plots it.
     """
     print(f"[Info] Running Mahalanobis distance analysis on: {popdep_file}")
-    df = load_popdep_data(popdep_file)
-    if df is None: return
+    if str(popdep_file).endswith(".popdep.info.tsv"):
+        df = load_df_from_tsv_popdep_info(popdep_file)
+    else:
+        df = load_popdep_data(popdep_file)
+    if df is None:
+        return
+    if "Depth_Var" not in df.columns:
+        df["Depth_Var"] = df["Depth_SD"] ** 2
 
     # Filter out missing/zero variants to perform log transform safely
     df_valid = df[(df['Depth_Mean'] > 0) & (df['Depth_CV'] > 0)].copy()

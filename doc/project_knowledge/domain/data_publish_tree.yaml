@@ -1,0 +1,36 @@
+kind: domain_concept
+id: data_publish_tree
+title: vmap4 00data and data1 publish conventions
+version: "1.0"
+
+home_data:
+  root: /data/home/tusr1/01projects/vmap4/00data
+  folders:
+    - id: "02bam"
+      role: Source BAMs (e.g. bam1/ABD/*.bam)
+    - id: "03ref"
+      role: Reference FASTA and indexes
+    - id: "05taxaBamMap"
+      role: Canonical {pop}.taxaBamMap.txt files
+    - id: popdep_bench
+      role: Truncated BAM extracts for PopDep benchmarks
+
+publish_tree:
+  root: /data1/dazheng_tusr1/vmap4.VCF.v1
+  jobs:
+    - id: test_plink
+      role: Primary test job (test_thin, test_common_thin mods)
+      layout:
+        process: "{job}/process/{mod}/…"
+        stats: "{job}/stats/{mod}/{plots,info,thresholds,logs}/…"
+        assess: "{job}/assess/{mod}/…"
+        integrated: "{job}/integrated/{mod}/…"
+    - id: main_raw
+      role: Production-scale variant/process outputs
+      notable:
+        - process/main_raw/variant/chrNNN.popdep.txt.bgz
+        - process/main_raw/checkpoint/popdep_crosschr
+
+test_inputs:
+  path: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process
+  note: Use existing A_test.* / prepared plink2 prefixes; do not regenerate test data.

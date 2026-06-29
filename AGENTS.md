@@ -21,6 +21,8 @@ When instructions conflict, prefer the **most specific** rule for the path or ta
 | [`.cursor/rules/workstation-nextflow.mdc`](.cursor/rules/workstation-nextflow.mdc) | `workflow/**/*.nf`, `workflow/Genetics/docs/**` |
 | [`.cursor/rules/workstation-python.mdc`](.cursor/rules/workstation-python.mdc) | `src/python/**/*.py` |
 
+Project domain knowledge (taxaBamMap, vmap4 run registry) lives in [`doc/KNOWLEDGE_README.md`](doc/KNOWLEDGE_README.md) and [`doc/project_knowledge/`](doc/project_knowledge/) — not in rules.
+
 ## Agent skills
 
 ### Issue tracker
@@ -42,6 +44,7 @@ Single-context layout: `CONTEXT.md` and `doc/adr/` at repo root (created lazily 
 | Skill | When |
 |-------|------|
 | [todo-drive-close](.cursor/skills/todo-drive-close/SKILL.md) | Work through `doc/TODO.md`, close backlog items, or update progress / NF run logs |
+| [session-to-agent-docs](.cursor/skills/session-to-agent-docs/SKILL.md) | Summarize a conversation into rules, `TODO_PROGRESS_LOG`, and `NF_CMD` |
 
 ### [mattpocock/skills](https://github.com/mattpocock/skills) — setup (run once)
 
@@ -75,12 +78,13 @@ Single-context layout: `CONTEXT.md` and `doc/adr/` at repo root (created lazily 
 
 Add new skills under `.cursor/skills/` and link them here—keep `AGENTS.md` as an index, not the skill body.
 
-## Operator docs (human + agent context)
+## Operator docs (human archive + agent primary source)
 
-These are not agent rules, but agents should cite them when running or extending pipelines:
-
-- [`workflow/Genetics/docs/GENETICS_WORKFLOW.md`](workflow/Genetics/docs/GENETICS_WORKFLOW.md) — canonical Genetics Nextflow operator narrative
-- [`doc/TODO.md`](doc/TODO.md) — checklist; [`doc/TODO_PROGRESS_LOG.md`](doc/TODO_PROGRESS_LOG.md) — append-only engineering log; [`doc/NF_CMD.md`](doc/NF_CMD.md) — Nextflow command log
+| Doc | Agents |
+|-----|--------|
+| [`doc/KNOWLEDGE_README.md`](doc/KNOWLEDGE_README.md) + [`doc/project_knowledge/`](doc/project_knowledge/) | **Read first** for paths, runs, resource semantics |
+| [`workflow/Genetics/docs/GENETICS_WORKFLOW.md`](workflow/Genetics/docs/GENETICS_WORKFLOW.md) | **Read** for Nextflow operator narrative |
+| [`doc/NF_CMD.md`](doc/NF_CMD.md), [`doc/TODO_PROGRESS_LOG.md`](doc/TODO_PROGRESS_LOG.md), [`doc/TODO.md`](doc/TODO.md) | **Do not read** for task planning (archive only; often stale). **Append** when rules/skills require logging. Load only if the user explicitly asks for replay, TODO drive, or log archaeology. |
 
 ## Minimal agent behavior
 
@@ -89,4 +93,5 @@ These are not agent rules, but agents should cite them when running or extending
 - **Pipeline layout:** `modules/local/` (process libs); `subworkflows/local/{entry,plink,wheat,upstream,partial}/`; partial reruns via `partial_router.nf --partial_task`; ops FTP under `subworkflows/tmp/ops/`. No `workflow/Genetics/tmp/` or repo `resources/`.
 - **Conda:** `run` for Nextflow; `stats` for Python stats / pytest; immutable inputs under `/data1/dazheng_tusr1/vmap4.VCF.v1`.
 - Do not `git commit` unless the user explicitly asks.
+- **Never run destructive shell** (`rm`, `find -delete`, publish-tree cleanup, etc.) without the user's explicit same-message approval; see **workstation-core** guardrail 5.
 - Before editing [`.cursor/rules/`](.cursor/rules/) or [`.cursor/skills/`](.cursor/skills/), confirm the user wants agent policy changed—unless the user explicitly requests a policy update (as in “update AI config”).

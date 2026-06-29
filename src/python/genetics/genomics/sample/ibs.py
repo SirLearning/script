@@ -3,8 +3,7 @@ from genetics.germplasm.sample import anno_group
 import numpy as np
 import pandas as pd
 from infra.utils.io import save_df_to_tsv
-from infra.utils.graph import plot_clustermap, plot_regression_comparison, plot_scatter_with_thresholds, plot_slope_chart
-import seaborn as sns
+from infra.utils.graph import plot_clustermap, sample_group_palette, plot_regression_comparison, plot_scatter_with_thresholds, plot_slope_chart
 import sys
 
 def ana_ibs_matrix(
@@ -50,11 +49,7 @@ def ana_ibs_matrix(
             df_grouped = anno_group(df_ids, group_file)
             
             if df_grouped is not None and 'Group' in df_grouped.columns:
-                # Map Groups to Colors
-                unique_groups = df_grouped['Group'].unique()
-                palette = sns.color_palette("hsv", len(unique_groups) + 1)
-                color_map = dict(zip(unique_groups, palette))
-                color_map['Unknown'] = (0.5, 0.5, 0.5)
+                color_map = sample_group_palette()
                 
                 # Make sure order matches ids (which is index of matrix)
                 # reindex df_grouped to match ids order if merge shuffled it?

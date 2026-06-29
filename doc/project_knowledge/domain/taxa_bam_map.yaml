@@ -1,0 +1,49 @@
+kind: domain_concept
+id: taxa_bam_map
+title: taxaBamMap file policy
+version: "1.0"
+description: >
+  Maps taxa to BAM lists for FastCall / caller jobs. Files live under
+  ${home_dir}/00data/05taxaBamMap/ as {pop}.taxaBamMap.txt.
+
+canonical_path_pattern: "${home_dir}/00data/05taxaBamMap/{pop}.taxaBamMap.txt"
+populations: [A, B, D, ABD, ALL]
+
+entities:
+  - id: taxa_bam_map_file
+    role: Tab-separated map (Taxa, Coverage-Of-All-Bams, Bams)
+    naming: "{pop}.taxaBamMap.txt"
+  - id: job_concat_map
+    role: Merged subgenome map for a job (e.g. chr1.A.taxaBamMap.txt)
+    produced_by: concatTaxaBamMap in caller.nf
+
+policies:
+  - id: population_membership
+    rule: >
+      A sample belongs to the map for the population it was registered under,
+      not the subgenome reference used for scan.
+    do_not: Hand-author a one-line A.taxaBamMap.txt for ABD-registered samples.
+
+  - id: single_sample_debug
+    rule: >
+      Extract the taxon line from the canonical population file; build a
+      job-local map (header + one row).
+    example_script: >
+      04runScreens/07run_cs_mp2018_scan_debug/setup_taxaBamMap.sh
+
+  - id: job_concat_scope
+    rules:
+      - Production all/rebuild jobs include ABD in a_pop concat when configured;
+        those samples appear in merged *.A.taxaBamMap.txt outputs.
+      - Job chr1 with a_pop ["A"] only does not auto-include ABD-registered taxa;
+        use an explicit extract or widen a_pop for debug.
+
+examples:
+  - sample_id: CS_mp_2018_8X
+    canonical_file: ABD.taxaBamMap.txt
+    not_in: A.taxaBamMap.txt
+    note: Valid to scan A-group chr with A-subgenome ref; map file is still ABD.
+
+code_refs:
+  - workflow/Genetics/modules/local/genotype/calling/caller.nf
+  - workflow/Genetics/modules/local/genotype/calling/caller_prep.nf

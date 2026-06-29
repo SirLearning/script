@@ -52,6 +52,7 @@ dependencies:
       - hail   # Conda environment pip fine-grained installation
       - cookiecutter
       - upsetplot
+      - pygam
       - -e .   # Editable install of your own python_script package
 
 # 1. can be created with:

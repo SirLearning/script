@@ -1,0 +1,59 @@
+kind: ontology
+id: taxa_bam_map
+title: taxaBamMap files
+updated: "2026-06-22"
+description: >-
+  BAM list maps for FastCall / PopDep / caller jobs. Each taxon row lists one or
+  more BAM paths and coverage metadata. Population membership is fixed at
+  registration time — not inferred from subgenome scan target.
+
+entities:
+  - id: TaxaBamMapFile
+    type: data_asset
+    path_pattern: "${home_dir}/00data/05taxaBamMap/{pop}.taxaBamMap.txt"
+    pops: [A, B, D, ABD, ALL]
+    columns: [Taxa, Coverage-Of-All-Bams, Bams]
+    notes: Tab-separated; Bams column may list multiple paths per taxon.
+
+  - id: JobLocalTaxaBamMap
+    type: data_asset
+    path_pattern: "${run_cwd}/{job}.{subgenome}.taxaBamMap.txt"
+    notes: Concatenated per subgenome by caller from selected pop files.
+
+relations:
+  - subject: Sample
+    predicate: registered_in
+    object: TaxaBamMapFile
+    rule: Use the map for the population the sample was registered under, not the subgenome being scanned.
+
+policies:
+  - id: no_hand_authored_wrong_pop
+    statement: Do not hand-author a one-line A.taxaBamMap.txt for ABD-registered samples.
+
+  - id: single_sample_debug_extract
+    statement: >-
+      Extract the taxon line from the canonical population file under
+      00data/05taxaBamMap/, then build a job-local map (header + one row).
+
+  - id: job_chr1_a_pop_only
+    statement: >-
+      Job chr1 with a_pop ["A"] only does not auto-include ABD-registered taxa.
+      Widen a_pop or use an explicit extract for debug.
+
+  - id: production_all_rebuild_abd
+    statement: >-
+      Production all / rebuild jobs include ABD in a_pop concat when configured;
+      those samples appear in merged *.A.taxaBamMap.txt outputs.
+
+implementation:
+  caller_module: workflow/Genetics/modules/local/genotype/calling/caller.nf
+  concat_process: workflow/Genetics/modules/local/genotype/calling/caller_prep.nf
+  gen_tbm_false: Reads existing ${home_dir}/00data/05taxaBamMap/${pop}.taxaBamMap.txt
+  job_config_fields: [a_pop, b_pop, d_pop]
+
+examples:
+  - sample_id: CS_mp_2018_8X
+    correct_file: ABD.taxaBamMap.txt
+    incorrect_file: A.taxaBamMap.txt
+    canonical_path: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/ABD.taxaBamMap.txt
+    debug_helper: /data/home/tusr1/01projects/vmap4/04runScreens/07run_cs_mp2018_scan_debug/setup_taxaBamMap.sh

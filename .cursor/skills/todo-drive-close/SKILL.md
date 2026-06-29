@@ -12,7 +12,9 @@ description: >-
 
 # TODO drive — close checklist items
 
-Use this skill when executing a **work session** whose goal is to pick up **unfinished** bullets in `doc/TODO.md`, ship code or pipeline changes, validate, and **record outcomes** in the repo logs.
+Use this skill when the user **explicitly** asks to work through the TODO checklist, close backlog items, or mentions TODO drive / progress log / NF command log.
+
+**Do not** open `doc/TODO.md`, `doc/TODO_PROGRESS_LOG.md`, or `doc/NF_CMD.md` for general task planning — use **`doc/KNOWLEDGE_README.md`** and **`doc/project_knowledge/`** instead (workstation-core guardrail 14).
 
 ## Non-negotiables (this repo)
 
