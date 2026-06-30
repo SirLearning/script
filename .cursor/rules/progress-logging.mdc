@@ -1,0 +1,105 @@
+---
+description: Progress logging — layout, daily files, NF replay blocks, when to write
+alwaysApply: true
+---
+
+# Progress logging
+
+Task planning lives **outside the repo** (GitHub Issues, vault, or other trackers). The repo keeps a single **daily engineering trail** under `doc/progress/` — narrative **and** command replay together.
+
+## Layout (`doc/`)
+
+```text
+doc/
+  PROGRESS_README.md       # Index + how to log; no session narrative
+  progress/
+    YYYY-MM-DD.md          # That day: narrative sections + NF replay blocks
+  KNOWLEDGE_README.md      # Index to structured project_knowledge/
+  project_knowledge/       # YAML registry (paths, runs, domain policies)
+```
+
+| Content | Belongs in |
+|---------|------------|
+| Engineering narrative, validation, blockers | `doc/progress/YYYY-MM-DD.md` — `##` sections |
+| Verbatim `nextflow run` / long shell | Same daily file — `#### NF replay` blocks |
+| Run-folder inventory, BAM/map paths, publish layout | `doc/project_knowledge/*.yaml` |
+| AI behaviour, conda/screen policy | `.cursor/rules/` |
+| Task backlog | **Outside repo** (GitHub Issues, vault) |
+
+`PROGRESS_README.md` uses Obsidian wikilinks: `[[progress/2026-06-30]]` → `doc/progress/2026-06-30.md`.
+
+**Deprecated (do not recreate):** `doc/TODO.md`, `doc/TODO_PROGRESS_LOG.md`, monolithic **`doc/NF_CMD.md`** (migrated into daily progress). Historical daily files may mention old paths — leave as audit trail.
+
+## When to write (mandatory trigger: any progress)
+
+Append to **today's** `doc/progress/YYYY-MM-DD.md` whenever the session produces progress — **not** only when code merges or issues close. Record:
+
+- Code, migration, config, or rule changes
+- Builds, tests, smoke runs, lint (`pass` / `fail` / `skipped`)
+- **Investigation, diagnosis, conclusions** (even without code changes)
+- Blockers, rollbacks, failed attempts
+- Decisions or partial steps worth an audit trail
+- **Nextflow / long shell runs** — include an **`#### NF replay`** block in the **same** daily file (same `##` section as the narrative when both exist)
+
+## Narrative format
+
+Each session slice gets one section:
+
+```markdown
+## YYYY-MM-DD — Short English title
+
+- Plain-language bullets: intent, files touched, outcomes, follow-ups
+```
+
+Rules:
+
+- **English** for all versioned text
+- **Append only** — never delete or rewrite existing entries
+- **No** mandatory field labels (`Date:`, `Files Changed:`, `Summary:` tables)
+- **No** opaque IDs (`OPS-NF-001`, checklist section numbers)
+- Supplements: `## YYYY-MM-DD — SUPP — topic`
+
+## NF replay format (command blocks)
+
+Use a **`#### NF replay`** subsection — the special marker for replayable commands. Wrap with HTML comments so nightly sync can extract blocks:
+
+```markdown
+## YYYY-MM-DD — PopDep chr36 smoke
+
+- Goal: validate partial_router popdepth on chr36 …
+- Outcome: exit 0, 12 succeeded
+
+<!-- nf-replay -->
+#### NF replay — main_raw_popdepth chr36
+
+Working directory: `/data/home/tusr1/01projects/vmap4/10stats.genome/03run_…`. Outcome: exit 0.
+
+```bash
+source ~/.bashrc && conda activate run && \
+screen -dmS popdep bash -lc 'source ~/.bashrc && conda activate run && cd … && nextflow run …'
+```
+<!-- /nf-replay -->
+```
+
+- One `#### NF replay` per distinct run attempt (or tightly related retry)
+- Optional one-line **cwd / outcome** prose before the fenced `bash` block
+- **Full** command lines inside the fence — no “see elsewhere”
+- For run-only sessions (no code change), a standalone `## …` section containing only `#### NF replay` is fine
+- Migrated history may use a trailing `## YYYY-MM-DD — NF replays` section; new entries should prefer inline blocks under the narrative `##` section
+
+## New daily file
+
+When creating `doc/progress/YYYY-MM-DD.md` for the first time:
+
+1. Start with `# Progress — YYYY-MM-DD`
+2. Add section(s) below
+3. Prepend `[[progress/YYYY-MM-DD]]` to **Recent entries** in **`doc/PROGRESS_README.md`**
+4. Keep roughly **14 days** in the index; drop older links (files stay on disk)
+
+## Read policy
+
+Agents **do not read** `doc/progress/` or `doc/PROGRESS_README.md` for task planning or “where is X?” facts — use **`doc/KNOWLEDGE_README.md`** and **`doc/project_knowledge/`** (workstation-core guardrail 14). Load progress logs only when the user explicitly asks for log archaeology or command replay.
+
+## Project knowledge
+
+Still update **`doc/project_knowledge/`** when registering new run folders or canonical resource paths — same session as the run when possible (see **session-to-agent-docs** skill). Use `nf_cmd_ref: doc/progress/YYYY-MM-DD.md — NF replay: <slug>` in YAML when a run is registered.

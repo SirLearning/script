@@ -2,15 +2,15 @@
 /*
  * Popdep QC stats from existing *.popdep.info.tsv + PLINK2 vmiss tables.
  *
- * Runs variant_popdep_missing_reg and variant_popdep_mahalanobis; publishes under
- *   {output_dir}/{job}/stats/{mod}/{info,plots,logs}
+ * Runs extended QC plots (depth + relative depth), and Mahalanobis (depth + relative depth).
+ * Publishes under {output_dir}/{job}/stats/{mod}/{info,plots,logs}
  *
- * Prerequisite: popdep_annotate.nf (or full processor) has written
+ * Prerequisite: popdep_annotate.nf has written
  *   {output_dir}/{job}/process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv
  *
  * Launch from a vmap4 run folder. Example:
- *   mkdir -p /data/home/tusr1/01projects/vmap4/10stats.genome/34run_popdep_n500_stats_thin/run_logs
- *   cd /data/home/tusr1/01projects/vmap4/10stats.genome/34run_popdep_n500_stats_thin
+ *   mkdir -p /data/home/tusr1/01projects/vmap4/10stats.genome/40run_popdep_n500_stats_thin/run_logs
+ *   cd /data/home/tusr1/01projects/vmap4/10stats.genome/40run_popdep_n500_stats_thin
  *   nextflow run .../subworkflows/tmp/popdep_stats.nf -c .../nextflow.config \
  *     --home_dir /data/home/tusr1/01projects/vmap4 \
  *     --user_dir /data/home/tusr1 \
@@ -23,7 +23,7 @@
 nextflow.enable.dsl=2
 
 include {
-    variant_popdep_missing_reg
+    variant_popdep_qc_plots
     variant_popdep_mahalanobis
 } from '../../modules/local/genotype/stats/stats_variant.nf'
 
@@ -55,6 +55,6 @@ workflow {
         }
     )
 
-    variant_popdep_missing_reg(ch_popdep.combine(ch_vmis, by: [0, 1]))
+    variant_popdep_qc_plots(ch_popdep.combine(ch_vmis, by: [0, 1]))
     variant_popdep_mahalanobis(ch_popdep)
 }

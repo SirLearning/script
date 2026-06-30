@@ -16,7 +16,7 @@ This directory holds the **Genotype** branch of the pipeline: PLINK/PLINK2 prepr
 | `subworkflows/local/entry/partial_router.nf` | Partial reruns via `--partial_task` (assess, stats redraw, wheat-from-plink). |
 | `nextflow.config` | Default `params`, resource labels, conda hints. Pass with **absolute** `-c` when launching auxiliary scripts from arbitrary cwd. |
 
-Typical invocation shape (full examples and chronological runs: **`doc/NF_CMD.md`**):
+Typical invocation shape (full examples in **`doc/progress/`** — search `#### NF replay`):
 
 ```text
 nextflow run <path-to>/workflow/Genetics/main.nf \
@@ -44,7 +44,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 
 ### Included but not routed (known gap)
 
-`analysis_extensions.nf` collects router-gap modules (`database`, `kinship`, `ps`, `GWAS`, `HAIL`) for future `main.nf` branches — they are **not** loaded by the active PLINK router. See **`doc/TODO.md`** §2 (“Router gap”).
+`analysis_extensions.nf` collects router-gap modules (`database`, `kinship`, `ps`, `GWAS`, `HAIL`) for future `main.nf` branches — they are **not** loaded by the active PLINK router. Track router-gap work in GitHub Issues.
 
 ### Process libraries (`modules/local/`)
 
@@ -92,7 +92,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 | `genotype/calling/` | `calling/caller.nf` | FastCall3 workflows (`run_FastCall3`, `load_lib_files`) + `caller_prep.nf` / `caller_fastcall.nf` |
 | `genotype/align/` | `align/align.nf` | `RUN_ALIGN_USB_TRANSFER` workflow; BAM USB transfer + MD5 (`align_transfer.nf`, `align_md5.nf`); BWA-MEM2 (`align_bwa.nf`) |
 
-**Hail library** (`genotype/hail/`) — included as `HAIL` workflow (router gap; see §2 TODO):
+**Hail library** (`genotype/hail/`) — included as `HAIL` workflow (router gap; not wired in `main.nf`):
 
 | File | Contents |
 | --- | --- |
@@ -126,7 +126,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 
 | Parameter | When to set | Notes |
 | --- | --- | --- |
-| `process_dir` | Reuse prebuilt per-chromosome or merged test pfiles | When merged `A_test.plink2` … `Others_test.plink2` exist under `{process_dir}`, test processors **skip** thin/merge and rebuild basic info + LD only. See frozen test paths in **`doc/TODO.md`** §2. |
+| `process_dir` | Reuse prebuilt per-chromosome or merged test pfiles | When merged `A_test.plink2` … `Others_test.plink2` exist under `{process_dir}`, test processors **skip** thin/merge and rebuild basic info + LD only. See **`doc/project_knowledge/domain/data_publish_tree.yaml`** and frozen paths under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process`. |
 | `mq_dir` | Site MQ reference (partial only) | Frozen **`{mq_dir}/reference/chrNNN.site_mq.{ref,calls}.*`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams`. Built once via **`--partial_task abstract_mq_50_bams --job test_plink`**; skipped when refs exist (`mq_force_rerun=false`). Downstream Python: `genetics.genomics.variant.mq.site_mq_ref_path()`. |
 | `popdep_dir` | Population depth reference (partial + test annotate) | Frozen **`{popdep_dir}/variant/chrNNN.popdep.txt.bgz`** (+ `.tbi`) under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw`. Legacy plain `*.popdep.txt` is still accepted for reuse/skip. Built once via **`--partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink`** (default **`PopDepCrossChr`** in **`TIGER_PD_20260619.jar`**: one pass over **`all.ALL.taxaBamMap.txt`** (FastCall-style 3-column map; per-chr **`all.{A,B,D,ALL}.taxaBamMap.txt`** for PopDepFull); length file **`Chr\\tLength\\tnTaxa`**; **`popdep_crosschr_threads`** default 16, **`popdep_crosschr_memory_gb`** default **640** (relativeDepth in 20260619); **`popdep_tiger_memory_gb`** default **640** for PopDepFull; **`popdep_crosschr_taxa_order`** (`interleave` \| `shuffle` \| `sorted`, TIGER `-o`); optional **`popdep_crosschr_checkpoint_dir`** + **`popdep_crosschr_checkpoint_interval`** (TIGER `-k` / `-ci`, resume with same paths); override **`--popdep_tiger_app PopDepFull`** for per-chr scans); skipped when refs exist (`popdep_force_rerun=false`). Test modes extract **`process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv`** via `annotate_subgenome_variant_popdep` (tabix lookup). Python: `genetics.genomics.variant.popdep.popdep_chr_ref_path()`. Bench: **`popdep_taxa_bam_file`**, **`popdep_chr_list`**, **`popdep_tiger_max_forks`** — see **`10stats.genome/10run_popdep_head2head/`**. |
 | `camp` | **`test_camp` only** | Path to cohort map TSV (e.g. `camp_vmap4_map.tsv`). Required for that mod. |
@@ -206,7 +206,7 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `main_raw_popdepth` | Full-chr TIGER popdepth → `{popdep_dir}/variant/chrNNN.popdep.txt.bgz` (+ tabix `.tbi`). |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` on existing merged test pfiles (`wheat_integrated_mod` required). |
 
-Historic runs logged under `doc/NF_CMD.md` may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.
+Historic runs in **`doc/progress/`** may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.
 
 ---
 
@@ -261,7 +261,7 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/main.nf \
   --wheat_table_input /path/to/snp_summary.tsv
 ```
 
-Log production runs in **`doc/NF_CMD.md`** per repo convention.
+Log production runs in today's **`doc/progress/YYYY-MM-DD.md`** per **`progress-logging.mdc`**.
 
 ---
 
@@ -284,14 +284,14 @@ Log production runs in **`doc/NF_CMD.md`** per repo convention.
    - Full router: `…/workflow/Genetics/main.nf`
    - Partial: `…/subworkflows/local/entry/partial_router.nf --partial_task <name>`
    - Always: `-c /data/home/tusr1/git/script/workflow/Genetics/nextflow.config`
-5. Append **cwd + full command** to **`doc/NF_CMD.md`**.
+5. Append **cwd + full command** to today's **`doc/progress/YYYY-MM-DD.md`** (`#### NF replay`).
 
 **Conventions**
 
 - **Do not reuse** an old run folder for a fresh attempt — create the next `NNrun_…`.
 - **Conda `run`** for Nextflow and **`screen`** (use `screen` from env `run` via `conda activate run`; not system `/usr/bin/screen`); **`stats`** for Python stats processes inside NF.
 - **`screen`** for long production runs (`conda activate run` before `screen`; re-activate inside the session); `-preview` / small debug exempt.
-- **Read-only inputs:** `/data1/dazheng_tusr1/vmap4.VCF.v1` (see **`doc/TODO.md`** for prepared `test_plink/process` paths).
+- **Read-only inputs:** `/data1/dazheng_tusr1/vmap4.VCF.v1` (prepared `test_plink/process` paths in **`doc/KNOWLEDGE_README.md`** / **`doc/project_knowledge/`**).
 - **Ephemeral preview dirs** (`00nf_preview*`) under `vmap4/` are OK for syntax smoke tests.
 
 **Partial-task → typical slug examples**
@@ -316,6 +316,7 @@ Processes invoke **`src/python`**, **`src/r`**, and **`src/java`** as configured
 
 ## Further reading
 
-- **`doc/NF_CMD.md`** — chronological full command lines and cwd notes.
-- **`doc/TODO.md`** — checklist, router gaps, frozen paths.
+- **`doc/progress/`** — daily engineering narrative and **`#### NF replay`** command blocks.
+- **`doc/PROGRESS_README.md`** — index to recent daily files.
+- **`doc/KNOWLEDGE_README.md`** — structured project registry (paths, runs, layout).
 - **`.cursor/rules/workstation-*.mdc`** — workstation and pipeline policy.

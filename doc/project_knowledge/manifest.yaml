@@ -36,7 +36,7 @@ workspace:
 
 # Append-only operational logs (not YAML; cross-linked from workspace entries)
 operational_logs:
-  - path: doc/NF_CMD.md
-    role: Full replay commands for Nextflow and long shell jobs
-  - path: doc/TODO_PROGRESS_LOG.md
-    role: Engineering narrative, pass/fail, rationale
+  - path: doc/PROGRESS_README.md
+    role: Index to daily progress files under doc/progress/
+  - path: doc/progress/
+    role: Append-only engineering narrative and NF replay blocks by calendar day

@@ -48,7 +48,7 @@ workflow {
             Wheat integrated mods (no VCF channel):
               - params.mod starting with wheat_ (e.g. wheat_pca_tsne, wheat_gwas)
 
-            See workflow/Genetics/docs/GENETICS_WORKFLOW.md and doc/NF_CMD.md for examples.
+            See workflow/Genetics/docs/GENETICS_WORKFLOW.md and doc/PROGRESS_README.md for run examples and replay log.
             """.stripIndent()
             exit 1
         }

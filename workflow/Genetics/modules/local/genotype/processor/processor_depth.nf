@@ -170,9 +170,9 @@ process popdep_tiger_gz_to_bgzip_tabix {
     """
     set -euo pipefail
 
-    echo "Converting ${id} TIGER gzip to BGZF + tabix (Chrom, Position columns)..."
+    echo "Converting ${id} TIGER gzip to BGZF + tabix (preserve TIGER header; prepend Chrom)..."
     gunzip -c ${gz} | awk -v chr="${chr}" '
-        NR == 1 { print "Chrom\\tPosition\\tDepth_Mean\\tDepth_SD"; next }
+        NR == 1 { print "Chrom\\t" \$0; next }
         { print chr "\\t" \$0 }
     ' | ${bgzip} -c -@ ${task.cpus} > ${id}.popdep.txt.bgz
     ${tabix} -S 1 -s 1 -b 2 -e 2 -f ${id}.popdep.txt.bgz

@@ -3,7 +3,7 @@ nextflow.enable.dsl=2
 /*
  * Router-gap analysis modules (included in plink_genotype_modes historically).
  * Not wired from main.nf yet — import here for future params.mod branches.
- * See doc/TODO.md §2 "Router gap".
+ * See GitHub Issues / partial_router backlog for router-gap tasks.
  */
 
 include { database as DATABASE } from '../../../modules/local/genotype/database/database.nf'

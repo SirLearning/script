@@ -46,8 +46,8 @@ def helpMessage() {
     Examples:
         nextflow run main.nf --home_dir /path/to/home --src_dir /path/to/src --mod test_thin --job myjob
 
-    Chronological Nextflow command log (append each new run at the end):
-        See repo file doc/NF_CMD.md.
+    Nextflow command replay (append each new run to today's daily file):
+        See doc/PROGRESS_README.md and doc/progress/YYYY-MM-DD.md (#### NF replay).
     """.stripIndent()
 }
 

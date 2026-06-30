@@ -131,16 +131,77 @@ def ensure_popdep_ref_tabix(chr_id: str, popdep_dir: str) -> Path:
         return bgz
 
 
+def _popdep_grid_column_map(header_cols: list[str]) -> dict[str, int | None]:
+    """Map TIGER / BGZF popdepth header names to column indices."""
+    clean = [c.replace("#", "") if isinstance(c, str) else c for c in header_cols]
+
+    def _idx(primary: str, aliases: list[str]) -> int | None:
+        for name in [primary, *aliases]:
+            if name in clean:
+                return clean.index(name)
+        return None
+
+    return {
+        "pos": _idx("Position", []),
+        "mean": _idx("Depth_Mean", []),
+        "sd": _idx("Depth_SD", []),
+        "rel_mean": _idx("RelativeDepth_Mean", ["RelDepth_Mean"]),
+        "rel_sd": _idx("RelativeDepth_SD", ["RelDepth_SD"]),
+    }
+
+
+def _parse_popdep_grid_row(
+    parts: list[str],
+    col_map: dict[str, int | None],
+) -> tuple[int, float, float, float, float] | None:
+    """Parse one popdepth grid row into position and absolute/relative depth stats."""
+    pos_i = col_map.get("pos")
+    mean_i = col_map.get("mean")
+    sd_i = col_map.get("sd")
+    if pos_i is None or mean_i is None or sd_i is None:
+        return None
+    if len(parts) <= max(pos_i, mean_i, sd_i):
+        return None
+
+    rel_mean = np.nan
+    rel_sd = np.nan
+    rel_mean_i = col_map.get("rel_mean")
+    rel_sd_i = col_map.get("rel_sd")
+    if rel_mean_i is not None and rel_sd_i is not None and len(parts) > rel_sd_i:
+        rel_mean = float(parts[rel_mean_i])
+        rel_sd = float(parts[rel_sd_i])
+
+    return (
+        int(parts[pos_i]),
+        float(parts[mean_i]),
+        float(parts[sd_i]),
+        rel_mean,
+        rel_sd,
+    )
+
+
+def _default_bgz_column_map() -> dict[str, int | None]:
+    """Default indices after ``Chrom`` was prepended to the TIGER header."""
+    return {
+        "pos": 1,
+        "mean": 2,
+        "sd": 3,
+        "rel_mean": 4,
+        "rel_sd": 5,
+    }
+
+
 def _tabix_popdep_lookup(
     chrom: int,
     positions: list[int],
     bgz_path: Path,
-) -> dict[int, tuple[float, float]]:
-    """Batch tabix fetch for sorted variant positions on one chromosome grid."""
+) -> dict[int, tuple[float, float, float, float]]:
+    """Batch tabix fetch: (Depth_Mean, Depth_SD, RelativeDepth_Mean, RelativeDepth_SD)."""
     if not positions:
         return {}
 
-    result: dict[int, tuple[float, float]] = {}
+    col_map = _default_bgz_column_map()
+    result: dict[int, tuple[float, float, float, float]] = {}
     regions_file = tempfile.NamedTemporaryFile(
         mode="w",
         suffix=".popdep.regions.tsv",
@@ -166,12 +227,11 @@ def _tabix_popdep_lookup(
         for line in proc.stdout.splitlines():
             if not line.strip():
                 continue
-            parts = line.rstrip().split("\t")
-            if len(parts) >= 4:
-                pos_s, mean_s, sd_s = parts[1], parts[2], parts[3]
-            else:
-                pos_s, mean_s, sd_s = parts[0], parts[1], parts[2]
-            result[int(pos_s)] = (float(mean_s), float(sd_s))
+            parsed = _parse_popdep_grid_row(line.rstrip().split("\t"), col_map)
+            if parsed is None:
+                continue
+            pos, mean, sd, rel_mean, rel_sd = parsed
+            result[pos] = (mean, sd, rel_mean, rel_sd)
     finally:
         os.unlink(regions_file.name)
 
@@ -181,13 +241,13 @@ def _tabix_popdep_lookup(
 def _stream_popdep_lookup(
     popdep_path: str,
     wanted_positions: list[int],
-) -> dict[int, tuple[float, float]]:
+) -> dict[int, tuple[float, float, float, float]]:
     """Fallback merge-join when tabix sidecar is unavailable."""
     if not wanted_positions:
         return {}
     wanted_set = set(wanted_positions)
     max_pos = max(wanted_positions)
-    result: dict[int, tuple[float, float]] = {}
+    result: dict[int, tuple[float, float, float, float]] = {}
     if not os.path.isfile(popdep_path):
         print(f"[Warn] Popdep reference missing: {popdep_path}")
         return result
@@ -198,16 +258,14 @@ def _stream_popdep_lookup(
         if not header:
             return result
         header_cols = header.rstrip("\n").split("\t")
-        pos_idx = 1 if header_cols and header_cols[0] == "Chrom" else 0
-        mean_idx = pos_idx + 1
-        sd_idx = pos_idx + 2
+        col_map = _popdep_grid_column_map(header_cols)
         for line in handle:
-            parts = line.rstrip("\n").split("\t")
-            if len(parts) <= sd_idx:
+            parsed = _parse_popdep_grid_row(line.rstrip("\n").split("\t"), col_map)
+            if parsed is None:
                 continue
-            pos = int(parts[pos_idx])
+            pos, mean, sd, rel_mean, rel_sd = parsed
             if pos in wanted_set:
-                result[pos] = (float(parts[mean_idx]), float(parts[sd_idx]))
+                result[pos] = (mean, sd, rel_mean, rel_sd)
             if pos >= max_pos and len(result) == len(wanted_set):
                 break
     return result
@@ -218,7 +276,17 @@ def save_variant_popdep_info(df: pd.DataFrame, output_path: str) -> None:
     out = df.copy()
     if "CHROM" in out.columns and "#CHROM" not in out.columns:
         out = out.rename(columns={"CHROM": "#CHROM"})
-    cols = ["#CHROM", "ID", "POS", "Depth_Mean", "Depth_SD", "Depth_CV"]
+    cols = [
+        "#CHROM",
+        "ID",
+        "POS",
+        "Depth_Mean",
+        "Depth_SD",
+        "Depth_CV",
+        "RelativeDepth_Mean",
+        "RelativeDepth_SD",
+        "RelativeDepth_CV",
+    ]
     out = out[[c for c in cols if c in out.columns]]
     save_df_to_tsv(out, output_path)
 
@@ -245,10 +313,15 @@ def _lookup_popdep_for_chromosome(
         depth_mean = np.nan
         depth_sd = np.nan
         depth_cv = np.nan
+        rel_mean = np.nan
+        rel_sd = np.nan
+        rel_cv = np.nan
         if depth is not None:
-            depth_mean, depth_sd = depth
+            depth_mean, depth_sd, rel_mean, rel_sd = depth
             if depth_mean > 0:
                 depth_cv = depth_sd / depth_mean
+            if rel_mean > 0:
+                rel_cv = rel_sd / rel_mean
         rows.append(
             {
                 "CHROM": chrom,
@@ -257,6 +330,9 @@ def _lookup_popdep_for_chromosome(
                 "Depth_Mean": depth_mean,
                 "Depth_SD": depth_sd,
                 "Depth_CV": depth_cv,
+                "RelativeDepth_Mean": rel_mean,
+                "RelativeDepth_SD": rel_sd,
+                "RelativeDepth_CV": rel_cv,
             }
         )
     return rows
@@ -280,7 +356,8 @@ def annotate_variants_popdep_from_pvar(
 
     Uses BGZF+tabix on ``*.popdep.txt.bgz`` when available (built at freeze time or once from legacy
     ``*.popdep.txt`` / ``*.popdep.txt.gz``). Writes ``{subgenome}.popdep.info.tsv`` with columns
-    ``#CHROM, ID, POS, Depth_Mean, Depth_SD, Depth_CV`` (NaN when reference depth is missing).
+    ``#CHROM, ID, POS, Depth_Mean, Depth_SD, Depth_CV, RelativeDepth_Mean, RelativeDepth_SD, RelativeDepth_CV``
+    (NaN when reference depth is missing).
     """
     print(f"[Info] Annotating popdep from pvar={pvar_path} popdep_dir={popdep_dir} tabix={use_tabix}")
     by_chrom: dict[int, list[tuple[int, str]]] = defaultdict(list)
@@ -384,12 +461,23 @@ def load_df_from_tsv_popdep_info(filepath: str) -> pd.DataFrame | None:
     if not all(c in df.columns for c in req_cols):
         print(f"[Error] Missing columns in popdep info. Required: {req_cols}")
         return None
+    if "Depth_Var" not in df.columns:
+        df["Depth_Var"] = df["Depth_SD"] ** 2
     if "Depth_CV" not in df.columns:
         df["Depth_CV"] = np.where(
             df["Depth_Mean"] > 0,
             df["Depth_SD"] / df["Depth_Mean"],
             np.nan,
         )
+    if "RelativeDepth_Mean" in df.columns and "RelativeDepth_SD" in df.columns:
+        if "RelativeDepth_Var" not in df.columns:
+            df["RelativeDepth_Var"] = df["RelativeDepth_SD"] ** 2
+        if "RelativeDepth_CV" not in df.columns:
+            df["RelativeDepth_CV"] = np.where(
+                df["RelativeDepth_Mean"] > 0,
+                df["RelativeDepth_SD"] / df["RelativeDepth_Mean"],
+                np.nan,
+            )
     return df
 
 # ==================================================================================
@@ -516,43 +604,74 @@ def ana_popdep_missing_reg(
     for x_col, x_label, is_log in metrics:
         y_col = 'Log_F_MISS' if is_log else 'F_MISS'
         y_label = 'Log Missing Rate' if is_log else 'Missing Rate'
-        
+
+        plot_df = merged
+        y_lim = None
+        if y_col == 'F_MISS':
+            y_lim = (0.0, 1.0)
+        elif y_col == 'Log_F_MISS':
+            plot_df = merged[(merged['F_MISS'] > 0) & (merged['F_MISS'] < 1)].copy()
+            if len(plot_df) < 10:
+                print(f"[Warning] Not enough F_MISS in (0,1) for log-scale plot: {x_col}")
+                continue
+            y_lim = (None, 0.0)
+
         plot_regression_comparison(
-            merged, x_col, y_col, 
-            x_label=x_label, y_label=y_label, 
+            plot_df, x_col, y_col,
+            x_label=x_label, y_label=y_label,
             filename=f"{output_prefix}.reg_{y_col}_vs_{x_col}.png",
-            title=f"{y_label} vs {x_label}"
+            title=f"{y_label} vs {x_label}",
+            y_lim=y_lim,
         )
 
 # ==================================================================================
 # Analysis 3: Mahalanobis Distance for Variant Depth Distribution
 # ==================================================================================
 
-def ana_popdep_mahalanobis(popdep_file, output_prefix, threshold_p_value=0.99):
+def ana_popdep_mahalanobis(
+    popdep_file,
+    output_prefix,
+    threshold_p_value=0.99,
+    relative_depth=False,
+):
     """
-    Calculates Mahalanobis distance for variant depth distribution (Log_Depth_Mean vs Log_Depth_CV),
-    sets an outlier threshold, saves the result, and plots it.
+    Mahalanobis outlier detection on log(mean) vs log(CV).
+
+    When ``relative_depth=True``, uses RelativeDepth_Mean / RelativeDepth_CV columns.
     """
-    print(f"[Info] Running Mahalanobis distance analysis on: {popdep_file}")
+    metric_tag = "reldepth" if relative_depth else "depth"
+    mean_col = "RelativeDepth_Mean" if relative_depth else "Depth_Mean"
+    cv_col = "RelativeDepth_CV" if relative_depth else "Depth_CV"
+    sd_col = "RelativeDepth_SD" if relative_depth else "Depth_SD"
+    log_mean_col = f"Log_{mean_col}"
+    log_cv_col = f"Log_{cv_col}"
+
+    print(
+        f"[Info] Running Mahalanobis ({metric_tag}) on: {popdep_file}"
+    )
     if str(popdep_file).endswith(".popdep.info.tsv"):
         df = load_df_from_tsv_popdep_info(popdep_file)
     else:
         df = load_popdep_data(popdep_file)
     if df is None:
         return
+    if relative_depth and mean_col not in df.columns:
+        print(f"[Warning] Skipping relative-depth Mahalanobis; missing {mean_col}")
+        return
     if "Depth_Var" not in df.columns:
         df["Depth_Var"] = df["Depth_SD"] ** 2
+    if relative_depth and "RelativeDepth_Var" not in df.columns and sd_col in df.columns:
+        df["RelativeDepth_Var"] = df[sd_col] ** 2
 
-    # Filter out missing/zero variants to perform log transform safely
-    df_valid = df[(df['Depth_Mean'] > 0) & (df['Depth_CV'] > 0)].copy()
+    df_valid = df[(df[mean_col] > 0) & (df[cv_col] > 0)].copy()
     if df_valid.empty:
-        print("[Error] No valid data for Mahalanobis calculation.")
+        print(f"[Error] No valid data for Mahalanobis ({metric_tag}).")
         return
 
-    df_valid['Log_Depth_Mean'] = np.log(df_valid['Depth_Mean'])
-    df_valid['Log_Depth_CV'] = np.log(df_valid['Depth_CV'])
-    
-    data = df_valid[['Log_Depth_Mean', 'Log_Depth_CV']].values
+    df_valid[log_mean_col] = np.log(df_valid[mean_col])
+    df_valid[log_cv_col] = np.log(df_valid[cv_col])
+
+    data = df_valid[[log_mean_col, log_cv_col]].values
     
     # Fast vectorized Mahalanobis calculation
     mean_vec = np.mean(data, axis=0)
@@ -575,25 +694,226 @@ def ana_popdep_mahalanobis(popdep_file, output_prefix, threshold_p_value=0.99):
     threshold = chi2.ppf(threshold_p_value, df=2)
     df_valid['Outlier'] = df_valid['Mahalanobis_Sq'] > threshold
 
-    # Save to file
     out_file = f"{output_prefix}.info.tsv"
-    out_df = df_valid[['Position', 'Depth_Mean', 'Depth_SD', 'Depth_CV', 'Mahalanobis', 'Mahalanobis_Sq', 'Outlier']]
-    save_df_to_tsv(out_df, out_file)
+    out_cols = [
+        "Position",
+        mean_col,
+        sd_col,
+        cv_col,
+        "Mahalanobis",
+        "Mahalanobis_Sq",
+        "Outlier",
+    ]
+    save_df_to_tsv(df_valid[out_cols], out_file)
 
-    # Plot
+    metric_label = "Relative Depth" if relative_depth else "Depth"
     plot_file = f"{output_prefix}.mahalanobis.png"
     plot_scatter_with_outliers(
         data=df_valid,
-        x_col='Log_Depth_Mean',
-        y_col='Log_Depth_CV',
-        outlier_col='Outlier',
-        title=f'Mahalanobis Distance Outlier Detection (p={threshold_p_value})',
+        x_col=log_mean_col,
+        y_col=log_cv_col,
+        outlier_col="Outlier",
+        title=(
+            f"Mahalanobis Outlier Detection ({metric_label}, p={threshold_p_value})"
+        ),
         filename=plot_file,
-        xlabel='Log Depth Mean',
-        ylabel='Log Depth CV',
-        color_normal='blue',
-        color_outlier='red',
-        s=2
+        xlabel=f"Log {metric_label} Mean",
+        ylabel=f"Log {metric_label} CV",
+        color_normal="blue",
+        color_outlier="red",
+        s=2,
     )
+
+
+_POPDEP_QC_METRIC_SPECS = (
+    {
+        "tag": "depth",
+        "mean": "Depth_Mean",
+        "sd": "Depth_SD",
+        "var": "Depth_Var",
+        "cv": "Depth_CV",
+        "label_mean": "Mean Depth",
+        "label_sd": "Depth SD",
+        "label_var": "Depth Variance",
+        "label_cv": "Depth CV",
+    },
+    {
+        "tag": "reldepth",
+        "mean": "RelativeDepth_Mean",
+        "sd": "RelativeDepth_SD",
+        "var": "RelativeDepth_Var",
+        "cv": "RelativeDepth_CV",
+        "label_mean": "Relative Mean Depth",
+        "label_sd": "Relative Depth SD",
+        "label_var": "Relative Depth Variance",
+        "label_cv": "Relative Depth CV",
+    },
+)
+
+
+def _load_popdep_for_analysis(popdep_file: str) -> pd.DataFrame | None:
+    if str(popdep_file).endswith(".popdep.info.tsv"):
+        return load_df_from_tsv_popdep_info(popdep_file)
+    return load_popdep_data(popdep_file)
+
+
+def _add_log_metric_columns(df: pd.DataFrame, base_cols: list[str]) -> pd.DataFrame:
+    for col in base_cols:
+        if col in df.columns:
+            df[f"Log_{col}"] = np.log(df[col].replace(0, np.nan))
+    return df
+
+
+def _plot_popdep_missing_regressions(
+    merged: pd.DataFrame,
+    spec: dict,
+    output_prefix: str,
+) -> None:
+    mean_col = spec["mean"]
+    cv_col = spec["cv"]
+    tag = spec["tag"]
+    if mean_col not in merged.columns or cv_col not in merged.columns:
+        print(f"[Warning] Skipping missing-reg plots for {tag}; columns absent.")
+        return
+
+    log_mean_col = f"Log_{mean_col}"
+    log_cv_col = f"Log_{cv_col}"
+    merged = _add_log_metric_columns(merged, [mean_col, cv_col, "F_MISS"])
+    log_miss_col = "Log_F_MISS"
+    merged[log_miss_col] = np.log(merged["F_MISS"].replace(0, np.nan))
+
+    missing_specs = [
+        (log_mean_col, "F_MISS", spec["label_mean"], "Missing Rate", (0.0, 1.0)),
+        (mean_col, "F_MISS", spec["label_mean"], "Missing Rate", (0.0, 1.0)),
+        (cv_col, "F_MISS", spec["label_cv"], "Missing Rate", (0.0, 1.0)),
+        (log_mean_col, log_miss_col, f"Log {spec['label_mean']}", "Log Missing Rate", None),
+        (log_cv_col, log_miss_col, f"Log {spec['label_cv']}", "Log Missing Rate", None),
+    ]
+
+    for x_col, y_col, x_label, y_label, y_lim in missing_specs:
+        plot_df = merged
+        if y_col == log_miss_col:
+            plot_df = merged[(merged["F_MISS"] > 0) & (merged["F_MISS"] < 1)].copy()
+            if len(plot_df) < 10:
+                print(f"[Warning] Not enough F_MISS in (0,1) for {tag} {x_col}")
+                continue
+            y_lim = (None, 0.0)
+
+        plot_regression_comparison(
+            plot_df,
+            x_col,
+            y_col,
+            x_label=x_label,
+            y_label=y_label,
+            filename=f"{output_prefix}.{tag}.reg_{y_col}_vs_{x_col}.png",
+            title=f"{y_label} vs {x_label} ({tag})",
+            y_lim=y_lim,
+        )
+
+
+def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str) -> None:
+    mean_col = spec["mean"]
+    sd_col = spec["sd"]
+    var_col = spec["var"]
+    cv_col = spec["cv"]
+    tag = spec["tag"]
+    if mean_col not in df.columns:
+        print(f"[Warning] Skipping depth scatter for {tag}; {mean_col} absent.")
+        return
+
+    df = _add_log_metric_columns(df, [mean_col, sd_col, var_col, cv_col])
+    scatter_specs = [
+        (sd_col, mean_col, spec["label_sd"], spec["label_mean"]),
+        (var_col, mean_col, spec["label_var"], spec["label_mean"]),
+        (cv_col, mean_col, spec["label_cv"], spec["label_mean"]),
+        (f"Log_{var_col}", f"Log_{mean_col}", f"Log {spec['label_var']}", f"Log {spec['label_mean']}"),
+    ]
+
+    for y_col, x_col, y_label, x_label in scatter_specs:
+        if y_col not in df.columns or x_col not in df.columns:
+            continue
+        plot_regression_comparison(
+            df,
+            x_col,
+            y_col,
+            x_label=x_label,
+            y_label=y_label,
+            filename=f"{output_prefix}.{tag}.scatter_{y_col}_vs_{x_col}.png",
+            title=f"{y_label} vs {x_label} ({tag})",
+        )
+
+
+def _plot_popdep_depth_distributions(
+    df: pd.DataFrame,
+    spec: dict,
+    output_prefix: str,
+) -> None:
+    mean_col = spec["mean"]
+    var_col = spec["var"]
+    tag = spec["tag"]
+    if mean_col not in df.columns or var_col not in df.columns:
+        print(f"[Warning] Skipping distributions for {tag}; columns absent.")
+        return
+
+    for col, label in (
+        (mean_col, spec["label_mean"]),
+        (var_col, spec["label_var"]),
+    ):
+        series = df[col].replace([np.inf, -np.inf], np.nan).dropna()
+        if series.empty:
+            print(f"[Warning] No data for {tag} distribution: {col}")
+            continue
+        mean_val = float(series.mean())
+        median_val = float(series.median())
+        std_val = float(series.std())
+
+        plot_distribution_with_stats(
+            data=df,
+            col=col,
+            title=f"{label} Distribution ({tag})",
+            filename=f"{output_prefix}.{tag}.dist_{col}.png",
+            mean_val=mean_val,
+            median_val=median_val,
+            std_val=std_val,
+            x_label=label,
+            log_scale=False,
+        )
+        plot_distribution_with_stats(
+            data=df,
+            col=col,
+            title=f"{label} Distribution ({tag}, log count)",
+            filename=f"{output_prefix}.{tag}.dist_{col}_logy.png",
+            mean_val=mean_val,
+            median_val=median_val,
+            std_val=std_val,
+            x_label=label,
+            log_scale=True,
+        )
+
+
+def ana_popdep_qc_plots(popdep_file, vmiss_file, output_prefix):
+    """
+    Extended popdep QC plots: depth vs missing regressions, mean-vs-dispersion scatter,
+    and mean/variance distributions — for both absolute and relative depth metrics.
+    """
+    df_dep = _load_popdep_for_analysis(popdep_file)
+    df_miss = load_df_from_plink_variant(vmiss_file)
+    if df_dep is None or df_miss is None:
+        return
+
+    merged = pd.merge(
+        df_miss[["Position", "F_MISS"]],
+        df_dep,
+        on="Position",
+        how="inner",
+    )
+    if merged.empty:
+        print("[Error] No overlapping positions for popdep QC plots.")
+        return
+
+    for spec in _POPDEP_QC_METRIC_SPECS:
+        _plot_popdep_missing_regressions(merged, spec, output_prefix)
+        _plot_popdep_depth_scatter(df_dep, spec, output_prefix)
+        _plot_popdep_depth_distributions(df_dep, spec, output_prefix)
 
 

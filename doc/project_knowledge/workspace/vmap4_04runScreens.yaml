@@ -19,7 +19,7 @@ runs:
     artefacts:
       - chr1/gen/VCF/chr002.vcf.gz
       - setup_taxaBamMap.sh
-    nf_cmd_ref: doc/NF_CMD.md — 2026-06-21 CS_mp scan_only
+    nf_cmd_ref: doc/progress/ — 2026-06-21 CS_mp scan_only
 
   - folder: 08run_cs_mp2018_properflag
     summary: CS_mp_2018_8X BAM proper-pair relabel and TLEN QC scripts
@@ -29,7 +29,7 @@ runs:
       - run_properflag.sh
       - validate_mpileup.sh
       - tlen_qc/
-    nf_cmd_ref: doc/NF_CMD.md — 2026-06-22 proper-pair relabel and TLEN QC
+    nf_cmd_ref: doc/progress/ — 2026-06-22 proper-pair relabel and TLEN QC
 
   - folder: all
     role: Production-scale scan job assets (vLib, configs)

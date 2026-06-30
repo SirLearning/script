@@ -26,11 +26,9 @@ YAML entries may optionally record `nf_cmd_ref` as a human pointer; agents must 
 |--------|----------------------------------|---------|
 | **`KNOWLEDGE_README.md` + `project_knowledge/*.yaml`** | **Yes — primary** | Run folders, resource paths, layout, domain policies |
 | **`.cursor/rules/`**, **`workflow/Genetics/docs/GENETICS_WORKFLOW.md`**, **repo source** | **Yes** | Behaviour, pipeline wiring, parameters |
-| **`doc/NF_CMD.md`** | **No** (unless user explicitly asks for command replay) | Human append-only run log; often stale or incomplete |
-| **`doc/TODO_PROGRESS_LOG.md`** | **No** | Human append-only engineering narrative |
-| **`doc/TODO.md`** | **No** (unless user explicitly drives TODO closure) | Human checklist; may lag reality |
+| **`doc/progress/`**, **`doc/PROGRESS_README.md`** | **No** (unless user asks for log archaeology / command replay) | Human append-only daily log (narrative + `#### NF replay` commands) |
 
-**Write:** Agents still **append** to `NF_CMD.md` / `TODO_PROGRESS_LOG.md` / flip `TODO.md` when rules or skills require logging after a run or closed item — that is **output**, not a read source for planning.
+**Write:** Agents still **append** to today's **`doc/progress/YYYY-MM-DD.md`** when rules or skills require logging — that is **output**, not a read source for planning. Task backlog: GitHub Issues — not in repo.
 
 Agents: update YAML via [session-to-agent-docs](../.cursor/skills/session-to-agent-docs/SKILL.md) when adding runs or domain paths. That skill defines the **boundary** between `project_knowledge`, `.cursor/rules`, and append-only logs.
 
@@ -70,13 +68,11 @@ Common fields: `id`, `title`, `path`, `summary`, `nf_cmd_ref`, `artefacts`.
 
 | File | Role |
 |------|------|
-| [`NF_CMD.md`](NF_CMD.md) | Human command replay archive |
-| [`TODO_PROGRESS_LOG.md`](TODO_PROGRESS_LOG.md) | Human engineering narrative |
-| [`TODO.md`](TODO.md) | Human checklist |
+| [`PROGRESS_README.md`](PROGRESS_README.md) | Index to daily progress (`progress/YYYY-MM-DD.md`; includes NF replay blocks) |
 
 ## Adding knowledge
 
-- **New vmap4 run:** append a `runs[]` entry in `project_knowledge/workspace/*.yaml` (folder name, one-line role, key **resource** paths). Optionally append commands to `NF_CMD.md` for humans; registry facts belong in YAML first.
+- **New vmap4 run:** append a `runs[]` entry in `project_knowledge/workspace/*.yaml` (folder name, one-line role, key **resource** paths). Optionally add **`#### NF replay`** in today's progress file; registry facts belong in YAML first.
 - **New domain fact:** extend `domain/*.yaml` for **resources and layout only**; register in `manifest.yaml`.
 - **Stats/plots/info TSV outputs:** covered by `data_publish_tree` — **do not** add per-task YAML registries.
 - **Analysis / QC conclusions:** personal notes or artefacts — **not** `project_knowledge`.

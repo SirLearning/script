@@ -22,7 +22,7 @@ run_count: 90+
 notable_runs:
   - folder: 11run_test_thin_restats
     summary: test_thin full restats smoke
-    nf_cmd_ref: doc/NF_CMD.md — 2026-06 (test_thin restats)
+    nf_cmd_ref: doc/progress/ — 2026-06 (test_thin restats)
   - folder: 24run_assess_plink2_full_test_thin
     summary: PLINK2 assess compute + Python plots for test_thin
   - folder: 41run_wheat_pca_tsne_test_thin
@@ -31,8 +31,8 @@ notable_runs:
     summary: MAC / missing-rate stats and plots
   - folder: 94run_chr_compare_centromere
     summary: test_thin vs test_common_thin genome density compare with centromere bands
-    nf_cmd_ref: doc/NF_CMD.md — 2026-06-18 chr compare plots
+    nf_cmd_ref: doc/progress/ — 2026-06-18 chr compare plots
 
 note: >
-  Full per-run inventory not duplicated here; search doc/NF_CMD.md for
+  Full per-run inventory not duplicated here; search doc/progress/ for
   "08stats.genome" or list the module directory on the workstation.

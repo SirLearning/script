@@ -3,7 +3,7 @@
 Nextflow workflows, Python/R/Java libraries, and engineering docs for large-scale crop genetics (VMap4 / wheat variation library).
 
 **Canonical operator guide:** [`workflow/Genetics/docs/GENETICS_WORKFLOW.md`](workflow/Genetics/docs/GENETICS_WORKFLOW.md)  
-**Backlog:** [`doc/TODO.md`](doc/TODO.md) · **Run log:** [`doc/NF_CMD.md`](doc/NF_CMD.md) · **Agent rules:** [`AGENTS.md`](AGENTS.md)
+**Progress:** [`doc/PROGRESS_README.md`](doc/PROGRESS_README.md) · **Agent rules:** [`AGENTS.md`](AGENTS.md)
 
 ---
 
@@ -26,7 +26,7 @@ Nextflow workflows, Python/R/Java libraries, and engineering docs for large-scal
 │   ├── conf/                  # nextflow.config fragments
 │   ├── docs/                  # Operator narrative (GENETICS_WORKFLOW.md)
 │   └── tests/                 # Nextflow test harness config
-├── doc/                       # TODO, progress log, NF command log
+├── doc/                       # Daily progress log, NF command log, project knowledge
 └── note/                      # Analysis notes
 ```
 
@@ -93,7 +93,7 @@ All production Nextflow runs and project-scale analysis use a **two-level** layo
 1. Pick the **task module** folder (`08stats.genome` for stats/assess/LD/MAC/chr/wheat partial work).
 2. List siblings, choose the next **`NN`**, create **`NNrun_<slug>`**, `cd` there.
 3. Run with **absolute** paths to `main.nf` or `partial_router.nf` and `nextflow.config`.
-4. Log cwd + command in `doc/NF_CMD.md`.
+4. Log cwd + full command in today's **`doc/progress/YYYY-MM-DD.md`** (`#### NF replay`).
 
 Authoritative policy: `.cursor/rules/workstation-core.mdc` and `workflow/Genetics/docs/GENETICS_WORKFLOW.md` § “Where and how to run”.
 

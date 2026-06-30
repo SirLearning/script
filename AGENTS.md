@@ -17,7 +17,8 @@ When instructions conflict, prefer the **most specific** rule for the path or ta
 
 | File | Scope |
 |------|--------|
-| [`.cursor/rules/workstation-core.mdc`](.cursor/rules/workstation-core.mdc) | **Always** — role, edit guardrails, repo map, vmap4 run policy, plotting/TODO conventions |
+| [`.cursor/rules/workstation-core.mdc`](.cursor/rules/workstation-core.mdc) | **Always** — role, edit guardrails, repo map, vmap4 run policy, plotting conventions |
+| [`.cursor/rules/progress-logging.mdc`](.cursor/rules/progress-logging.mdc) | **Always** — daily progress log, NF replay blocks, write triggers |
 | [`.cursor/rules/workstation-nextflow.mdc`](.cursor/rules/workstation-nextflow.mdc) | `workflow/**/*.nf`, `workflow/Genetics/docs/**` |
 | [`.cursor/rules/workstation-python.mdc`](.cursor/rules/workstation-python.mdc) | `src/python/**/*.py` |
 
@@ -43,8 +44,8 @@ Single-context layout: `CONTEXT.md` and `doc/adr/` at repo root (created lazily 
 
 | Skill | When |
 |-------|------|
-| [todo-drive-close](.cursor/skills/todo-drive-close/SKILL.md) | Work through `doc/TODO.md`, close backlog items, or update progress / NF run logs |
-| [session-to-agent-docs](.cursor/skills/session-to-agent-docs/SKILL.md) | Summarize a conversation into rules, `TODO_PROGRESS_LOG`, and `NF_CMD` |
+| [todo-drive-close](.cursor/skills/todo-drive-close/SKILL.md) | Drive GitHub Issues / scoped work batches; append daily progress and NF run logs |
+| [session-to-agent-docs](.cursor/skills/session-to-agent-docs/SKILL.md) | Summarize a conversation into project knowledge and today's `doc/progress/` |
 
 ### [mattpocock/skills](https://github.com/mattpocock/skills) — setup (run once)
 
@@ -84,7 +85,7 @@ Add new skills under `.cursor/skills/` and link them here—keep `AGENTS.md` as 
 |-----|--------|
 | [`doc/KNOWLEDGE_README.md`](doc/KNOWLEDGE_README.md) + [`doc/project_knowledge/`](doc/project_knowledge/) | **Read first** for paths, runs, resource semantics |
 | [`workflow/Genetics/docs/GENETICS_WORKFLOW.md`](workflow/Genetics/docs/GENETICS_WORKFLOW.md) | **Read** for Nextflow operator narrative |
-| [`doc/NF_CMD.md`](doc/NF_CMD.md), [`doc/TODO_PROGRESS_LOG.md`](doc/TODO_PROGRESS_LOG.md), [`doc/TODO.md`](doc/TODO.md) | **Do not read** for task planning (archive only; often stale). **Append** when rules/skills require logging. Load only if the user explicitly asks for replay, TODO drive, or log archaeology. |
+| [`doc/progress/`](doc/progress/), [`doc/PROGRESS_README.md`](doc/PROGRESS_README.md) | **Do not read** for task planning (archive only; often stale). **Append** today's progress file when rules/skills require logging. Load only if the user explicitly asks for replay or log archaeology. |
 
 ## Minimal agent behavior
 

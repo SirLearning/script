@@ -14,12 +14,12 @@ publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/vari
 runs:
   - folder: 01run_main_raw_popdepth
     summary: chr36 PopDep smoke then full 44-chr sweep (legacy per-chr PopDep)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-15 main_raw_popdepth chr36 smoke"
+    nf_cmd_ref: "doc/progress/ — 2026-06-15 main_raw_popdepth chr36 smoke"
     screen: [popdep_chr36, popdep_all]
 
   - folder: 02run_popdepfull_chr36_benchmark
     summary: PopDepFull chr36 benchmark (TIGER_PD_20260615.jar)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-15 PopDepFull chr36 benchmark"
+    nf_cmd_ref: "doc/progress/ — 2026-06-15 PopDepFull chr36 benchmark"
     screen: popdepfull_chr36
 
   - folder: 03run_popdepfull_fork2_bench
@@ -32,36 +32,36 @@ runs:
 
   - folder: 05run_main_raw_popdepth_full
     summary: Production PopDepFull full sweep planning run
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-15 follow-up PopDepFull params"
+    nf_cmd_ref: "doc/progress/ — 2026-06-15 follow-up PopDepFull params"
 
   - folder: 06run_main_raw_popdepth_full
     summary: PopDepFull full 44-chr BGZF publish (replaced by 07run CrossChr)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-16 PopDepFull full sweep"
+    nf_cmd_ref: "doc/progress/ — 2026-06-16 PopDepFull full sweep"
     screen: popdepfull_all
 
   - folder: 07run_main_raw_popdepth_crosschr
     summary: PopDepCrossChr production attempt (TIGER_PD_20260616.jar)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-16 PopDepCrossChr 07run"
+    nf_cmd_ref: "doc/progress/ — 2026-06-16 PopDepCrossChr 07run"
     screen: popdep_crosschr
 
   - folder: 08run_main_raw_popdepth_crosschr
     summary: PopDepCrossChr v2 (length file Chr/Length/nTaxa fix)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-16 PopDepCrossChr v2 08run"
+    nf_cmd_ref: "doc/progress/ — 2026-06-16 PopDepCrossChr v2 08run"
     screen: popdep_crosschr_v2
 
   - folder: 09run_popdep_crosschr_threads_bench
     summary: CrossChr thread sweep 8–128 @ 384G
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-16 thread benchmark"
+    nf_cmd_ref: "doc/progress/ — 2026-06-16 thread benchmark"
     screen: popdep_bench9
 
   - folder: 10run_popdep_head2head
     summary: PopDepFull vs PopDepCrossChr head-to-head (N3/N20, truncated BAM extract)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-17 head2head"
+    nf_cmd_ref: "doc/progress/ — 2026-06-17 head2head"
     artefacts: bench_assets/tb.N3_micro.txt, tb.N20.txt
 
   - folder: 11run_popdep_head2head_bgz_split
     summary: Truncated head2head after bgzip/tabix split from TIGER compute
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-17 11run bgz split"
+    nf_cmd_ref: "doc/progress/ — 2026-06-17 11run bgz split"
     screen: [popdep_h2h_11run, popdep_h2h_t2mon]
 
   - folder: 12run_popdep_crosschr_smoke
@@ -70,22 +70,22 @@ runs:
 
   - folder: 12run_popdep_extract_n200
     summary: N200 truncated BAM extract (10 Mb × 44 chr)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-18 N200 extract"
+    nf_cmd_ref: "doc/progress/ — 2026-06-18 N200 extract"
     screen: popdep_extract_n200
     note: Duplicate NN prefix 12 with crosschr_smoke folder.
 
   - folder: 13run_popdep_n200_bench
     summary: N200 bench harness + popdep_tiger_threads smoke
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-18 N200 bench harness"
+    nf_cmd_ref: "doc/progress/ — 2026-06-18 N200 bench harness"
 
   - folder: 14run_popdep_n200_bench
     summary: N200 full bench + checkpoint preflight (TIGER_PD_20260619.jar)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-19 N200 14run"
+    nf_cmd_ref: "doc/progress/ — 2026-06-19 N200 14run"
     screen: popdep_n200_14run
 
   - folder: 15run_main_raw_popdepth_crosschr
     summary: Full main_raw PopDepCrossChr production (~8285 taxa, 96 threads, shuffle, ci=500)
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-19 PopDepCrossChr 15run production"
+    nf_cmd_ref: "doc/progress/ — 2026-06-19 PopDepCrossChr 15run production"
     screen: popdep_crosschr_15run
     publish: main_raw/variant/chrNNN.popdep.txt.bgz
 
@@ -115,28 +115,28 @@ runs:
 
   - folder: 33run_popdep_n500_annotate_thin
     summary: N500 popdep tabix annotate → test_thin *.popdep.info.tsv
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-28 N500 popdep annotate+stats"
+    nf_cmd_ref: "doc/progress/ — 2026-06-28 N500 popdep annotate+stats"
     screen: popdep_n500_ann_thin
     entry_nf: workflow/Genetics/subworkflows/tmp/popdep_annotate.nf
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin/variant/*.popdep.info.tsv
 
   - folder: 34run_popdep_n500_stats_thin
     summary: popdep_missing_reg + Mahalanobis on test_thin N500 annotations
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-28 N500 popdep annotate+stats"
+    nf_cmd_ref: "doc/progress/ — 2026-06-28 N500 popdep annotate+stats"
     screen: popdep_n500_stats_thin
     entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
 
   - folder: 35run_popdep_n500_annotate_common_thin
     summary: N500 popdep tabix annotate → test_common_thin *.popdep.info.tsv
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-28 N500 popdep annotate+stats"
+    nf_cmd_ref: "doc/progress/ — 2026-06-28 N500 popdep annotate+stats"
     screen: popdep_n500_ann_common
     entry_nf: workflow/Genetics/subworkflows/tmp/popdep_annotate.nf
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_thin/variant/*.popdep.info.tsv
 
   - folder: 36run_popdep_n500_stats_common_thin
     summary: popdep_missing_reg + Mahalanobis on test_common_thin N500 annotations
-    nf_cmd_ref: "doc/NF_CMD.md — 2026-06-28 N500 popdep annotate+stats"
+    nf_cmd_ref: "doc/progress/ — 2026-06-28 N500 popdep annotate+stats"
     screen: popdep_n500_stats_common
     entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_thin/

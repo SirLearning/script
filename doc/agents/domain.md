@@ -20,7 +20,8 @@ Single-context repo (this repo):
 ├── doc/
 │   ├── adr/
 │   ├── agents/
-│   ├── TODO.md
+│   ├── PROGRESS_README.md
+│   ├── progress/
 │   └── ...
 └── src/
 ```

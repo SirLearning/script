@@ -243,6 +243,33 @@ process variant_mq_missing_reg {
     """
 }
 
+process variant_popdep_qc_plots {
+    tag "variant popdep qc plots: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    tuple val(id), val(chr), path(popdep), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.popdep_qc.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.popdep import ana_popdep_qc_plots
+
+    print(f"Processing extended popdep QC plots for ${chr}...")
+    ana_popdep_qc_plots("${popdep}", "${vmiss}", "${id}.variant.popdep_qc")
+    """
+}
+
 process variant_popdep_missing_reg {
     tag "variant popdep vs missing reg: ${chr}"
     publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
@@ -295,7 +322,8 @@ process variant_popdep_mahalanobis {
     from genetics.genomics.variant.popdep import ana_popdep_mahalanobis
 
     print(f"Processing population depth Mahalanobis distance for ${chr}...")
-    ana_popdep_mahalanobis("${popdep}", "${id}.variant.mahalanobis")
+    ana_popdep_mahalanobis("${popdep}", "${id}.variant.mahalanobis", relative_depth=False)
+    ana_popdep_mahalanobis("${popdep}", "${id}.variant.mahalanobis_reldepth", relative_depth=True)
     """
 }
 

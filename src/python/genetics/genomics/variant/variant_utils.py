@@ -20,12 +20,18 @@ def load_df_from_plink_variant(filepath):
             df['chr_sep_id'] = df['ID'].astype(str).str.split('-').str[0].astype(int)
             df['chr_sep_pos'] = df['ID'].astype(str).str.split('-').str[1].astype(int)
 
-            # Get Chromosome name
-            df['Chromosome'] = df['chr_sep_id'].apply(get_chromosome)
-            
-            # Calculate linear Position (requires passing both ID and local pos to the function)
-            # get_pos_on_chromosome is not vectorized, so use apply(axis=1)
-            df['Position'] = df.apply(lambda row: get_pos_on_chromosome(row['chr_sep_id'], row['chr_sep_pos']), axis=1)
+            # Others subgenome uses CHROM/ID prefix 0; linear ref map does not apply.
+            others_mask = df['chr_sep_id'] == 0
+            if others_mask.any():
+                df.loc[others_mask, 'Position'] = df.loc[others_mask, 'chr_sep_pos']
+
+            mapped = ~others_mask
+            if mapped.any():
+                df.loc[mapped, 'Chromosome'] = df.loc[mapped, 'chr_sep_id'].apply(get_chromosome)
+                df.loc[mapped, 'Position'] = df.loc[mapped].apply(
+                    lambda row: get_pos_on_chromosome(row['chr_sep_id'], row['chr_sep_pos']),
+                    axis=1,
+                )
         except Exception as e:
             print(f"[Warning] Could not extract Position from ID column: {e}")
     else:

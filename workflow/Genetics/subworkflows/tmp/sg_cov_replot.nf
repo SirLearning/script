@@ -5,7 +5,7 @@
  * Reads smiss/scount from params.process_dir; writes via publishDir to
  * params.output_dir/params.job/stats/params.mod/{info,plots,thresholds,logs}.
  *
- * Launch from a vmap4 run folder (see doc/NF_CMD.md). Example:
+ * Launch from a vmap4 run folder; log the command in doc/progress/YYYY-MM-DD.md (#### NF replay). Example:
  *   nextflow run .../subworkflows/tmp/sg_cov_replot.nf -c .../nextflow.config \
  *     --mod test_thin \
  *     --process_dir /data1/.../test_plink/process/test_thin

@@ -40,7 +40,7 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
 13. **`screen` must come from conda `run` (mandatory):** `screen` is installed in env `run` via repo-root `environment_run.yml`. **Do not** use the system `/usr/bin/screen` for production or long-lived pipeline sessions.
     - **Always** `source ~/.bashrc && conda activate run` **before** any `screen -S`, `screen -dmS`, or `screen -r` used to launch or attach pipeline work.
     - After attach, **re-activate** `run` inside the session (`conda activate run`) — non-login shells may not inherit conda.
-    - **Canonical detached launch** (agents and `doc/NF_CMD.md` examples):
+    - **Canonical detached launch** (agents and daily progress `#### NF replay` examples):
       ```bash
       source ~/.bashrc && conda activate run && \
       screen -dmS <session> bash -lc 'source ~/.bashrc && conda activate run && cd <run_dir> && <command>'
@@ -49,13 +49,13 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
     - When logging runs, include the full `screen ... bash -lc '...'` wrapper (see `workstation-nextflow.mdc`).
 14. **Project knowledge — read before guess; update when the registry changes:**
     - **Look up first** when you need prior **run folders**, **task modules**, **canonical resource paths** (BAM, taxaBamMap, refs, publish trees), or **what an input file role is** — do not infer from chat memory, grep alone, or archive logs. Start at **`doc/KNOWLEDGE_README.md`**, then **`doc/project_knowledge/manifest.yaml`**, then the listed `domain/` or `workspace/` YAML. If a fact is missing, **verify on disk or in repo source** (workflow params, publish tree).
-    - **Do not read archive logs for task facts:** **`doc/NF_CMD.md`**, **`doc/TODO_PROGRESS_LOG.md`**, and **`doc/TODO.md`** are human append-only records — often stale, incomplete, or wrong. Agents must **not** load them when planning runs, answering “where is X?”, or explaining missing outputs — unless the user **explicitly** asks for command replay, TODO closure, or log archaeology. Still **append** to those files when rules/skills require logging after a run or closed checklist item.
+    - **Do not read archive logs for task facts:** **`doc/progress/`** is the human append-only record (narrative + NF replay) — often stale, incomplete, or wrong. Agents must **not** load it when planning runs, answering “where is X?”, or explaining missing outputs — unless the user **explicitly** asks for command replay or log archaeology. Still **append** to **`doc/progress/YYYY-MM-DD.md`** when rules/skills require logging (see **`progress-logging.mdc`**).
     - **Update promptly** when the session **creates a new numbered run folder**, **registers a new vmap4 module**, or **establishes a new stable path / naming convention for resources** (e.g. a new `00data` subfolder, a canonical map file, a benchmark publish subpath). Append to the relevant **`doc/project_knowledge/workspace/*.yaml`** or **`domain/*.yaml`**; register new files in **`manifest.yaml`**; add an index row in **`KNOWLEDGE_README.md`** if needed. Keep entries **registry-only** — no analysis conclusions, plot interpretations, or per-task output catalogues.
     - **Do not register routine pipeline outputs** already covered by **`domain/data_publish_tree.yaml`** (e.g. stats PNG/TSV under `{job}/stats/{mod}/plots|info|…`), analysis parameters, or plot recipes — those live in published artefacts and logs, not project_knowledge.
-    - **Same session as the run or path change** when possible (or via **`.cursor/skills/session-to-agent-docs/SKILL.md`** when the user asks to capture the conversation). Do not leave new runs only in `NF_CMD` without a matching workspace YAML entry.
+    - **Same session as the run or path change** when possible (or via **`.cursor/skills/session-to-agent-docs/SKILL.md`** when the user asks to capture the conversation). Do not leave new runs only in progress logs without a matching workspace YAML entry.
 15. **Publish tree writes — Nextflow or tmp `.nf` only (critical):**
     - **Never** create, overwrite, or copy artefacts into the **data/publish** tree (`params.output_dir`, typically `/data1/.../vmap4.VCF.v1/{job}/process|stats/…`) via ad-hoc Python/shell (`shutil.copy`, `cp`, `tee`, inline plot scripts that target data1 directly, etc.).
-    - **Allowed:** (a) a normal or partial Nextflow run whose processes use **`publishDir`**; (b) a dedicated **temporary** entry under **`workflow/Genetics/subworkflows/tmp/*.nf`** (plot-only / republish mini-workflows) launched from a **vmap4 run folder** with **`nextflow run … -c …/nextflow.config`** and logged in **`doc/NF_CMD.md`**.
+    - **Allowed:** (a) a normal or partial Nextflow run whose processes use **`publishDir`**; (b) a dedicated **temporary** entry under **`workflow/Genetics/subworkflows/tmp/*.nf`** (plot-only / republish mini-workflows) launched from a **vmap4 run folder** with **`nextflow run … -c …/nextflow.config`** and logged in today's **`doc/progress/YYYY-MM-DD.md`** (`#### NF replay`).
     - Repo Python may write to **run cwd** or **`01projects/vmap4/00data/`** resource paths; **`run_sg_cov_stats_batch.py`** and similar helpers must **not** copy into publish — use **`subworkflows/tmp/sg_cov_replot.nf`** instead.
     - **Library Python** under `src/python/` must not embed publish-tree paths, `argparse` CLIs that target data1, or `if __name__ == "__main__"` entry points for pipeline outputs — pass paths from **Nextflow `params`** / process inputs only (see **`subworkflows/tmp/*_replot.nf`**).
 
@@ -75,7 +75,7 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - `src/python/`: core — `Genetics`, `Infra`, `WeaTE`.
 - `src/r/`, `src/java/`: R and Java tools.
 - `note/`: notes and docs.
-- `doc/`: versioned **TODO** master list (`TODO.md`), append-only **progress log** (`TODO_PROGRESS_LOG.md`), **Nextflow run log** (`NF_CMD.md`), and **structured project knowledge** (`KNOWLEDGE_README.md`, `project_knowledge/*.yaml`).
+- `doc/`: daily **progress log** (`progress/YYYY-MM-DD.md` — narrative + **`#### NF replay`** commands; index `PROGRESS_README.md`) and **structured project knowledge** (`KNOWLEDGE_README.md`, `project_knowledge/*.yaml`). Task backlog lives outside the repo (GitHub Issues / vault).
 - Root `*.yml`: Conda envs (`EnvStats`, `EnvRun`, `EnvTiger`). **`pytest.ini`** — pytest discovers `tests/` with `pythonpath = src/python`. **CI:** `.github/workflows/ci.yml` (ruff + pytest on push/PR).
 - **No repo `resources/`:** WeaTE and ad-hoc scripts read **`transposon/`** relative to the **run cwd** under `vmap4/`, not a versioned repo folder.
 
@@ -84,7 +84,7 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - **Reuse first:** Call existing `plot_*` helpers (`plot_scatter_with_thresholds`, `plot_distribution_with_stats`, `plot_regression_comparison`, `plot_slope_chart`, `plot_correlation_with_regression`, etc.) from task modules instead of adding analysis-named wrappers (e.g. avoid `plot_ld_*` in `graph.py`).
 - **`plot_slope_chart` scope:** It draws **parallel-coordinate** lines between **two columns** at fixed x-positions 1 and 2—not a generic y-vs-distance decay curve. Do not use it for LD decay vs physical distance unless that geometry is intentional.
 - **New `plot_*` only when necessary:** If no existing helper fits, add a **generic** function in `graph.py` (neutral name, reusable signature) and match established visuals: `sns.set_style("white")`, constants `TITLE_FONT_SIZE`, `X_LABEL_FONT_SIZE`, `Y_LABEL_FONT_SIZE`, `TICK_FONT_SIZE`, `LEGEND_FONT_SIZE`, `dpi=300`, `bbox_inches='tight'`, and legend placement consistent with neighboring functions (e.g. `bbox_to_anchor=(0.0, -0.15)` where used elsewhere).
-- **Partial pipeline reruns:** Wire channels in **`subworkflows/local/partial/*.nf`**; launch **`subworkflows/local/entry/partial_router.nf`** with `--partial_task`. Pass absolute `-c` to `nextflow.config`; log in **`doc/NF_CMD.md`**. See **`GENETICS_WORKFLOW.md`**.
+- **Partial pipeline reruns:** Wire channels in **`subworkflows/local/partial/*.nf`**; launch **`subworkflows/local/entry/partial_router.nf`** with `--partial_task`. Pass absolute `-c` to `nextflow.config`; log in today's **`doc/progress/YYYY-MM-DD.md`**. See **`GENETICS_WORKFLOW.md`**.
 
 # Genotype assess (`processor/processor_assess.nf` compute + `stats/stats_assess.nf` plots; `partial_router.nf`)
 
@@ -102,31 +102,12 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - **Compute vs plot boundary (strict):** Native tools (`plink2`, `gcta64`, awk)—**not** Python/sklearn PCA, GWAS, or dense-matrix regression.
 - **Python** (`src/python/genetics/genomics/plink/results_io.py`, `genomics/sample/pca_structure.py`, `genomics/variant/*_plot.py`, `gwas/association_plot.py`): parse tool outputs, light summarization, plotting via `infra.utils.graph`. **`src/python/genetics/wheat/`** is deprecated shim only.
 - **Conda:** `gcta` is in `environment_stats.yml`; update with `conda env update -f environment_stats.yml` before GCTA modes.
-- **Partial reruns:** `partial_router.nf --partial_task wheat_from_plink`; log in `doc/NF_CMD.md`.
+- **Partial reruns:** `partial_router.nf --partial_task wheat_from_plink`; log in today's **`doc/progress/YYYY-MM-DD.md`**.
 
 # Domain
 
 Large-scale crop genetics: robust, memory-aware, high-throughput (many samples, variant workflows, QTL, tool integration).
 
-# TODO maintenance (Mandatory)
+# Progress logging
 
-Canonical checklist: **`doc/TODO.md`**. Audit trail: **`doc/TODO_PROGRESS_LOG.md`** (append-only: never delete or rewrite existing body text; you may **append** new paragraphs or a new dated section at the **end** to supplement an older entry without altering its original text).
-
-**`doc/TODO.md` language:** Keep the checklist **in English** so the repo stays consistent for collaborators and search. When the user supplies additions or edits **in Chinese** (or mixed Chinese/English), **translate** section titles and bullet text into clear technical English **before** writing the file. Do **not** leave Chinese prose in `doc/TODO.md`. Preserve unchanged: checkbox structure, nesting, `[[…]]` links, `LogRef` / calendar dates, absolute paths, flags, sample or library IDs, and backtick-wrapped tool/file names. After translation, verify no checklist items were dropped or merged unless the user explicitly narrowed scope; if a source phrase is ambiguous, prefer a short English wording plus an optional parenthetical source tag (e.g. `(from …)`) rather than guessing a new scientific claim.
-
-**`doc/TODO_PROGRESS_LOG.md` — section headings:** Use `## YYYY-MM-DD — <short English title>` only (supplements: `## YYYY-MM-DD — SUPP — <topic>`). **Do not** add opaque IDs (`OPS-NF-001`, `TODO-PLINK-004`, etc.); cross-reference other entries by date + title or `doc/TODO.md` § / `LogRef` dates. In table-style rows, use **`Summary`** (not `TODO ID / title`).
-
-**`doc/TODO_PROGRESS_LOG.md` — reporting priority (English):** This file is the **engineering narrative**: goals, what changed in the repo and **why**, each validation or runtime step (**pass / fail / skipped**), if something failed **what went wrong**, **how** it was fixed or what to do next, and the **final effect** (science or ops). Describe **how results are exposed** (e.g. `publishDir` layout, file types such as PNG/TSV, notable prefixes). Use **natural prose**, a memo, or a markdown **table**—whatever reads clearest. **Do not paste full shell command lines** here when the same run is already logged in **`doc/NF_CMD.md`**; instead cite that log (e.g. `doc/NF_CMD.md`, heading `### YYYY-MM-DD — …`) and record **only the working directory(ies)** from which each run or retry was launched, plus short non-secret flags if not obvious from NF_CMD (e.g. `--mod`, `-preview`). You may still quote **one or two outcome lines** (exit code, succeeded/failed counts) if they are not in NF_CMD. For each work batch or validation pass, aim to cover where relevant:
-
-- **Intent** of the change or experiment.
-- **Files / modules touched** and rationale (design trade-off, bug fix, policy).
-- **Tests and runs:** cwd per attempt; outcome (pass/fail); if fail, root cause and remediation or open **next step**; if blocked, who/what unblocks it.
-- **Deliverables:** where artefacts land, formats, and how a human should interpret them.
-
-When work **closes** one or more checklist items in the **same** agent turn / PR as that work:
-
-1. Update **`doc/TODO.md`**: flip `[ ]` → `[x]`, or adjust bullets if scope changed; keep `LogRef` / dates in the list when they are narrative anchors.
-2. Append **at least one new** section to the **end** of **`doc/TODO_PROGRESS_LOG.md`** with heading `## YYYY-MM-DD — <short English title>`. A reader should understand **intent, diffs, validation story, and artefact layout** without chat. **Do not duplicate** full Nextflow/bash transcripts when they are already in **`doc/NF_CMD.md`**. If an older log entry was thin, append a new trailing section titled `## YYYY-MM-DD — SUPP — <topic>` with the missing narrative—**do not erase** the original entry.
-3. **Batching:** one top-level section per completion batch is typical; use subheadings for each goal or retry. If one session closes many **unrelated** items, use **multiple** dated sections at the end.
-4. **Partial / blocked validation:** state what was not verified and the **next** action (owner, dataset, or type of run).
-5. **Flyway / local DB migration tasks only:** say whether validation used an **empty-db rerun** or **sample-data** check, and state **pass/fail** in plain language (no need to paste full SQL logs unless diagnosis requires it).
+Follow **`.cursor/rules/progress-logging.mdc`** (always applied). Task planning is **outside the repo** (GitHub Issues, vault). **Log any progress** — append to **`doc/progress/YYYY-MM-DD.md`** (narrative + **`#### NF replay`** for commands); index updates go to **`doc/PROGRESS_README.md`** only.

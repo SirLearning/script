@@ -35,7 +35,7 @@ def helpMessage() {
 
     Required:
       params.output_dir          Log / summary publish root
-      GSA_FTP_PASSWORD env var   FTP password (preferred; not logged in NF_CMD)
+      GSA_FTP_PASSWORD env var   FTP password (preferred; not logged in NF replay blocks)
 
     Optional overrides:
       --ftp_host, --ftp_remote_dir, --ftp_user
