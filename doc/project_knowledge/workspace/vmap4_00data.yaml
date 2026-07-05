@@ -26,3 +26,9 @@ folders:
     subpaths:
       - chr10000000/
       - chr10000000_N200/
+      - head2head_20260619_175321/
+        role: PopDep vs PopDepFull vs PopDepCrossChr monitor TSVs (1M chr × 96 taxa, Jun 2026)
+        files:
+          - monitor_popdep_rel.tsv
+          - monitor_popdepfull_rel.tsv
+          - monitor_popdepcrosschr_rel.tsv

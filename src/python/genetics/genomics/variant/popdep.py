@@ -811,6 +811,41 @@ def _plot_popdep_missing_regressions(
         )
 
 
+def _trim_scatter_percentile_outliers(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    pct: float = 1.0,
+    min_points: int = 10,
+) -> pd.DataFrame | None:
+    """Drop rows outside the ``pct``–``100-pct`` percentile band on either axis."""
+    valid = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    if len(valid) < min_points:
+        return None
+
+    lo_q = pct / 100.0
+    hi_q = 1.0 - lo_q
+    x_lo, x_hi = valid[x_col].quantile([lo_q, hi_q])
+    y_lo, y_hi = valid[y_col].quantile([lo_q, hi_q])
+    keep = (
+        (valid[x_col] >= x_lo)
+        & (valid[x_col] <= x_hi)
+        & (valid[y_col] >= y_lo)
+        & (valid[y_col] <= y_hi)
+    )
+    trimmed = df.loc[valid.index[keep]]
+    if len(trimmed) < min_points:
+        return None
+    return trimmed
+
+
+def _scatter_y_lim(y_col: str, cv_col: str) -> tuple[float | None, float | None] | None:
+    """CV is strictly positive; keep the y-axis non-negative on raw CV scatter plots."""
+    if y_col == cv_col:
+        return (0.0, None)
+    return None
+
+
 def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str) -> None:
     mean_col = spec["mean"]
     sd_col = spec["sd"]
@@ -832,15 +867,33 @@ def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str)
     for y_col, x_col, y_label, x_label in scatter_specs:
         if y_col not in df.columns or x_col not in df.columns:
             continue
+        y_lim = _scatter_y_lim(y_col, cv_col)
+        base_title = f"{y_label} vs {x_label} ({tag})"
+        base_filename = f"{output_prefix}.{tag}.scatter_{y_col}_vs_{x_col}.png"
+
         plot_regression_comparison(
             df,
             x_col,
             y_col,
             x_label=x_label,
             y_label=y_label,
-            filename=f"{output_prefix}.{tag}.scatter_{y_col}_vs_{x_col}.png",
-            title=f"{y_label} vs {x_label} ({tag})",
+            filename=base_filename,
+            title=base_title,
+            y_lim=y_lim,
         )
+
+        trimmed = _trim_scatter_percentile_outliers(df, x_col, y_col)
+        if trimmed is not None:
+            plot_regression_comparison(
+                trimmed,
+                x_col,
+                y_col,
+                x_label=x_label,
+                y_label=y_label,
+                filename=base_filename.replace(".png", ".trim99.png"),
+                title=f"{base_title}, excluding outer 1% on each axis",
+                y_lim=y_lim,
+            )
 
 
 def _plot_popdep_depth_distributions(

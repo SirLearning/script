@@ -744,6 +744,69 @@ def publish_aneuploidy_collect_outputs(
     return chr_all, sample_all, flagged, chr_table_paths
 
 
+def patch_published_aneuploidy_for_samples(
+    stats_base: str | Path,
+    chr_paths: list[str | Path],
+    sample_paths: list[str | Path],
+) -> tuple[pd.DataFrame, pd.DataFrame, int, int]:
+    """
+    Replace rows for rescan samples in an existing publish tree (no full re-collect).
+
+    Updates ``info/sample_aneuploidy_summary.tsv``, ``info/flagged_samples.tsv``, and
+    per-chromosome ``info/chr_depth/*.depth.tsv`` under ``stats_base``.
+    """
+    stats_base = Path(stats_base)
+    info_dir = stats_base / "info"
+    chr_depth_dir = info_dir / "chr_depth"
+
+    chr_new = pd.concat(
+        [pd.read_csv(p, sep="\t") for p in chr_paths if Path(p).exists()],
+        ignore_index=True,
+    )
+    sample_new = pd.concat(
+        [pd.read_csv(p, sep="\t") for p in sample_paths if Path(p).exists()],
+        ignore_index=True,
+    )
+    if sample_new.empty:
+        raise ValueError("patch_published_aneuploidy_for_samples: no sample summaries to patch")
+
+    sample_ids = set(sample_new["sample"].map(normalize_sample_id))
+
+    summary_path = info_dir / "sample_aneuploidy_summary.tsv"
+    sample_all = pd.read_csv(summary_path, sep="\t")
+    n_before_flagged = int(sample_all.loc[
+        sample_all["sample"].isin(sample_ids), "aneuploid_flag"
+    ].sum())
+    sample_all = sample_all[~sample_all["sample"].isin(sample_ids)]
+    sample_all = pd.concat([sample_all, sample_new], ignore_index=True)
+    sample_all = sample_all.sort_values(["cohort", "sample"]).reset_index(drop=True)
+    sample_all.to_csv(summary_path, sep="\t", index=False)
+
+    flagged_path = info_dir / "flagged_samples.tsv"
+    flagged = pd.read_csv(flagged_path, sep="\t")
+    flagged = flagged[~flagged["sample"].isin(sample_ids)]
+    newly_flagged = sample_new[sample_new["aneuploid_flag"]]
+    if not newly_flagged.empty:
+        flagged = pd.concat([flagged, newly_flagged], ignore_index=True)
+    flagged = flagged.sort_values(
+        ["cohort", "n_abnormal_chr"], ascending=[True, False]
+    ).reset_index(drop=True)
+    flagged.to_csv(flagged_path, sep="\t", index=False)
+
+    for logical_chr, new_sub in split_chr_depth_by_chromosome(chr_new).items():
+        path = chr_depth_dir / f"{logical_chr}.depth.tsv"
+        if not path.exists():
+            continue
+        old = pd.read_csv(path, sep="\t")
+        old = old[~old["sample"].isin(sample_ids)]
+        patched = pd.concat([old, new_sub], ignore_index=True)
+        patched = patched.sort_values(["cohort", "sample"]).reset_index(drop=True)
+        patched.to_csv(path, sep="\t", index=False)
+
+    n_after_flagged = int(sample_new["aneuploid_flag"].sum())
+    return sample_all, flagged, n_before_flagged, n_after_flagged
+
+
 def load_chr_depth_from_dir(chr_depth_dir: str | Path) -> pd.DataFrame:
     """Load flat ``*.depth.tsv`` files from a single chr_depth directory."""
     chr_depth_dir = Path(chr_depth_dir)

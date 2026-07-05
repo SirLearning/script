@@ -120,3 +120,75 @@ process mosdepth_aneuploidy_replot {
     print("Wrote {} plots".format(len(paths)))
     """
 }
+
+process mosdepth_aneuploidy_patch_publish {
+    tag "patch aneuploidy publish"
+    publishDir "${aneuploidyPublishBase()}/info", mode: 'copy', pattern: "{sample_aneuploidy_summary,flagged_samples}.tsv"
+    publishDir "${aneuploidyPublishBase()}/info/chr_depth", mode: 'copy', pattern: "chr_depth/**", saveAs: { filename -> new File(filename.toString()).name }
+    publishDir "${aneuploidyPublishBase()}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    path(chr_tsvs, stageAs: 'chr/*')
+    path(sample_tsvs, stageAs: 'sample/*')
+    val(stats_base)
+
+    output:
+    path("sample_aneuploidy_summary.tsv"), emit: sample
+    path("flagged_samples.tsv"), emit: flagged
+    path("chr_depth/*.tsv"), emit: chr_depth
+    path("mosdepth_aneuploidy_patch_publish.log"), emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import shutil
+    import sys
+    from pathlib import Path
+
+    sys.stdout = open("mosdepth_aneuploidy_patch_publish.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.germplasm.sample.mosdepth_aneuploidy import (
+        patch_published_aneuploidy_for_samples,
+        split_chr_depth_by_chromosome,
+    )
+
+    stats_base = Path("${stats_base}")
+    info_dir = stats_base / "info"
+    chr_depth_dir = info_dir / "chr_depth"
+
+    chr_paths = sorted(Path("chr").glob("*.tsv"))
+    sample_paths = sorted(Path("sample").glob("*.tsv"))
+    print("Patch publish: {} chr tables, {} sample summaries".format(
+        len(chr_paths), len(sample_paths),
+    ))
+
+    sample_all, flagged, n_before, n_after = patch_published_aneuploidy_for_samples(
+        stats_base,
+        chr_paths,
+        sample_paths,
+    )
+
+    # Stage patched tables for publishDir (read back from publish tree).
+    shutil.copy2(info_dir / "sample_aneuploidy_summary.tsv", "sample_aneuploidy_summary.tsv")
+    shutil.copy2(info_dir / "flagged_samples.tsv", "flagged_samples.tsv")
+
+    chr_new = __import__("pandas").concat(
+        [__import__("pandas").read_csv(p, sep="\\t") for p in chr_paths],
+        ignore_index=True,
+    )
+    Path("chr_depth").mkdir(exist_ok=True)
+    for logical_chr, sub in split_chr_depth_by_chromosome(chr_new).items():
+        src = chr_depth_dir / f"{logical_chr}.depth.tsv"
+        if src.exists():
+            shutil.copy2(src, Path("chr_depth") / src.name)
+
+    print(
+        "Patched samples={}, flagged_before={}, flagged_after={}, "
+        "total_flagged={}".format(
+            len(sample_paths), n_before, n_after, len(flagged),
+        )
+    )
+    """
+}

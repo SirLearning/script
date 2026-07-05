@@ -563,3 +563,44 @@ process PLOT_PLINK_PCA {
         --output ${id}.pca_plot.pdf
     """
 }
+
+process plot_thin_common_sample_missing_compare {
+    tag "thin vs common-thin sample missing slopes"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/thin_common_compare/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/thin_common_compare/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/thin_common_compare/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(thin_process_dir), val(compare_process_dir), val(output_prefix), val(left_label), val(right_label)
+
+    output:
+    path("${output_prefix}.sample.missing_slope.info.tsv"), emit: info
+    path("${output_prefix}.sample.missing_slope.A.png"), emit: missing_slope_a
+    path("${output_prefix}.sample.missing_slope.B.png"), emit: missing_slope_b
+    path("${output_prefix}.sample.missing_slope.D.png"), emit: missing_slope_d
+    path("${output_prefix}.sample.missing_slope.Others.png"), emit: missing_slope_others
+    path("${output_prefix}.thin_common_miss_compare.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${output_prefix}.thin_common_miss_compare.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.sample.miss import plot_thin_common_sample_missing_slope
+
+    group_file = "${params.output_dir}/meta_data/sample_group.txt"
+    print("Plotting ${left_label} vs ${right_label} sample missing-rate slopes (A / B / D / Others) ...")
+    rows = plot_thin_common_sample_missing_slope(
+        "${thin_process_dir}",
+        "${compare_process_dir}",
+        "${output_prefix}",
+        group_file=group_file,
+        left_label="${left_label}",
+        right_label="${right_label}",
+    )
+    print(f"Subgenomes plotted: {len(rows)}")
+    """
+}

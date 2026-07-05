@@ -460,7 +460,13 @@ def plot_regression_comparison(
     else:
         plt.xlim(x_min - 0.05*x_span, x_max + 0.05*x_span)
     if y_lim is not None:
-        plt.ylim(y_lim)
+        y_kwargs = {}
+        if y_lim[0] is not None:
+            y_kwargs["bottom"] = y_lim[0]
+        if len(y_lim) > 1 and y_lim[1] is not None:
+            y_kwargs["top"] = y_lim[1]
+        if y_kwargs:
+            plt.ylim(**y_kwargs)
     
     plt.legend(loc='upper left', bbox_to_anchor=(0.0, -0.15), fontsize=LEGEND_FONT_SIZE, frameon=False)
     
@@ -1783,30 +1789,73 @@ def plot_slope_chart(
     title, filename,
     line_color='gray',
     highlight_color='red',
-    figure_size=(6, 8)
+    figure_size=(6, 8),
+    group_col=None,
+    ylabel='Value',
+    ylim=None,
+    line_alpha=None,
 ):
     """
     Plots a slope chart (parallel coordinates for 2 variables).
+
+    When ``group_col`` is set (typically ``Group``), each sample line uses
+    :func:`sample_group_palette` colors; otherwise all lines share ``line_color``.
     """
+    from matplotlib.lines import Line2D
+
+    sns.set_style("white")
     plt.figure(figsize=figure_size)
-    
-    # 1. Plot individual lines
-    for _, row in df.iterrows():
-        plt.plot([1, 2], [row[col1], row[col2]], 
-                 marker='o', alpha=0.1, color=line_color)
-        
-    # 2. Plot Average
-    avg1 = df[col1].mean()
-    avg2 = df[col2].mean()
-    
-    plt.plot([1, 2], [avg1, avg2], marker='o', color=highlight_color, linewidth=3, label='Population Mean')
-    
+
+    plot_df = df[[col1, col2]].replace([np.inf, -np.inf], np.nan).dropna()
+    if group_col and group_col in df.columns:
+        plot_df = df[[col1, col2, group_col]].replace([np.inf, -np.inf], np.nan).dropna()
+        hue_order, palette_map = sample_group_hue_config(plot_df[group_col])
+        alpha = line_alpha if line_alpha is not None else 0.35
+        for grp in hue_order:
+            sub = plot_df[plot_df[group_col] == grp]
+            color = palette_map.get(grp, SAMPLE_GROUP_UNKNOWN_COLOR)
+            for _, row in sub.iterrows():
+                plt.plot(
+                    [1, 2], [row[col1], row[col2]],
+                    marker='o', alpha=alpha, color=color, linewidth=1,
+                )
+        group_handles = [
+            Line2D([0], [0], color=palette_map[g], lw=2, label=g)
+            for g in hue_order
+        ]
+    else:
+        alpha = line_alpha if line_alpha is not None else 0.1
+        for _, row in plot_df.iterrows():
+            plt.plot(
+                [1, 2], [row[col1], row[col2]],
+                marker='o', alpha=alpha, color=line_color,
+            )
+        group_handles = []
+
+    avg1 = plot_df[col1].mean()
+    avg2 = plot_df[col2].mean()
+    plt.plot(
+        [1, 2], [avg1, avg2], marker='o', color=highlight_color,
+        linewidth=3, label='Population Mean',
+    )
+
     plt.xticks([1, 2], [xlabel1, xlabel2], fontsize=X_LABEL_FONT_SIZE)
-    plt.ylabel('Value', fontsize=Y_LABEL_FONT_SIZE)
+    plt.ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.grid(axis='y', linestyle='--', alpha=0.5)
-    plt.legend()
-    
+    if ylim is not None:
+        plt.ylim(ylim)
+
+    handles = group_handles + [
+        Line2D([0], [0], color=highlight_color, lw=3, label='Population Mean'),
+    ]
+    plt.legend(
+        handles=handles,
+        loc='upper left', bbox_to_anchor=(0.0, -0.12),
+        fontsize=LEGEND_FONT_SIZE, frameon=False,
+        title=group_col if group_handles else None,
+    )
+
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved slope chart to {filename}")
     plt.close()

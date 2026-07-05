@@ -47,6 +47,7 @@ include {
 include {
     report_plink_chr_variant_counts
     plot_thin_common_chr_variant_compare
+    plot_thin_common_chr_pi_compare
 } from './stats_chr_report.nf'
 
 

@@ -1,9 +1,14 @@
+from pathlib import Path
+
 from .sample_utils import load_df_from_plink2
+from genetics.germplasm.sample import anno_group
 from infra.utils.io import load_df_from_tsv, save_df_to_tsv, load_thresholds, save_thresholds
-from infra.utils.graph import plot_distribution_with_stats
+from infra.utils.graph import plot_distribution_with_stats, plot_slope_chart
 import pandas as pd
 import os
 import argparse
+
+THIN_COMMON_SUBGENOMES = ('A', 'B', 'D', 'Others')
 
 def ana_sample_missing(
     input_file, 
@@ -129,7 +134,99 @@ def plot_imiss_dist(
         
     except Exception as e:
         print(f"[Error] Failed to plot individual missingness: {e}")
-        
+
+
+def _subgenome_smiss_path(process_dir, subgenome):
+    return Path(process_dir) / 'sample' / f'{subgenome}.info.smiss'
+
+
+def merge_thin_common_sample_missing(
+    thin_process_dir,
+    compare_process_dir,
+    subgenome,
+    left_label='test_thin',
+    right_label='test_common_thin',
+):
+    """Inner-join per-sample F_MISS for one subgenome across two process mods."""
+    thin_path = _subgenome_smiss_path(thin_process_dir, subgenome)
+    compare_path = _subgenome_smiss_path(compare_process_dir, subgenome)
+    empty_cols = ['Sample', left_label, right_label]
+    if not thin_path.exists():
+        print(f'[Warning] Missing smiss: {thin_path}')
+        return pd.DataFrame(columns=empty_cols)
+    if not compare_path.exists():
+        print(f'[Warning] Missing smiss: {compare_path}')
+        return pd.DataFrame(columns=empty_cols)
+
+    thin = load_df_from_plink2(str(thin_path))
+    compare = load_df_from_plink2(str(compare_path))
+    if thin is None or compare is None:
+        return pd.DataFrame(columns=empty_cols)
+
+    merged = thin[['Sample', 'F_MISS']].merge(
+        compare[['Sample', 'F_MISS']],
+        on='Sample',
+        how='inner',
+        suffixes=('_left', '_right'),
+    )
+    return merged.rename(columns={
+        'F_MISS_left': left_label,
+        'F_MISS_right': right_label,
+    })
+
+
+def plot_thin_common_sample_missing_slope(
+    thin_process_dir,
+    compare_process_dir,
+    output_prefix,
+    group_file=None,
+    subgenomes=THIN_COMMON_SUBGENOMES,
+    left_label='test_thin',
+    right_label='test_common_thin',
+):
+    """
+    Per-subgenome slope charts: each sample connects left_mod → right_mod F_MISS.
+
+    Writes ``{prefix}.sample.missing_slope.{A|B|D|Others}.png`` and
+    ``{prefix}.sample.missing_slope.info.tsv``.
+    """
+    info_rows = []
+    for subgenome in subgenomes:
+        merged = merge_thin_common_sample_missing(
+            thin_process_dir,
+            compare_process_dir,
+            subgenome,
+            left_label=left_label,
+            right_label=right_label,
+        )
+        if merged.empty:
+            print(f'[Warning] No overlapping smiss samples for subgenome {subgenome}; skipping plot.')
+            continue
+
+        if group_file:
+            merged = anno_group(merged, group_file, save_tsv=False)
+
+        plot_slope_chart(
+            merged,
+            col1=left_label,
+            col2=right_label,
+            xlabel1=left_label,
+            xlabel2=right_label,
+            title=f'Sample missing rate: {left_label} vs {right_label} ({subgenome})',
+            filename=f'{output_prefix}.sample.missing_slope.{subgenome}.png',
+            group_col='Group' if group_file and 'Group' in merged.columns else None,
+            ylabel='Missing Rate (F_MISS)',
+            ylim=(0.0, 1.0),
+        )
+
+        out = merged.copy()
+        out.insert(0, 'subgenome', subgenome)
+        info_rows.append(out)
+
+    if info_rows:
+        save_df_to_tsv(pd.concat(info_rows, ignore_index=True), f'{output_prefix}.sample.missing_slope.info.tsv')
+    return info_rows
+
 
 def main():
     parser = argparse.ArgumentParser(description="Missing Rate Analysis (.smiss, .imiss)")

@@ -2,11 +2,12 @@ nextflow.enable.dsl=2
 
 /*
  * Partial stats reruns from existing process/<mod>/ or stats/<mod>/ artefacts.
- * Wired from partial_router.nf (--partial_task ld_redraw | mac_stats | mac_dist_redraw | chr_counts | chr_compare | rebuild_lib_stats).
+ * Wired from partial_router.nf (--partial_task ld_redraw | mac_stats | mac_dist_redraw | chr_counts | chr_compare | chr_pi_compare | thin_common_miss_compare | rebuild_lib_stats).
  */
 
 include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw; variant_mq_missing_reg; variant_popdep_missing_reg } from '../../../modules/local/genotype/stats/stats_variant.nf'
-include { report_plink_chr_variant_counts; plot_thin_common_chr_variant_compare } from '../../../modules/local/genotype/stats/stats_chr_report.nf'
+include { report_plink_chr_variant_counts; plot_thin_common_chr_variant_compare; plot_thin_common_chr_pi_compare } from '../../../modules/local/genotype/stats/stats_chr_report.nf'
+include { plot_thin_common_sample_missing_compare } from '../../../modules/local/genotype/stats/stats_sample.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from '../../../modules/local/genotype/stats/stats.nf'
 
 workflow RUN_LD_PLOTS_REDRAW {
@@ -233,6 +234,44 @@ workflow RUN_CHR_VARIANT_COMPARE {
 
     plot_thin_common_chr_variant_compare(
         channel.of(tuple(thin_root, common_root, thin_by_ref, common_by_ref, output_prefix))
+    )
+}
+
+workflow RUN_CHR_PI_COMPARE {
+    main:
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def thin_root = params.thin_process_dir ?: "${params.output_dir}/${params.job}/process/test_thin"
+    def common_root = params.common_process_dir ?: "${params.output_dir}/${params.job}/process/test_common_thin"
+    def output_prefix = params.output_prefix ?: 'test_thin_vs_test_common_thin'
+
+    log.info "Thin process:   ${thin_root}"
+    log.info "Common process: ${common_root}"
+
+    plot_thin_common_chr_pi_compare(
+        channel.of(tuple(thin_root, common_root, output_prefix))
+    )
+}
+
+workflow RUN_THIN_COMMON_MISSING_COMPARE {
+    main:
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def thin_root = params.thin_process_dir ?: "${params.output_dir}/${params.job}/process/test_thin"
+    def compare_root = params.compare_process_dir ?: params.common_process_dir ?: "${params.output_dir}/${params.job}/process/test_common_thin"
+    def output_prefix = params.output_prefix ?: 'test_thin_vs_test_common_thin'
+    def left_label = params.left_mod_label ?: 'test_thin'
+    def right_label = params.right_mod_label ?: 'test_common_thin'
+
+    log.info "Left process:  ${thin_root} (${left_label})"
+    log.info "Right process: ${compare_root} (${right_label})"
+
+    plot_thin_common_sample_missing_compare(
+        channel.of(tuple(thin_root, compare_root, output_prefix, left_label, right_label))
     )
 }
 

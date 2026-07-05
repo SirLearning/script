@@ -10,6 +10,7 @@ include {
     test_plink_processor as TEST_PLINK_PROCESSOR
     test_plink_camp as TEST_PLINK_CAMP_PROCESSOR
     test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR
+    test_common_only_processor as TEST_COMMON_ONLY_PROCESSOR
 } from '../../../modules/local/genotype/processor/processor.nf'
 include {
     plink_stats as PLINK_STATS
@@ -76,6 +77,25 @@ workflow RUN_TEST_COMMON_THIN {
 
     main:
     def processor_out = TEST_COMMON_THIN_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep)
+}
+
+workflow RUN_TEST_COMMON_ONLY {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_COMMON_ONLY_PROCESSOR(ch_vcf)
     TEST_PLINK_STATS(
         processor_out.ld,
         processor_out.ld_cross,

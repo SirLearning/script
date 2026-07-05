@@ -327,6 +327,32 @@ def build_genome_density_compare_table(thin_bins, common_bins):
     return table.sort_values('bin_index').reset_index(drop=True)
 
 
+def plot_thin_common_by_ref_distribution_line(
+    merged,
+    filename,
+    title,
+    y_label,
+    figure_size=(14, 5),
+):
+    """Dual-line per-ref chromosome plot (test_thin vs test_common_thin)."""
+    from infra.utils.graph import plot_multi_line_series
+
+    plot_multi_line_series(
+        merged,
+        x_col='ref_name',
+        y_specs=[
+            {'y_col': 'test_thin', 'label': 'test_thin', 'color': '#4c72b0', 'linewidth': 2.0},
+            {'y_col': 'test_common_thin', 'label': 'test_common_thin', 'color': '#c44e52', 'linewidth': 2.0},
+        ],
+        title=title,
+        filename=filename,
+        x_label='Chromosome',
+        y_label=y_label,
+        figure_size=figure_size,
+        rotate_xlabels=45,
+    )
+
+
 def prepare_plink_phenotype_table(phenotype_file, trait, output_path):
     pheno = load_df_generic(phenotype_file)
     if pheno is None or pheno.empty:

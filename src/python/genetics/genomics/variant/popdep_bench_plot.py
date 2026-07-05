@@ -26,6 +26,17 @@ VMAP4_STATS_GENOME = Path("/data/home/tusr1/01projects/vmap4/10stats.genome")
 POPDEP_BENCH_PUBLISH_DIR = Path(
     "/data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/popdep_bench"
 )
+H2H_1M96_DATA_DIR = Path(
+    "/data/home/tusr1/01projects/vmap4/00data/popdep_bench/head2head_20260619_175321"
+)
+
+H2H_1M96_SERIES = (
+    ("PopDep", "monitor_popdep_rel.tsv", "#d62728"),
+    ("PopDepFull", "monitor_popdepfull_rel.tsv", "#1f77b4"),
+    ("PopDepCrossChr", "monitor_popdepcrosschr_rel.tsv", "#2ca02c"),
+)
+H2H_1M96_FILL_ALPHA = 0.32
+H2H_1M96_ACTIVE_SDB_RMB_S = 50.0
 
 MONITOR_NUMERIC = (
     "java_rss_gb",
@@ -504,6 +515,151 @@ def plot_head2head_throughput(summary: pd.DataFrame, out_dir: Path) -> None:
     )
 
 
+def _prepare_h2h_1m96_frame(monitor: pd.DataFrame) -> pd.DataFrame:
+    """Filter tiger phase with active disk read, add elapsed_sec from first sample."""
+    if monitor.empty:
+        return monitor
+    df = monitor.copy()
+    if "phase" in df.columns:
+        df = df[df["phase"] == "tiger"]
+    if df.empty:
+        return df
+    if "sdb_rMB_s" in df.columns:
+        active = df[df["sdb_rMB_s"] > H2H_1M96_ACTIVE_SDB_RMB_S]
+        if not active.empty:
+            df = active
+    if "timestamp" not in df.columns:
+        return df
+    df = df.sort_values("timestamp")
+    t0 = df["timestamp"].min()
+    df["elapsed_sec"] = (df["timestamp"] - t0).dt.total_seconds()
+    return df.reset_index(drop=True)
+
+
+def load_h2h_1m96_series(data_dir: Path | None = None) -> list[tuple[str, pd.DataFrame, str]]:
+    """Return (label, frame, color) for each PopDep app in the 1M×96 head2head bench."""
+    root = Path(data_dir or H2H_1M96_DATA_DIR)
+    out: list[tuple[str, pd.DataFrame, str]] = []
+    for label, fname, color in H2H_1M96_SERIES:
+        mon = load_monitor_tsv(root / fname)
+        frame = _prepare_h2h_1m96_frame(mon)
+        if frame.empty or "elapsed_sec" not in frame.columns:
+            print(f"WARN: skipping empty h2h_1M96 series {label} ({root / fname})")
+            continue
+        out.append((label, frame, color))
+    return out
+
+
+def build_h2h_1m96_summary(series: list[tuple[str, pd.DataFrame, str]]) -> pd.DataFrame:
+    rows = []
+    for label, df, _color in series:
+        elapsed = float(df["elapsed_sec"].max())
+        rows.append(
+            {
+                "campaign_id": "head2head_1M96",
+                "campaign_label": "Head2head 1M chr × 96 taxa (Jun 2026)",
+                "jar": "TIGER_dazheng.jar",
+                "app": label,
+                "threads": 16,
+                "elapsed_sec": elapsed,
+                "n_monitor_tiger": len(df),
+                "samtools_cpu_avg": float(df["samtools_cpu_avg"].mean()),
+                "samtools_n_mean": float(df["samtools_n"].mean()),
+                "sdb_rMB_s_avg": float(df["sdb_rMB_s"].mean()) if "sdb_rMB_s" in df.columns else None,
+                "sdb_wMB_s_avg": float(df["sdb_wMB_s"].mean()) if "sdb_wMB_s" in df.columns else None,
+                "sdb_aqu_sz_avg": float(df["sdb_aqu_sz"].mean()) if "sdb_aqu_sz" in df.columns else None,
+                "note": f"active=tiger & sdb_rMB_s>{H2H_1M96_ACTIVE_SDB_RMB_S:g}; shaded timeseries",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _plot_h2h_filled_timeseries(
+    series: list[tuple[str, pd.DataFrame, str]],
+    y_col: str,
+    title: str,
+    ylabel: str,
+    out_path: Path,
+) -> None:
+    """Line + shaded area under each series (longest run drawn first)."""
+    usable = [
+        (label, df, color)
+        for label, df, color in series
+        if y_col in df.columns and df[y_col].notna().any()
+    ]
+    if not usable:
+        return
+
+    usable.sort(key=lambda item: item[1]["elapsed_sec"].max(), reverse=True)
+
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=(11, 6))
+    for label, df, color in usable:
+        x = df["elapsed_sec"].to_numpy()
+        y = df[y_col].to_numpy()
+        ax.fill_between(
+            x,
+            y,
+            0,
+            color=color,
+            alpha=H2H_1M96_FILL_ALPHA,
+            linewidth=0,
+            zorder=1,
+        )
+        ax.plot(
+            x,
+            y,
+            color=color,
+            linewidth=1.6,
+            label=label,
+            alpha=0.95,
+            zorder=2,
+        )
+
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel("Elapsed (s)", fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+    ax.tick_params(axis="both", labelsize=TICK_FONT_SIZE)
+    ax.set_xlim(left=0)
+    ax.set_ylim(bottom=0)
+    ax.legend(loc="upper left", bbox_to_anchor=(0.0, -0.18), fontsize=LEGEND_FONT_SIZE, frameon=False)
+    fig.subplots_adjust(bottom=0.22)
+    _save_fig(out_path)
+
+
+def plot_h2h_1m96_timeseries(
+    out_dir: Path,
+    info_dir: Path | None = None,
+    data_dir: Path | None = None,
+) -> pd.DataFrame | None:
+    """PopDep vs PopDepFull vs PopDepCrossChr samtools CPU/count time series (1M×96)."""
+    series = load_h2h_1m96_series(data_dir)
+    if not series:
+        return None
+
+    summary = build_h2h_1m96_summary(series)
+    if info_dir is not None:
+        save_df_to_tsv(summary, str(info_dir / "h2h_1M96_summary.tsv"))
+
+    prefix = "h2h_1M96"
+    phase_note = "phase=tiger"
+    _plot_h2h_filled_timeseries(
+        series,
+        "samtools_n",
+        f"Concurrent samtools processes ({phase_note})",
+        "samtools count",
+        out_dir / f"{prefix}_samtools_n_timeseries.png",
+    )
+    _plot_h2h_filled_timeseries(
+        series,
+        "samtools_cpu_avg",
+        f"Mean samtools CPU per process ({phase_note})",
+        "samtools CPU avg (%)",
+        out_dir / f"{prefix}_samtools_cpu_timeseries.png",
+    )
+    return summary
+
+
 def plot_monitor_timeseries(
     campaigns: list[BenchCampaign],
     out_dir: Path,
@@ -704,6 +860,7 @@ def plot_jar_evolution_elapsed(summary: pd.DataFrame, out_dir: Path) -> None:
 def run_popdep_bench_plots(
     output_dir: str | Path,
     stats_root: str | Path = VMAP4_STATS_GENOME,
+    h2h_1m96_dir: str | Path | None = None,
 ) -> pd.DataFrame:
     """Load bench summaries, enrich with monitor stats, write TSV + PNG figures."""
     out_dir = Path(output_dir)
@@ -737,6 +894,7 @@ def run_popdep_bench_plots(
         ("n200_13run", "full_fork2_t32", "13run Full fork2×32"),
     ]
     plot_monitor_timeseries(campaigns, plots_dir, run_specs)
+    plot_h2h_1m96_timeseries(plots_dir, info_dir, h2h_1m96_dir)
 
     print(f"Wrote {len(list(plots_dir.glob('*.png')))} plots under {plots_dir}")
     return summary
@@ -756,5 +914,10 @@ if __name__ == "__main__":
         default=str(VMAP4_STATS_GENOME),
         help="Root of 10stats.genome bench run folders",
     )
+    p.add_argument(
+        "--h2h-1m96-dir",
+        default=str(H2H_1M96_DATA_DIR),
+        help="Monitor TSV directory for PopDep/Full/CrossChr 1M×96 head2head",
+    )
     args = p.parse_args()
-    run_popdep_bench_plots(args.output_dir, args.stats_root)
+    run_popdep_bench_plots(args.output_dir, args.stats_root, args.h2h_1m96_dir)

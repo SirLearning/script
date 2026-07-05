@@ -60,6 +60,36 @@ process subsampling_common_variant_pfile_for_test {
     """
 }
 
+process subsampling_maf_only_pfile_for_test {
+    tag "maf-only common pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.common.only"), path("${id}.common.only.pgen"), path("${id}.common.only.psam"), path("${id}.common.only.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > common_only_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --maf ${params.hf_maf} \\
+        --thin ${params.hf_thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.common.only
+    """
+}
+
 process merge_subgenome_test_pfile {
     tag "merge plink2 test subgenome pfile: ${subgenome}"
     publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
