@@ -51,6 +51,19 @@ def listMergedSubgenomeSnpQcPlotTuples(process_dir) {
     }
 }
 
+// Tuples for sample_plink1_pca_plot: subgenome, chr_id, eigenvec, eigenval.
+def listMergedSubgenomeTestPcaTuples(pca_dir) {
+    def subgenomes = ['A', 'B', 'D', 'Others']
+    return subgenomes.collect { sg ->
+        tuple(
+            sg,
+            "sub_${sg}",
+            file("${pca_dir}/${sg}.pca.eigenvec"),
+            file("${pca_dir}/${sg}.pca.eigenval"),
+        )
+    }
+}
+
 // Tuples matching merge_subgenome_test_pfile emit bfile shape.
 def listMergedSubgenomeTestBfileTuples(process_dir) {
     def subgenomes = ['A', 'B', 'D', 'Others']

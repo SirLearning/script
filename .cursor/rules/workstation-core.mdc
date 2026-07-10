@@ -22,7 +22,12 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
 9. **vmap4 run workspace (two-level layout):** All pipeline runs, partial reruns, and project-scale Python/R analysis execute under **`/data/home/tusr1/01projects/vmap4/`** — never from `/data/home/tusr1/git/script`. Use a **task-module folder** (level 1) then a **numbered run folder** (level 2):
    - **Level 1 — task module:** e.g. `08stats.genome/`, `10stats.genome/` for genotype stats / assess / LD / MAC / chr / popdepth partial work; other science areas get their own top-level module dirs under `vmap4/` by the same `NN<name>/` convention.
    - **Level 2 — run attempt:** `NNrun` or `NNrun_<slug>` inside that module (monotonic `NN`: `01`, `02`, …). Slug describes purpose and often mod, e.g. `01run_main_raw_popdepth`, `02run_popdepfull_chr36_benchmark`.
-   - **Create before launch:** `mkdir -p /data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>`, **`cd` there**, then run. Pick `NN` = one higher than the highest existing run folder in that module; **do not reuse** old run dirs for fresh attempts.
+   - **Create before launch:** `mkdir -p /data/home/tusr1/01projects/vmap4/<module>/<NNrun_<slug>>`, **`cd` there**, then run. Pick `NN` = one higher than the highest existing run folder **in that module**; **do not reuse** old run dirs for fresh attempts.
+   - **Module choice (mandatory — read before every launch):**
+     - **Prefer the current active module** for the science area (genotype stats / assess / LD / MAC / chr / popdepth → **`10stats.genome/`**). Treat **`08stats.genome/`** as **historical only** — it has 100+ runs and is slow to `ls`; **do not** create new runs there unless the user explicitly names that module.
+     - Before picking `NN`, **`ls` the target module** (or read `doc/project_knowledge/workspace/vmap4_*<module>*.yaml`) and take `max(NN)+1` among `NNrun_*` folders only.
+     - **NN overflow rule (critical):** when the highest existing `NNrun_*` in a module has **`NN >= 99`**, **do not** create `100run_*` in the same folder. Open a **successor module** with the **next +2 prefix** and the same slug: e.g. `08stats.genome` → `10stats.genome` → `12stats.genome`. Register the new module in **`doc/project_knowledge/workspace/vmap4_root.yaml`** and add a workspace YAML; start numbering at **`01run_*`** in the successor.
+     - If multiple modules exist for the same role (e.g. `08` historical + `10` active), **always default to the active one** unless the user directs otherwise.
    - **Exception:** repo unit tests (`pytest`, `ruff` from repo root against `tests/`) only — no Nextflow `-preview` or real runs from the repo root.
 10. **Three directories — do not mix (critical):**
 

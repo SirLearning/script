@@ -485,6 +485,141 @@ process sample_ibs_stats {
     """
 }
 
+process plink1_ibs_square {
+    tag "plink1 ibs: ${id}"
+    label 'cpus_8'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/ibs", mode: 'copy', pattern: "*.{mibs,mibs.id,log}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/ibs/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(bed), path(bim), path(fam)
+
+    output:
+    tuple val(id), val(chr), path("${id}.ibs.mibs"), path("${id}.ibs.mibs.id"), emit: ibs
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink1_ibs.log 2>&1
+    plink --bfile ${prefix} \\
+        --distance ibs square \\
+        --allow-extra-chr \\
+        --chr-set 42 \\
+        --threads ${task.cpus} \\
+        --out ${id}.ibs
+    """
+}
+
+process plink1_pca {
+    tag "plink2 pca: ${id}"
+    label 'cpus_8'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/pca", mode: 'copy', pattern: "*.{eigenvec,eigenval,log}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/pca/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.pca.eigenvec"), path("${id}.pca.eigenval"), emit: pca
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink2_pca.log 2>&1
+    plink2 --pfile ${prefix} \\
+        --mind 0.9999 \\
+        --pca approx ${params.pc_num} \\
+        --allow-extra-chr \\
+        --threads ${task.cpus} \\
+        --out ${id}.pca
+    """
+}
+
+process sample_plink1_pca_plot {
+    tag "plink1 pca plot: ${id}"
+    label 'cpus_2'
+    cpus 8
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    path group_file
+    tuple val(id), val(chr), path(eigenvec), path(eigenval)
+
+    output:
+    tuple val(id), val(chr), path("*.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("${chr}.plink1_pca_plot.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.sample.pca_structure import plot_population_structure
+
+    print(f"Plotting PLINK2 genotype PCA for ${chr}...")
+    plot_population_structure(
+        "${eigenvec}",
+        "${eigenval}",
+        "${id}.sample",
+        group_file="${group_file}",
+        plot_tsne=False,
+        pca_title="Population Structure PCA (PLINK2 approx)",
+    )
+    """
+}
+
+process sample_ibs_mds_plot {
+    tag "ibs mds: ${id}"
+    label 'cpus_2'
+    cpus 8
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    path group_file
+    tuple val(id), val(chr), path(mibs), path(ids_file)
+
+    output:
+    tuple val(id), val(chr), path("*.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("${chr}.ibs_mds.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.sample import plot_ibs_matrix_mds
+
+    print(f"Plotting IBS matrix MDS for ${chr}...")
+    plot_ibs_matrix_mds(
+        "${mibs}",
+        "${ids_file}",
+        "${id}.sample.ibs",
+        group_file="${group_file}",
+        n_components=${params.pc_num},
+        tsne_n_input_dims=${params.wheat_tsne_n_input_pcs},
+        tsne_max_iter=${params.wheat_tsne_max_iter},
+        tsne_random_state=${params.wheat_tsne_random_state},
+        tsne_n_jobs=${task.cpus},
+    )
+    """
+}
+
 process sample_germplasm_dedup {
     tag "detect germplasm duplicates: ${id}"
     publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"

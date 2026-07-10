@@ -13,6 +13,7 @@ include {
     variant_mq_missing_reg
     variant_popdep_missing_reg
     variant_popdep_mahalanobis
+    variant_maf_miss_group_stats
     variant_ld_decay_plot
     variant_ld_crosschr_plot
     variant_popdep_stats
@@ -29,6 +30,10 @@ include {
     sample_germplasm_dedup
     plink_pca
     PLOT_PLINK_PCA
+    plink1_ibs_square
+    plink1_pca
+    sample_ibs_mds_plot
+    sample_plink1_pca_plot
     plot_subgenome_gam_ibs_depth_compare
     plot_subgenome_gam_ibs_depth_compare_sg
 } from './stats_sample.nf'
@@ -66,6 +71,8 @@ workflow test_plink_stats {
     hardy
     mq
     popdep
+    merged_bfile
+    merged_pfile
 
     main:
     // prepare input
@@ -125,6 +132,7 @@ workflow test_plink_stats {
     // 2.1 Basic Variant Stats (Missing, MAF)
     def vmiss_out = variant_missing_stats(vmiss)
     def maf_out = variant_maf_stats(afreq)
+    variant_maf_miss_group_stats(afreq.combine(vmiss, by: [0, 1]))
     variant_mac_stats(gcount)
     variant_mac_maf_reg(gcount)
     variant_mac_missing_reg(gcount.combine(vmiss, by: [0, 1]))
@@ -133,6 +141,11 @@ workflow test_plink_stats {
     variant_popdep_missing_reg(popdep.combine(vmiss, by: [0, 1]))
     variant_ld_decay_plot(ld)
     variant_ld_crosschr_plot(ld_cross)
+
+    def ibs_out = plink1_ibs_square(merged_bfile)
+    def pca_out = plink1_pca(merged_pfile)
+    sample_ibs_mds_plot(group_file, ibs_out.ibs)
+    sample_plink1_pca_plot(group_file, pca_out.pca)
 
     // emit:
 }

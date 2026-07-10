@@ -10,8 +10,18 @@ from infra.utils.io import load_df_generic, save_df_to_tsv
 from infra.wheat.ref_v1 import all_ref_v1_plink_chr_ids, get_ref_v1_chr_name, get_ref_v1_genome_segment_layout
 
 
-def load_plink2_eigenvec(path):
-    df = load_df_generic(path)
+def load_plink_eigenvec(path):
+    """Load PLINK 1.9 or 2 ``.eigenvec`` (headerless FID IID PC… or ``#FID`` header)."""
+
+    with open(path, encoding='utf-8') as handle:
+        first_line = handle.readline()
+    if first_line.lstrip().startswith('#'):
+        df = load_df_generic(path)
+    else:
+        df = pd.read_csv(path, sep=r'\s+', header=None, comment='#')
+        if df.shape[1] < 3:
+            raise ValueError(f'Expected FID IID PC… columns in eigenvec: {path}')
+        df.columns = ['FID', 'Sample'] + [f'PC{i + 1}' for i in range(df.shape[1] - 2)]
     if df is None or df.empty:
         raise ValueError(f'Empty eigenvec: {path}')
     if '#FID' in df.columns:
@@ -21,6 +31,12 @@ def load_plink2_eigenvec(path):
     elif 'IID' in df.columns and 'Sample' not in df.columns:
         df = df.rename(columns={'IID': 'Sample'})
     return df
+
+
+def load_plink2_eigenvec(path):
+    """Backward-compatible alias for :func:`load_plink_eigenvec`."""
+
+    return load_plink_eigenvec(path)
 
 
 def load_plink2_eigenval(path):

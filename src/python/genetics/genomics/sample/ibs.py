@@ -1,10 +1,236 @@
+from __future__ import annotations
+
 from .sample_utils import load_df_from_plink2, load_matrix_file, load_ids_file
 from genetics.germplasm.sample import anno_group
+from genetics.genomics.sample.pca_structure import _fit_tsne_2d
 import numpy as np
 import pandas as pd
+import umap
 from infra.utils.io import save_df_to_tsv
-from infra.utils.graph import plot_clustermap, sample_group_palette, plot_regression_comparison, plot_scatter_with_thresholds, plot_slope_chart
+from infra.utils.graph import (
+    plot_bar_chart,
+    plot_clustermap,
+    sample_group_palette,
+    plot_scatter_with_thresholds,
+    plot_slope_chart,
+)
 import sys
+
+
+def _classical_mds(dist_matrix: np.ndarray, n_components: int = 10) -> tuple[np.ndarray, np.ndarray]:
+    """Classical MDS (R cmdscale) from a symmetric distance matrix."""
+
+    n = dist_matrix.shape[0]
+    if n < 2:
+        raise ValueError("Distance matrix must have at least two samples.")
+    d2 = np.square(dist_matrix.astype(float))
+    j = np.eye(n) - np.ones((n, n)) / n
+    b = -0.5 * j @ d2 @ j
+    evals, evecs = np.linalg.eigh(b)
+    order = np.argsort(evals)[::-1]
+    evals = evals[order]
+    evecs = evecs[:, order]
+    evals_pos = np.maximum(evals, 0.0)
+    k = min(int(n_components), n - 1)
+    coords = evecs[:, :k] * np.sqrt(evals_pos[:k])
+    total = float(evals_pos.sum())
+    explained = evals_pos[:k] / total if total > 0 else np.zeros(k, dtype=float)
+    return coords, explained
+
+
+def _umap_n_neighbors(n_samples: int, requested: int) -> int:
+    """Pick a valid ``n_neighbors`` for UMAP (must be less than ``n_samples``)."""
+
+    if n_samples < 2:
+        return 1
+    return max(2, min(int(requested), n_samples - 1))
+
+
+def _fit_umap_2d(
+    dist_matrix: np.ndarray,
+    *,
+    n_neighbors: int,
+    min_dist: float,
+    random_state: int,
+) -> np.ndarray:
+    """Run 2D UMAP on a precomputed distance matrix (1 − IBS)."""
+
+    n = dist_matrix.shape[0]
+    nn = _umap_n_neighbors(n, n_neighbors)
+    reducer = umap.UMAP(
+        n_components=2,
+        metric="precomputed",
+        n_neighbors=nn,
+        min_dist=float(min_dist),
+        random_state=int(random_state),
+    )
+    return reducer.fit_transform(dist_matrix.astype(float))
+
+
+def plot_ibs_matrix_mds(
+    matrix_file: str,
+    id_file: str,
+    output_prefix: str,
+    group_file: str | None = None,
+    *,
+    n_components: int = 10,
+    tsne_n_input_dims: int = 10,
+    tsne_max_iter: int = 1000,
+    tsne_random_state: int = 42,
+    tsne_n_jobs: int = 1,
+    umap_n_neighbors: int = 15,
+    umap_min_dist: float = 0.1,
+    umap_random_state: int = 42,
+    plot_tsne: bool = True,
+    plot_umap: bool = True,
+) -> None:
+    """
+    Classical MDS (PCoA / R ``cmdscale``) from a PLINK1 square IBS similarity matrix (.mibs).
+
+    Distance is ``1 − IBS``. Outputs use ``MDS1``, ``MDS2``, … — distinct from PLINK genotype PCA.
+    Optional t-SNE on leading MDS axes and UMAP on the IBS distance matrix.
+    """
+
+    print(f"Processing IBS matrix MDS: {matrix_file}")
+    ids = load_ids_file(id_file)
+    if not ids:
+        print("Error: No IDs found.")
+        return
+
+    df_mat = load_matrix_file(matrix_file)
+    if df_mat is None:
+        return
+    if df_mat.shape != (len(ids), len(ids)):
+        print(f"Error: Matrix shape {df_mat.shape} != {len(ids)}x{len(ids)}")
+        return
+
+    sim = df_mat.to_numpy(dtype=float)
+    np.fill_diagonal(sim, 1.0)
+    sim = np.nan_to_num(sim, nan=0.0)
+    dist = 1.0 - sim
+
+    try:
+        coords, explained = _classical_mds(dist, n_components=n_components)
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return
+
+    mds_cols = [f"MDS{i + 1}" for i in range(coords.shape[1])]
+    df_mds = pd.DataFrame(coords, columns=mds_cols)
+    df_mds.insert(0, "Sample", ids)
+    df_mds = anno_group(df_mds, group_file) if group_file else df_mds
+    group_col = "Group" if "Group" in df_mds.columns else None
+
+    save_df_to_tsv(df_mds, f"{output_prefix}.ibs_mds.tsv")
+    df_var = pd.DataFrame(
+        {
+            "MDS": mds_cols[: len(explained)],
+            "ExplainedVarianceRatio": explained.tolist(),
+        }
+    )
+    save_df_to_tsv(df_var, f"{output_prefix}.ibs_mds.variance.tsv")
+
+    if {"MDS1", "MDS2"}.issubset(df_mds.columns):
+        plot_scatter_with_thresholds(
+            data=df_mds,
+            x_col="MDS1",
+            y_col="MDS2",
+            title="Population Structure MDS (PLINK1 IBS)",
+            filename=f"{output_prefix}.ibs_mds.png",
+            xlabel="MDS1",
+            ylabel="MDS2",
+            group_col=group_col,
+        )
+    if len(explained) >= 2 and {"MDS3", "MDS4"}.issubset(df_mds.columns):
+        plot_scatter_with_thresholds(
+            data=df_mds,
+            x_col="MDS3",
+            y_col="MDS4",
+            title="Population Structure MDS (PLINK1 IBS, MDS3 vs MDS4)",
+            filename=f"{output_prefix}.ibs_mds.mds34.png",
+            xlabel="MDS3",
+            ylabel="MDS4",
+            group_col=group_col,
+        )
+    plot_bar_chart(
+        names=df_var["MDS"].tolist(),
+        values=df_var["ExplainedVarianceRatio"].tolist(),
+        title="IBS MDS Explained Variance Ratio",
+        ylabel="Variance Ratio",
+        filename=f"{output_prefix}.ibs_mds.variance.png",
+        ylim=(0.0, 1.0),
+    )
+
+    n = coords.shape[0]
+    if plot_tsne and n >= 3:
+        k = max(2, min(int(tsne_n_input_dims), coords.shape[1]))
+        x_tsne = coords[:, :k]
+        if np.isfinite(x_tsne).all():
+            z_tsne = _fit_tsne_2d(
+                x_tsne,
+                max_iter=int(tsne_max_iter),
+                random_state=int(tsne_random_state),
+                n_jobs=int(tsne_n_jobs),
+            )
+            df_tsne = pd.DataFrame({"Sample": ids, "TSNE1": z_tsne[:, 0], "TSNE2": z_tsne[:, 1]})
+            if group_col:
+                df_tsne[group_col] = df_mds[group_col].astype(str).values
+            save_df_to_tsv(df_tsne, f"{output_prefix}.ibs_mds_tsne.tsv")
+            plot_scatter_with_thresholds(
+                data=df_tsne,
+                x_col="TSNE1",
+                y_col="TSNE2",
+                title="t-SNE on IBS MDS coordinates (sklearn)",
+                filename=f"{output_prefix}.ibs_mds_tsne.png",
+                xlabel="t-SNE 1",
+                ylabel="t-SNE 2",
+                group_col=group_col,
+            )
+        else:
+            print("[Warning] Non-finite MDS values; skipping t-SNE.")
+
+    if plot_umap and n >= 3:
+        if np.isfinite(dist).all():
+            try:
+                z_umap = _fit_umap_2d(
+                    dist,
+                    n_neighbors=int(umap_n_neighbors),
+                    min_dist=float(umap_min_dist),
+                    random_state=int(umap_random_state),
+                )
+            except Exception as exc:
+                print(f"[Warning] UMAP failed: {exc}")
+            else:
+                df_umap = pd.DataFrame({"Sample": ids, "UMAP1": z_umap[:, 0], "UMAP2": z_umap[:, 1]})
+                if group_col:
+                    df_umap[group_col] = df_mds[group_col].astype(str).values
+                save_df_to_tsv(df_umap, f"{output_prefix}.ibs_mds_umap.tsv")
+                plot_scatter_with_thresholds(
+                    data=df_umap,
+                    x_col="UMAP1",
+                    y_col="UMAP2",
+                    title="UMAP on IBS distance (1 − IBS)",
+                    filename=f"{output_prefix}.ibs_mds_umap.png",
+                    xlabel="UMAP 1",
+                    ylabel="UMAP 2",
+                    group_col=group_col,
+                )
+        else:
+            print("[Warning] Non-finite IBS distances; skipping UMAP.")
+
+
+def plot_ibs_matrix_pca(*args, **kwargs):
+    """Deprecated alias for :func:`plot_ibs_matrix_mds`."""
+
+    import warnings
+
+    warnings.warn(
+        "plot_ibs_matrix_pca is deprecated; use plot_ibs_matrix_mds for IBS ordination "
+        "or plot_population_structure for PLINK genotype PCA.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return plot_ibs_matrix_mds(*args, **kwargs)
 
 def ana_ibs_matrix(
     matrix_file,

@@ -299,5 +299,7 @@ workflow RUN_REBUILLD_LIB_STATS {
         channel.of(tuple(id, chr, file("${proc}/variant/${id}.info.hardy"))),
         channel.empty(),
         channel.empty(),
+        channel.empty(),
+        channel.empty(),
     )
 }

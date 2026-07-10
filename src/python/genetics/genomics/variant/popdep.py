@@ -14,6 +14,9 @@ from scipy.stats import chi2
 
 from genetics.genomics.variant.mq import load_mq_data
 from infra.utils.graph import (
+    DEFAULT_AXIS_PADDING_FRACTION,
+    axis_limits_with_adaptive_upper,
+    padded_axis_limits,
     plot_distribution_with_stats,
     plot_mean_variance_fit,
     plot_qq_residuals,
@@ -607,6 +610,7 @@ def ana_popdep_missing_reg(
 
         plot_df = merged
         y_lim = None
+        x_lim = None
         if y_col == 'F_MISS':
             y_lim = (0.0, 1.0)
         elif y_col == 'Log_F_MISS':
@@ -615,12 +619,15 @@ def ana_popdep_missing_reg(
                 print(f"[Warning] Not enough F_MISS in (0,1) for log-scale plot: {x_col}")
                 continue
             y_lim = (None, 0.0)
+        if x_col == 'Depth_Mean':
+            x_lim = (0.0, None)
 
         plot_regression_comparison(
             plot_df, x_col, y_col,
             x_label=x_label, y_label=y_label,
             filename=f"{output_prefix}.reg_{y_col}_vs_{x_col}.png",
             title=f"{y_label} vs {x_label}",
+            x_lim=x_lim,
             y_lim=y_lim,
         )
 
@@ -764,6 +771,34 @@ def _add_log_metric_columns(df: pd.DataFrame, base_cols: list[str]) -> pd.DataFr
     return df
 
 
+def _nonnegative_depth_metric_floor(col: str, spec: dict) -> float | None:
+    """Raw mean / SD / variance metrics are non-negative; log-scale columns are exempt."""
+    if col.startswith("Log_"):
+        return None
+    if col in (spec["mean"], spec["sd"], spec["var"], spec["cv"]):
+        return 0.0
+    return None
+
+
+def _scatter_axis_limits(
+    x_col: str,
+    y_col: str,
+    spec: dict,
+) -> tuple[tuple[float | None, float | None] | None, tuple[float | None, float | None] | None]:
+    x_floor = _nonnegative_depth_metric_floor(x_col, spec)
+    y_floor = _nonnegative_depth_metric_floor(y_col, spec)
+    x_lim = (x_floor, None) if x_floor is not None else None
+    y_lim = (y_floor, None) if y_floor is not None else None
+    return x_lim, y_lim
+
+
+def _distribution_xlim(series: pd.Series) -> tuple[float, float] | None:
+    lims = padded_axis_limits(series)
+    if lims is None:
+        return (0.0, None)
+    return 0.0, lims[1]
+
+
 def _plot_popdep_missing_regressions(
     merged: pd.DataFrame,
     spec: dict,
@@ -792,6 +827,10 @@ def _plot_popdep_missing_regressions(
 
     for x_col, y_col, x_label, y_label, y_lim in missing_specs:
         plot_df = merged
+        x_lim = None
+        x_floor = _nonnegative_depth_metric_floor(x_col, spec)
+        if x_floor is not None:
+            x_lim = (x_floor, None)
         if y_col == log_miss_col:
             plot_df = merged[(merged["F_MISS"] > 0) & (merged["F_MISS"] < 1)].copy()
             if len(plot_df) < 10:
@@ -807,43 +846,121 @@ def _plot_popdep_missing_regressions(
             y_label=y_label,
             filename=f"{output_prefix}.{tag}.reg_{y_col}_vs_{x_col}.png",
             title=f"{y_label} vs {x_label} ({tag})",
+            x_lim=x_lim,
             y_lim=y_lim,
         )
 
 
-def _trim_scatter_percentile_outliers(
+def _adaptive_scatter_axis_limits(
     df: pd.DataFrame,
     x_col: str,
     y_col: str,
-    pct: float = 1.0,
+    spec: dict,
+    *,
     min_points: int = 10,
-) -> pd.DataFrame | None:
-    """Drop rows outside the ``pct``–``100-pct`` percentile band on either axis."""
+) -> tuple[tuple[float, float] | None, tuple[float, float] | None]:
+    """Per-axis upper trim limits; floors at 0 for raw mean / SD / variance."""
     valid = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
     if len(valid) < min_points:
-        return None
+        return None, None
 
-    lo_q = pct / 100.0
-    hi_q = 1.0 - lo_q
-    x_lo, x_hi = valid[x_col].quantile([lo_q, hi_q])
-    y_lo, y_hi = valid[y_col].quantile([lo_q, hi_q])
-    keep = (
-        (valid[x_col] >= x_lo)
-        & (valid[x_col] <= x_hi)
-        & (valid[y_col] >= y_lo)
-        & (valid[y_col] <= y_hi)
+    x_lim = axis_limits_with_adaptive_upper(
+        valid[x_col],
+        min_points=min_points,
+        lower_override=_nonnegative_depth_metric_floor(x_col, spec),
     )
+    y_lim = axis_limits_with_adaptive_upper(
+        valid[y_col],
+        min_points=min_points,
+        lower_override=_nonnegative_depth_metric_floor(y_col, spec),
+    )
+    return x_lim, y_lim
+
+
+def _percentile_upper_scatter_limits(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    spec: dict,
+    *,
+    upper_pct: float = 99.9,
+    min_points: int = 10,
+    padding_fraction: float = DEFAULT_AXIS_PADDING_FRACTION,
+) -> tuple[pd.DataFrame | None, tuple[float, float] | None, tuple[float, float] | None]:
+    """
+    Max-only percentile trim: drop rows above ``upper_pct`` on either axis.
+
+    Lower axis bound is 0 for raw mean / SD / variance / CV; no lower-percentile
+    row filter (unlike legacy trim99 which also excluded the bottom 1%).
+    """
+    valid = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    if len(valid) < min_points:
+        return None, None, None
+
+    hi_q = upper_pct / 100.0
+    x_hi = float(valid[x_col].quantile(hi_q))
+    y_hi = float(valid[y_col].quantile(hi_q))
+    keep = (valid[x_col] <= x_hi) & (valid[y_col] <= y_hi)
     trimmed = df.loc[valid.index[keep]]
     if len(trimmed) < min_points:
-        return None
-    return trimmed
+        return None, None, None
+
+    def _axis_lim(series: pd.Series, col: str, hi_val: float) -> tuple[float, float]:
+        lo_raw = float(series.min())
+        floor = _nonnegative_depth_metric_floor(col, spec)
+        span = hi_val - lo_raw
+        if span <= 0:
+            span = max(abs(lo_raw), abs(hi_val), 1.0) * 0.01
+        if floor is not None:
+            lo_axis = floor
+        else:
+            lo_axis = lo_raw - span * padding_fraction
+        hi_axis = hi_val + span * padding_fraction
+        return lo_axis, hi_axis
+
+    valid_trim = trimmed[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    x_lim = _axis_lim(valid_trim[x_col], x_col, x_hi)
+    y_lim = _axis_lim(valid_trim[y_col], y_col, y_hi)
+    return trimmed, x_lim, y_lim
 
 
-def _scatter_y_lim(y_col: str, cv_col: str) -> tuple[float | None, float | None] | None:
-    """CV is strictly positive; keep the y-axis non-negative on raw CV scatter plots."""
-    if y_col == cv_col:
-        return (0.0, None)
-    return None
+def _plot_percentile_upper_scatter(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    spec: dict,
+    *,
+    x_label: str,
+    y_label: str,
+    base_title: str,
+    base_filename: str,
+    upper_pct: float,
+    suffix: str,
+) -> None:
+    """Write a max-only percentile scatter variant (axis floor 0, no lower row filter)."""
+    trim_df, trim_x_lim, trim_y_lim = _percentile_upper_scatter_limits(
+        df,
+        x_col,
+        y_col,
+        spec,
+        upper_pct=upper_pct,
+    )
+    if trim_df is None:
+        return
+    pct_label = (
+        f"{int(upper_pct)}th" if upper_pct == int(upper_pct) else f"{upper_pct}th"
+    )
+    plot_regression_comparison(
+        trim_df,
+        x_col,
+        y_col,
+        x_label=x_label,
+        y_label=y_label,
+        filename=base_filename.replace(".png", f".{suffix}.png"),
+        title=f"{base_title}, excluding above {pct_label} percentile on each axis",
+        x_lim=trim_x_lim,
+        y_lim=trim_y_lim,
+    )
 
 
 def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str) -> None:
@@ -867,7 +984,7 @@ def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str)
     for y_col, x_col, y_label, x_label in scatter_specs:
         if y_col not in df.columns or x_col not in df.columns:
             continue
-        y_lim = _scatter_y_lim(y_col, cv_col)
+        x_lim, y_lim = _scatter_axis_limits(x_col, y_col, spec)
         base_title = f"{y_label} vs {x_label} ({tag})"
         base_filename = f"{output_prefix}.{tag}.scatter_{y_col}_vs_{x_col}.png"
 
@@ -879,20 +996,41 @@ def _plot_popdep_depth_scatter(df: pd.DataFrame, spec: dict, output_prefix: str)
             y_label=y_label,
             filename=base_filename,
             title=base_title,
+            x_lim=x_lim,
             y_lim=y_lim,
         )
 
-        trimmed = _trim_scatter_percentile_outliers(df, x_col, y_col)
-        if trimmed is not None:
+        trim_x_lim, trim_y_lim = _adaptive_scatter_axis_limits(
+            df,
+            x_col,
+            y_col,
+            spec,
+        )
+        if trim_x_lim is not None or trim_y_lim is not None:
             plot_regression_comparison(
-                trimmed,
+                df,
                 x_col,
                 y_col,
                 x_label=x_label,
                 y_label=y_label,
-                filename=base_filename.replace(".png", ".trim99.png"),
-                title=f"{base_title}, excluding outer 1% on each axis",
-                y_lim=y_lim,
+                filename=base_filename.replace(".png", ".trim.png"),
+                title=f"{base_title}, adaptive upper-axis trim",
+                x_lim=trim_x_lim if trim_x_lim is not None else x_lim,
+                y_lim=trim_y_lim if trim_y_lim is not None else y_lim,
+            )
+
+        for upper_pct, suffix in ((99.0, "trim99"), (99.9, "trim999")):
+            _plot_percentile_upper_scatter(
+                df,
+                x_col,
+                y_col,
+                spec,
+                x_label=x_label,
+                y_label=y_label,
+                base_title=base_title,
+                base_filename=base_filename,
+                upper_pct=upper_pct,
+                suffix=suffix,
             )
 
 
@@ -902,6 +1040,7 @@ def _plot_popdep_depth_distributions(
     output_prefix: str,
 ) -> None:
     mean_col = spec["mean"]
+    sd_col = spec["sd"]
     var_col = spec["var"]
     tag = spec["tag"]
     if mean_col not in df.columns or var_col not in df.columns:
@@ -910,8 +1049,11 @@ def _plot_popdep_depth_distributions(
 
     for col, label in (
         (mean_col, spec["label_mean"]),
+        (sd_col, spec["label_sd"]),
         (var_col, spec["label_var"]),
     ):
+        if col not in df.columns:
+            continue
         series = df[col].replace([np.inf, -np.inf], np.nan).dropna()
         if series.empty:
             print(f"[Warning] No data for {tag} distribution: {col}")
@@ -919,6 +1061,7 @@ def _plot_popdep_depth_distributions(
         mean_val = float(series.mean())
         median_val = float(series.median())
         std_val = float(series.std())
+        xlim = _distribution_xlim(series)
 
         plot_distribution_with_stats(
             data=df,
@@ -930,6 +1073,7 @@ def _plot_popdep_depth_distributions(
             std_val=std_val,
             x_label=label,
             log_scale=False,
+            xlim=xlim,
         )
         plot_distribution_with_stats(
             data=df,
@@ -941,6 +1085,7 @@ def _plot_popdep_depth_distributions(
             std_val=std_val,
             x_label=label,
             log_scale=True,
+            xlim=xlim,
         )
 
 

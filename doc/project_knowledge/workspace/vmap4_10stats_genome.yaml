@@ -140,3 +140,45 @@ runs:
     screen: popdep_n500_stats_common
     entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_thin/
+
+  - folder: 44run_popdep_qc_trim_replot
+    summary: popdep_stats replot with adaptive upper-axis trim (.trim.png)
+    nf_cmd_ref: "doc/progress/2026-07-06.md — NF replay: popdep adaptive trim replot"
+    screen: popdep_trim_replot
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/plots/*.trim.png
+
+  - folder: 45run_popdep_qc_axis0_replot
+    summary: popdep_stats replot with mean/SD/variance axis floor at 0
+    nf_cmd_ref: "doc/progress/2026-07-07.md — NF replay: popdep axis0 replot"
+    screen: popdep_axis0
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/plots/
+
+  - folder: 46run_popdep_qc_trim999_replot
+    summary: popdep_stats replot with max-only 99.9th-percentile trim999 scatter PNGs
+    nf_cmd_ref: "doc/progress/2026-07-07.md — NF replay: popdep trim999 replot"
+    screen: popdep_trim999
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/plots/*.trim999.png
+
+  - folder: 47run_popdep_qc_trim99_replot
+    summary: popdep_stats replot — trim99 max-only 99th percentile (same spec as trim999)
+    nf_cmd_ref: "doc/progress/2026-07-07.md — NF replay: popdep trim99 replot"
+    screen: popdep_trim99
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_stats.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_thin}/plots/*.trim99.png
+
+  - folder: 48run_test_common_inter
+    summary: test_common_inter full pipeline — conservative rare-inter extract (maxForks=3, group_workers=2)
+    nf_cmd_ref: "doc/progress/2026-07-09.md — NF replay: test_common_inter conservative rerun"
+    screen: tcommon_inter
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_common_inter
+
+  - folder: 48run_test_common_inter
+    summary: test_common_inter full pipeline — conservative rare-inter extract (maxForks=3, group_workers=2)
+    nf_cmd_ref: "doc/progress/2026-07-09.md — NF replay: test_common_inter conservative rerun"
+    screen: tcommon_inter
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_common_inter

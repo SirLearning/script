@@ -20,8 +20,11 @@ modules:
     note: New stats work uses 10stats.genome from NN=01.
 
   - id: "10stats.genome"
-    role: Current PopDep / main_raw_popdepth module
+    role: Current PopDep / main_raw_popdepth / genotype-stats test runs
     knowledge: workspace/vmap4_10stats_genome.yaml
+    note: >
+      Default module for new stats launches (NN up to 99). When NN would exceed 99,
+      create successor 12stats.genome (+2 prefix). Do not add runs to 08stats.genome.
 
   - id: "11aneuploidy"
     role: Mosdepth aneuploidy benchmark scan (mosdepth_aneuploidy_scan.nf)

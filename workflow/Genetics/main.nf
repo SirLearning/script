@@ -7,6 +7,8 @@ include {
     RUN_TEST_PLINK_CAMP
     RUN_TEST_COMMON_THIN
     RUN_TEST_COMMON_ONLY
+    RUN_TEST_COMMON_INTER
+    RUN_TEST_RARE_ONLY
 } from './subworkflows/local/plink/plink_genotype_modes.nf'
 include { RUN_WHEAT_INTEGRATED } from './subworkflows/local/wheat/wheat_integrated_study.nf'
 
@@ -40,6 +42,12 @@ workflow {
         } else if (params.mod == 'test_common_only') {
             log.info "${params.c_yellow}Using PLINK MAF-ONLY COMMON TEST module (test_common_only).${params.c_reset}"
             RUN_TEST_COMMON_ONLY(ch_vcf)
+        } else if (params.mod == 'test_common_inter') {
+            log.info "${params.c_yellow}Using PLINK COMMON-INTER TEST module (test_common_inter).${params.c_reset}"
+            RUN_TEST_COMMON_INTER(ch_vcf)
+        } else if (params.mod == 'test_rare_only') {
+            log.info "${params.c_yellow}Using PLINK RARE-ONLY TEST module (test_rare_only).${params.c_reset}"
+            RUN_TEST_RARE_ONLY(ch_vcf)
         } else {
             log.error "${params.c_red}Unknown or unsupported params.mod: '${params.mod}'${params.c_reset}"
             log.info """
@@ -49,6 +57,8 @@ workflow {
               - test_camp
               - test_common_thin
               - test_common_only
+              - test_common_inter
+              - test_rare_only
 
             Wheat integrated mods (no VCF channel):
               - params.mod starting with wheat_ (e.g. wheat_pca_tsne, wheat_gwas)

@@ -32,14 +32,21 @@ def load_df_from_king(input_file):
 def load_ids_file(input_file):
     """
     Loads ID file (often .mibs.id or similar).
-    Assuming space separated, usually 2 columns (FID IID).
+    PLINK writes FID IID without a header; fall back to two-column space-separated rows.
     Returns list of IIDs.
     """
     print(f"[Info] Loading ID file: {input_file}")
-    df = load_df_from_tsv(input_file)
-    if df is not None:
+    if not os.path.exists(input_file):
+        print(f"[Warning] ID file not found: {input_file}")
+        return []
+    try:
+        df = pd.read_csv(input_file, sep=r'\s+', header=None, names=['FID', 'IID'])
+        if df.empty:
+            return []
         return df['IID'].astype(str).tolist()
-    return []
+    except Exception as e:
+        print(f"[Error] Failed to load ID file: {e}")
+        return []
 
 def load_matrix_file(input_file):
     """

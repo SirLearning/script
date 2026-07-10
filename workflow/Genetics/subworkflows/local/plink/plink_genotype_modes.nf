@@ -11,6 +11,8 @@ include {
     test_plink_camp as TEST_PLINK_CAMP_PROCESSOR
     test_common_thin_processor as TEST_COMMON_THIN_PROCESSOR
     test_common_only_processor as TEST_COMMON_ONLY_PROCESSOR
+    test_common_inter_processor as TEST_COMMON_INTER_PROCESSOR
+    test_rare_only_processor as TEST_RARE_ONLY_PROCESSOR
 } from '../../../modules/local/genotype/processor/processor.nf'
 include {
     plink_stats as PLINK_STATS
@@ -49,7 +51,9 @@ workflow RUN_TEST_PLINK {
         processor_out.afreq,
         processor_out.hardy,
         processor_out.mq,
-        processor_out.popdep)
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
 }
 
 workflow RUN_TEST_PLINK_CAMP {
@@ -69,7 +73,9 @@ workflow RUN_TEST_PLINK_CAMP {
         processor_out.afreq,
         processor_out.hardy,
         processor_out.mq,
-        processor_out.popdep)
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
 }
 workflow RUN_TEST_COMMON_THIN {
     take:
@@ -87,7 +93,9 @@ workflow RUN_TEST_COMMON_THIN {
         processor_out.afreq,
         processor_out.hardy,
         processor_out.mq,
-        processor_out.popdep)
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
 }
 
 workflow RUN_TEST_COMMON_ONLY {
@@ -106,6 +114,49 @@ workflow RUN_TEST_COMMON_ONLY {
         processor_out.afreq,
         processor_out.hardy,
         processor_out.mq,
-        processor_out.popdep)
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
 }
 
+workflow RUN_TEST_COMMON_INTER {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_COMMON_INTER_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
+}
+
+workflow RUN_TEST_RARE_ONLY {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_RARE_ONLY_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
+}

@@ -67,6 +67,111 @@ def padded_axis_limits(values, fraction=DEFAULT_AXIS_PADDING_FRACTION):
     return lo - pad, hi + pad
 
 
+def adaptive_axis_max(
+    values,
+    *,
+    min_points: int = 10,
+    gap_multiplier: float = 5.0,
+) -> float | None:
+    """
+    Upper display bound by peeling isolated high values from the maximum downward.
+
+    From the sorted maximum, forms the top cluster (consecutive points separated by
+    at most ``gap_multiplier`` times the typical step). If that cluster is a single
+    point and the gap to the rest of the data is much larger than typical spacing,
+    exclude it and repeat. Dense multi-point tails are kept even when separated from
+    the bulk.
+
+    The minimum is never adjusted. Returns ``None`` when trimming does not apply.
+    """
+    s = pd.to_numeric(pd.Series(values), errors="coerce").replace(
+        [np.inf, -np.inf], np.nan
+    ).dropna()
+    if len(s) < min_points:
+        return None
+
+    vals = np.sort(s.values.astype(float))
+    raw_max = float(vals[-1])
+    trimmed_max = raw_max
+
+    while len(vals) >= 2:
+        diffs = np.diff(vals)
+        if len(diffs) == 0:
+            break
+
+        sorted_diffs = np.sort(diffs)
+        half = max(1, len(sorted_diffs) // 2)
+        baseline = float(np.median(sorted_diffs[:half]))
+        if baseline <= 0:
+            baseline = max(float(np.std(vals)), 1e-12)
+
+        top_idx = len(vals) - 1
+        cluster_start = top_idx
+        while cluster_start > 0:
+            step = vals[cluster_start] - vals[cluster_start - 1]
+            if step <= gap_multiplier * baseline:
+                cluster_start -= 1
+                continue
+            break
+
+        if cluster_start == 0:
+            break
+
+        gap_below = vals[cluster_start] - vals[cluster_start - 1]
+        cluster_size = top_idx - cluster_start + 1
+        if gap_below <= gap_multiplier * baseline or cluster_size >= 2:
+            break
+
+        trimmed_max = float(vals[cluster_start - 1])
+        vals = vals[:cluster_start]
+
+    tol = 1e-12 * max(abs(raw_max), 1.0)
+    if trimmed_max >= raw_max - tol:
+        return None
+    return trimmed_max
+
+
+def axis_limits_with_adaptive_upper(
+    values,
+    *,
+    min_points: int = 10,
+    gap_multiplier: float = 5.0,
+    padding_fraction: float = DEFAULT_AXIS_PADDING_FRACTION,
+    lower_override: float | None = None,
+) -> tuple[float, float] | None:
+    """
+    Matplotlib axis limits with adaptive upper trim and padded lower bound.
+
+    The lower bound defaults to the data minimum minus padding; pass
+    ``lower_override`` (e.g. ``0.0`` for non-negative CV axes) to fix the floor.
+    Returns ``None`` when no upper trim is needed.
+    """
+    s = pd.to_numeric(pd.Series(values), errors="coerce").replace(
+        [np.inf, -np.inf], np.nan
+    ).dropna()
+    if len(s) < min_points:
+        return None
+
+    lo_raw = float(s.min())
+    hi_raw = float(s.max())
+    hi_trim = adaptive_axis_max(
+        s,
+        min_points=min_points,
+        gap_multiplier=gap_multiplier,
+    )
+    if hi_trim is None:
+        return None
+
+    span_full = hi_raw - lo_raw
+    if span_full <= 0:
+        span_full = max(abs(lo_raw), abs(hi_raw), 1.0) * 0.01
+    lo = lo_raw - span_full * padding_fraction
+    if lower_override is not None:
+        lo = lower_override
+    hi = hi_trim + (hi_trim - lo_raw) * padding_fraction
+    return lo, hi
+
+
 def sample_group_palette() -> dict[str, tuple]:
     """Fixed Group → color map (seaborn ``deep``, same family as default categorical plots)."""
     colors = sns.color_palette("deep", len(SAMPLE_GROUP_ORDER))
@@ -456,7 +561,13 @@ def plot_regression_comparison(
     plt.ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
     plt.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
     if x_lim is not None:
-        plt.xlim(x_lim)
+        x_kwargs = {}
+        if x_lim[0] is not None:
+            x_kwargs["left"] = x_lim[0]
+        if len(x_lim) > 1 and x_lim[1] is not None:
+            x_kwargs["right"] = x_lim[1]
+        if x_kwargs:
+            plt.xlim(**x_kwargs)
     else:
         plt.xlim(x_min - 0.05*x_span, x_max + 0.05*x_span)
     if y_lim is not None:
@@ -588,6 +699,74 @@ def plot_stacked_distribution(
         )
     
     fig.savefig(filename, dpi=300, bbox_inches='tight')
+    print(f"Saved plot to {filename}")
+    plt.close(fig)
+
+
+def plot_stacked_proportion_bar(
+    prop_df: pd.DataFrame,
+    title: str,
+    filename: str,
+    *,
+    x_label: str | None = None,
+    y_label: str = "Fraction of variants",
+    stack_col_title: str = "Group",
+    figure_size=(10, 6),
+) -> None:
+    """
+    100% stacked bar chart: rows in ``prop_df`` are x categories; columns are stack segments.
+
+    Values should be non-negative and sum to ~1 along each row (within float tolerance).
+    When ``stack_col_title`` is ``Group``, uses :func:`sample_group_hue_config` colors.
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_style("white")
+    if prop_df.empty:
+        print(f"[Warning] plot_stacked_proportion_bar: empty data for {filename}")
+        return
+
+    work = prop_df.fillna(0.0).copy()
+    row_sums = work.sum(axis=1)
+    if not np.allclose(row_sums, 1.0, atol=1e-6, equal_nan=True):
+        print(f"[Warning] Row sums not ~1 in stacked proportion bar; renormalizing for {filename}")
+        work = work.div(row_sums.replace(0, np.nan), axis=0).fillna(0.0)
+
+    x_labels = [str(x) for x in work.index.tolist()]
+    stack_cols = list(work.columns)
+    if stack_col_title == "Group":
+        _, palette_map = sample_group_hue_config(stack_cols)
+        colors = [palette_map.get(str(c), SAMPLE_GROUP_UNKNOWN_COLOR) for c in stack_cols]
+    else:
+        colors = sns.color_palette("deep", len(stack_cols))
+
+    fig, ax = plt.subplots(figsize=figure_size)
+    bottom = np.zeros(len(work))
+    x_pos = np.arange(len(work))
+
+    for col, color in zip(stack_cols, colors):
+        vals = work[col].to_numpy(dtype=float)
+        ax.bar(x_pos, vals, bottom=bottom, label=str(col), color=color, width=0.65, edgecolor="white", linewidth=0.4)
+        bottom = bottom + vals
+
+    ax.set_ylim(0.0, 1.0)
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(x_labels)
+    if x_label:
+        ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    ax.legend(
+        title=stack_col_title,
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.18),
+        fontsize=LEGEND_FONT_SIZE,
+        title_fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Saved plot to {filename}")
     plt.close(fig)
 

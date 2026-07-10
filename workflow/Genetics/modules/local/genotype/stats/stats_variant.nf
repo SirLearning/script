@@ -438,3 +438,41 @@ process variant_popdep_stats {
     ana_popdep_missing_reg("${popdep}", "${vmiss}", "${id}.variant.popdep")
     """
 }
+
+process variant_maf_miss_group_stats {
+    tag "variant maf/miss group plots: ${chr}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.info.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_8'
+
+    input:
+    tuple val(id), val(chr), path(afreq), path(vmiss)
+
+    output:
+    tuple val(id), val(chr), path("*.info.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("${chr}.variant_maf_miss_group.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.maf_miss_group import ana_variant_maf_miss_by_group
+
+    pfile_prefix = "${params.output_dir}/${params.job}/process/${params.mod}/${id}_test.plink2"
+    group_file = "${params.output_dir}/meta_data/sample_group.txt"
+    print(f"Processing variant MAF/miss group plots for ${chr}...")
+    ana_variant_maf_miss_by_group(
+        "${afreq}",
+        "${vmiss}",
+        pfile_prefix,
+        group_file,
+        "${id}.variant.maf_miss",
+    )
+    """
+}

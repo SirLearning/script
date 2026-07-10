@@ -28,6 +28,8 @@ dependencies:
   - bcftools
   - vcftools
   - bedtools
+  - ucsc-mafspeciessubset
+  - ucsc-mafspecieslist
 
   # math libraries
   - hdf5

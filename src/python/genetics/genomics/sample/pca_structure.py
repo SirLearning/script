@@ -91,24 +91,22 @@ def plot_population_structure(
     tsne_max_iter: int = 1000,
     tsne_random_state: int = 42,
     tsne_n_jobs: int = 1,
+    plot_tsne: bool = True,
+    tsne_max_samples: int = 3000,
+    pca_title: str = "Population Structure PCA (PLINK2)",
 ) -> None:
     """
-    Load PLINK2 eigenvec/eigenval, attach optional sample ``Group`` labels,
-    save tables, PCA scatter + variance bar, and t-SNE on leading PLINK PCs.
+    Load PLINK eigenvec/eigenval, attach optional sample ``Group`` labels,
+    save tables, PCA scatter + variance bar, and optional t-SNE on leading PCs.
 
     Parameters
     ----------
-    group_file
-        Two-column sample/group table (space-separated, no header), as used by
-        ``anno_group`` in ``ref_ibs`` and ``test_plink_stats``.
-    tsne_n_input_pcs
-        Number of leading PLINK PCs passed as input to t-SNE.
-    tsne_max_iter
-        Maximum iterations for sklearn ``TSNE``.
-    tsne_random_state
-        RNG seed for reproducibility.
-    tsne_n_jobs
-        Threads for t-SNE when supported by installed sklearn (else ignored).
+    plot_tsne
+        When False, skip t-SNE (recommended for large cohorts in PLINK1 partial stats).
+    tsne_max_samples
+        Skip t-SNE when sample count exceeds this threshold (avoids sklearn segfaults).
+    pca_title
+        Title for the PC1 vs PC2 scatter plot.
     """
     pcs = load_plink2_eigenvec(eigenvec_path)
     eigen = load_plink2_eigenval(eigenval_path)
@@ -122,7 +120,7 @@ def plot_population_structure(
             data=pcs,
             x_col="PC1",
             y_col="PC2",
-            title="Population Structure PCA (PLINK2)",
+            title=pca_title,
             filename=f"{output_prefix}.pca.png",
             xlabel="PC1",
             ylabel="PC2",
@@ -133,17 +131,23 @@ def plot_population_structure(
         values=eigen["ExplainedVarianceRatio"].tolist(),
         title="PCA Explained Variance Ratio (PLINK2)",
         ylabel="Variance Ratio",
-        filename=f"{output_prefix}.variance.png",
+        filename=f"{output_prefix}.pca.variance.png",
         ylim=(0.0, 1.0),
     )
 
     pc_cols = _ordered_pc_columns(pcs)
+    if not plot_tsne:
+        print("[Info] plot_tsne=False; skipping t-SNE.")
+        return
     if len(pc_cols) < 2:
         print("[Warning] Fewer than two PC columns; skipping t-SNE.")
         return
     k = max(2, min(int(tsne_n_input_pcs), len(pc_cols)))
     X = pcs[pc_cols[:k]].to_numpy(dtype=float)
     n = X.shape[0]
+    if n > int(tsne_max_samples):
+        print(f"[Info] Sample count {n} > tsne_max_samples={tsne_max_samples}; skipping t-SNE.")
+        return
     if n < 3:
         print("[Warning] Fewer than three samples; skipping t-SNE.")
         return
