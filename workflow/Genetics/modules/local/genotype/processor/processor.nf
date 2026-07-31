@@ -576,16 +576,10 @@ workflow test_common_inter_processor {
             def pvar = file("${prefix}.pvar")
             return [ id, chr, prefix, pgen, psam, pvar ]
         }
-        log.info "${params.c_green}Building common-inter test pfiles (all-group MAF < ${params.hf_maf}, thin ${params.hf_common_inter_thin_rate})${params.c_reset}"
+        log.info "${params.c_green}Building common-inter test pfiles (exclude all-group MAF < ${params.hf_maf}, thin ${params.hf_common_inter_thin_rate})${params.c_reset}"
         extract_out = build_chr_rare_inter_extract(group_file, source_pfiles)
-        thin_in = extract_out.pfile_with_extract.filter { id, chr, prefix, pgen, psam, pvar, extract ->
-            def keep = extract.size() > 0
-            if (!keep) {
-                log.warn "Skip thin for ${id}: empty rare-inter extract (0 all-group-rare sites)"
-            }
-            keep
-        }
-        subsampling_out = subsampling_common_inter_pfile_for_test(thin_in)
+        // Exclude rare-inter IDs (reuse published extract when present), then thin remaining sites.
+        subsampling_out = subsampling_common_inter_pfile_for_test(extract_out.pfile_with_extract)
 
         def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
         def merge_out = merge_subgenome_test_pfile(grouped_pfile)
@@ -597,16 +591,9 @@ workflow test_common_inter_processor {
         ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
     } else {
         preprocess_out = plink_preprocess(vcf_in)
-        log.info "${params.c_green}Building common-inter test pfiles (all-group MAF < ${params.hf_maf}, thin ${params.hf_common_inter_thin_rate})${params.c_reset}"
+        log.info "${params.c_green}Building common-inter test pfiles (exclude all-group MAF < ${params.hf_maf}, thin ${params.hf_common_inter_thin_rate})${params.c_reset}"
         extract_out = build_chr_rare_inter_extract(group_file, preprocess_out.pfile)
-        thin_in = extract_out.pfile_with_extract.filter { id, chr, prefix, pgen, psam, pvar, extract ->
-            def keep = extract.size() > 0
-            if (!keep) {
-                log.warn "Skip thin for ${id}: empty rare-inter extract (0 all-group-rare sites)"
-            }
-            keep
-        }
-        subsampling_out = subsampling_common_inter_pfile_for_test(thin_in)
+        subsampling_out = subsampling_common_inter_pfile_for_test(extract_out.pfile_with_extract)
 
         def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
         def merge_out = merge_subgenome_test_pfile(grouped_pfile)

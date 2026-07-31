@@ -158,19 +158,28 @@ process subsampling_common_inter_pfile_for_test {
     set -euo pipefail
     exec > common_inter_pfile_${id}.log 2>&1
 
-    if [ ! -s "${extract}" ]; then
-        echo "SKIP: empty rare-inter extract for ${id}; no all-group-rare sites to thin."
-        exit 0
+    # Keep sites that are NOT all-group-rare (MAF < hf_maf in every sample_group),
+    # then randomly thin. Empty rare-inter list => exclude nothing.
+    if [ -s "${extract}" ]; then
+        echo "Excluding all-group-rare sites listed in ${extract}"
+        plink2 --pfile ${prefix} \\
+            --exclude ${extract} \\
+            --thin ${params.hf_common_inter_thin_rate} \\
+            --seed ${params.ld_decay_random_seed} \\
+            --allow-extra-chr \\
+            --make-pgen \\
+            --threads ${task.cpus} \\
+            --out ${id}.common.inter
+    else
+        echo "Empty rare-inter extract for ${id}; thinning all sites (nothing to exclude)."
+        plink2 --pfile ${prefix} \\
+            --thin ${params.hf_common_inter_thin_rate} \\
+            --seed ${params.ld_decay_random_seed} \\
+            --allow-extra-chr \\
+            --make-pgen \\
+            --threads ${task.cpus} \\
+            --out ${id}.common.inter
     fi
-
-    plink2 --pfile ${prefix} \\
-        --extract ${extract} \\
-        --thin ${params.hf_common_inter_thin_rate} \\
-        --seed ${params.ld_decay_random_seed} \\
-        --allow-extra-chr \\
-        --make-pgen \\
-        --threads ${task.cpus} \\
-        --out ${id}.common.inter
     """
 }
 

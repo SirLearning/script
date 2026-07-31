@@ -176,9 +176,11 @@ runs:
     entry_nf: workflow/Genetics/main.nf
     mod: test_common_inter
 
-  - folder: 48run_test_common_inter
-    summary: test_common_inter full pipeline — conservative rare-inter extract (maxForks=3, group_workers=2)
-    nf_cmd_ref: "doc/progress/2026-07-09.md — NF replay: test_common_inter conservative rerun"
-    screen: tcommon_inter
+  - folder: 49run_test_common_inter_exclude_rebuild
+    summary: Rebuild test_common_inter — exclude all-group-rare then thin 0.002473 to ~2.5M (reuse published rare_inter extracts)
+    nf_cmd_ref: "doc/progress/2026-07-13.md — NF replay: test_common_inter exclude+thin rebuild"
+    screen: tcommon_inter_excl
     entry_nf: workflow/Genetics/main.nf
     mod: test_common_inter
+    process_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/

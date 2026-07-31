@@ -1,0 +1,47 @@
+# Cursor indexing / file-watcher exclusions.
+# Keep source under src/, workflow/, tests/, doc/ searchable.
+# Syntax mirrors .gitignore.
+
+# --- Large local artefacts (main slowdown) ---
+/out/
+/note/
+
+# WeaTE bundled depth / reference tables (tens of MB each)
+/src/python/WeaTE/pop/data/
+
+# Local CodeGraph DB (regenerated separately)
+.codegraph/
+
+# --- Archives / binaries often pulled into search ---
+*.jar
+*.zip
+*.rar
+*.7z
+*.parquet
+*.whl
+*.egg
+
+# --- Caches / build / IDE ---
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+/src/python/build/
+.idea/
+.vscode/
+
+# --- Nextflow session artefacts (must not live in this repo) ---
+.work/
+work/
+.nextflow/
+.nextflow.log
+.nextflow.log.*
+pipeline_info/
+
+# --- Misc junk ---
+.DS_Store
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+tmp/

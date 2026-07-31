@@ -463,7 +463,7 @@ def write_rare_inter_extract_for_chromosome(
 
     Uses the globally aligned minor allele (see :func:`count_intersection_rare_sites`).
     Skips plink2 when a complete published afreq panel exists; skips entirely when
-    published rare-inter extract + summary already exist.
+    a published rare-inter extract already exists (summary is optional for reuse).
     """
 
     if chr_id is None:
@@ -472,15 +472,12 @@ def write_rare_inter_extract_for_chromosome(
     pub_afreq_dir = Path(published_afreq_dir) if published_afreq_dir else None
     emit_dir = Path(afreq_emit_dir) if afreq_emit_dir else None
 
-    if published_extract_path and published_summary_path:
+    if published_extract_path:
         pub_extract = Path(published_extract_path)
-        pub_summary = Path(published_summary_path)
-        if pub_extract.is_file() and pub_summary.is_file():
+        if pub_extract.is_file():
             out_path = Path(extract_path)
             out_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(pub_extract, out_path)
-            if summary_path:
-                shutil.copy2(pub_summary, summary_path)
             if pub_afreq_dir is not None:
                 members = _panel_members_from_pfile(
                     pfile_prefix,
@@ -490,8 +487,24 @@ def write_rare_inter_extract_for_chromosome(
                 pub_global, pub_groups = _published_afreq_paths(pub_afreq_dir, chr_id, members)
                 if _afreq_panel_complete(pub_global, pub_groups) and emit_dir is not None:
                     _emit_named_afreq_copies(chr_id, pub_global, pub_groups, emit_dir)
-            summary_df = pd.read_csv(pub_summary, sep="\t")
-            summary = summary_df.iloc[0].to_dict()
+
+            pub_summary = Path(published_summary_path) if published_summary_path else None
+            if pub_summary is not None and pub_summary.is_file():
+                if summary_path:
+                    shutil.copy2(pub_summary, summary_path)
+                summary = pd.read_csv(pub_summary, sep="\t").iloc[0].to_dict()
+            else:
+                # Extract exists; avoid recounting huge ID lists just to fill a summary.
+                summary = {
+                    "n_variants": -1,
+                    "n_groups": -1,
+                    "groups": "",
+                    "maf_threshold": float(maf_threshold),
+                    "n_all_groups_rare": -1,
+                    "fraction_all_groups_rare": -1.0,
+                }
+                if summary_path:
+                    save_df_to_tsv(pd.DataFrame([summary]), summary_path)
             print(
                 f"[Info] Skipping {chr_id}: published rare-inter extract already exists",
                 flush=True,

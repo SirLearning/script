@@ -26,9 +26,29 @@ folders:
     subpaths:
       - chr10000000/
       - chr10000000_N200/
-      - head2head_20260619_175321/
+      - path: head2head_20260619_175321/
         role: PopDep vs PopDepFull vs PopDepCrossChr monitor TSVs (1M chr × 96 taxa, Jun 2026)
         files:
           - monitor_popdep_rel.tsv
           - monitor_popdepfull_rel.tsv
           - monitor_popdepcrosschr_rel.tsv
+  - id: "08timopheevii_dryad"
+    role: Triticum timopheevii Dryad assembly/annotation staging (doi:10.5061/dryad.mpg4f4r6p)
+    path: /data/home/tusr1/01projects/vmap4/00data/08timopheevii_dryad
+    notes: >
+      Download via Dryad API bearer + S3 presigned URL
+      (api/v2/files/<id>/download). file_stream blocked by AWS WAF from this host.
+    files:
+      - Timopheevii.final.pm.oriented.fasta.gz
+      - Timopheevii.final.pm.oriented.with_org.fasta.gz
+      - Tritim_EIv0.3.annotation.gff3
+      - Tritim_EIv0.3.annotation.cds.fasta.gz
+      - Tritim_EIv0.3.annotation.pep.fasta.gz
+      - Tritim_EIv0.3.annotation_repeatsRM.gff3
+      - Tritim_EIv0.3.release.functional_annotation.gff3
+      - Tritim_EIv0.3.release.gff3.pep.fasta.functional_annotation.tsv
+      - Timopheevii.final.pm.oriented.pretext
+      - Tritim_EIv0.3.annotation.final_table.tsv
+      - README.md
+    excluded:
+      - Tim.S95.v2.hifi.5mC.3col.bed
