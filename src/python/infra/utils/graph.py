@@ -364,7 +364,11 @@ def plot_multi_line_series(
         clr = spec.get("color", "steelblue")
         ls = spec.get("linestyle", "-")
         lw = float(spec.get("linewidth", 1.5))
-        plt.plot(data[x_col], data[yc], color=clr, linestyle=ls, linewidth=lw, label=lbl)
+        marker = spec.get("marker")
+        plot_kwargs = dict(color=clr, linestyle=ls, linewidth=lw, label=lbl)
+        if marker:
+            plot_kwargs["marker"] = marker
+        plt.plot(data[x_col], data[yc], **plot_kwargs)
 
     plt.title(title, fontsize=TITLE_FONT_SIZE)
     plt.xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
@@ -382,6 +386,72 @@ def plot_multi_line_series(
         plt.ylim(ylim)
     if rotate_xlabels is not None:
         plt.xticks(rotation=rotate_xlabels, ha="right")
+
+    plt.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved plot to {filename}")
+    plt.close()
+
+
+def plot_dual_axis_line_series(
+    data,
+    x_col,
+    left_spec,
+    right_spec,
+    title,
+    filename,
+    x_label=None,
+    figure_size=(10, 6),
+    rotate_xlabels=None,
+):
+    """
+    Line plot with independent left/right y-axes (twinx).
+
+    left_spec / right_spec: dicts with required ``y_col`` and optional
+    ``label``, ``color``, ``linestyle``, ``linewidth``, ``marker``, ``y_label``.
+    """
+    sns.set_style("white")
+    fig, ax_left = plt.subplots(figsize=figure_size)
+    ax_right = ax_left.twinx()
+
+    def _plot_axis(ax, spec, axis_name):
+        y_col = spec["y_col"]
+        color = spec.get("color", "steelblue" if axis_name == "left" else "darkorange")
+        label = spec.get("label", y_col)
+        ls = spec.get("linestyle", "-")
+        lw = float(spec.get("linewidth", 1.8))
+        marker = spec.get("marker")
+        plot_kwargs = dict(color=color, linestyle=ls, linewidth=lw, label=label)
+        if marker:
+            plot_kwargs["marker"] = marker
+        ax.plot(data[x_col], data[y_col], **plot_kwargs)
+        y_label = spec.get("y_label", y_col)
+        ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE, color=color)
+        ax.tick_params(axis="y", labelcolor=color, labelsize=TICK_FONT_SIZE)
+        return ax
+
+    _plot_axis(ax_left, left_spec, "left")
+    _plot_axis(ax_right, right_spec, "right")
+
+    if x_label is None:
+        x_label = x_col
+    ax_left.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax_left.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax_left.tick_params(axis="x", labelsize=TICK_FONT_SIZE)
+    if rotate_xlabels is not None:
+        ax_left.tick_params(axis="x", rotation=rotate_xlabels)
+        for tick in ax_left.get_xticklabels():
+            tick.set_ha("right")
+
+    lines_left, labels_left = ax_left.get_legend_handles_labels()
+    lines_right, labels_right = ax_right.get_legend_handles_labels()
+    ax_left.legend(
+        lines_left + lines_right,
+        labels_left + labels_right,
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
 
     plt.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Saved plot to {filename}")
@@ -617,6 +687,19 @@ def plot_stacked_distribution(
     if x_label is None:
         x_label = col
 
+    if df is None or getattr(df, "empty", True) or col not in df.columns:
+        print(f"[Warning] Skipping stacked distribution (empty or missing column): {filename}")
+        return
+    plot_df = df[[c for c in (col, group_col) if c in df.columns]].replace(
+        [np.inf, -np.inf], np.nan
+    ).dropna(subset=[col])
+    if plot_df.empty:
+        print(f"[Warning] Skipping stacked distribution (no valid rows): {filename}")
+        return
+    if group_col in plot_df.columns and plot_df[group_col].dropna().empty:
+        print(f"[Warning] Skipping stacked distribution (no group levels): {filename}")
+        return
+
     fig, ax = plt.subplots(figsize=figure_size)
     bg_handles: list = []
     if background_intervals:
@@ -630,11 +713,11 @@ def plot_stacked_distribution(
             plot_bins = np.linspace(xlim[0], xlim[1], bins + 1)
 
     # Histogram with Stacked Groups
-    hue_kw = _hue_kwargs_for_sample_group(df, group_col)
+    hue_kw = _hue_kwargs_for_sample_group(plot_df, group_col)
     ax = sns.histplot(
-        data=df,
+        data=plot_df,
         x=col,
-        hue=group_col,
+        hue=group_col if group_col in plot_df.columns else None,
         multiple='stack',
         bins=plot_bins,
         binrange=binrange,
@@ -768,6 +851,79 @@ def plot_stacked_proportion_bar(
     )
     fig.savefig(filename, dpi=300, bbox_inches="tight")
     print(f"Saved plot to {filename}")
+    plt.close(fig)
+
+
+def plot_stacked_bar_chart(
+    count_df: pd.DataFrame,
+    title: str,
+    filename: str,
+    *,
+    x_label: str | None = None,
+    y_label: str = "Count",
+    stack_col_title: str = "Category",
+    stack_colors: dict[str, str] | None = None,
+    figure_size=(10, 6),
+    rotate_xlabels: int | None = 45,
+) -> None:
+    """
+    Absolute-count stacked bar chart: rows in ``count_df`` are x categories; columns are stack segments.
+    """
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    sns.set_style("white")
+    if count_df.empty:
+        print(f"[Warning] plot_stacked_bar_chart: empty data for {filename}")
+        return
+
+    work = count_df.fillna(0).copy()
+    stack_cols = list(work.columns)
+    x_labels = [str(x) for x in work.index.tolist()]
+    if stack_colors is None:
+        colors = sns.color_palette("deep", len(stack_cols))
+    else:
+        colors = [stack_colors.get(str(col), "#cccccc") for col in stack_cols]
+
+    fig, ax = plt.subplots(figsize=figure_size)
+    bottom = np.zeros(len(work))
+    x_pos = np.arange(len(work))
+
+    for col, color in zip(stack_cols, colors):
+        vals = work[col].to_numpy(dtype=float)
+        ax.bar(
+            x_pos,
+            vals,
+            bottom=bottom,
+            label=str(col),
+            color=color,
+            width=0.75,
+            edgecolor="white",
+            linewidth=0.4,
+        )
+        bottom = bottom + vals
+
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(x_labels)
+    if x_label:
+        ax.set_xlabel(x_label, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(y_label, fontsize=Y_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if rotate_xlabels is not None:
+        ax.tick_params(axis="x", rotation=rotate_xlabels)
+        for label in ax.get_xticklabels():
+            label.set_ha("right")
+    ax.legend(
+        title=stack_col_title,
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.18),
+        fontsize=LEGEND_FONT_SIZE,
+        title_fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved stacked bar chart to {filename}")
     plt.close(fig)
 
 
@@ -1837,43 +1993,88 @@ def plot_stacked_histogram(
     title, filename,
     xlabel, ylabel,
     mean_val=None, median_val=None,
-    xlim=None, log_scale=False
+    xlim=None, log_scale=False,
+    legend_title="Categories",
 ):
     """
     Plots a stacked histogram using seaborn.
     """
-    plt.figure(figsize=(10, 6))
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=(10, 6))
     
     # Bins logic
     bins = 100
     binrange = xlim if xlim else None
 
-    sns.histplot(data=data, x=x_col, hue=hue_col, hue_order=hue_order,
-                 bins=bins, binrange=binrange, multiple='stack',
-                 palette=palette_map, edgecolor='white', alpha=0.8, kde=False)
+    sns.histplot(
+        data=data,
+        x=x_col,
+        hue=hue_col,
+        hue_order=hue_order,
+        bins=bins,
+        binrange=binrange,
+        multiple='stack',
+        palette=palette_map,
+        edgecolor='white',
+        alpha=0.8,
+        kde=False,
+        legend=False,
+        ax=ax,
+    )
 
+    # seaborn histplot legend handles are unreliable via get_legend_handles_labels()
+    # in some matplotlib/seaborn builds — build hue patches explicitly.
+    hue_handles = [
+        Patch(
+            facecolor=palette_map[label],
+            edgecolor='white',
+            linewidth=0.5,
+            label=label,
+        )
+        for label in hue_order
+    ]
+    hue_labels = list(hue_order)
+
+    stat_handles: list[Line2D] = []
+    stat_labels: list[str] = []
     if mean_val is not None:
-        plt.axvline(mean_val, color='red', linestyle='--', label=f'Mean: {mean_val:.4f}')
+        ax.axvline(mean_val, color='red', linestyle='--', linewidth=1.5)
+        stat_handles.append(Line2D([0], [0], color='red', linestyle='--', linewidth=1.5))
+        stat_labels.append(f'Mean: {mean_val:.4f}')
     if median_val is not None:
-        plt.axvline(median_val, color='green', linestyle='--', label=f'Median: {median_val:.4f}')
+        ax.axvline(median_val, color='green', linestyle='-', linewidth=1.5)
+        stat_handles.append(Line2D([0], [0], color='green', linestyle='-', linewidth=1.5))
+        stat_labels.append(f'Median: {median_val:.4f}')
 
-    plt.legend(loc='upper right', title='Categories')
+    ax.legend(
+        handles=hue_handles + stat_handles,
+        labels=hue_labels + stat_labels,
+        title=legend_title,
+        loc='upper left',
+        bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE,
+        title_fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
 
     if log_scale:
-        plt.yscale('log')
-        plt.ylabel(f"{ylabel} (Log Scale)", fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_yscale('log')
+        ax.set_ylabel(f"{ylabel} (Log Scale)", fontsize=Y_LABEL_FONT_SIZE)
     else:
-        plt.ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+        ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
 
-    plt.title(title, fontsize=TITLE_FONT_SIZE)
-    plt.xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
+    ax.tick_params(axis='both', which='major', labelsize=TICK_FONT_SIZE)
     if xlim:
-        plt.xlim(xlim)
-    plt.grid(True, which="major", axis='y', alpha=0.3)
-    # plt.tight_layout()
-    plt.savefig(filename, dpi=300, bbox_inches='tight')
+        ax.set_xlim(xlim)
+    ax.grid(True, which="major", axis='y', alpha=0.3)
+    fig.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved {filename}")
-    plt.close()
+    plt.close(fig)
 
 
 
@@ -1890,6 +2091,11 @@ def plot_scatter_with_thresholds(
     xlim=None,
     ylim=None,
     group_col=None,
+    highlight_ids=None,
+    id_col=None,
+    highlight_color='crimson',
+    highlight_marker='*',
+    highlight_size=160,
 ):
     """
     Plots a scatter plot with optional horizontal and vertical threshold lines.
@@ -1898,6 +2104,8 @@ def plot_scatter_with_thresholds(
         thresholds_h (list of dict): e.g. [{'value': 0.95, 'color': 'red', 'linestyle': '--', 'label': 'Cutoff'}]
         thresholds_v (list of dict): e.g. [{'value': 0.5, 'color': 'orange', 'linestyle': '--', 'label': 'Limit'}]
         group_col: Optional column name for hue (e.g. ``Group`` from ``anno_group``).
+        highlight_ids: Sample IDs to mark with a distinct marker and text label.
+        id_col: Column holding sample IDs for ``highlight_ids`` (defaults to Sample, IID, #IID).
     """
     sns.set_style("white")
     
@@ -1917,6 +2125,43 @@ def plot_scatter_with_thresholds(
             data=plot_data, x=x_col, y=y_col,
             alpha=alpha, s=s, edgecolor='w', color=color,
         )
+
+    if highlight_ids:
+        hi_ids = {str(v) for v in highlight_ids if str(v).strip()}
+        if hi_ids:
+            id_candidates = [id_col] if id_col else []
+            id_candidates.extend(c for c in ('Sample', 'IID', '#IID', 'FID') if c not in id_candidates)
+            resolved_id_col = next((c for c in id_candidates if c in data.columns), None)
+            if resolved_id_col is None:
+                print(f"[Warning] highlight_ids requested but no ID column found in {list(data.columns)}")
+            else:
+                hi = data[data[resolved_id_col].astype(str).isin(hi_ids)].copy()
+                hi = hi[[x_col, y_col, resolved_id_col]].replace([np.inf, -np.inf], np.nan).dropna()
+                if hi.empty:
+                    print(f"[Warning] highlight_ids not found in column {resolved_id_col}: {sorted(hi_ids)}")
+                else:
+                    plt.scatter(
+                        hi[x_col],
+                        hi[y_col],
+                        c=highlight_color,
+                        s=highlight_size,
+                        marker=highlight_marker,
+                        edgecolors='black',
+                        linewidths=0.6,
+                        zorder=5,
+                        label='Highlighted',
+                    )
+                    for _, row in hi.iterrows():
+                        plt.annotate(
+                            str(row[resolved_id_col]),
+                            (row[x_col], row[y_col]),
+                            xytext=(6, 6),
+                            textcoords='offset points',
+                            fontsize=TICK_FONT_SIZE,
+                            color=highlight_color,
+                            fontweight='bold',
+                            zorder=6,
+                        )
     
     # Horizontal Thresholds
     if thresholds_h:
@@ -1950,7 +2195,7 @@ def plot_scatter_with_thresholds(
     if ylim is not None:
         plt.ylim(ylim)
 
-    if use_hue or thresholds_h or thresholds_v:
+    if use_hue or thresholds_h or thresholds_v or highlight_ids:
         plt.legend(
             loc='upper left', bbox_to_anchor=(0.0, -0.15),
             fontsize=LEGEND_FONT_SIZE, frameon=False,
@@ -2038,6 +2283,57 @@ def plot_slope_chart(
     plt.savefig(filename, dpi=300, bbox_inches='tight')
     print(f"Saved slope chart to {filename}")
     plt.close()
+
+
+def plot_scatter_two_categories(
+    data,
+    x_col,
+    y_col,
+    category_col,
+    *,
+    category_labels,
+    category_colors,
+    title,
+    filename,
+    xlabel=None,
+    ylabel=None,
+    alpha=0.5,
+    s=25,
+    figure_size=(10, 8),
+    dpi=300,
+):
+    """Scatter plot with two categorical point colors (e.g. variant vs non-variant sites)."""
+    import os
+
+    sns.set_style("white")
+    plt.figure(figsize=figure_size)
+
+    categories = sorted(category_labels.keys(), key=lambda k: (str(k), repr(k)))
+    for cat in categories:
+        subset = data[data[category_col] == cat]
+        if subset.empty:
+            continue
+        plt.scatter(
+            subset[x_col],
+            subset[y_col],
+            s=s,
+            alpha=alpha,
+            label=category_labels[cat],
+            color=category_colors.get(cat, "steelblue"),
+        )
+
+    plt.xlabel(xlabel if xlabel else x_col, fontsize=X_LABEL_FONT_SIZE)
+    plt.ylabel(ylabel if ylabel else y_col, fontsize=Y_LABEL_FONT_SIZE)
+    plt.title(title, fontsize=TITLE_FONT_SIZE)
+    plt.legend(loc="best", fontsize=LEGEND_FONT_SIZE)
+
+    parent_dir = os.path.dirname(filename)
+    if parent_dir and not os.path.exists(parent_dir):
+        os.makedirs(parent_dir, exist_ok=True)
+
+    plt.savefig(filename, dpi=dpi, bbox_inches="tight")
+    plt.close()
+    print(f"Saved two-category scatter plot to {filename}")
 
 
 def plot_scatter_with_outliers(

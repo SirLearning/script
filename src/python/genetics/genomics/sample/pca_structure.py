@@ -94,6 +94,7 @@ def plot_population_structure(
     plot_tsne: bool = True,
     tsne_max_samples: int = 3000,
     pca_title: str = "Population Structure PCA (PLINK2)",
+    highlight_samples: list[str] | None = None,
 ) -> None:
     """
     Load PLINK eigenvec/eigenval, attach optional sample ``Group`` labels,
@@ -107,6 +108,8 @@ def plot_population_structure(
         Skip t-SNE when sample count exceeds this threshold (avoids sklearn segfaults).
     pca_title
         Title for the PC1 vs PC2 scatter plot.
+    highlight_samples
+        Optional sample IDs to mark on the PCA scatter (uses ``Sample`` / ``IID`` column).
     """
     pcs = load_plink2_eigenvec(eigenvec_path)
     eigen = load_plink2_eigenval(eigenval_path)
@@ -125,6 +128,8 @@ def plot_population_structure(
             xlabel="PC1",
             ylabel="PC2",
             group_col=group_col,
+            highlight_ids=highlight_samples,
+            id_col="Sample" if "Sample" in pcs.columns else ("IID" if "IID" in pcs.columns else None),
         )
     plot_bar_chart(
         names=eigen["PC"].tolist(),

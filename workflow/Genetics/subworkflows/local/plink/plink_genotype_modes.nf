@@ -13,6 +13,9 @@ include {
     test_common_only_processor as TEST_COMMON_ONLY_PROCESSOR
     test_common_inter_processor as TEST_COMMON_INTER_PROCESSOR
     test_rare_only_processor as TEST_RARE_ONLY_PROCESSOR
+    test_hex_processor as TEST_HEX_PROCESSOR
+    test_wap_processor as TEST_WAP_PROCESSOR
+    test_collinear_processor as TEST_COLLINEAR_PROCESSOR
 } from '../../../modules/local/genotype/processor/processor.nf'
 include {
     plink_stats as PLINK_STATS
@@ -146,6 +149,70 @@ workflow RUN_TEST_RARE_ONLY {
 
     main:
     def processor_out = TEST_RARE_ONLY_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
+}
+
+workflow RUN_TEST_HEX {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_HEX_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
+}
+
+workflow RUN_TEST_WAP {
+    take:
+    ch_vcf
+
+    main:
+    def processor_out = TEST_WAP_PROCESSOR(ch_vcf)
+    TEST_PLINK_STATS(
+        processor_out.ld,
+        processor_out.ld_cross,
+        processor_out.smiss,
+        processor_out.scount,
+        processor_out.vmiss,
+        processor_out.gcount,
+        processor_out.afreq,
+        processor_out.hardy,
+        processor_out.mq,
+        processor_out.popdep,
+        processor_out.merged_bfile,
+        processor_out.merged_pfile)
+}
+
+workflow RUN_TEST_COLLINEAR {
+    take:
+    ch_vcf
+    collinear_root
+
+    main:
+    def processor_out = TEST_COLLINEAR_PROCESSOR(ch_vcf, collinear_root)
     TEST_PLINK_STATS(
         processor_out.ld,
         processor_out.ld_cross,

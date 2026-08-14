@@ -32,8 +32,10 @@ include {
     PLOT_PLINK_PCA
     plink1_ibs_square
     plink1_pca
+    plink1_pca_ld_prune
     sample_ibs_mds_plot
     sample_plink1_pca_plot
+    sample_plink1_pca_ld_plot
     plot_subgenome_gam_ibs_depth_compare
     plot_subgenome_gam_ibs_depth_compare_sg
 } from './stats_sample.nf'
@@ -54,6 +56,8 @@ include {
     plot_thin_common_chr_variant_compare
     plot_thin_common_chr_pi_compare
 } from './stats_chr_report.nf'
+
+include { plot_confirmed_aneuploidy_chromosome } from './stats_aneuploidy.nf'
 
 
 // --- Genotype statistics workflows ---
@@ -76,7 +80,7 @@ workflow test_plink_stats {
 
     main:
     // prepare input
-    def idxstats = file("${params.output_dir}/vmap4_v1_idxstat_summary.txt")
+    def idxstats = file("${params.output_dir}/meta_data/vmap4_v1_idxstat_summary.txt")
     def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
     def tbm_dir = file("${params.home_dir}/00data/05taxaBamMap")
     def dbone_dir = file("${params.user_dir}/git/DBone/Service/src/main/resources/raw/20251208")
@@ -144,8 +148,12 @@ workflow test_plink_stats {
 
     def ibs_out = plink1_ibs_square(merged_bfile)
     def pca_out = plink1_pca(merged_pfile)
+    // Others is mostly chr0; LD prune leaves too few non-chr0 sites for --pca approx.
+    def pca_ld_in = merged_pfile.filter { id, chr, prefix, pgen, psam, pvar -> id != 'Others' }
+    def pca_ld_out = plink1_pca_ld_prune(pca_ld_in)
     sample_ibs_mds_plot(group_file, ibs_out.ibs)
     sample_plink1_pca_plot(group_file, pca_out.pca)
+    sample_plink1_pca_ld_plot(group_file, pca_ld_out.pca)
 
     // emit:
 }

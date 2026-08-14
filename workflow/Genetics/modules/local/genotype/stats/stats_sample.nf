@@ -537,6 +537,40 @@ process plink1_pca {
     """
 }
 
+process plink1_pca_ld_prune {
+    tag "plink2 pca ld-prune: ${id}"
+    label 'cpus_8'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/pca_ld", mode: 'copy', pattern: "*.{eigenvec,eigenval,log}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/pca_ld/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.pca.ld.eigenvec"), path("${id}.pca.ld.eigenval"), emit: pca
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${chr}.plink2_pca_ld.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --indep-pairwise ${params.pca_ld_window} ${params.pca_ld_step} ${params.pca_ld_r2} \\
+        --threads ${task.cpus} \\
+        --out ${id}.pca.ld.prune
+
+    plink2 --pfile ${prefix} \\
+        --extract ${id}.pca.ld.prune.prune.in \\
+        --mind 0.9999 \\
+        --pca approx ${params.pc_num} \\
+        --allow-extra-chr \\
+        --threads ${task.cpus} \\
+        --out ${id}.pca.ld
+    """
+}
+
 process sample_plink1_pca_plot {
     tag "plink1 pca plot: ${id}"
     label 'cpus_2'
@@ -573,6 +607,92 @@ process sample_plink1_pca_plot {
         group_file="${group_file}",
         plot_tsne=False,
         pca_title="Population Structure PCA (PLINK2 approx)",
+    )
+    """
+}
+
+process sample_plink1_pca_ld_plot {
+    tag "plink1 pca ld plot: ${id}"
+    label 'cpus_2'
+    cpus 8
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    path group_file
+    tuple val(id), val(chr), path(eigenvec), path(eigenval)
+
+    output:
+    tuple val(id), val(chr), path("*.tsv"), emit: info
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("${chr}.plink1_pca_ld_plot.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.sample.pca_structure import plot_population_structure
+
+    print(f"Plotting LD-pruned PLINK2 PCA for ${chr}...")
+    plot_population_structure(
+        "${eigenvec}",
+        "${eigenval}",
+        "${id}.sample.pca_ld",
+        group_file="${group_file}",
+        plot_tsne=False,
+        pca_title="Population Structure PCA (PLINK2 approx, LD-pruned)",
+    )
+    """
+}
+
+process sample_plink1_pca_highlight_plot {
+    tag "pca highlight plot: ${id} (${pca_kind})"
+    label 'cpus_2'
+    cpus 8
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    path group_file
+    tuple val(id), val(chr), path(eigenvec), path(eigenval)
+    val(pca_kind)
+    val(highlight_samples)
+
+    output:
+    tuple val(id), val(chr), path("*.png"), emit: plots
+    tuple val(id), val(chr), path("*.log"), emit: log
+
+    script:
+    def output_prefix = (pca_kind == 'pca_ld') ? "${id}.sample.pca_ld" : "${id}.sample"
+    def plot_title = (pca_kind == 'pca_ld')
+        ? "Population Structure PCA (PLINK2 approx, LD-pruned)"
+        : "Population Structure PCA (PLINK2 approx)"
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("${chr}.plink1_pca_highlight_${pca_kind}.log", "w")
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.sample.pca_structure import plot_population_structure
+
+    highlight = [s.strip() for s in "${highlight_samples}".split(",") if s.strip()]
+    print(f"Replotting ${pca_kind} PCA for ${chr} with highlights: {highlight}")
+    plot_population_structure(
+        "${eigenvec}",
+        "${eigenval}",
+        "${output_prefix}",
+        group_file="${group_file}",
+        plot_tsne=False,
+        pca_title="${plot_title}",
+        highlight_samples=highlight,
     )
     """
 }

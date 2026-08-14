@@ -1,5 +1,10 @@
 nextflow.enable.dsl=2
 
+// Top-level declarations for Nextflow language server / schema (defaults also in conf/base.config).
+params.collinear_root = null
+params.collinear_skip_prep = false
+params.process_dir = null
+
 include { header; helpMessage; check_input } from './subworkflows/local/entry/genetics_helpers.nf'
 include {
     RUN_V1_PLINK
@@ -9,7 +14,14 @@ include {
     RUN_TEST_COMMON_ONLY
     RUN_TEST_COMMON_INTER
     RUN_TEST_RARE_ONLY
+    RUN_TEST_HEX
+    RUN_TEST_WAP
+    RUN_TEST_COLLINEAR
 } from './subworkflows/local/plink/plink_genotype_modes.nf'
+include {
+    collinear_sites_prep
+    publish_collinear_root
+} from './modules/local/genotype/processor/processor_test.nf'
 include { RUN_WHEAT_INTEGRATED } from './subworkflows/local/wheat/wheat_integrated_study.nf'
 
 workflow {
@@ -48,6 +60,28 @@ workflow {
         } else if (params.mod == 'test_rare_only') {
             log.info "${params.c_yellow}Using PLINK RARE-ONLY TEST module (test_rare_only).${params.c_reset}"
             RUN_TEST_RARE_ONLY(ch_vcf)
+        } else if (params.mod == 'test_hex') {
+            log.info "${params.c_yellow}Using PLINK HEX-PANEL TEST module (test_hex).${params.c_reset}"
+            RUN_TEST_HEX(ch_vcf)
+        } else if (params.mod == 'test_wap') {
+            log.info "${params.c_yellow}Using PLINK WAP-PANEL TEST module (test_wap).${params.c_reset}"
+            RUN_TEST_WAP(ch_vcf)
+        } else if (params.mod == 'test_collinear') {
+            log.info "${params.c_yellow}Using PLINK COLLINEAR TEST module (test_collinear).${params.c_reset}"
+            def process_dir = params.process_dir ?: "${params.output_dir}/${params.job}/process/test_collinear"
+            def collinear_root = params.collinear_root ?: "${process_dir}/collinear"
+            def ch_collinear_root
+            if (params.collinear_skip_prep) {
+                def existing = file(collinear_root)
+                if (!existing.exists() || !existing.isDirectory()) {
+                    error "test_collinear: --collinear_skip_prep requires existing --collinear_root (${collinear_root})"
+                }
+                log.info "${params.c_green}Skipping collinear_sites_prep; using ${collinear_root}${params.c_reset}"
+                ch_collinear_root = publish_collinear_root(channel.value(existing))
+            } else {
+                ch_collinear_root = collinear_sites_prep()
+            }
+            RUN_TEST_COLLINEAR(ch_vcf, ch_collinear_root)
         } else {
             log.error "${params.c_red}Unknown or unsupported params.mod: '${params.mod}'${params.c_reset}"
             log.info """
@@ -59,6 +93,9 @@ workflow {
               - test_common_only
               - test_common_inter
               - test_rare_only
+              - test_hex
+              - test_wap
+              - test_collinear
 
             Wheat integrated mods (no VCF channel):
               - params.mod starting with wheat_ (e.g. wheat_pca_tsne, wheat_gwas)

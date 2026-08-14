@@ -297,33 +297,40 @@ def ana_variant_maf_miss_by_group(
         {"value": 0.005, "label": "Threshold 0.005", "color": "#c44e52", "linestyle": "--"},
     ]
 
-    plot_stacked_distribution(
-        df=maf_sub,
-        col="MAF",
-        group_col="Group",
-        title="Distribution of Minor Allele Frequency (0-0.01) by sample group",
-        filename=f"{output_prefix}.maf.dist.0.01.linear.group.png",
-        mean_val=mean_maf,
-        median_val=median_maf,
-        x_label="MAF",
-        y_label="Count of Variants",
-        bins=100,
-        xlim=(0.0, 0.01),
-    )
-    plot_stacked_distribution(
-        df=maf_sub,
-        col="MAF",
-        group_col="Group",
-        title="Distribution of Minor Allele Frequency (0-0.01, log y) by sample group",
-        filename=f"{output_prefix}.maf.dist.0.01.log.group.png",
-        mean_val=mean_maf,
-        median_val=median_maf,
-        x_label="MAF",
-        y_label="Count of Variants",
-        bins=100,
-        log_scale=True,
-        xlim=(0.0, 0.01),
-    )
+    if maf_sub.empty:
+        # Common for MAF-filtered mods (e.g. test_collinear MAF>0.05): skip rare-bin plots.
+        print(
+            f"[Warning] No variants with MAF<=0.01 (n={len(merged)}); "
+            "skipping 0-0.01 group MAF/miss plots."
+        )
+    else:
+        plot_stacked_distribution(
+            df=maf_sub,
+            col="MAF",
+            group_col="Group",
+            title="Distribution of Minor Allele Frequency (0-0.01) by sample group",
+            filename=f"{output_prefix}.maf.dist.0.01.linear.group.png",
+            mean_val=mean_maf,
+            median_val=median_maf,
+            x_label="MAF",
+            y_label="Count of Variants",
+            bins=100,
+            xlim=(0.0, 0.01),
+        )
+        plot_stacked_distribution(
+            df=maf_sub,
+            col="MAF",
+            group_col="Group",
+            title="Distribution of Minor Allele Frequency (0-0.01, log y) by sample group",
+            filename=f"{output_prefix}.maf.dist.0.01.log.group.png",
+            mean_val=mean_maf,
+            median_val=median_maf,
+            x_label="MAF",
+            y_label="Count of Variants",
+            bins=100,
+            log_scale=True,
+            xlim=(0.0, 0.01),
+        )
     plot_stacked_distribution(
         df=merged,
         col="F_MISS",
@@ -338,20 +345,20 @@ def ana_variant_maf_miss_by_group(
         xlim=(0.0, 1.0),
     )
 
-    reg_df = merged[(merged["MAF"] <= 0.01)].copy()
-    reg_plot = _subsample_for_plot(reg_df, regression_max_points, random_seed)
-    plot_joint_regression(
-        df=reg_plot,
-        x_col="MAF",
-        y_col="F_MISS",
-        group_col="Group",
-        x_label="Minor Allele Frequency (MAF)",
-        y_label="Variant Missing Rate (F_MISS)",
-        filename=f"{output_prefix}.reg.0.01.group.png",
-        title="Variant MAF vs Missing Rate (MAF 0-0.01) by sample group",
-        x_lim=(0.0, 0.01),
-        y_lim=(0.0, 1.0),
-    )
+    if not maf_sub.empty:
+        reg_plot = _subsample_for_plot(maf_sub, regression_max_points, random_seed)
+        plot_joint_regression(
+            df=reg_plot,
+            x_col="MAF",
+            y_col="F_MISS",
+            group_col="Group",
+            x_label="Minor Allele Frequency (MAF)",
+            y_label="Variant Missing Rate (F_MISS)",
+            filename=f"{output_prefix}.reg.0.01.group.png",
+            title="Variant MAF vs Missing Rate (MAF 0-0.01) by sample group",
+            x_lim=(0.0, 0.01),
+            y_lim=(0.0, 1.0),
+        )
 
     counts, fractions = _maf_bin_group_fraction_table(merged)
     long_stats = []

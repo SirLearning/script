@@ -223,6 +223,9 @@ def reg_missing_idx_mapping(
     else:
         # 1. Read Mapping Rate Data
         df_idxstats = load_df_from_idxstats(mapping_file)
+        if df_idxstats is None:
+            print(f"Error reading mapping file: {mapping_file}")
+            return
         df_map = df_idxstats[['TaxaID', 'Mapping_Rate_Pct']].rename(columns={'TaxaID': 'Sample'})
         # 2. Read .smiss Data using smiss_ana
         print(f"Reading .smiss file: {smiss_file}...")

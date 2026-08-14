@@ -27,7 +27,7 @@ modules:
       create successor 12stats.genome (+2 prefix). Do not add runs to 08stats.genome.
 
   - id: "11aneuploidy"
-    role: Mosdepth aneuploidy benchmark scan (mosdepth_aneuploidy_scan.nf)
+    role: Mosdepth aneuploidy benchmark + MAPQ bin cohort scan
     knowledge: workspace/vmap4_11aneuploidy.yaml
 
   - id: "05reliable.lib"

@@ -26,6 +26,11 @@ include {
     subsampling_rare_only_pfile_for_test
     build_chr_rare_inter_extract
     subsampling_common_inter_pfile_for_test
+    prepare_test_hex_keep
+    subsampling_hex_pfile_for_test
+    prepare_test_wap_keep
+    subsampling_wap_pfile_for_test
+    extract_collinear_pfile_for_test
     merge_subgenome_test_pfile
 } from './processor_test.nf'
 
@@ -741,6 +746,316 @@ workflow test_rare_only_processor {
 
     emit:
     vcf = params.process_dir ? channel.empty() : preprocess_out.gz_vcf
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
+}
+
+workflow test_hex_processor {
+    take:
+    vcf_in
+
+    main:
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
+
+    def map_subgenome = { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }
+
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip hex panel thin + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant and sample/${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else if (params.process_dir) {
+        def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${params.process_dir}"
+        source_pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        keep_out = prepare_test_hex_keep(group_file)
+        log.info "${params.c_green}Building test_hex pfiles (--keep hex panel, exclude ${params.test_hex_exclude_groups}; --mac 2; --thin ${params.test_hex_thin_rate})${params.c_reset}"
+        subsampling_out = subsampling_hex_pfile_for_test(keep_out.keep, source_pfiles)
+
+        def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+    } else {
+        error "test_hex requires --process_dir pointing at main_raw pfiles (or an existing test_hex merge for reuse)."
+    }
+
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
+    emit:
+    vcf = channel.empty()
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
+}
+
+workflow test_wap_processor {
+    take:
+    vcf_in
+
+    main:
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
+
+    def map_subgenome = { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }
+
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip WAP panel thin + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant and sample/${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else if (params.process_dir) {
+        def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${params.process_dir}"
+        source_pfiles = vcf_in.map { id, chr, _vcf ->
+            def prefix = "${params.process_dir}/${id}.plink2"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            return [ id, chr, prefix, pgen, psam, pvar ]
+        }
+        keep_out = prepare_test_wap_keep(group_file)
+        log.info "${params.c_green}Building test_wap pfiles (--keep ${params.test_wap_include_groups}; --mac 2 drop monomorphic; --thin ${params.test_wap_thin_rate})${params.c_reset}"
+        subsampling_out = subsampling_wap_pfile_for_test(keep_out.keep, source_pfiles)
+
+        def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+    } else {
+        error "test_wap requires --process_dir pointing at main_raw pfiles (or an existing test_wap merge for reuse)."
+    }
+
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
+    emit:
+    vcf = channel.empty()
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
+}
+
+workflow test_collinear_processor {
+    take:
+    vcf_in
+    collinear_root
+
+    main:
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+    def merge_bfile
+    def main_raw_dir = params.main_raw_dir ?: params.popdep_dir
+
+    def map_subgenome = { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }
+
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip collinear extract + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        merge_bfile = Channel.from(listMergedSubgenomeTestBfileTuples(params.process_dir))
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant and sample/${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            log.info "${params.c_green}Making basic info from reused merged pfiles.${params.c_reset}"
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
+        ld_out = calc_plink_ld_unphased(merge_pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+    } else {
+        log.info "${params.c_green}Using main_raw pfiles in dir:${params.c_reset} ${main_raw_dir}"
+        log.info "${params.c_green}Collinear extract lists from prep collinear_root/extract${params.c_reset}"
+        source_pfiles = vcf_in.combine(collinear_root).map { id, chr, _vcf, root ->
+            def prefix = "${main_raw_dir}/${id}.plink2"
+            def pgen = file("${prefix}.pgen")
+            def psam = file("${prefix}.psam")
+            def pvar = file("${prefix}.pvar")
+            def extract = file("${root}/extract/${id}.collinear.txt")
+            return [ id, chr, prefix, pgen, psam, pvar, extract ]
+        }.filter { id, chr, prefix, pgen, psam, pvar, extract ->
+            extract.exists() && extract.size() > 0
+        }
+        subsampling_out = extract_collinear_pfile_for_test(source_pfiles)
+
+        def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        merge_bfile = merge_out.bfile
+
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+        ld_out = calc_plink_ld_unphased(merge_out.pfile)
+        ld_cross_out = calc_plink_ld_crosschr_random(merge_out.pfile)
+    }
+
+    if (reuseMerged && hasVariantMqForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${params.process_dir}/variant${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            mq: [ id, chr, file("${d}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from frozen site_mq.ref (${params.mq_dir})${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(merge_pfile)
+    }
+
+    if (reuseMerged && hasVariantPopdepForMergedTests(params.process_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${params.process_dir}/variant${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            def d = params.process_dir
+            popdep: [ id, chr, file("${d}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from frozen main_raw grids (${params.popdep_dir})${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(merge_pfile)
+    }
+
+    emit:
+    vcf = channel.empty()
     merged_bfile = merge_bfile
     merged_pfile = merge_pfile
     smiss = basic_info_out.smiss

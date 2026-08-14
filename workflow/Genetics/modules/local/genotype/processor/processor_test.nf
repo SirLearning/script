@@ -183,6 +183,302 @@ process subsampling_common_inter_pfile_for_test {
     """
 }
 
+process extract_collinear_pfile_for_test {
+    tag "collinear extract pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_collinear'}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_collinear'}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar), path(extract_list)
+
+    output:
+    tuple val(id), val(chr), val("${id}.collinear"), path("${id}.collinear.pgen"), path("${id}.collinear.psam"), path("${id}.collinear.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > collinear_extract_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --extract ${extract_list} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.collinear
+    """
+}
+
+process publish_collinear_root {
+    tag "publish collinear root"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_collinear'}", mode: 'copy'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_1'
+
+    input:
+    path collinear
+
+    output:
+    path collinear, emit: collinear_root
+
+    script:
+    """
+    set -euo pipefail
+    test -d "${collinear}/extract"
+    n=\$(ls -1 "${collinear}/extract"/*.txt 2>/dev/null | wc -l)
+    echo "collinear extract lists: \${n}"
+    test "\${n}" -gt 0
+    """
+}
+
+process collinear_sites_prep {
+    tag "collinear sites prep"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_collinear'}/collinear", mode: 'copy', pattern: "**/*"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_8'
+
+    output:
+    path "collinear", emit: collinear_root
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("collinear_sites_prep.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.alignment.collinear_sites import prepare_collinear_test_dataset
+
+    print("Preparing collinear test dataset (cached site lists + join + sample)...")
+    summary = prepare_collinear_test_dataset(
+        syntenic_matrix_dir="${params.syntenic_matrix_dir}",
+        main_raw_dir="${params.main_raw_dir ?: params.popdep_dir}",
+        full_lineage_summary_tsv="${params.full_lineage_summary_tsv}",
+        output_dir="collinear",
+        target_n=${params.collinear_target_n},
+        maf_threshold=${params.collinear_maf_threshold},
+        seed=${params.ld_decay_random_seed},
+        workers=${params.collinear_workers},
+        force=${params.collinear_force ? 'True' : 'False'},
+    )
+    print(summary)
+    """
+}
+
+process prepare_test_site_panel {
+    tag "test_site panel prep"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_site'}", mode: 'copy', pattern: "**/*"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_8'
+
+    output:
+    path "test_site", emit: site_root
+
+    script:
+    def chr_exclude_py = params.test_site_chr_exclude
+        ? params.test_site_chr_exclude.toString().split(/[,\\s]+/).collect { it.trim() }.findAll { it }.collect { it.toInteger() }
+        : []
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("prepare_test_site_panel.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.popdep_site_panel import prepare_test_site_panel
+
+    chr_exclude = set(${chr_exclude_py})
+    print("Preparing test_site random genome panel + popdep extract...")
+    summary = prepare_test_site_panel(
+        popdep_dir="${params.popdep_dir}",
+        main_raw_dir="${params.main_raw_dir ?: params.popdep_dir}",
+        output_dir="test_site",
+        target_bp=${params.test_site_target_bp},
+        seed=${params.test_site_seed ?: params.ld_decay_random_seed},
+        chr_exclude=chr_exclude,
+        force=${params.test_site_force ? 'True' : 'False'},
+    )
+    print(summary)
+    """
+}
+
+process extract_test_site_pfile_for_test {
+    tag "test_site extract pfile: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_site'}/variant", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_site'}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar), path(extract_list)
+
+    output:
+    tuple val(id), val(chr), val("${id}.site"), path("${id}.site.pgen"), path("${id}.site.psam"), path("${id}.site.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > test_site_extract_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --extract ${extract_list} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.site
+    """
+}
+
+process publish_test_site_root {
+    tag "publish test_site root"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_site'}", mode: 'copy'
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_1'
+
+    input:
+    path site_root
+
+    output:
+    path site_root, emit: site_root
+
+    script:
+    """
+    set -euo pipefail
+    test -f "${site_root}/sites/panel.sites.tsv"
+    n=\$(wc -l < "${site_root}/sites/panel.sites.tsv")
+    echo "test_site panel rows (incl header): \${n}"
+    test "\${n}" -gt 1
+    """
+}
+
+process prepare_test_wap_keep {
+    tag "prepare WAP panel keep list"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.keep"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_1'
+
+    input:
+    path group_file
+
+    output:
+    path "test_wap.keep", emit: keep
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("prepare_test_wap_keep.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.group_maf_intersection import write_sample_group_keep_file
+
+    include = frozenset(
+        g.strip() for g in "${params.test_wap_include_groups}".split(",") if g.strip()
+    )
+    n = write_sample_group_keep_file("${group_file}", "test_wap.keep", include_groups=include)
+    print(f"Wrote test_wap.keep with {n} samples (included groups: {sorted(include)})")
+    """
+}
+
+process subsampling_wap_pfile_for_test {
+    tag "WAP panel pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    path keep_file
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.wap"), path("${id}.wap.pgen"), path("${id}.wap.psam"), path("${id}.wap.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > wap_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --keep ${keep_file} \\
+        --mac 2 \\
+        --thin ${params.test_wap_thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.wap
+    """
+}
+
+process prepare_test_hex_keep {
+    tag "prepare hex panel keep list"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.keep"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_1'
+
+    input:
+    path group_file
+
+    output:
+    path "test_hex.keep", emit: keep
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("prepare_test_hex_keep.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+
+    from genetics.genomics.variant.group_maf_intersection import write_sample_group_keep_file
+
+    exclude = frozenset(
+        g.strip() for g in "${params.test_hex_exclude_groups}".split(",") if g.strip()
+    )
+    n = write_sample_group_keep_file("${group_file}", "test_hex.keep", exclude_groups=exclude)
+    print(f"Wrote test_hex.keep with {n} samples (excluded groups: {sorted(exclude)})")
+    """
+}
+
+process subsampling_hex_pfile_for_test {
+    tag "hex panel pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    path keep_file
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.hex"), path("${id}.hex.pgen"), path("${id}.hex.psam"), path("${id}.hex.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > hex_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --keep ${keep_file} \\
+        --mac 2 \\
+        --thin ${params.test_hex_thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.hex
+    """
+}
+
 process subsampling_rare_only_pfile_for_test {
     tag "rare-only pfile for test: ${id}"
     publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"

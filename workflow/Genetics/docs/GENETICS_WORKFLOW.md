@@ -36,6 +36,8 @@ These branches are wired in the **anonymous** top-level workflow in `main.nf`. P
 | `test_thin` | `TEST_PLINK_PROCESSOR` (`test_plink_processor`) | `TEST_PLINK_STATS` (`test_plink_stats`) |
 | `test_camp` | `TEST_PLINK_CAMP_PROCESSOR` + **`params.camp`** TSV | `TEST_PLINK_STATS` |
 | `test_common_thin` | `TEST_COMMON_THIN_PROCESSOR` (hard-filter + thin from `hf_*` params) | `TEST_PLINK_STATS` |
+| `test_hex` | `TEST_HEX_PROCESSOR` (`--keep` hex panel, `--mac 2`, `--thin test_hex_thin_rate`; input `--process_dir` = `main_raw`) | `TEST_PLINK_STATS` |
+| `test_wap` | `TEST_WAP_PROCESSOR` (`--keep` WAP sample_group, `--mac 2`, `--thin test_wap_thin_rate`; input `--process_dir` = `main_raw`) | `TEST_PLINK_STATS` |
 | `wheat_*` | *(none — table/matrix integrated track)* | `integrated_wheat` (`modules/local/integrated/integrated_wheat.nf`) |
 
 Single-table wheat modes use `wheat_table_input`; `wheat_gwas` / `wheat_kgwas` use dedicated genotype or k-mer + phenotype params (see **Wheat integrated workflows** below).
@@ -129,6 +131,7 @@ Any other `params.mod` causes `main.nf` to **exit 1** with a list of supported m
 | `process_dir` | Reuse prebuilt per-chromosome or merged test pfiles | When merged `A_test.plink2` … `Others_test.plink2` exist under `{process_dir}`, test processors **skip** thin/merge and rebuild basic info + LD only. See **`doc/project_knowledge/domain/data_publish_tree.yaml`** and frozen paths under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process`. |
 | `mq_dir` | Site MQ reference (partial only) | Frozen **`{mq_dir}/reference/chrNNN.site_mq.{ref,calls}.*`** under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/abstract_mq_50_bams`. Built once via **`--partial_task abstract_mq_50_bams --job test_plink`**; skipped when refs exist (`mq_force_rerun=false`). Downstream Python: `genetics.genomics.variant.mq.site_mq_ref_path()`. |
 | `popdep_dir` | Population depth reference (partial + test annotate) | Frozen **`{popdep_dir}/variant/chrNNN.popdep.txt.bgz`** (+ `.tbi`) under `/data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw`. Legacy plain `*.popdep.txt` is still accepted for reuse/skip. Built once via **`--partial_task main_raw_popdepth --mod main_raw_popdepth --job test_plink`** (default **`PopDepCrossChr`** in **`TIGER_PD_20260619.jar`**: one pass over **`all.ALL.taxaBamMap.txt`** (FastCall-style 3-column map; per-chr **`all.{A,B,D,ALL}.taxaBamMap.txt`** for PopDepFull); length file **`Chr\\tLength\\tnTaxa`**; **`popdep_crosschr_threads`** default 16, **`popdep_crosschr_memory_gb`** default **640** (relativeDepth in 20260619); **`popdep_tiger_memory_gb`** default **640** for PopDepFull; **`popdep_crosschr_taxa_order`** (`interleave` \| `shuffle` \| `sorted`, TIGER `-o`); optional **`popdep_crosschr_checkpoint_dir`** + **`popdep_crosschr_checkpoint_interval`** (TIGER `-k` / `-ci`, resume with same paths); override **`--popdep_tiger_app PopDepFull`** for per-chr scans); skipped when refs exist (`popdep_force_rerun=false`). Test modes extract **`process/{mod}/variant/{A,B,D,Others}.popdep.info.tsv`** via `annotate_subgenome_variant_popdep` (tabix lookup). Python: `genetics.genomics.variant.popdep.popdep_chr_ref_path()`. Bench: **`popdep_taxa_bam_file`**, **`popdep_chr_list`**, **`popdep_tiger_max_forks`** — see **`10stats.genome/10run_popdep_head2head/`**. |
+| `test_site_target_bp` | **`test_site` mod** (tmp build) | Random genome site panel size (default **10_000_000** bp). Build via **`subworkflows/tmp/test_site_build.nf`**; popdep-only stats via **`test_site_popdep_stats.nf`**. Panel + popdep sidecar under **`process/test_site/sites/`**; variant pfiles under **`process/test_site/variant/chrNNN.site.plink2`**. Stats plots highlight **`Is_Variant`** sites (grey vs red). |
 | `camp` | **`test_camp` only** | Path to cohort map TSV (e.g. `camp_vmap4_map.tsv`). Required for that mod. |
 | `chr` | Optional | Comma-separated chromosome filter after job config builds the VCF channel. |
 | `wheat_table_input`, `wheat_gwas_*`, `wheat_kgwas_*` | **`params.mod` starts with `wheat_`** | See **Wheat integrated workflows** below. Requires `user_dir` for the `stats` Conda env (same as genotype stats processes). |
@@ -179,6 +182,8 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `popdep_missing_reg` | `RUN_POPDEP_MISSING_REG` | `test_thin` / `test_common_thin`; needs `*.popdep.info.tsv` |
 | `abstract_mq_50_bams` | `RUN_ABSTRACT_MQ_50_BAMS` | `--mod abstract_mq_50_bams`; one-off site MQ build |
 | `main_raw_popdepth` | `RUN_MAIN_RAW_POPDEPTH` | `--mod main_raw_popdepth`; one-off TIGER popdepth per chr → `main_raw/variant/` |
+| `aneuploidy_mapq` | `RUN_ANEUPLOIDY_MAPQ` | `--mod aneuploidy_check`; full-cohort BAM MAPQ + 1 Mb bin depth TSVs |
+| `aneuploidy_breachr` | `RUN_BREACHR_FLAGGED` | `--mod aneuploidy_check`; breachr segment calls on flagged samples with existing MAPQ TSVs + mosdepth reconciliation |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` | `test_thin` / `test_common_thin` + `wheat_integrated_mod` |
 
 **Ops** (`subworkflows/tmp/ops/`) — self-contained FTP upload helpers (not genetics analysis):
@@ -187,6 +192,14 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | --- | --- |
 | `ops/gsa_ftp_upload.nf` | GSA FTP upload (`submit.big.ac.cn`); set `GSA_FTP_PASSWORD`. |
 | `ops/gwh_ftp_upload.nf` | GWH FTP upload; optional `--verify_md5` / `--verify_only`. Set `GSA_FTP_PASSWORD`. |
+
+**Plot-only replots** (read published TSVs; no processor rerun):
+
+| Script | Purpose |
+| --- | --- |
+| `breachr_reconcile_replot.nf` | Replot breachr mosdepth reconciliation summary charts from `info/breachr_check/breachr_reconcile_all.tsv`. |
+| `mosdepth_aneuploidy_replot.nf` | Replot mosdepth rel_depth distributions from `info/chr_depth/*.depth.tsv`. |
+| `aneuploidy_chromosome_plot.nf` | Stacked bar of confirmed whole-chromosome aneuploidy (nullisomy / monosomy / trisomy / tetrasomy) per chromosome from `info/breachr_check/breachr_reconcile_all.tsv`. Params: `--aneuploidy_breachr_input_dir`, `--aneuploidy_plot_id`, `--aneuploidy_plot_title`. |
 
 **Partial task notes** (workflow bodies in `subworkflows/local/partial/`):
 
@@ -204,6 +217,8 @@ nextflow run /data/home/tusr1/git/script/workflow/Genetics/subworkflows/local/en
 | `popdep_missing_reg` | Depth vs missing regression plots from `*.popdep.info.tsv` + vmiss. |
 | `abstract_mq_50_bams` | Full-chr bcftools mpileup site MQ → `{mq_dir}/reference/`. |
 | `main_raw_popdepth` | Full-chr TIGER popdepth → `{popdep_dir}/variant/chrNNN.popdep.txt.bgz` (+ tabix `.tbi`). |
+| `aneuploidy_mapq` | Per-sample `samtools view -F 1796` scan → `{output_dir}/{job}/stats/aneuploidy_check/info/mapq_check/{sample}.mapq_depth_bin.tsv` (1 Mb bins: MAPQ histogram + `bin_mean_depth`). Skips samples whose TSV already exists when `mapq_skip_existing=true`. Optional `-c conf/mosdepth_aneuploidy_mapq.config` sets `mapq_max_forks=16`, `mapq_plot=false`. Sample list default: `{home_dir}/00data/05taxaBamMap/final.ALL.taxaBamMap.txt`. |
+| `aneuploidy_breachr` | Reads `info/flagged_samples.tsv` (`aneuploid_flag=true`), runs `breachr` on existing `info/mapq_check/*.mapq_depth_bin.tsv`, publishes `info/breachr_check/` (`breachr_segments_all.tsv`, `cnv_misclassified_as_aneuploidy.tsv`, `breachr_reconcile_summary.tsv`). Optional `-c conf/breachr_flagged.config`. |
 | `wheat_from_plink` | `RUN_WHEAT_FROM_PLINK` on existing merged test pfiles (`wheat_integrated_mod` required). |
 
 Historic runs in **`doc/progress/`** may still reference removed `workflow/Genetics/tmp/*.nf` paths; use `partial_router.nf` for new runs.
@@ -303,6 +318,8 @@ Log production runs in today's **`doc/progress/YYYY-MM-DD.md`** per **`progress-
 | `mac_stats` | `57run_mac_stats_test_thin` |
 | `chr_compare` | `51run_chr_variant_compare_plots` |
 | `wheat_from_plink` | `43run_wheat_pca_grp_test_thin` |
+| `aneuploidy_mapq` | `15run_mapq_full_cohort` under `11aneuploidy/` |
+| `aneuploidy_breachr` | `16run_breachr_flagged_test` under `11aneuploidy/` |
 
 Authoritative guardrails: **`.cursor/rules/workstation-core.mdc`** and **`.cursor/rules/workstation-nextflow.mdc`**.
 

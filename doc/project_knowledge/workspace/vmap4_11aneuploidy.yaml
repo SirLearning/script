@@ -1,0 +1,51 @@
+kind: workspace_module
+id: vmap4_11aneuploidy
+title: Aneuploidy benchmark (mosdepth scan + MAPQ bin cohort)
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/11aneuploidy
+purpose: >
+  Mosdepth chr-level aneuploidy scan and full-cohort MAPQ + per-bin depth profiles
+  for benchmark job. MAPQ partial task: partial_router.nf --partial_task aneuploidy_mapq.
+partial_tasks:
+  - aneuploidy_mapq
+  - aneuploidy_breachr
+default_job: benchmark
+default_mod: aneuploidy_check
+taxa_bam_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+mosdepth_inputs: /data/home/tusr1/01projects/vmap4/00data/04depth/
+publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/
+mapq_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/mapq_check/
+breachr_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/breachr_check/
+
+runs:
+  - folder: 01run_benchmark_full
+    summary: Full mosdepth aneuploidy benchmark scan (421M work cache)
+    status: historical
+
+  - folder: 14run_benchmark
+    summary: Jun 25 mosdepth aneuploidy pilot
+    status: historical
+
+  - folder: 03run_mapq_check
+    summary: Early flagged-sample MAPQ bin check (264 samples)
+    status: historical
+
+  - folder: 15run_mapq_full_cohort
+    summary: Full-cohort MAPQ bin scan (~8288 samples); skip_existing for 263 prior TSVs
+    nf_cmd_ref: doc/progress/2026-08-04.md — NF replay aneuploidy_mapq full cohort
+    screen: mapq_cohort
+    status: running
+    note: maxForks=64, cpus=2 per task (2026-08-05 restart at 772 published TSVs)
+
+  - folder: 16run_breachr_flagged_test
+    summary: breachr v1 segment + mosdepth reconcile (261 flagged; alias fix for _deduped IDs)
+    nf_cmd_ref: doc/progress/2026-08-10.md — NF replay aneuploidy_breachr flagged test
+    status: historical
+    note: superseded by 17run_breachr_flagged_v2 (v2 dosage/subgenome algorithm)
+
+  - folder: 17run_breachr_flagged_v2
+    summary: breachr v2 recompute — dosage profiling, subgenome mismatch, flat mapq_depth_cap PNGs
+    nf_cmd_ref: doc/progress/2026-08-10.md — NF replay breachr v2 flagged recompute (17run)
+    screen: breachr_v2_fresh
+    status: completed
+    note: 524 tasks OK; 261 flat PNGs under breachr_check/plots/mapq_depth_cap/

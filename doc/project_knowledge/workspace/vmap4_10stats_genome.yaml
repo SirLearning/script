@@ -184,3 +184,226 @@ runs:
     mod: test_common_inter
     process_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw
     publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/
+
+  - folder: 51run_pca_ld_test_thin
+    summary: LD-pruned PCA replot (A/B/D) for test_thin
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: LD-pruned PCA test mods"
+    screen: pca_ld_thin
+    entry_nf: workflow/Genetics/subworkflows/tmp/plink1_pca_ld_replot.nf
+    mod: test_thin
+
+  - folder: 52run_pca_ld_test_common_thin
+    summary: LD-pruned PCA replot (A/B/D) for test_common_thin
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: LD-pruned PCA test mods"
+    screen: pca_ld_cthin
+    entry_nf: workflow/Genetics/subworkflows/tmp/plink1_pca_ld_replot.nf
+    mod: test_common_thin
+
+  - folder: 53run_pca_ld_test_common_only
+    summary: LD-pruned PCA replot (A/B/D) for test_common_only
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: LD-pruned PCA test mods"
+    screen: pca_ld_conly
+    entry_nf: workflow/Genetics/subworkflows/tmp/plink1_pca_ld_replot.nf
+    mod: test_common_only
+
+  - folder: 54run_pca_ld_test_common_inter
+    summary: LD-pruned PCA replot (A/B/D) for test_common_inter
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: LD-pruned PCA test mods"
+    screen: pca_ld_cinter
+    entry_nf: workflow/Genetics/subworkflows/tmp/plink1_pca_ld_replot.nf
+    mod: test_common_inter
+
+  - folder: 55run_pca_ld_test_rare_only
+    summary: LD-pruned PCA replot (A/B/D) for test_rare_only
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: LD-pruned PCA test mods"
+    screen: pca_ld_ronly
+    entry_nf: workflow/Genetics/subworkflows/tmp/plink1_pca_ld_replot.nf
+    mod: test_rare_only
+
+  - folder: 50run_maf_full_lineage_count
+    summary: Full subgenome-lineage syntenic counts from syntenic_sites_k2 (exit 0; 25.2% full-lineage)
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: maf full-lineage matrix count"
+    screen: maf_fulllin
+    matrix_dir: /data/home/tusr1/01projects/vmap4/00data/06maf/syntenic_sites_k2
+    out: out/full_lineage_{by_chr,summary}.tsv
+    result: "full_lineage 3292058438 / 13064426950; all16=0"
+
+  - folder: 57run_popdep_n500_loo_chr1_10mb
+    summary: Shell-script LOO harness (superseded by 58run NF entry)
+    status: superseded
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+
+  - folder: 58run_popdep_n500_loo_chr1_nf
+    summary: N500 PopDepFull LOO chr1 10 Mb — tmp NF workflow; smoke max_cases=2 (stopped; grid_id output bug)
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: N500 PopDep LOO chr1 10 Mb smoke"
+    screen: popdep_loo_nf
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_n500_loo_chr1.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/
+    status: aborted
+
+  - folder: 59run_popdep_n500_loo_chr1_1mb
+    summary: N500 PopDepFull LOO chr1 1 Mb smoke (3 cases) after grid_id output fix
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: N500 PopDep LOO chr1 1 Mb smoke"
+    screen: popdep_loo_1mb
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_n500_loo_chr1.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_1mb/
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    params:
+      popdep_tiger_app: PopDepFull
+      popdep_loo_chr: 1
+      popdep_loo_bench_max_bp: 1000000
+      popdep_loo_max_cases: 2
+
+  - folder: 60run_popdep_n500_loo_chr1_10mb_full
+    summary: N500 PopDepFull LOO chr1 10 Mb full panel (501 cases baseline+500 LOO)
+    nf_cmd_ref: "doc/progress/2026-08-04.md — NF replay: N500 PopDep LOO chr1 10 Mb full"
+    screen: popdep_loo_full
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_n500_loo_chr1.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    params:
+      popdep_tiger_app: PopDepFull
+      popdep_loo_chr: 1
+      popdep_loo_bench_max_bp: 10000000
+      popdep_loo_max_cases: 0
+      popdep_loo_max_forks: 2
+      note: resumed Aug 5 with maxForks=2 after 175/501 cases
+
+  - folder: 61run_popdep_n500_loo_influence_plots
+    summary: LOO influence score plots + metric decomposition from 60run info.tsv
+    nf_cmd_ref: "doc/progress/2026-08-08.md — NF replay: popdep LOO influence plots"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_influence_plots.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/stats/{plots,info,logs}/
+
+  - folder: 71run_popdep_n500_loo_chr1_split_plots
+    summary: N500 chr1 501-case split LOO plots — absolute vs pattern influence
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: chr1 N500 split influence plots (71run)"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_influence_plots.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/stats/plots/
+    status: completed
+
+  - folder: 62run_popdep_n500_loo_outlier_review
+    summary: LOO outlier review plots — influence tiers vs N500 BAM/depth QC
+    nf_cmd_ref: "doc/progress/2026-08-08.md — NF replay: popdep LOO outlier review"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_outlier_review.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/stats/{plots,info,logs}/
+
+  - folder: 63run_popdep_n500_loo_quadrant_review
+    summary: LOO influence × sample-quality quadrant (keep vs delete_candidate)
+    nf_cmd_ref: "doc/progress/2026-08-08.md — NF replay: popdep LOO quadrant review"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_quadrant_review.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_chr1_10mb/stats/{plots,info,logs}/
+
+  - folder: 65run_popdep_n500_loo_aneuploidy_samechr
+    summary: Targeted same-chromosome LOO for N500 aneuploidy-flagged samples (chr1/2/3/4/6/7 × 10 Mb)
+    nf_cmd_ref: "doc/progress/2026-08-08.md — NF replay: aneuploidy same-chr LOO batch"
+    screen: popdep_aneu_samechr
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_n500_loo_aneuploidy_samechr.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_aneuploidy_samechr/
+    status: superseded
+
+  - folder: 68run_popdep_n500_loo_aneuploidy_samechr
+    summary: Same-chr aneuploidy LOO retry — publish_root wired via process input; per-chr NF cwd
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: aneuploidy same-chr LOO batch v2"
+    screen: popdep_aneu_samechr
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_n500_loo_aneuploidy_samechr.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_aneuploidy_samechr/
+    status: completed
+
+  - folder: 69run_popdep_n500_loo_aneuploidy_plots
+    summary: Aneuploidy same-chr LOO plots — per-chr breakdown + chr1 vs samechr horizontal comparison
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: aneuploidy same-chr LOO plots (69run)"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_aneuploidy_samechr_plots.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_aneuploidy_samechr/stats/plots/
+    status: completed
+
+  - folder: 70run_popdep_n500_loo_aneuploidy_split_plots
+    summary: Split LOO influence (absolute vs pattern) — aneuploidy samechr replot
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: split influence aneuploidy replot (70run)"
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_loo_aneuploidy_samechr_plots.nf
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_loo_aneuploidy_samechr/stats/plots/
+    status: completed
+
+  - folder: 66run_test_collinear_build
+    summary: test_collinear (superseded) — slow single-thread prep; stopped for accelerated 67run
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: test_collinear build"
+    screen: test_collinear
+    entry_nf: workflow/Genetics/subworkflows/tmp/collinear_test_build.nf
+    mod: test_collinear
+    status: stopped
+
+  - folder: 67run_test_collinear_build
+    summary: test_collinear prep only (publishDir bug; extract/stats never ran) — prep reused by 70run
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: test_collinear build accelerated (67run)"
+    screen: test_collinear
+    entry_nf: workflow/Genetics/subworkflows/tmp/collinear_test_build.nf
+    mod: test_collinear
+    prep_work: work/67/02a6cbff9b26e078cb6e84316b174b/collinear
+    status: prep_complete_publish_failed
+
+  - folder: 70run_test_collinear_build
+    summary: test_collinear extract+stats — skip prep, reuse 67 work collinear root (2M sites)
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: test_collinear build accelerated (70run skip-prep)"
+    screen: test_collinear
+    entry_nf: workflow/Genetics/subworkflows/tmp/collinear_test_build.nf
+    mod: test_collinear
+    collinear_root_reuse: /data/home/tusr1/01projects/vmap4/10stats.genome/67run_test_collinear_build/work/67/02a6cbff9b26e078cb6e84316b174b/collinear
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_collinear
+    publish_process_null: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/null
+    publish_stats_null: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/null
+    note: "exit 0; 123 ok / 9 ignored; chr extracts under process/test_collinear; merge+stats landed under process|stats/null (params.mod null); A/B/D n=815490/836245/348265"
+    status: completed_with_publish_null
+
+  - folder: 74run_test_collinear_republish_fix_stats
+    summary: aborted full-tree republish of process/null (~121G); stats→test_collinear done; ~112G work left
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: test_collinear lean republish + fix stats (75run)"
+    screen: collinear_fix
+    entry_nf: workflow/Genetics/subworkflows/tmp/collinear_republish_fix_stats.nf
+    mod: test_collinear
+    source_mod: null
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_collinear
+    note: "process republish killed; cleanup work/ needs explicit approval"
+    status: aborted_full_tree_copy
+
+  - folder: 75run_test_collinear_republish_fix_stats
+    summary: lean copy process null→test_collinear (skip vcor); rerun 9 ignored stats; EXIT 0
+    nf_cmd_ref: "doc/progress/2026-08-09.md — NF replay: test_collinear lean republish + fix stats (75run)"
+    screen: collinear_fix
+    entry_nf: workflow/Genetics/subworkflows/tmp/collinear_republish_fix_stats.nf
+    mod: test_collinear
+    source_mod: null
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_collinear
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_collinear
+    note: "mapping+maf_miss_group OK; popdep_miss log-only (null Depth_Mean); *.vcor stay under process/null"
+    status: completed
+
+  - folder: 75run_popdep_final_crosschr
+    summary: PopDepCrossChr N500 popdep_final (487 taxa) — exclude 11 aneuploidy-flagged + CS_sg_2017_60X/ABD_0418/ABD_0225; benchmark publish
+    nf_cmd_ref: "doc/progress/2026-08-10.md — NF replay: popdep_final CrossChr benchmark"
+    screen: popdep_final
+    mod: popdep_final
+    job: benchmark
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_popdep_final.taxaBamMap.txt
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/process/popdep_final/variant/
+    params:
+      popdep_tiger_app: PopDepCrossChr
+      popdep_chr_exclude: "32"
+      popdep_crosschr_threads: 64
+      popdep_crosschr_memory_gb: 640
+      n_taxa: 487
+    status: deferred
+    note: "Stopped 2026-08-10 ~10 min in (server IO saturated with mapq_cohort); relaunch after 11aneuploidy/15run_mapq_full_cohort completes"
+
+  - folder: 77run_test_site_smoke
+    summary: test_site smoke — 100 kb random panel + popdep-only stats (build + stats chained)
+    nf_cmd_ref: "doc/progress/2026-08-11.md — NF replay: test_site smoke (77run)"
+    screen: test_site_smoke
+    mod: test_site
+    job: test_plink
+    params:
+      test_site_target_bp: 100000
+      test_site_seed: 42
+      popdep_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_site/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_site/
+    status: running

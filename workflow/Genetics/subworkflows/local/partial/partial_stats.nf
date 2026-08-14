@@ -48,7 +48,7 @@ workflow RUN_MAC_STATS_FROM_GCOUNT {
 
     def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
 
-    if (params.mod in ['test_thin', 'test_common_thin']) {
+    if (params.mod in ['test_thin', 'test_common_thin', 'test_collinear']) {
         def subgenomes = ['A', 'B', 'D', 'Others']
         def ch_gcount = channel.from(
             subgenomes.collect { sg ->
@@ -85,7 +85,7 @@ workflow RUN_MAC_MISS_BIN50_SAMPLE {
 
     def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
 
-    if (params.mod in ['test_thin', 'test_common_thin']) {
+    if (params.mod in ['test_thin', 'test_common_thin', 'test_collinear']) {
         def subgenomes = ['A', 'B', 'D', 'Others']
         def ch_gcount = channel.from(
             subgenomes.collect { sg ->
@@ -118,7 +118,7 @@ workflow RUN_MQ_MISSING_REG {
 
     def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
 
-    if (params.mod in ['test_thin', 'test_common_thin']) {
+    if (params.mod in ['test_thin', 'test_common_thin', 'test_collinear']) {
         def subgenomes = ['A', 'B', 'D', 'Others']
         def ch_mq = channel.from(
             subgenomes.collect { sg ->
@@ -147,7 +147,7 @@ workflow RUN_POPDEP_MISSING_REG {
 
     def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
 
-    if (params.mod in ['test_thin', 'test_common_thin']) {
+    if (params.mod in ['test_thin', 'test_common_thin', 'test_collinear']) {
         def subgenomes = ['A', 'B', 'D', 'Others']
         def ch_popdep = channel.from(
             subgenomes.collect { sg ->

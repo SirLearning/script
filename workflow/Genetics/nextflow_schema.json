@@ -10,7 +10,7 @@
     "output_dir": { "type": ["string", "null"] },
     "mod": {
       "type": ["string", "null"],
-      "description": "Pipeline mode: VCF/PLINK branch — v1_plink, test_thin, test_camp, test_common_thin; or wheat_* integrated modes."
+      "description": "Pipeline mode: VCF/PLINK branch — v1_plink, test_thin, test_camp, test_common_thin, test_common_only, test_common_inter, test_rare_only, test_hex, test_wap, test_collinear; or wheat_* integrated modes."
     },
     "job": { "type": ["string", "null"] },
     "tool": { "type": ["string", "null"], "default": "plink" },
@@ -91,6 +91,65 @@
     "hf_maf": { "type": "number", "default": 0.05 },
     "hf_geno": { "type": "number", "default": 0.2 },
     "hf_thin_rate": { "type": "number", "default": 0.005 },
+
+    "collinear_root": {
+      "type": ["string", "null"],
+      "description": "Existing collinear prep tree (extract/, …) for test_collinear when --collinear_skip_prep is set."
+    },
+    "collinear_skip_prep": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip collinear_sites_prep and reuse --collinear_root for test_collinear."
+    },
+    "collinear_extract_dir": {
+      "type": ["string", "null"],
+      "description": "Directory of chrNNN.collinear.txt extract lists (defaults to collinear_root/extract)."
+    },
+    "collinear_target_n": {
+      "type": "integer",
+      "default": 2000000,
+      "description": "Target variant count after MAF filter + proportional sample for test_collinear."
+    },
+    "collinear_maf_threshold": {
+      "type": "number",
+      "default": 0.05,
+      "description": "Minimum MAF for collinear candidate sites before sampling."
+    },
+    "collinear_workers": {
+      "type": "integer",
+      "default": 7,
+      "description": "Parallel workers for collinear_sites_prep."
+    },
+    "collinear_force": {
+      "type": "boolean",
+      "default": false,
+      "description": "Force rebuild of cached collinear prep artefacts."
+    },
+    "syntenic_matrix_dir": {
+      "type": ["string", "null"],
+      "description": "Directory of *.syntenic.matrix.tsv.gz for full-lineage collinear prep."
+    },
+    "full_lineage_summary_tsv": {
+      "type": ["string", "null"],
+      "description": "Summary TSV from full-lineage count (species columns per subgenome)."
+    },
+    "main_raw_dir": {
+      "type": ["string", "null"],
+      "description": "main_raw process root for collinear overlap with published variant tables."
+    },
+
+    "aneuploidy_breachr_input_dir": {
+      "type": ["string", "null"],
+      "description": "Directory with breachr_reconcile_all.tsv for confirmed aneuploidy chromosome plot (defaults to stats/<mod>/info/breachr_check)."
+    },
+    "aneuploidy_plot_title": {
+      "type": ["string", "null"],
+      "description": "Optional plot title override for confirmed aneuploidy chromosome distribution."
+    },
+    "aneuploidy_plot_id": {
+      "type": ["string", "null"],
+      "description": "Output prefix for confirmed aneuploidy plot/tables (defaults to params.job)."
+    },
 
     "ld_window_kb": { "type": "integer", "default": 5000 },
     "ld_decay_max_kb": { "type": "integer", "default": 5000 },

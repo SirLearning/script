@@ -49,6 +49,38 @@ def _write_keep_file(samples: list[str], path: Path) -> None:
             handle.write(f"0\t{sample}\n")
 
 
+def write_sample_group_keep_file(
+    group_file: str | Path,
+    keep_path: str | Path,
+    *,
+    exclude_groups: frozenset[str] | set[str] | None = None,
+    include_groups: frozenset[str] | set[str] | None = None,
+) -> int:
+    """Write plink2 ``--keep`` FID/IID lines for samples matching group filters."""
+
+    group_df = load_df_from_space_sep_no_header(group_file, ["Sample", "Group"])
+    if group_df is None or group_df.empty:
+        raise ValueError(f"Could not load group file: {group_file}")
+
+    group_df = group_df.copy()
+    group_df["Sample"] = group_df["Sample"].astype(str)
+    group_df["Group"] = group_df["Group"].astype(str)
+
+    if exclude_groups:
+        group_df = group_df[~group_df["Group"].isin(set(exclude_groups))]
+    if include_groups:
+        group_df = group_df[group_df["Group"].isin(set(include_groups))]
+
+    samples = group_df["Sample"].tolist()
+    if not samples:
+        raise ValueError("No samples left after sample_group filters.")
+
+    keep_path = Path(keep_path)
+    keep_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_keep_file(samples, keep_path)
+    return len(samples)
+
+
 def run_plink2_freq(
     pfile_prefix: str,
     out_prefix: Path,

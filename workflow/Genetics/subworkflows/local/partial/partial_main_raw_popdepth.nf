@@ -30,8 +30,8 @@ include {
 
 workflow RUN_MAIN_RAW_POPDEPTH {
     main:
-    if (params.mod != 'main_raw_popdepth') {
-        error "RUN_MAIN_RAW_POPDEPTH: params.mod must be main_raw_popdepth (got: ${params.mod})."
+    if (!(params.mod in ['main_raw_popdepth', 'popdep_final'])) {
+        error "RUN_MAIN_RAW_POPDEPTH: params.mod must be main_raw_popdepth or popdep_final (got: ${params.mod})."
     }
     if (!params.home_dir) {
         error 'RUN_MAIN_RAW_POPDEPTH: params.home_dir is required.'

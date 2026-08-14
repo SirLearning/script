@@ -6,7 +6,8 @@ nextflow.enable.dsl=2
  *
  * Tasks: assess_plink | assess_vcf | ld_redraw | mac_stats | mac_miss_bin50_sample |
  *        mac_dist_redraw | mq_missing_reg | popdep_missing_reg | chr_counts | chr_compare | chr_pi_compare |
- *        thin_common_miss_compare | rebuild_lib_stats | wheat_from_plink | abstract_mq_50_bams | main_raw_popdepth
+ *        thin_common_miss_compare | rebuild_lib_stats | wheat_from_plink | abstract_mq_50_bams |
+ *        aneuploidy_mapq | aneuploidy_breachr | main_raw_popdepth
  */
 
 include { RUN_ASSESS_PLINK_DEBUG; RUN_ASSESS_VCF_DEBUG } from '../partial/partial_assess.nf'
@@ -24,6 +25,8 @@ include {
     RUN_REBUILLD_LIB_STATS
 } from '../partial/partial_stats.nf'
 include { RUN_ABSTRACT_MQ_50_BAMS } from '../partial/partial_abstract_mq.nf'
+include { RUN_ANEUPLOIDY_MAPQ } from '../partial/partial_aneuploidy_mapq.nf'
+include { RUN_BREACHR_FLAGGED } from '../partial/partial_breachr_flagged.nf'
 include { RUN_MAIN_RAW_POPDEPTH } from '../partial/partial_main_raw_popdepth.nf'
 include { RUN_WHEAT_FROM_PLINK } from '../wheat/wheat_integrated_study.nf'
 
@@ -32,7 +35,8 @@ workflow {
         error """partial_router.nf: --partial_task is required. Choices:
           assess_plink, assess_vcf, ld_redraw, mac_stats, mac_miss_bin50_sample,
           mac_dist_redraw, mq_missing_reg, popdep_missing_reg, chr_counts, chr_compare, chr_pi_compare,
-          thin_common_miss_compare, rebuild_lib_stats, wheat_from_plink, abstract_mq_50_bams, main_raw_popdepth"""
+          thin_common_miss_compare, rebuild_lib_stats, wheat_from_plink, abstract_mq_50_bams,
+          aneuploidy_mapq, aneuploidy_breachr, main_raw_popdepth"""
     }
 
     if (params.partial_task == 'assess_plink') {
@@ -65,6 +69,10 @@ workflow {
         RUN_WHEAT_FROM_PLINK()
     } else if (params.partial_task == 'abstract_mq_50_bams') {
         RUN_ABSTRACT_MQ_50_BAMS()
+    } else if (params.partial_task == 'aneuploidy_mapq') {
+        RUN_ANEUPLOIDY_MAPQ()
+    } else if (params.partial_task == 'aneuploidy_breachr') {
+        RUN_BREACHR_FLAGGED()
     } else if (params.partial_task == 'main_raw_popdepth') {
         RUN_MAIN_RAW_POPDEPTH()
     } else {

@@ -19,7 +19,7 @@ folders:
     role: Depth-related auxiliary data
   - id: "05taxaBamMap"
     role: Canonical taxa→BAM maps
-    files: ["A.taxaBamMap.txt", "B.taxaBamMap.txt", "D.taxaBamMap.txt", "ABD.taxaBamMap.txt", "ALL.taxaBamMap.txt", "all.*.taxaBamMap.txt", "final.*.taxaBamMap.txt"]
+    files: ["A.taxaBamMap.txt", "B.taxaBamMap.txt", "D.taxaBamMap.txt", "ABD.taxaBamMap.txt", "ALL.taxaBamMap.txt", "all.*.taxaBamMap.txt", "final.*.taxaBamMap.txt", "popdep/tb.N500_popdep_final.taxaBamMap.txt"]
     knowledge: domain/taxa_bam_map.yaml
   - id: popdep_bench
     role: Truncated BAM panels for PopDep benchmarks
@@ -32,6 +32,30 @@ folders:
           - monitor_popdep_rel.tsv
           - monitor_popdepfull_rel.tsv
           - monitor_popdepcrosschr_rel.tsv
+  - id: "09einkorn_ref"
+    role: Einkorn reference genomes for aneuploidy analysis
+    path: /data/home/tusr1/01projects/vmap4/00data/09einkorn_ref
+    dryad: doi:10.5061/dryad.v41ns1rxj
+    gsa: CRA001951
+    files:
+      - TA10622_v1.1.fasta.gz
+      - TA299_v1.1.fasta.gz
+      - TA10622_v1.1_annotation.tar.gz
+      - TA299_v1.1_annotation.tar.gz
+      - TA10622-ccsmeth-CpG-freq.bed.gz
+      - TA299-ccsmeth-CpG-freq.bed.gz
+    subpaths:
+      - CRA001951_fastq/
+    download_scripts:
+      - download_dryad_files.sh
+      - download_gsa_cra001951.sh
+    gsa_runs:
+      aliases: [WGS-A001..005, WGS-A031..035, WGS-A063..065]
+      crr: [CRR072134-138, CRR072164-168, CRR072196-198]
+    notes: >
+      Fasta copied from /data/tmp/youqing (2026-08-04).
+      Annotation + ccsmeth bed via Dryad API bearer (same method as 08timopheevii_dryad).
+      VMap1 CRA001951 WGS-A FASTQ via https://download.cncb.ac.cn/gsa3/CRA001951/.
   - id: "08timopheevii_dryad"
     role: Triticum timopheevii Dryad assembly/annotation staging (doi:10.5061/dryad.mpg4f4r6p)
     path: /data/home/tusr1/01projects/vmap4/00data/08timopheevii_dryad
