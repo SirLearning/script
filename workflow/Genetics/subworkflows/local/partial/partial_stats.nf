@@ -2,10 +2,10 @@ nextflow.enable.dsl=2
 
 /*
  * Partial stats reruns from existing process/<mod>/ or stats/<mod>/ artefacts.
- * Wired from partial_router.nf (--partial_task ld_redraw | mac_stats | mac_dist_redraw | chr_counts | chr_compare | chr_pi_compare | thin_common_miss_compare | rebuild_lib_stats).
+ * Wired from partial_router.nf (--partial_task ld_redraw | ld_rare_common | mac_stats | mac_dist_redraw | chr_counts | chr_compare | chr_pi_compare | thin_common_miss_compare | rebuild_lib_stats).
  */
 
-include { variant_ld_decay_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw; variant_mq_missing_reg; variant_popdep_missing_reg } from '../../../modules/local/genotype/stats/stats_variant.nf'
+include { variant_ld_decay_plot; variant_ld_decay_rare_common_plot; variant_ld_crosschr_plot; variant_mac_stats; variant_mac_maf_reg; variant_mac_missing_reg; variant_mac_missing_reg_bin50_sample; variant_mac_dist_log_redraw; variant_mq_missing_reg; variant_popdep_missing_reg } from '../../../modules/local/genotype/stats/stats_variant.nf'
 include { report_plink_chr_variant_counts; plot_thin_common_chr_variant_compare; plot_thin_common_chr_pi_compare } from '../../../modules/local/genotype/stats/stats_chr_report.nf'
 include { plot_thin_common_sample_missing_compare } from '../../../modules/local/genotype/stats/stats_sample.nf'
 include { test_plink_stats as TEST_PLINK_STATS } from '../../../modules/local/genotype/stats/stats.nf'
@@ -35,6 +35,32 @@ workflow RUN_LD_PLOTS_REDRAW {
 
     variant_ld_decay_plot(ch_ld)
     variant_ld_crosschr_plot(ch_ld_cross)
+}
+
+workflow RUN_LD_RARE_COMMON {
+    main:
+    if (!params.mod) {
+        error 'params.mod is required (e.g. test_thin).'
+    }
+    if (!params.output_dir || !params.job) {
+        error 'params.output_dir and params.job are required.'
+    }
+
+    def subgenomes = ['A', 'B', 'D', 'Others']
+    def base = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+
+    def ch_ld_afreq = channel.from(
+        subgenomes.collect { sg ->
+            tuple(
+                sg,
+                "sub_${sg}",
+                file("${base}/${sg}.info.ld.vcor", checkIfExists: true),
+                file("${base}/${sg}.info.afreq", checkIfExists: true),
+            )
+        }
+    )
+
+    variant_ld_decay_rare_common_plot(ch_ld_afreq)
 }
 
 workflow RUN_MAC_STATS_FROM_GCOUNT {

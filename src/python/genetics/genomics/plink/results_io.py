@@ -7,7 +7,12 @@ import pandas as pd
 import numpy as np
 
 from infra.utils.io import load_df_generic, save_df_to_tsv
-from infra.wheat.ref_v1 import all_ref_v1_plink_chr_ids, get_ref_v1_chr_name, get_ref_v1_genome_segment_layout
+from infra.wheat.ref_v1 import (
+    all_ref_v1_plink_chr_ids,
+    get_ref_v1_chr_name,
+    get_ref_v1_genome_segment_layout,
+    pvar_chrom_to_plink_chr_id,
+)
 
 
 def load_plink_eigenvec(path):
@@ -101,12 +106,13 @@ def summarize_tagsnp_from_prune(prune_in_path, output_prefix, max_tags=1000):
 
 
 def _count_variants_in_pvar(pvar_path):
+    """Count variants per PLINK segment id, for arm-numbered or ref-chr named pvars."""
     counts = Counter()
     with open(pvar_path, encoding='utf-8') as handle:
         for line in handle:
             if line.startswith('#'):
                 continue
-            chrom = line.split('\t', 1)[0]
+            chrom = pvar_chrom_to_plink_chr_id(line.split('\t', 1)[0])
             if chrom:
                 counts[chrom] += 1
     return counts
@@ -264,7 +270,10 @@ def iter_process_pvar_positions(process_dir):
                 if line.startswith('#'):
                     continue
                 parts = line.split('\t', 3)
-                yield int(parts[0]), int(parts[1])
+                plink_chr = pvar_chrom_to_plink_chr_id(parts[0])
+                if plink_chr is None:
+                    continue
+                yield int(plink_chr), int(parts[1])
 
 
 def compute_genome_bin_counts(process_dir, bin_size_bp=5_000_000):

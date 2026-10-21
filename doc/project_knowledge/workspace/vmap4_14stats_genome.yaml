@@ -1,0 +1,919 @@
+kind: workspace_module
+id: vmap4_14stats_genome
+title: Genotype stats runs (successor of 12stats.genome)
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/14stats.genome
+purpose: >
+  Successor stats module after 12stats.genome reached NN=99. Same science area
+  (genotype stats / assess / LD / MAC / popdep partials). Numbered runs from 01.
+partial_task: mac_het_excess
+default_job: test_plink
+publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/
+
+runs:
+  - folder: 01run_circos_ld_map_plot_only_test_wap_thin_refchr
+    summary: Replot three-ring Circos from published LD-block tables (chunked parallel Python)
+    nf_cmd_ref: "doc/progress/2026-09-10.md — NF replay: circos ld map plot-only parallel"
+    screen: circos_ld_map
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      circos_ld_map_plot_only: true
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_thin_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: failed
+
+  - folder: 02run_circos_ld_map_plot_only_test_wap_thin_refchr
+    summary: Replot three-ring Circos from published LD-block tables (chunked parallel Python, fork workers)
+    nf_cmd_ref: "doc/progress/2026-09-10.md — NF replay: circos ld map plot-only parallel retry"
+    screen: circos_ld_map
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      circos_ld_map_plot_only: true
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_thin_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 03run_circos_ld_map_thin_density_common_blocks
+    summary: Circos rare/common density from test_wap_thin_refchr; LD blocks from test_wap_common_refchr
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: circos thin density common LD blocks"
+    screen: circos_ld_map
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    circos_ld_mod: test_wap_common_refchr
+    job: test_plink
+    params:
+      circos_ld_map_plot_only: false
+      circos_ld_mod: test_wap_common_refchr
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 04run_singer_arg_common_inter_2mb
+    summary: 2 Mb chr1A window from test_common_inter_refchr; selfing GT phase; Beagle impute; SINGER ARG
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: singer arg common inter 2mb engine"
+    screen: singer_arg_2mb
+    entry_nf: workflow/Genetics/subworkflows/tmp/singer_arg_common_inter.nf
+    mod: test_common_inter_2mb_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter_2mb_refchr/
+    status: superseded_full_sample
+
+  - folder: 05run_circos_ld_map_from_tables_legend
+    summary: Replot Circos from published density/blocks TSVs; restore LEGEND_FONT_SIZE 12
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: circos replot from tables legend12"
+    screen: circos_ld_replot
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      circos_ld_map_plot_only: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 06run_circos_ld_map_1mb_cov50
+    summary: Circos outer ring from 1 Mb LD-block bp coverage >= 0.5, adjacent bins merged
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: circos 1Mb coverage 50 replot"
+    screen: circos_ld_replot
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      circos_ld_map_plot_only: true
+      circos_ld_block_coverage_frac: 0.5
+      circos_bin_bp: 1000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 07run_singer_arg_wap_china_64win
+    summary: WAP China (~1299) keep; 64 spread 2 Mb windows; selfing phase; Beagle; SINGER ARG
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: singer arg wap china 64win"
+    screen: singer_arg_china64
+    entry_nf: workflow/Genetics/subworkflows/tmp/singer_arg_common_inter.nf
+    mod: test_common_inter_2mb_wap_china_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter_2mb_wap_china_refchr/
+    status: completed
+
+  - folder: 08run_singer_retry_failed_random_seed
+    summary: Retry failed China 64-window SINGER ARGs from published Beagle VCFs with our random -seed (not singer_master -debug)
+    nf_cmd_ref: "doc/progress/2026-09-11.md — NF replay: singer retry failed random seed"
+    screen: singer_arg_retry
+    entry_nf: workflow/Genetics/subworkflows/tmp/singer_arg_common_inter.nf
+    mod: test_common_inter_2mb_wap_china_refchr
+    job: test_plink
+    params:
+      singer_from_beagle: true
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter_2mb_wap_china_refchr/
+    status: completed
+
+  - folder: 09run_singer_arg_preview
+    summary: Preview tables/plots from published China 64-window SINGER ARG texts (no new sampling)
+    nf_cmd_ref: "doc/progress/2026-09-12.md — NF replay: singer arg preview"
+    screen: none
+    entry_nf: workflow/Genetics/subworkflows/tmp/singer_arg_preview.nf
+    mod: test_common_inter_2mb_wap_china_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter_2mb_wap_china_refchr/
+    status: completed
+
+  - folder: 10run_singer_arg_relatedness
+    summary: Local relatedness ranking from published China 64-window SINGER ARGs (mean haplotype TMRCA)
+    nf_cmd_ref: "doc/progress/2026-09-13.md — NF replay: singer arg relatedness"
+    screen: none
+    entry_nf: workflow/Genetics/subworkflows/tmp/singer_arg_relatedness.nf
+    mod: test_common_inter_2mb_wap_china_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter_2mb_wap_china_refchr/
+    status: completed
+
+  - folder: 11run_test_popdep
+    summary: 100M random popdep sites classified gap/repeat/GC/CNV/normal; popdep-only class plots
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: test_popdep 100M class plots"
+    screen: test_popdep
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_build.nf
+    mod: test_popdep
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 12run_vep_atlas_composition
+    summary: Unique-site VEP composition, frequency×function heatmap, and 10 Mb window Circos/mirror/violin from test_wap_refchr plus test_wap_exon
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: vep atlas composition"
+    screen: vep_atlas
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_plots.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_exon_mod: test_wap_exon
+      vep_atlas_bin_bp: 10000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 13run_vep_atlas_exon_lof
+    summary: Replot VEP atlas with rare predicted LoF from test_wap_exon (common/rare still test_wap_refchr)
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: vep atlas exon lof"
+    screen: vep_atlas_exon
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_plots.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_exon_mod: test_wap_exon
+      vep_atlas_bin_bp: 10000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 14run_species_ld_linear_x
+    summary: Replot species LD vs genome size; 2:1 canvas; linear LD kb x-axis
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: species ld linear x"
+    screen: none
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    params:
+      species_ld_csv: /data/home/tusr1/01projects/vmap4/00data/10meta_data/species_LD.csv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed
+
+  - folder: 15run_species_ld_human_logx
+    summary: Replot species LD with Homo sapiens and log-log axes; keep 2:1 canvas
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: species ld human logx"
+    screen: none
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    params:
+      species_ld_csv: /data/home/tusr1/01projects/vmap4/00data/10meta_data/species_LD.csv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed
+
+  - folder: 16run_species_ld_linear_x_pair
+    summary: Add linear-x unlabeled/labeled species LD plots beside existing log-x pair
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: species ld linear x pair"
+    screen: none
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    params:
+      species_ld_csv: /data/home/tusr1/01projects/vmap4/00data/10meta_data/species_LD.csv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed
+
+  - folder: 17run_popdep_n500_crosschr_ntaxa500
+    summary: First N500 45-chr CrossChr nTaxa=500 attempt; failed immediately (TIGER_PD_20260619.jar rejects -g)
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: n500 crosschr ntaxa500 45chr"
+    screen: popdep_n500_45
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    mod: main_raw_popdepth
+    job: test_plink
+    status: failed
+
+  - folder: 18run_test_popdep
+    summary: Rebuild test_popdep 100M class plots from ntaxa500 grids after 19run CrossChr
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: n500 crosschr ntaxa500 45chr"
+    screen: popdep_n500_45
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_build.nf
+    mod: test_popdep
+    job: test_plink
+    popdep_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_ntaxa500
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 19run_popdep_n500_crosschr_ntaxa500
+    summary: PopDepCrossChr N500 all 45 chr with override-map nTaxa=500; chains into 18run_test_popdep
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: n500 crosschr ntaxa500 45chr"
+    screen: popdep_n500_45
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    mod: main_raw_popdepth
+    job: test_plink
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    params:
+      popdep_tiger_app: PopDepCrossChr
+      popdep_tiger_jar: TIGER_PD_20260619.jar
+      popdep_crosschr_threads: 64
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_ntaxa500/
+    status: completed
+
+  - folder: 20run_vep_atlas_circos_tracks
+    summary: Replot VEP atlas Circos with cytobands, test_wap_thin_refchr LD blocks, and inner gene heatmap
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: vep atlas circos tracks"
+    screen: vep_atlas_circos
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_circos_replot.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_ld_blocks: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/info/all.variant.circos_ld_map.blocks_1mb.info.tsv
+      vep_atlas_gene_gff: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706.gff3
+      vep_atlas_bin_bp: 10000000
+      vep_atlas_peri_flank_bp: 50000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 21run_vep_atlas_circos_gap_legend
+    summary: Circos replot; thin ideogram; gene histogram; wrap-gap ring labels; chrom names further out
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: vep atlas circos gap legend"
+    screen: vep_atlas_circos
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_circos_replot.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_ld_blocks: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/info/all.variant.circos_ld_map.blocks_1mb.info.tsv
+      vep_atlas_gene_gff: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706.gff3
+      vep_atlas_bin_bp: 10000000
+      vep_atlas_peri_flank_bp: 50000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 22run_vep_atlas_circos_center_legend
+    summary: Circos replot; no cytoband legend; centre hole labels; closer chrom names; gene/LoF/common/rare colour order
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: vep atlas circos center legend"
+    screen: vep_atlas_circos
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_circos_replot.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_ld_blocks: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/info/all.variant.circos_ld_map.blocks_1mb.info.tsv
+      vep_atlas_gene_gff: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706.gff3
+      vep_atlas_bin_bp: 10000000
+      vep_atlas_peri_flank_bp: 50000000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 23run_test_popdep_ntaxa500_rescale
+    summary: Invert June CrossChr zero-padded nTaxa on test_popdep 44-chr site tables to n=500; redraw class plots
+    nf_cmd_ref: "doc/progress/2026-09-18.md — NF replay: test_popdep ntaxa500 rescale"
+    screen: test_popdep_ntaxa
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_ntaxa_rescale.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 24run_test_popdep_reldepth_plots
+    summary: Plot-only redraw of test_popdep class plots; add RelativeDepth SD/CV JointGrids from existing 18run sites
+    nf_cmd_ref: "doc/progress/2026-09-19.md — NF replay: test_popdep reldepth class replot"
+    screen: test_popdep_rel
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 25run_mac_het_rh_diag_test_rare_only
+    summary: R_H=H/MAC band diagnostics on test_rare_only; failed on popdep filename collision
+    nf_cmd_ref: "doc/progress/2026-09-20.md — NF replay: mac_het rh diag collision"
+    screen: mac_het_rh
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    job: test_plink
+    params:
+      mac_het_rh_diag: true
+      mac_het_popdep_mapq30_mod: test_rare_only_mapq30
+    status: failed
+
+  - folder: 26run_mac_het_rh_diag_test_rare_only
+    summary: R_H band diagnostics plus all-het extract and PLINK2 --het on test_rare_only
+    nf_cmd_ref: "doc/progress/2026-09-20.md — NF replay: mac_het rh diag"
+    screen: mac_het_rh2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    job: test_plink
+    params:
+      mac_het_rh_diag: true
+      mac_het_rh_sample: true
+      mac_het_popdep_mapq30_mod: test_rare_only_mapq30
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 27run_mac_het_rh_sample_replot_test_rare_only
+    summary: Replot all-het sample O(HET) burden from published --het tables
+    nf_cmd_ref: "doc/progress/2026-09-20.md — NF replay: mac_het rh sample replot"
+    screen: mac_het_rh3
+    entry_nf: workflow/Genetics/subworkflows/tmp/mac_het_rh_sample_replot.nf
+    mod: test_rare_only
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 28run_test_popdep_stack_count_marginals
+    summary: Plot-only redraw of test_popdep JointGrids with stacked-count x/y marginals next to fill fractions
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep stack count marginals"
+    screen: test_popdep_stack
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: cancelled
+
+  - folder: 29run_test_popdep_prebin_stack_marginals
+    summary: Plot-only redraw; JointGrid marginals use numpy pre-bin counts; persist 2M scatter TSV
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep prebin stack marginals"
+    screen: test_popdep_stack
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 30run_test_wap_exon_lof_ancestry
+    summary: Polarize test_wap_exon unique LoF sites against syntenic_sites_k2 lineage outgroups (derived / ancestral / unknown)
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_wap_exon lof ancestry"
+    screen: lof_anc
+    mod: test_wap_exon
+    job: test_plink
+    params:
+      matrix_dir: /data/home/tusr1/01projects/vmap4/00data/06maf/syntenic_sites_k2
+    artefacts:
+      cwd_output: /data/home/tusr1/01projects/vmap4/14stats.genome/30run_test_wap_exon_lof_ancestry/
+    status: completed
+
+  - folder: 31run_test_thin_popdep_density_cascade
+    summary: n500 ntaxa500 RelDepth mean-vs-SD cell density 60/80, then test_thin het → MAC≥5 → WAP MAC≥2
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_thin popdep density cascade"
+    screen: popdep_cascade
+    entry_nf: workflow/Genetics/subworkflows/tmp/filter_cascade_popdep_density.nf
+    mod: test_thin
+    job: test_plink
+    params:
+      popdep_density_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_ntaxa500
+      filter_cascade_het_mod: test_common_only
+      filter_cascade_wap_mod: test_wap
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 32run_test_popdep_swap_marginals
+    summary: Replot test_popdep JointGrids from saved scatter; inner stacked counts, outer fill 0-1
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep swap marginals"
+    screen: test_popdep_marg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 33run_test_popdep_legend_ticks
+    summary: Replot test_popdep JointGrids; outer ticks 0 and 1; legend GC/CNV uppercase
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep legend ticks"
+    screen: test_popdep_leg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: running
+
+  - folder: 34run_lof_vs_gene_length
+    summary: test_wap_exon LoF count per gene vs Lulab CDS length and gene span
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: lof vs gene length"
+    mod: test_wap_exon
+    job: test_plink
+    artefacts:
+      cwd_output: /data/home/tusr1/01projects/vmap4/14stats.genome/34run_lof_vs_gene_length/
+    status: completed
+
+  - folder: 35run_lof_vs_gene_length_publish
+    summary: Publish test_wap_exon LoF-vs-length and ancestry-class plots into stats/test_wap_exon
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: lof vs gene length publish"
+    entry_nf: workflow/Genetics/subworkflows/tmp/lof_vs_gene_length_replot.nf
+    mod: test_wap_exon
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/
+    status: completed
+
+  - folder: 36run_rare_vs_gene_length
+    summary: test_wap_exon rare_wap (MAF<1%) and all exon SNP counts per gene vs Lulab CDS length
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: rare vs gene length"
+    mod: test_wap_exon
+    job: test_plink
+    artefacts:
+      cwd_output: /data/home/tusr1/01projects/vmap4/14stats.genome/36run_rare_vs_gene_length/
+    status: completed
+
+  - folder: 37run_test_popdep_density_keep
+    summary: Colour test_popdep scatter by genome 60%/80% RelDepth cells; keep blue, drop grey; mean-vs-SD JointGrids
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep density keep scatter"
+    screen: popdep_keep
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_density_keep_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_density_masks: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/info/all.variant.popdep_density.masks.npz
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: launched
+
+  - folder: 38run_test_popdep_log_density
+    summary: log10 RelMean vs RelSD 90000-cell density on all test_popdep sites; 60%/80% keep vs drop
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep log density"
+    screen: popdep_log
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_log_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_log_n_cells: 90000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 39run_rare_vs_gene_length_publish
+    summary: Publish test_wap_exon rare_wap-vs-CDS plots into stats/test_wap_exon
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: rare vs gene length publish"
+    entry_nf: workflow/Genetics/subworkflows/tmp/rare_vs_gene_length_replot.nf
+    mod: test_wap_exon
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/
+    status: completed
+
+  - folder: 40run_test_popdep_log_density_site_cov
+    summary: Replot test_popdep log density keep/drop by site coverage 60%/80%; reuse 38run counts.npz
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep log density site coverage"
+    screen: popdep_sitecov
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_log_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_log_n_cells: 90000
+      popdep_log_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.log_density.counts.npz
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 41run_test_popdep_site_coverage_curve
+    summary: Plot retained-site % vs nonempty-cell top % from reused log-density histogram
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep site coverage curve"
+    screen: popdep_curve
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_log_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      popdep_log_n_cells: 90000
+      popdep_log_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.log_density.counts.npz
+      popdep_log_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 42run_test_popdep_log_density_keep90
+    summary: Replot log-density keep 60/80/90 JointGrids at point alpha 0.2; reuse counts.npz
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep log density keep90 alpha0.2"
+    screen: popdep_keep90
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_log_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_log_n_cells: 90000
+      popdep_log_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.log_density.counts.npz
+      popdep_log_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 43run_test_popdep_log_density_lin010
+    summary: Replot log-density keep 60/80/90 RelDepth JointGrids; linear axes [0, 10]
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep log density linear 0-10"
+    screen: popdep_lin010
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_log_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_log_n_cells: 90000
+      popdep_log_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.log_density.counts.npz
+      popdep_log_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: launched
+
+  - folder: 44run_test_popdep_linear_density_0p02_6
+    summary: Linear RelDepth [0.02, 6] site-coverage keep 60/80/90; no log
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep linear density 0.02-6"
+    screen: popdep_lin026
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_linear_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_lin_n_cells: 90000
+      popdep_lin_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 45run_test_popdep_lin_density_keep95_99
+    summary: Replot lin_density keep 60–99 JointGrids; reuse linear counts.npz
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep lin density keep 95-99"
+    screen: popdep_lin95
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_linear_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_lin_n_cells: 90000
+      popdep_lin_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.lin_density.counts.npz
+      popdep_lin_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: launched
+
+  - folder: 46run_test_popdep_cv_density_mean0_6
+    summary: RelMean [0, 6] vs observed CV site-coverage keep 60/70/80/90/95/97/98/99 plus class CV plot
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv density mean 0-6"
+    screen: popdep_cvden
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_sites_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_popdep/sites
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 47run_test_popdep_cv_density_keep85
+    summary: Replot cv_density keep 60–99 including 85%; reuse mean-CV counts.npz
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv density keep 85"
+    screen: popdep_cv85
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 48run_test_popdep_class_normal_on_top
+    summary: Replot by_class JointGrids; normal last in hue_order (scatter and stacks)
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class normal on top"
+    screen: popdep_clstop
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 49run_test_popdep_cv_class_normal_on_top
+    summary: Replot cv_density cv_vs_mean_by_class (mean 0-6); reuse counts.npz; skip keep JointGrids
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class normal on top"
+    screen: popdep_cvcls
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 50run_test_popdep_class_green_normal
+    summary: Replot by_class JointGrids; normal green, repeat grey
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class green normal"
+    screen: popdep_clscol
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 51run_test_popdep_cv_class_green_normal
+    summary: Replot cv_density cv_vs_mean_by_class; normal green, repeat grey
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class green normal"
+    screen: popdep_cvcol
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 52run_test_popdep_class_alpha
+    summary: Replot by_class JointGrids; normal alpha 0.05 on top, repeat 0.90 at bottom, others 0.5
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class alpha"
+    screen: popdep_clsalp
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 53run_test_popdep_cv_class_alpha
+    summary: Replot cv_density cv_vs_mean_by_class with updated class point alphas
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class alpha"
+    screen: popdep_cvalp
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 54run_test_popdep_class_red_normal
+    summary: Replot by_class JointGrids; original alphas; normal red, repeat green
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class red normal"
+    screen: popdep_clsred
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 55run_test_popdep_cv_class_red_normal
+    summary: Replot cv_density cv_vs_mean_by_class; original alphas; normal red, repeat green
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class red normal"
+    screen: popdep_cvred
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 56run_test_popdep_class_cnv_blue
+    summary: Replot by_class JointGrids; CNV blue
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class cnv blue"
+    screen: popdep_clsblu
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 57run_test_popdep_cv_class_cnv_blue
+    summary: Replot cv_density cv_vs_mean_by_class; CNV blue
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class cnv blue"
+    screen: popdep_cvblu
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 58run_test_popdep_class_normal_orange
+    summary: Replot by_class JointGrids; normal former CNV orange
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class normal orange"
+    screen: popdep_clsorg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 59run_test_popdep_cv_class_normal_orange
+    summary: Replot cv_density cv_vs_mean_by_class; normal former CNV orange
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class normal orange"
+    screen: popdep_cvorg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 60run_ld_along_chr_r2_0p5_test_wap_common_refchr
+    summary: Plot-only along-chr distance where mean r2 falls to 0.5 on test_wap_common_refchr
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: ld along chr r2 0p5 test_wap_common_refchr"
+    screen: ld_r2_0p5
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    params:
+      ld_along_chr_plot_only: true
+      ld_along_chr_r2: 0.5
+      ld_along_chr_chromosomes: "1A,2A,3A,4A,5A,6A,7A,1B,2B,3B,4B,5B,6B,7B,1D,2D,3D,4D,5D,6D,7D"
+      ld_along_chr_max_kb: 20000
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: launched
+
+  - folder: 61run_test_popdep_class_opaque_legend
+    summary: Replot by_class JointGrids; legend markers opaque palette colours
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class opaque legend"
+    screen: popdep_clsleg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 62run_test_popdep_cv_class_opaque_legend
+    summary: Replot cv_density cv_vs_mean_by_class; legend markers opaque palette colours
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class opaque legend"
+    screen: popdep_cvleg
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: completed
+
+  - folder: 63run_test_popdep_class_original_palette
+    summary: Replot by_class JointGrids; original palette (grey normal, orange CNV) and hue order (normal bottom, gap top)
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep class original palette"
+    screen: popdep_clsorig
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_class_replot.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: launched
+
+  - folder: 64run_test_popdep_cv_class_original_palette
+    summary: Replot cv_density cv_vs_mean_by_class; original palette and hue order
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: test_popdep cv class original palette"
+    screen: popdep_cvorig
+    entry_nf: workflow/Genetics/subworkflows/tmp/test_popdep_cv_density.nf
+    mod: test_popdep
+    job: test_plink
+    params:
+      test_popdep_scatter_tsv: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.scatter.sites.tsv
+      popdep_cv_n_cells: 90000
+      popdep_cv_counts_npz: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/info/test_popdep.popdep.cv_density.counts.npz
+      popdep_cv_plot_keep_drop: false
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_popdep/
+    status: launched
+
+  - folder: 65run_popdep_n500_cv_reliable_lib
+    summary: n500 RelMean[0,6] vs RelCV[0,25] 500x500 site-coverage keep 60/80 BED libraries
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: n500 cv reliable lib"
+    screen: popdep_cvlib
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_cv_reliable_lib.nf
+    mod: _popdep_n500_cv_reliable
+    job: test_plink
+    params:
+      popdep_density_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_ntaxa500
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_cv_reliable/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/_popdep_n500_cv_reliable/
+    status: completed
+
+  - folder: 66run_ld_decay_r2_0p5_1kb_test_wap_common_refchr
+    summary: Fine-bin 1 kb all-pairs mean r2=0.5 distance on test_wap_common_refchr
+    nf_cmd_ref: "doc/progress/2026-09-21.md — NF replay: ld decay r2 0p5 1kb test_wap_common_refchr"
+    screen: ld_decay_1kb
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_decay_r2_threshold.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    params:
+      ld_decay_r2_threshold: 0.5
+      ld_decay_fine_bin_kb: 1
+      ld_decay_fine_max_kb: 100
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: launched
+
+  - folder: 67run_test_thin_cv_reliable_cascade
+    summary: test_thin four-step cascade on n500 RelMean-CV keep80 and keep60 BEDs; genome estimate via thin_rate
+    nf_cmd_ref: "doc/progress/2026-09-22.md — NF replay: test_thin cv reliable cascade"
+    screen: popdep_cvcasc
+    entry_nf: workflow/Genetics/subworkflows/tmp/filter_cascade_cv_reliable.nf
+    mod: test_thin
+    job: test_plink
+    params:
+      popdep_cv_reliable_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_cv_reliable
+      filter_cascade_het_mod: test_common_only
+      filter_cascade_wap_mod: test_wap
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 68run_wap_cv_reliable_vep_atlas
+    summary: PopDep keep80/keep60, excess het, and MAC>=5 on test_wap_refchr and test_wap_exon; VEP atlas from the kept sites
+    nf_cmd_ref: "doc/progress/2026-09-22.md — NF replay: wap cv reliable vep atlas"
+    screen: wap_cvatlas
+    entry_nf: workflow/Genetics/subworkflows/tmp/wap_cv_reliable_vep_atlas.nf
+    mod: test_wap_refchr
+    job: test_plink
+    params:
+      vep_atlas_exon_mod: test_wap_exon
+      popdep_cv_reliable_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_cv_reliable
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: completed
+
+  - folder: 69run_wap_mac1_testsets
+    summary: Rebuild WAP arm, refchr, and exon pfiles at MAC>=1, then VEP and the cv-reliable atlas
+    nf_cmd_ref: "doc/progress/2026-09-22.md — NF replay: wap mac1 testsets atlas"
+    screen: wap_mac1
+    entry_nf: workflow/Genetics/subworkflows/tmp/wap_mac1_testsets.nf
+    mod: test_wap_mac1_refchr
+    job: test_plink
+    params:
+      test_wap_min_mac: 1
+      wap_mac1_stage: arm then refchr then exon
+      vep_atlas_exon_mod: test_wap_mac1_exon
+      filter_cascade_min_mac: 1
+      popdep_cv_reliable_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_cv_reliable
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_mac1/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_mac1_refchr/
+    status: completed
+
+  - folder: 70run_vep_atlas_rare_common_share
+    summary: Stacked rare versus common share by subgenome from the MAC>=1 atlas counts
+    nf_cmd_ref: "doc/progress/2026-09-23.md — NF replay: rare common share"
+    entry_nf: workflow/Genetics/subworkflows/tmp/vep_atlas_rare_common_share.nf
+    mod: test_wap_mac1_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_mac1_refchr/
+    status: completed
+

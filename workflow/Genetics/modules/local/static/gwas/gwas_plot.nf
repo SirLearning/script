@@ -23,6 +23,65 @@ process plot_gwas_association {
     """
 }
 
+process plot_wap_association {
+    tag "plot wap assoc: ${output_prefix}"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+
+    input:
+    tuple path(association), val(output_prefix)
+
+    output:
+    path "*.tsv", emit: info
+    path "*.png", emit: plots
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.gwas.association_plot import plot_gwas_results
+
+    plot_gwas_results("${association}", "${output_prefix}", source="plink2")
+    """
+}
+
+process plot_wap_burden {
+    tag "plot wap burden: ${output_prefix}"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/plots", mode: 'copy', pattern: "*.png"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+
+    input:
+    tuple path(burden), val(output_prefix)
+    path gff
+
+    output:
+    path "*.tsv", emit: info
+    path "*.png", emit: plots
+    path "*.log", emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("${output_prefix}.burden_plot.log", "w")
+    sys.stderr = sys.stdout
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.gwas.association_plot import plot_burden_results
+
+    plot_burden_results("${burden}", "${output_prefix}", "${gff}")
+    """
+}
+
 process plot_gwas {
     tag "${res.baseName}"
     publishDir "${params.outdir}/post", mode: 'copy'

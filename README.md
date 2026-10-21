@@ -42,6 +42,7 @@ Environments are created **once from the repo-root YAML files** (no extra depend
 | --- | --- | --- |
 | `run` | `environment_run.yml` | Nextflow, screen |
 | `stats` | `environment_stats.yml` | Python 3.12, PLINK/PLINK2, bcftools, Hail (conda + pip), stats stack |
+| `anno` | `environment_anno.yml` | Ensembl VEP and SnpEff (Java 21); keep out of `stats` |
 | `stats_r` | `environment_stats_r.yml` | R plotting / BioConductor |
 | `tiger` | `environment_tiger.yml` | Alignment / variant calling |
 | `dbone` | `environment_dbone.yml` | DBone / basic ops |

@@ -7,12 +7,31 @@ include { getRefV1ChrLength } from '../../infra/infra_ref_v1.nf'
 
 def popdepBenchChrLength(chr) {
     def full = getRefV1ChrLength(chr.toString()).toLong()
-    def capParam = params.popdep_bench_max_bp_per_chr ?: params.popdep_loo_bench_max_bp
-    if (capParam) {
-        def cap = capParam.toLong()
-        return Math.min(full, cap)
+    if (params.popdep_bench_max_bp_per_chr) {
+        return Math.min(full, params.popdep_bench_max_bp_per_chr.toLong())
     }
     return full
+}
+
+def popdepLooChrLength(chr) {
+    def full = getRefV1ChrLength(chr.toString()).toLong()
+    def cap = (params.popdep_loo_bench_max_bp ?: 10000000).toLong()
+    return Math.min(full, cap)
+}
+
+def popdepTigerMinMapq() {
+    return params.popdep_min_mapq != null ? params.popdep_min_mapq.toString().toInteger() : 0
+}
+
+def popdepLengthNTaxa(chr) {
+    if (params.popdep_taxa_bam_file) {
+        def tb = file(params.popdep_taxa_bam_file.toString())
+        if (!tb.exists()) {
+            throw new FileNotFoundException("popdep_taxa_bam_file not found: ${params.popdep_taxa_bam_file}")
+        }
+        return tb.readLines().findAll { it.trim() }.size() - 1
+    }
+    return getPopDepNTaxaForChr_v1(chr, params.home_dir)
 }
 
 def popdepVariantPublishDir() {
@@ -42,6 +61,10 @@ def popdepCrossChrTigerExtraArgs() {
         )
     }
     def lines = ["-o ${order}"]
+    // TIGER_PD_20260619 PopDepCrossChr has no -g; MAPQ is TIGER_PD_20260818+.
+    if (popdepTigerMinMapq() > 0) {
+        lines << "-g ${popdepTigerMinMapq()}"
+    }
     if (params.popdep_crosschr_checkpoint_dir) {
         lines << "-k ${params.popdep_crosschr_checkpoint_dir}"
         lines << "-ci ${params.popdep_crosschr_checkpoint_interval}"
@@ -65,6 +88,7 @@ process calc_population_depth {
     script:
     def tb_file = params.popdep_taxa_bam_file ?: getPopDepTaxaBamFile_v1(chr, params.home_dir)
     def chr_length = popdepBenchChrLength(chr)
+    def mapq_line = popdepTigerMinMapq() > 0 ? "        -g ${popdepTigerMinMapq()} \\\n" : ""
     """
     set -euo pipefail
     exec > popdep_${chr}.log 2>&1
@@ -88,7 +112,7 @@ process calc_population_depth {
         -c ${chr_length} \\
         -d samtools \\
         -e ${task.cpus} \\
-        -f ${id}.popdep.txt.gz
+${mapq_line}        -f ${id}.popdep.txt.gz
 
     echo "TIGER population depth completed for chromosome ${chr}."
     """
@@ -110,7 +134,7 @@ process calc_population_depth_crosschr {
     script:
     def tb_file = params.popdep_taxa_bam_file ?: getPopDepTaxaBamFileAll_v1(params.home_dir)
     def chr_length_lines = chr_list.collect { c ->
-        def n_taxa = getPopDepNTaxaForChr_v1(c, params.home_dir)
+        def n_taxa = popdepLengthNTaxa(c)
         "echo -e '${c}\\t${popdepBenchChrLength(c.toString())}\\t${n_taxa}' >> chromosomeLength.txt"
     }.join('\n    ')
     def chr_bash = chr_list.collect { c -> c.toString() }.join(' ')
@@ -135,7 +159,7 @@ process calc_population_depth_crosschr {
     ${chr_length_lines}
     echo "Chromosome length file (Chr, Length, nTaxa per subgenome taxaBamMap):"
     cat chromosomeLength.txt
-    echo "PopDepCrossChr TIGER extras: taxa_order=${params.popdep_crosschr_taxa_order} checkpoint=${params.popdep_crosschr_checkpoint_dir ?: 'off'} interval=${params.popdep_crosschr_checkpoint_interval}"
+    echo "PopDepCrossChr TIGER extras: taxa_order=${params.popdep_crosschr_taxa_order} min_mapq=${popdepTigerMinMapq()} checkpoint=${params.popdep_crosschr_checkpoint_dir ?: 'off'} interval=${params.popdep_crosschr_checkpoint_interval}"
 
     java -Xmx${task.memory.toGiga()}G -jar ${tiger_jar} \\
         -app PopDepCrossChr \\
@@ -263,7 +287,7 @@ process calc_population_depth_loo_case {
 
     script:
     def grid_id = String.format('chr%03d', chr.toString().toInteger())
-    def chr_length = popdepBenchChrLength(chr)
+    def chr_length = popdepLooChrLength(chr)
     """
     set -euo pipefail
     exec > popdep_loo_${case_id}_${chr}.log 2>&1

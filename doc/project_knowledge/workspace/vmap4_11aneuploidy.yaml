@@ -9,13 +9,19 @@ purpose: >
 partial_tasks:
   - aneuploidy_mapq
   - aneuploidy_breachr
+  - aneuploidy_breachr_cohort
 default_job: benchmark
 default_mod: aneuploidy_check
 taxa_bam_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
 mosdepth_inputs: /data/home/tusr1/01projects/vmap4/00data/04depth/
 publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/
 mapq_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/mapq_check/
+mapq_popdep_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/mapq_popdep/
+mapq_popdep_all_prefix: allmapq_1mb
+mapq_popdep_mq30_prefix: mapq30_1mb
+mapq_popdep_plots: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/plots/mapq_popdep/
 breachr_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/breachr_check/
+breachr_cohort_publish: /data1/dazheng_tusr1/vmap4.VCF.v1/benchmark/stats/aneuploidy_check/info/breachr_cohort/
 
 runs:
   - folder: 01run_benchmark_full
@@ -31,11 +37,18 @@ runs:
     status: historical
 
   - folder: 15run_mapq_full_cohort
-    summary: Full-cohort MAPQ bin scan (~8288 samples); skip_existing for 263 prior TSVs
+    summary: Full-cohort MAPQ bin scan (8288 samples)
     nf_cmd_ref: doc/progress/2026-08-04.md — NF replay aneuploidy_mapq full cohort
     screen: mapq_cohort
-    status: running
-    note: maxForks=64, cpus=2 per task (2026-08-05 restart at 772 published TSVs)
+    status: completed
+    note: 8288 TSVs under info/mapq_check/
+
+  - folder: 19run_breachr_full_cohort
+    summary: Full-cohort breachr segment calling on all MAPQ TSVs (8288 samples)
+    nf_cmd_ref: doc/progress/2026-08-16.md — NF replay aneuploidy_breachr_cohort
+    screen: breachr_cohort
+    status: completed
+    note: 8289 tasks OK (~28 min); 8288 segment TSVs + breachr_segments_all.tsv (~118 MB)
 
   - folder: 16run_breachr_flagged_test
     summary: breachr v1 segment + mosdepth reconcile (261 flagged; alias fix for _deduped IDs)
@@ -49,3 +62,21 @@ runs:
     screen: breachr_v2_fresh
     status: completed
     note: 524 tasks OK; 261 flat PNGs under breachr_check/plots/mapq_depth_cap/
+
+  - folder: 22run_mapq30_1mb_popdep
+    summary: Cohort 1 Mb MAPQ30+ popdep grid + CNV-colored QC scatters (Polars)
+    entry_nf: workflow/Genetics/subworkflows/tmp/mapq_bin_popdep.nf
+    nf_cmd_ref: doc/progress/2026-08-18.md — NF replay mapq_bin_popdep
+    publish_info: info/mapq_popdep/
+    publish_plots: plots/mapq_popdep/
+    status: completed
+    note: exit 0 ~5 min; 8288 input TSVs → combined grid + 21 chr TSVs; 4 QC PNGs
+
+  - folder: 23run_allmapq_1mb_popdep
+    summary: Cohort 1 Mb popdep — unfiltered bin_mean_depth (no MAPQ cut)
+    entry_nf: workflow/Genetics/subworkflows/tmp/mapq_bin_popdep.nf
+    config: workflow/Genetics/conf/mapq_bin_popdep_all.config
+    nf_cmd_ref: doc/progress/2026-08-18.md — NF replay allmapq_bin_popdep
+    publish_prefix: allmapq_1mb
+    status: completed
+    note: exit 0 ~5 min; prefix allmapq_1mb; depth=bin_mean_depth, rel=subgenome median norm

@@ -10,15 +10,55 @@ import numpy as np
 import pandas as pd
 
 from genetics.genomics.variant.popdep import (
+    _stream_popdep_lookup,
     _tabix_popdep_lookup,
     ensure_popdep_ref_tabix,
+    popdep_chr_ref_path,
 )
-from infra.utils.graph import plot_distribution_with_stats, plot_scatter_two_categories
-from infra.utils.io import save_df_to_tsv
-from infra.wheat.ref_v1 import get_chr_id_length
+from genetics.genomics.variant.popdep_region_class import (
+    REGION_CLASS_ALPHA,
+    REGION_CLASS_COLORS,
+    REGION_CLASS_HUE_ORDER,
+    REGION_CLASS_LEGEND_LABELS,
+    REGION_CLASSES,
+    classify_positions,
+    load_class_interval_sets,
+)
+from infra.utils.graph import (
+    plot_distribution_with_stats,
+    plot_joint_regression,
+    plot_scatter_two_categories,
+    plot_stacked_hist_counts,
+)
+from infra.utils.io import load_df_generic, save_df_to_tsv
+from infra.wheat.ref_v1 import REF_V1_SUBGENOME_SEGMENT_CHR_IDS, get_chr_id_length
 
 PLINK_CHR_FILE_IDS: tuple[str, ...] = tuple(f"chr{i:03d}" for i in range(45))
 TABIX_BATCH_SIZE = 50_000
+STREAM_LOOKUP_MIN_SITES = 100_000
+TEST_POPDEP_SCATTER_CAP = 2_000_000
+TEST_POPDEP_TARGET_N = 100_000_000
+TEST_POPDEP_HIST_BINS = 100
+TEST_POPDEP_DEPTH_XLIM = (0.0, 40.0)
+TEST_POPDEP_REL_XLIM = (0.0, 5.0)
+N500_PANEL_N = 500
+# June 2026 31run PopDepCrossChr chromosomeLength nTaxa while scanning 500 BAMs
+# (missing taxa zero-padded). chr032 used PopDepFull with nTaxa=500.
+NTAXA_ZERO_PADDED_BY_SUBGENOME = {
+    "A": 7675,
+    "B": 7594,
+    "D": 7738,
+    "Others": 8285,
+}
+_CHROM_TO_SUBGENOME = {
+    int(cid): sg
+    for sg, ids in REF_V1_SUBGENOME_SEGMENT_CHR_IDS.items()
+    for cid in ids
+}
+_MEAN_SD_CV_COLS = (
+    ("Depth_Mean", "Depth_SD", "Depth_CV"),
+    ("RelativeDepth_Mean", "RelativeDepth_SD", "RelativeDepth_CV"),
+)
 
 
 @dataclass(frozen=True)
@@ -51,6 +91,101 @@ def plink_chr_int(chr_file_id: str) -> int:
 def list_plink_chr_file_ids(*, chr_exclude: set[int] | None = None) -> list[str]:
     exclude = chr_exclude or set()
     return [cid for cid in PLINK_CHR_FILE_IDS if plink_chr_int(cid) not in exclude]
+
+
+def n500_crosschr_ntaxa_used(chrom: int, *, n_new: int = N500_PANEL_N) -> int:
+    """Return the nTaxa written into June CrossChr grids for this chromosome.
+
+    chr032 was computed with PopDepFull at the true panel size and is not scaled.
+    """
+    chrom_i = int(chrom)
+    if chrom_i == 32:
+        return int(n_new)
+    sg = _CHROM_TO_SUBGENOME.get(chrom_i)
+    if sg is None:
+        raise ValueError(f"Unknown chromosome id: {chrom_i}")
+    return NTAXA_ZERO_PADDED_BY_SUBGENOME[sg]
+
+
+def rescale_zero_padded_mean_sd(
+    mean,
+    sd,
+    *,
+    n_old: int,
+    n_new: int = N500_PANEL_N,
+):
+    """Invert mean/SD after n_old-n_new taxa were included as zeros.
+
+    TIGER reports a population SD (divide by n, not n-1). With padded zeros,
+    ``sum`` and ``sum of squares`` are unchanged, so::
+
+        mean_new = mean_old * n_old / n_new
+        sd_new^2 = (n_old / n_new) * (sd_old^2 + mean_old^2) - mean_new^2
+    """
+    if n_old <= 0 or n_new <= 0:
+        raise ValueError("n_old and n_new must be positive")
+    mean_arr = np.asarray(mean, dtype=float)
+    sd_arr = np.asarray(sd, dtype=float)
+    scalar = np.ndim(mean) == 0 and np.ndim(sd) == 0
+    if n_old == n_new:
+        out_mean, out_sd = mean_arr.copy(), sd_arr.copy()
+    else:
+        scale = n_old / n_new
+        out_mean = mean_arr * scale
+        second = np.square(sd_arr) + np.square(mean_arr)
+        var_new = np.maximum(scale * second - np.square(out_mean), 0.0)
+        out_sd = np.sqrt(var_new)
+    if scalar:
+        return float(out_mean), float(out_sd)
+    return out_mean, out_sd
+
+
+def _cv_from_mean_sd(mean, sd):
+    mean_arr = np.asarray(mean, dtype=float)
+    sd_arr = np.asarray(sd, dtype=float)
+    out = np.full(mean_arr.shape, np.nan, dtype=float)
+    ok = np.isfinite(mean_arr) & (mean_arr > 0) & np.isfinite(sd_arr)
+    out[ok] = sd_arr[ok] / mean_arr[ok]
+    return out
+
+
+def rescale_test_popdep_sites(
+    input_tsv: str | Path,
+    output_tsv: str | Path,
+    *,
+    n_new: int = N500_PANEL_N,
+) -> pd.DataFrame:
+    """Rescale one chromosome test_popdep site table from padded nTaxa to n_new."""
+    df = load_df_generic(str(input_tsv))
+    if df.empty:
+        save_df_to_tsv(df, str(output_tsv))
+        return df
+    if "CHROM" not in df.columns:
+        raise ValueError(f"{input_tsv} has no CHROM column")
+    chroms = pd.unique(df["CHROM"].dropna())
+    if len(chroms) != 1:
+        raise ValueError(f"{input_tsv} expected one CHROM, got {list(chroms)}")
+    n_old = n500_crosschr_ntaxa_used(int(chroms[0]), n_new=n_new)
+    print(
+        f"rescale_test_popdep_sites {input_tsv}: n_rows={len(df)} "
+        f"CHROM={int(chroms[0])} n_old={n_old} n_new={n_new}"
+    )
+    if n_old != n_new:
+        for mean_col, sd_col, cv_col in _MEAN_SD_CV_COLS:
+            if mean_col not in df.columns or sd_col not in df.columns:
+                continue
+            mean_new, sd_new = rescale_zero_padded_mean_sd(
+                df[mean_col].to_numpy(),
+                df[sd_col].to_numpy(),
+                n_old=n_old,
+                n_new=n_new,
+            )
+            df[mean_col] = mean_new
+            df[sd_col] = sd_new
+            if cv_col in df.columns:
+                df[cv_col] = _cv_from_mean_sd(mean_new, sd_new)
+    save_df_to_tsv(df, str(output_tsv))
+    return df
 
 
 def _allocate_proportional(counts: dict[str, int], target_n: int) -> dict[str, int]:
@@ -175,7 +310,13 @@ def extract_popdep_rows_for_chr(
         return sub
     positions = sub["Position"].astype(int).tolist()
     try:
-        popdep_map = _tabix_lookup_chunked(chrom, positions, popdep_dir)
+        if len(positions) >= STREAM_LOOKUP_MIN_SITES:
+            popdep_map = _stream_popdep_lookup(
+                popdep_chr_ref_path(popdep_dir, chrom),
+                positions,
+            )
+        else:
+            popdep_map = _tabix_lookup_chunked(chrom, positions, popdep_dir)
     except (FileNotFoundError, RuntimeError, OSError) as exc:
         print(f"[Warning] Popdep lookup failed for {chr_file_id}: {exc}")
         popdep_map = {}
@@ -417,6 +558,503 @@ def ana_test_site_popdep_plots(
                 "n_variant_sites": int(variants.shape[0]),
                 "n_non_variant_sites": int(non_var.shape[0]),
             }]
+        ),
+        f"{output_prefix}.plot_summary.tsv",
+    )
+
+
+def sample_chr_sites(chr_file_id: str, n: int, *, seed: int) -> pd.DataFrame:
+    """Sample ``n`` distinct 1-based positions on one PLINK segment."""
+    chrom = plink_chr_int(chr_file_id)
+    length = int(get_chr_id_length(chrom) or 0)
+    if n <= 0 or length <= 0:
+        return pd.DataFrame(columns=["Chr_id", "CHROM", "Position"])
+    take = min(int(n), length)
+    rng = random.Random(int(seed) + chrom * 1_000_003)
+    if take >= length:
+        positions = list(range(1, length + 1))
+    else:
+        positions = rng.sample(range(1, length + 1), take)
+    positions.sort()
+    return pd.DataFrame(
+        {
+            "Chr_id": [chr_file_id] * take,
+            "CHROM": [chrom] * take,
+            "Position": positions,
+        }
+    )
+
+
+def allocate_test_popdep_sites(
+    target_bp: int,
+    *,
+    chr_file_ids: list[str] | None = None,
+    chr_exclude: set[int] | None = None,
+) -> pd.DataFrame:
+    """Proportional site counts per PLINK segment."""
+    chr_ids = chr_file_ids or list_plink_chr_file_ids(chr_exclude=chr_exclude)
+    lengths: dict[str, int] = {}
+    for cid in chr_ids:
+        length = int(get_chr_id_length(plink_chr_int(cid)) or 0)
+        if length > 0:
+            lengths[cid] = length
+    alloc = _allocate_proportional(lengths, int(target_bp))
+    rows = [
+        {"Chr_id": cid, "CHROM": plink_chr_int(cid), "n_sites": int(alloc.get(cid, 0))}
+        for cid in chr_ids
+    ]
+    return pd.DataFrame(rows)
+
+
+def prepare_test_popdep_chr_panel(
+    chr_file_id: str,
+    n_sites: int,
+    *,
+    popdep_dir: str | Path,
+    annotation_dir: str | Path,
+    output_tsv: str | Path,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Sample sites on one chromosome, attach popdep, assign region_class."""
+    sites = sample_chr_sites(chr_file_id, int(n_sites), seed=seed)
+    if sites.empty:
+        empty = pd.DataFrame(
+            columns=[
+                "Chr_id",
+                "CHROM",
+                "Position",
+                "Depth_Mean",
+                "Depth_SD",
+                "Depth_CV",
+                "RelativeDepth_Mean",
+                "RelativeDepth_SD",
+                "RelativeDepth_CV",
+                "region_class",
+            ]
+        )
+        save_df_to_tsv(empty, str(output_tsv))
+        return empty
+
+    popdep_sub = extract_popdep_rows_for_chr(chr_file_id, sites, str(popdep_dir))
+    class_sets = load_class_interval_sets(annotation_dir)
+    popdep_sub["region_class"] = classify_positions(
+        plink_chr_int(chr_file_id),
+        popdep_sub["Position"].to_numpy(),
+        class_sets,
+    )
+    save_df_to_tsv(popdep_sub, str(output_tsv))
+    return popdep_sub
+
+
+def concat_test_popdep_chr_tables(paths) -> pd.DataFrame:
+    frames = []
+    for path in paths:
+        table = pd.read_csv(path, sep="\t")
+        if not table.empty:
+            frames.append(table)
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
+
+
+def hist_bin_edges(xlim: tuple[float, float], n_bins: int) -> np.ndarray:
+    lo, hi = float(xlim[0]), float(xlim[1])
+    if hi <= lo:
+        raise ValueError(f"xlim must be increasing, got {xlim}")
+    return np.linspace(lo, hi, int(n_bins) + 1)
+
+
+def hist_counts_by_group(
+    values,
+    groups,
+    bin_edges,
+    *,
+    group_order: tuple[str, ...] = REGION_CLASSES,
+) -> dict[str, np.ndarray]:
+    """Bin ``values`` per group; clip into ``bin_edges`` so every finite value is counted."""
+    edges = np.asarray(bin_edges, dtype=float)
+    n_bins = int(edges.size - 1)
+    out = {g: np.zeros(n_bins, dtype=np.int64) for g in group_order}
+    x = pd.to_numeric(pd.Series(values, dtype="object"), errors="coerce").to_numpy(
+        dtype=float, copy=False
+    )
+    g = pd.Series(groups, dtype="object").astype(str).to_numpy()
+    ok = np.isfinite(x)
+    if not ok.any():
+        return out
+    x = np.clip(x[ok], edges[0], edges[-1])
+    g = g[ok]
+    for label in group_order:
+        mask = g == label
+        if mask.any():
+            out[label] = np.histogram(x[mask], bins=edges)[0].astype(np.int64)
+    return out
+
+
+def _median_from_hist(bin_edges, counts) -> float | None:
+    total = int(np.sum(counts))
+    if total <= 0:
+        return None
+    cum = np.cumsum(counts)
+    idx = int(np.searchsorted(cum, (total + 1) // 2))
+    idx = min(max(idx, 0), len(counts) - 1)
+    return float(0.5 * (bin_edges[idx] + bin_edges[idx + 1]))
+
+
+def _iter_popdep_plot_tables(panel):
+    if isinstance(panel, pd.DataFrame):
+        yield panel
+        return
+    if isinstance(panel, (str, Path)):
+        yield load_df_generic(str(panel))
+        return
+    for item in panel:
+        if isinstance(item, pd.DataFrame):
+            yield item
+        else:
+            yield load_df_generic(str(item))
+
+
+def _scatter_quota(n_rows: int, scatter_cap: int) -> int:
+    if n_rows <= 0 or scatter_cap <= 0:
+        return 0
+    take = int(round(n_rows * scatter_cap / float(TEST_POPDEP_TARGET_N)))
+    if take < 1:
+        take = min(n_rows, int(scatter_cap))
+    return min(n_rows, int(scatter_cap), take)
+
+
+def _stratified_subsample(
+    df: pd.DataFrame,
+    *,
+    group_col: str,
+    n: int,
+    seed: int = 42,
+) -> pd.DataFrame:
+    if len(df) <= n:
+        return df
+    counts = df[group_col].value_counts()
+    alloc = _allocate_proportional(counts.to_dict(), n)
+    parts = []
+    for label, take in alloc.items():
+        subset = df[df[group_col] == label]
+        if take <= 0 or subset.empty:
+            continue
+        if take >= len(subset):
+            parts.append(subset)
+        else:
+            parts.append(subset.sample(n=int(take), random_state=seed))
+    if not parts:
+        return df.sample(n=n, random_state=seed)
+    return pd.concat(parts, ignore_index=True)
+
+
+def _fill_missing_cv(
+    scatter: pd.DataFrame,
+    mean_col: str,
+    sd_col: str,
+    cv_col: str,
+) -> None:
+    """Fill CV from SD/mean when the column is absent or NaN (in-place)."""
+    if mean_col not in scatter.columns or sd_col not in scatter.columns:
+        return
+    if cv_col not in scatter.columns:
+        scatter[cv_col] = np.nan
+    cv = pd.to_numeric(scatter[cv_col], errors="coerce")
+    miss = cv.isna()
+    if not bool(miss.any()):
+        return
+    mean = pd.to_numeric(scatter.loc[miss, mean_col], errors="coerce")
+    sd = pd.to_numeric(scatter.loc[miss, sd_col], errors="coerce")
+    scatter.loc[miss, cv_col] = np.where(mean > 0, sd / mean, np.nan)
+
+
+def _plot_popdep_mean_sd_joints(
+    scatter: pd.DataFrame,
+    *,
+    output_prefix: str,
+    mean_col: str,
+    sd_col: str,
+    cv_col: str,
+    file_prefix: str,
+    x_label: str,
+    sd_label: str,
+    cv_label: str,
+) -> None:
+    """JointGrid SD/CV vs mean for one depth scale (absolute or relative)."""
+    if mean_col not in scatter.columns:
+        return
+    for y_col, y_label, tag in (
+        (sd_col, sd_label, "sd"),
+        (cv_col, cv_label, "cv"),
+    ):
+        if y_col not in scatter.columns:
+            continue
+        plot_df = scatter.dropna(subset=[mean_col, y_col])
+        if plot_df.empty:
+            continue
+        y_vals = pd.to_numeric(plot_df[y_col], errors="coerce")
+        if y_vals.nunique(dropna=True) < 2:
+            continue
+        plot_joint_regression(
+            plot_df,
+            x_col=mean_col,
+            y_col=y_col,
+            group_col="region_class",
+            x_label=x_label,
+            y_label=y_label,
+            filename=f"{output_prefix}.{file_prefix}.{tag}_vs_mean_by_class.png",
+            title=f"{y_label} vs {x_label.lower()} by genomic class (test_popdep)",
+            figure_size=(10, 8),
+            palette=REGION_CLASS_COLORS,
+            hue_order=list(REGION_CLASS_HUE_ORDER),
+            draw_regression=False,
+            alpha=0.45,
+            s=12,
+            rasterized=True,
+            legend_title="Genomic class",
+            bins_x=250,
+            bins_y=150,
+            min_points=1,
+            marginal_multiple="fill",
+            stack_last_on_top=True,
+            hue_alpha=REGION_CLASS_ALPHA,
+            also_stack_counts=True,
+            hue_labels=REGION_CLASS_LEGEND_LABELS,
+        )
+        pos = plot_df[(plot_df[mean_col] > 0) & (plot_df[y_col] > 0)]
+        if pos.empty:
+            continue
+        plot_joint_regression(
+            pos,
+            x_col=mean_col,
+            y_col=y_col,
+            group_col="region_class",
+            x_label=x_label,
+            y_label=y_label,
+            filename=f"{output_prefix}.{file_prefix}.{tag}_vs_mean_by_class.log.png",
+            title=f"{y_label} vs {x_label.lower()} by genomic class (log, test_popdep)",
+            figure_size=(10, 8),
+            palette=REGION_CLASS_COLORS,
+            hue_order=list(REGION_CLASS_HUE_ORDER),
+            log_x=True,
+            log_y=True,
+            draw_regression=False,
+            alpha=0.45,
+            s=12,
+            rasterized=True,
+            legend_title="Genomic class",
+            bins_x=250,
+            bins_y=150,
+            min_points=1,
+            marginal_multiple="fill",
+            stack_last_on_top=True,
+            hue_alpha=REGION_CLASS_ALPHA,
+            also_stack_counts=True,
+            hue_labels=REGION_CLASS_LEGEND_LABELS,
+        )
+
+
+def ana_test_popdep_class_plots(
+    panel: pd.DataFrame | str | Path | list,
+    output_prefix: str,
+    *,
+    scatter_cap: int = TEST_POPDEP_SCATTER_CAP,
+    hist_bins: int = TEST_POPDEP_HIST_BINS,
+    depth_xlim: tuple[float, float] = TEST_POPDEP_DEPTH_XLIM,
+    rel_xlim: tuple[float, float] = TEST_POPDEP_REL_XLIM,
+    joints_only: bool = False,
+) -> None:
+    """Popdep-only QC coloured by gap/repeat/gc/cnv/normal.
+
+    Histograms use pre-binned counts (clip to ``depth_xlim`` / ``rel_xlim``).
+    Scatter JointGrids use a stratified subsample. Paths are streamed one
+    chromosome table at a time so the full 100M-row panel is never concatenated.
+    ``joints_only`` redraws SD/CV JointGrids from an existing scatter table and
+    skips the 100M class-mean histograms.
+    """
+    if joints_only:
+        scatter_parts = list(_iter_popdep_plot_tables(panel))
+        scatter = (
+            pd.concat(scatter_parts, ignore_index=True) if scatter_parts else pd.DataFrame()
+        )
+        if scatter.empty:
+            print("[Error] joints_only: no scatter rows.")
+            return
+        scatter = scatter.copy()
+        if "region_class" in scatter.columns:
+            scatter["region_class"] = scatter["region_class"].astype(str)
+        _fill_missing_cv(scatter, "Depth_Mean", "Depth_SD", "Depth_CV")
+        _fill_missing_cv(scatter, "RelativeDepth_Mean", "RelativeDepth_SD", "RelativeDepth_CV")
+        _plot_popdep_mean_sd_joints(
+            scatter,
+            output_prefix=output_prefix,
+            mean_col="Depth_Mean",
+            sd_col="Depth_SD",
+            cv_col="Depth_CV",
+            file_prefix="depth",
+            x_label="Mean depth",
+            sd_label="Depth SD",
+            cv_label="Depth CV",
+        )
+        _plot_popdep_mean_sd_joints(
+            scatter,
+            output_prefix=output_prefix,
+            mean_col="RelativeDepth_Mean",
+            sd_col="RelativeDepth_SD",
+            cv_col="RelativeDepth_CV",
+            file_prefix="reldepth",
+            x_label="Relative mean depth",
+            sd_label="Relative depth SD",
+            cv_label="Relative depth CV",
+        )
+        save_df_to_tsv(
+            pd.DataFrame([{"n_scatter_sites": int(len(scatter)), "joints_only": 1}]),
+            f"{output_prefix}.plot_summary.tsv",
+        )
+        return
+
+    depth_edges = hist_bin_edges(depth_xlim, hist_bins)
+    rel_edges = hist_bin_edges(rel_xlim, hist_bins)
+    depth_hist = {cls: np.zeros(hist_bins, dtype=np.int64) for cls in REGION_CLASSES}
+    rel_hist = {cls: np.zeros(hist_bins, dtype=np.int64) for cls in REGION_CLASSES}
+    class_n = {cls: 0 for cls in REGION_CLASSES}
+    n_sites = 0
+    depth_sum = 0.0
+    rel_sum = 0.0
+    n_rel = 0
+    scatter_parts: list[pd.DataFrame] = []
+
+    for table in _iter_popdep_plot_tables(panel):
+        req = {"Depth_Mean", "Depth_SD", "region_class"}
+        if not req.issubset(table.columns):
+            missing = req - set(table.columns)
+            raise ValueError(f"test_popdep panel missing columns: {sorted(missing)}")
+        df = table.replace([np.inf, -np.inf], np.nan)
+        df["region_class"] = df["region_class"].astype(str)
+        valid = df.dropna(subset=["Depth_Mean", "Depth_SD"])
+        if valid.empty:
+            continue
+        n_sites += int(len(valid))
+        depth_sum += float(pd.to_numeric(valid["Depth_Mean"], errors="coerce").sum())
+        for cls, n_cls in valid["region_class"].value_counts().items():
+            if cls in class_n:
+                class_n[cls] += int(n_cls)
+        add_d = hist_counts_by_group(
+            valid["Depth_Mean"], valid["region_class"], depth_edges
+        )
+        for cls in REGION_CLASSES:
+            depth_hist[cls] += add_d[cls]
+        if "RelativeDepth_Mean" in valid.columns:
+            rel = valid.dropna(subset=["RelativeDepth_Mean"])
+            if not rel.empty:
+                n_rel += int(len(rel))
+                rel_sum += float(pd.to_numeric(rel["RelativeDepth_Mean"], errors="coerce").sum())
+                add_r = hist_counts_by_group(
+                    rel["RelativeDepth_Mean"], rel["region_class"], rel_edges
+                )
+                for cls in REGION_CLASSES:
+                    rel_hist[cls] += add_r[cls]
+        take = _scatter_quota(len(valid), int(scatter_cap))
+        if take > 0:
+            if take >= len(valid):
+                scatter_parts.append(valid)
+            else:
+                scatter_parts.append(valid.sample(n=take, random_state=42))
+        chrom = int(valid["CHROM"].iloc[0]) if "CHROM" in valid.columns else -1
+        print(f"binned CHROM={chrom} n_valid={len(valid)} scatter_take={take} n_sites_cum={n_sites}")
+
+    if n_sites <= 0:
+        print("[Error] No valid popdep rows for test_popdep plots.")
+        return
+
+    class_counts = pd.DataFrame(
+        {"region_class": list(REGION_CLASSES), "n_sites": [class_n[c] for c in REGION_CLASSES]}
+    )
+    save_df_to_tsv(class_counts, f"{output_prefix}.class_counts.tsv")
+
+    depth_total = sum(depth_hist.values())
+    rel_total = sum(rel_hist.values()) if n_rel else None
+    plot_stacked_hist_counts(
+        depth_edges,
+        depth_hist,
+        title="Mean depth by genomic class (test_popdep)",
+        filename=f"{output_prefix}.depth.mean_dist_by_class.png",
+        x_label="Mean depth",
+        hue_order=list(REGION_CLASS_HUE_ORDER),
+        palette=REGION_CLASS_COLORS,
+        hue_labels=REGION_CLASS_LEGEND_LABELS,
+        mean_val=depth_sum / n_sites if n_sites else None,
+        median_val=_median_from_hist(depth_edges, depth_total),
+    )
+    if n_rel > 0:
+        plot_stacked_hist_counts(
+            rel_edges,
+            rel_hist,
+            title="Relative mean depth by genomic class (test_popdep)",
+            filename=f"{output_prefix}.reldepth.mean_dist_by_class.png",
+            x_label="Relative mean depth",
+            hue_order=list(REGION_CLASS_HUE_ORDER),
+            palette=REGION_CLASS_COLORS,
+            hue_labels=REGION_CLASS_LEGEND_LABELS,
+            mean_val=rel_sum / n_rel,
+            median_val=_median_from_hist(rel_edges, rel_total),
+        )
+
+    scatter = (
+        pd.concat(scatter_parts, ignore_index=True) if scatter_parts else pd.DataFrame()
+    )
+    if not scatter.empty and len(scatter) > int(scatter_cap):
+        scatter = _stratified_subsample(
+            scatter, group_col="region_class", n=int(scatter_cap), seed=42
+        )
+    if scatter.empty:
+        print("[Warning] No scatter rows after subsample.")
+        save_df_to_tsv(
+            pd.DataFrame(
+                [{"n_sites": n_sites, "n_scatter_sites": 0, **{f"n_{c}": class_n[c] for c in REGION_CLASSES}}]
+            ),
+            f"{output_prefix}.plot_summary.tsv",
+        )
+        return
+    scatter = scatter.copy()
+    _fill_missing_cv(scatter, "Depth_Mean", "Depth_SD", "Depth_CV")
+    _fill_missing_cv(scatter, "RelativeDepth_Mean", "RelativeDepth_SD", "RelativeDepth_CV")
+    save_df_to_tsv(scatter, f"{output_prefix}.scatter.sites.tsv")
+    _plot_popdep_mean_sd_joints(
+        scatter,
+        output_prefix=output_prefix,
+        mean_col="Depth_Mean",
+        sd_col="Depth_SD",
+        cv_col="Depth_CV",
+        file_prefix="depth",
+        x_label="Mean depth",
+        sd_label="Depth SD",
+        cv_label="Depth CV",
+    )
+    _plot_popdep_mean_sd_joints(
+        scatter,
+        output_prefix=output_prefix,
+        mean_col="RelativeDepth_Mean",
+        sd_col="RelativeDepth_SD",
+        cv_col="RelativeDepth_CV",
+        file_prefix="reldepth",
+        x_label="Relative mean depth",
+        sd_label="Relative depth SD",
+        cv_label="Relative depth CV",
+    )
+
+    save_df_to_tsv(
+        pd.DataFrame(
+            [
+                {
+                    "n_sites": int(n_sites),
+                    "n_scatter_sites": int(len(scatter)),
+                    "hist_bins": int(hist_bins),
+                    "depth_xlim_hi": float(depth_xlim[1]),
+                    **{f"n_{cls}": int(class_n[cls]) for cls in REGION_CLASSES},
+                }
+            ]
         ),
         f"{output_prefix}.plot_summary.tsv",
     )

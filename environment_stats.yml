@@ -4,7 +4,6 @@ channels:
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
   - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
-  - defaults
 dependencies:
 
   # compilers
@@ -38,6 +37,8 @@ dependencies:
   # complex environment solving python packages
   - numpy
   - pandas
+  - pyarrow
+  - polars
   - scipy
   - scikit-learn
   - matplotlib
@@ -58,6 +59,8 @@ dependencies:
       - -e .   # Editable install of your own python_script package
 
 # 1. can be created with:
-# conda env create -f environment_stats.yml
+# conda env create -f environment_stats.yml --solver=libmamba
 # 2. or update an existing environment with:
-# conda env update -f environment_stats.yml
+# conda env update -f environment_stats.yml --solver=libmamba
+#
+# Variant annotation (VEP / SnpEff) lives in environment_anno.yml, not here.

@@ -1,0 +1,58 @@
+kind: workspace_module
+id: vmap4_06transfer_watkins
+title: Watkins transfer and single-sample VCF split timing
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/06transfer.watkins
+
+inputs:
+  cohort_vcf: /data1/dazheng_tusr1/vmap4.VCF.v1/chrNNN.vcf.gz
+  main_raw_symlinks: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/chrNNN.vcf.gz
+  sample_group: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/sample_group.txt
+  note: >
+    main_raw chrNNN.vcf.gz entries are symlinks to the job-root VCFs.
+    Watkins sample IDs are the CRR accessions in sample_group.txt.
+
+runs:
+  - folder: 01run
+    summary: Earlier Watkins transfer Nextflow run
+    status: historical
+
+  - folder: 02run_watkins_ssvcf_time
+    summary: >
+      Timed bcftools +split of all Watkins samples from chr043 and chr044,
+      plus a chr036 single-sample rate probe. Outputs stay in this run folder.
+    status: completed_2026-10-10
+    bcftools: /data/home/tusr1/miniconda3/envs/tiger/bin/bcftools
+    nf_cmd_ref: doc/progress/2026-10-10.md — NF replay: watkins ssvcf time
+
+  - folder: 03run_watkins_refchr_vcf_usb5
+    summary: >
+      Speed test: Watkins chr036 pgen recoded to chr6D coordinates and exported
+      as one VCF on /mnt/usb5.
+    status: completed_2026-10-12
+    plink2: /data/home/tusr1/miniconda3/envs/stats/bin/plink2
+    vcf: /mnt/usb5/watkins_refchr/chr6D.arm36.vcf
+    nf_cmd_ref: doc/progress/2026-10-12.md — NF replay: watkins refchr vcf usb5
+
+  - folder: 04run_watkins_refchr_vcf_usb5_half
+    summary: >
+      Screen watkins_vcf_half exports about half of the Watkins refchr arm VCFs
+      to /mnt/usb5/watkins_refchr. Groups: chr3B, chr2A, chr2B, chr3A, chr7A,
+      chr4A, chr5A, chr7B, chr5B, Mit, Chl.
+    status: stopped_2026-10-13
+    plink2: /data/home/tusr1/miniconda3/envs/stats/bin/plink2
+    vcf_dir: /mnt/usb5/watkins_refchr
+    nf_cmd_ref: doc/progress/2026-10-12.md — NF replay: watkins refchr vcf usb5 half
+
+  - folder: 05run_watkins_refchr_vcf_usb1_usb5
+    summary: >
+      Full Watkins refchr export, one uncompressed VCF per chromosome.
+      usb1: chr1A chr1B chr1D chr2A chr2B chr2D chr3A chr3B chr3D chr4A chr4B chr4D.
+      usb5: chr5A chr5B chr5D chr6A chr6B chr6D chr7A chr7B chr7D chrUn Mit Chl.
+      INFO is dropped. Two arms are concatenated in refchr position order.
+    status: running_2026-10-13
+    plink2: /data/home/tusr1/miniconda3/envs/stats/bin/plink2
+    vcf_dirs:
+      - /mnt/usb1/watkins_refchr
+      - /mnt/usb5/watkins_refchr
+    nf_cmd_ref: doc/progress/2026-10-13.md — NF replay: watkins refchr vcf usb1 usb5

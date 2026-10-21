@@ -7,7 +7,8 @@ description: >
   ${home_dir}/00data/05taxaBamMap/ as {pop}.taxaBamMap.txt.
 
 canonical_path_pattern: "${home_dir}/00data/05taxaBamMap/{pop}.taxaBamMap.txt"
-populations: [A, B, D, ABD, ALL]
+populations: [A, B, D, ABD, ALL, WAP]
+related: domain/sample_cohorts.yaml
 
 entities:
   - id: taxa_bam_map_file
@@ -37,6 +38,12 @@ policies:
         those samples appear in merged *.A.taxaBamMap.txt outputs.
       - Job chr1 with a_pop ["A"] only does not auto-include ABD-registered taxa;
         use an explicit extract or widen a_pop for debug.
+
+  - id: wap_association_panel
+    rule: >
+      WAP.taxaBamMap.txt is the phenotyped association panel (2012 taxa;
+      IDs P*/PA*). It is disjoint from ABD.taxaBamMap.txt. WAP BAMs live
+      under bam1/ABD; the map file is still WAP. See sample_cohorts.yaml.
 
 examples:
   - sample_id: CS_mp_2018_8X

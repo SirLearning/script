@@ -3,7 +3,11 @@ import pandas as pd
 import pytest
 
 from genetics.genomics.variant.popdep import _percentile_upper_scatter_limits
-from infra.utils.graph import adaptive_axis_max, axis_limits_with_adaptive_upper
+from infra.utils.graph import (
+    adaptive_axis_max,
+    axis_limits_with_adaptive_upper,
+    padded_log_axis_limits,
+)
 
 
 def test_adaptive_axis_max_peels_isolated_high_outlier():
@@ -75,3 +79,10 @@ def test_percentile_upper_scatter_keeps_low_values():
     assert float(trimmed["Depth_SD"].min()) < float(df["Depth_SD"].quantile(0.01))
     assert x_lim is not None and x_lim[0] == pytest.approx(0.0)
     assert y_lim is not None and y_lim[0] == pytest.approx(0.0)
+
+
+def test_padded_log_axis_limits_span_data_in_log10():
+    lo, hi = padded_log_axis_limits([4.0, 8246.0], fraction=0.06)
+    assert lo < np.log10(4.0)
+    assert hi > np.log10(8246.0)
+    assert hi - lo < np.log10(8246.0 / 4.0) * 1.2

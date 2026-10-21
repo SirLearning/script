@@ -29,6 +29,83 @@ process subsampling_pfile_for_test {
     """
 }
 
+process compute_abd_global_thin_rate {
+    tag "ABD global thin rate to ${params.test_set_target_n} sites"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/info", mode: 'copy', pattern: "global_thin_rate.tsv"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+
+    input:
+    path pvars
+
+    output:
+    path "thin_rate.txt", emit: rate_file
+    path "global_thin_rate.tsv", emit: table
+
+    script:
+    """
+    python3 <<'PY'
+    from pathlib import Path
+    import sys
+
+    target_n = int(${params.test_set_target_n})
+    max_n = int(${params.test_set_max_n})
+    n = 0
+    per = []
+    for p in sorted(Path('.').glob('*.pvar')):
+        c = 0
+        with p.open() as fh:
+            for line in fh:
+                if line and not line.startswith('#'):
+                    c += 1
+        per.append((p.name, c))
+        n += c
+    if n <= 0:
+        raise SystemExit('compute_abd_global_thin_rate: no variants in A/B/D pvar files')
+    rate = 1.0 if n <= max_n else min(1.0, target_n / n)
+    with open('global_thin_rate.tsv', 'w') as out:
+        out.write('file\\tsites\\n')
+        for name, c in per:
+            out.write(f'{name}\\t{c}\\n')
+        out.write(f'TOTAL_ABD\\t{n}\\n')
+        out.write(f'target_n\\t{target_n}\\n')
+        out.write(f'max_n\\t{max_n}\\n')
+        out.write(f'thin_rate\\t{rate:.8f}\\n')
+    Path('thin_rate.txt').write_text(f'{rate:.8f}\\n')
+    print(f'ABD_sites={n} target_n={target_n} max_n={max_n} thin_rate={rate:.8f}', file=sys.stderr)
+    PY
+    """
+}
+
+process thin_merged_subgenome_pfile {
+    tag "thin merged pfile with global keep rate: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+    val thin_rate
+
+    output:
+    tuple val(id), val(chr), val("${id}_test.plink2"), path("${id}_test.plink2.pgen"), path("${id}_test.plink2.psam"), path("${id}_test.plink2.pvar"), emit: pfile
+    tuple val(id), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > thin_merged_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --thin ${thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}_test.plink2
+    """
+}
+
 process subsampling_common_variant_pfile_for_test {
     tag "common-thin pfile for test: ${id}"
     publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
@@ -384,6 +461,69 @@ process prepare_test_wap_keep {
     """
 }
 
+process gff_feature_bed {
+    tag "GFF ${params.test_wap_exon_gff_type} BED"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/annotate", mode: 'copy', pattern: "*.bed"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_1'
+
+    input:
+    path gff
+
+    output:
+    path "${params.mod}.extract.bed", emit: bed
+    path "*.log", emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+
+    sys.stdout = open("gff_feature_bed.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.genomics.gene.gff_bed import parse_gff_feature_types, write_merged_gff_bed
+
+    types = parse_gff_feature_types("${params.test_wap_exon_gff_type}")
+    n = write_merged_gff_bed("${gff}", "${params.mod}.extract.bed", feature_types=types)
+    print(f"wrote {n} merged {','.join(types)} intervals from ${gff}")
+    """
+}
+
+process extract_wap_exon_pfile {
+    tag "WAP exon pfile: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'wap_exon_extract'
+
+    input:
+    path keep_file
+    path exon_bed
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.wap.exon"), path("${id}.wap.exon.pgen"), path("${id}.wap.exon.psam"), path("${id}.wap.exon.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > wap_exon_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --keep ${keep_file} \\
+        --extract bed0 ${exon_bed} \\
+        --mac ${params.test_wap_min_mac} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.wap.exon
+    """
+}
+
 process subsampling_wap_pfile_for_test {
     tag "WAP panel pfile for test: ${id}"
     publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
@@ -406,13 +546,45 @@ process subsampling_wap_pfile_for_test {
 
     plink2 --pfile ${prefix} \\
         --keep ${keep_file} \\
-        --mac 2 \\
+        --mac ${params.test_wap_min_mac} \\
         --thin ${params.test_wap_thin_rate} \\
         --seed ${params.ld_decay_random_seed} \\
         --allow-extra-chr \\
         --make-pgen \\
         --threads ${task.cpus} \\
         --out ${id}.wap
+    """
+}
+
+process subsampling_wap_common_pfile_for_test {
+    tag "WAP common pfile for test: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    path keep_file
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}.wapc"), path("${id}.wapc.pgen"), path("${id}.wapc.psam"), path("${id}.wapc.pvar"), emit: pfile
+    tuple val(id), val(chr), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > wap_common_pfile_${id}.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --keep ${keep_file} \\
+        --maf ${params.test_wap_common_maf} \\
+        --thin ${params.test_wap_common_thin_rate} \\
+        --seed ${params.ld_decay_random_seed} \\
+        --allow-extra-chr \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.wapc
     """
 }
 
@@ -549,6 +721,124 @@ process merge_subgenome_test_pfile {
         --make-bed \\
         --threads ${task.cpus} \\
         --out ${subgenome}_test.plink
+    """
+}
+
+process prepare_test_popdep_annotations {
+    tag "test_popdep region-class beds"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}", mode: 'copy', pattern: "annotation/**"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_16'
+
+    output:
+    path "annotation", emit: annotation_dir
+    path "annotation/chr_alloc.tsv", emit: alloc
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    from pathlib import Path
+
+    Path("annotation").mkdir(parents=True, exist_ok=True)
+    sys.stdout = open("prepare_test_popdep_annotations.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.genomics.variant.popdep_region_class import build_region_class_beds
+    from genetics.genomics.variant.popdep_site_panel import allocate_test_popdep_sites
+    from infra.utils.io import save_df_to_tsv
+
+    print("Building gap/repeat/GC/CNV segment BEDs...")
+    counts = build_region_class_beds(
+        gap_bed="${params.test_popdep_gap_bed}",
+        te_gff="${params.test_popdep_te_gff}",
+        fasta_path="${params.test_popdep_fasta}",
+        mapq_popdep_dir="${params.test_popdep_mapq_dir}",
+        output_dir="annotation",
+        window_bp=${params.test_popdep_gc_window_bp ?: 1000},
+        gc_high=${params.test_popdep_gc_high ?: 0.55},
+        gc_low=${params.test_popdep_gc_low ?: 0.35},
+        cnv_frac_min=${params.test_popdep_cnv_frac_min ?: 0.2},
+        mapq_prefix="${params.test_popdep_mapq_prefix ?: 'allmapq_1mb'}",
+    )
+    print(counts)
+    alloc = allocate_test_popdep_sites(${params.test_popdep_target_bp ?: 100000000})
+    save_df_to_tsv(alloc, "annotation/chr_alloc.tsv")
+    print(alloc.to_string(index=False))
+    """
+}
+
+process prepare_test_popdep_chr_panel {
+    tag "test_popdep chr panel: ${chr_id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}/sites", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'test_popdep_chr'
+
+    input:
+    tuple val(chr_id), val(n_sites)
+    path annotation_dir
+
+    output:
+    path "${chr_id}.popdep.sites.tsv", emit: sites
+    path "*.log", emit: logs
+
+    script:
+    """
+    #!/usr/bin/env python
+    import sys
+    sys.stdout = open("prepare_test_popdep_${chr_id}.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.genomics.variant.popdep_site_panel import prepare_test_popdep_chr_panel
+
+    print("Sampling ${n_sites} sites on ${chr_id}...")
+    prepare_test_popdep_chr_panel(
+        "${chr_id}",
+        int(${n_sites}),
+        popdep_dir="${params.popdep_dir}",
+        annotation_dir="${annotation_dir}",
+        output_tsv="${chr_id}.popdep.sites.tsv",
+        seed=${params.test_popdep_seed ?: 42},
+    )
+    """
+}
+
+process rescale_test_popdep_chr_sites {
+    tag "rescale ntaxa500 ${chr_id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}/sites", mode: 'copy', pattern: "*.tsv"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'test_popdep_chr'
+
+    input:
+    val chr_id
+
+    output:
+    path "${chr_id}.popdep.sites.tsv", emit: sites
+    path "*.log", emit: logs
+
+    script:
+    def sites_dir = params.test_popdep_sites_dir ?: "${params.output_dir}/${params.job}/process/${params.mod ?: 'test_popdep'}/sites"
+    """
+    #!/usr/bin/env python
+    import sys
+    from pathlib import Path
+
+    sys.stdout = open("rescale_test_popdep_${chr_id}.log", "w", buffering=1)
+    sys.stderr = sys.stdout
+    if "${params.src_dir}" and "${params.src_dir}" != "null":
+        sys.path.insert(0, "${params.src_dir}/python")
+
+    from genetics.genomics.variant.popdep_site_panel import rescale_test_popdep_sites
+
+    src = Path("${sites_dir}") / "${chr_id}.popdep.sites.tsv"
+    print(f"Rescaling {src} to nTaxa=500...")
+    rescale_test_popdep_sites(src, "${chr_id}.popdep.sites.tsv")
     """
 }
 

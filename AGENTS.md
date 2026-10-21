@@ -92,7 +92,7 @@ Add new skills under `.cursor/skills/` and link them here—keep `AGENTS.md` as 
 - Follow **workstation-core** for language (English in versioned text), minimal diffs, and operational guardrails.
 - **Repo vs run vs publish:** edit code under `/data/home/tusr1/git/script` only (no `work/`, `.nextflow*`, `pipeline_info/`). Run Nextflow from `/data/home/tusr1/01projects/vmap4/<module>/<NNrun_*>/` — **prefer `10stats.genome/`** for new stats work; **never** default to overcrowded `08stats.genome/`. When a module's highest `NNrun_*` reaches **99**, create successor module **`NN+2<name>/`** (e.g. `12stats.genome`) per **workstation-core** guardrail 9. Published artefacts live under `/data1/dazheng_tusr1/vmap4.VCF.v1/…`.
 - **Pipeline layout:** `modules/local/` (process libs); `subworkflows/local/{entry,plink,wheat,upstream,partial}/`; partial reruns via `partial_router.nf --partial_task`; ops FTP under `subworkflows/tmp/ops/`. No `workflow/Genetics/tmp/` or repo `resources/`.
-- **Conda:** `run` for Nextflow; `stats` for Python stats / pytest; immutable inputs under `/data1/dazheng_tusr1/vmap4.VCF.v1`.
+- **Conda:** `run` for Nextflow; `stats` for Python stats / pytest; `anno` for VEP / SnpEff; immutable inputs under `/data1/dazheng_tusr1/vmap4.VCF.v1`.
 - Do not `git commit` unless the user explicitly asks.
 - **Never run destructive shell** (`rm`, `find -delete`, publish-tree cleanup, etc.) without the user's explicit same-message approval; see **workstation-core** guardrail 5.
 - Before editing [`.cursor/rules/`](.cursor/rules/) or [`.cursor/skills/`](.cursor/skills/), confirm the user wants agent policy changed—unless the user explicitly requests a policy update (as in “update AI config”).

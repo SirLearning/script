@@ -1,0 +1,13 @@
+PLINK v2.0.0-a.7.8 64-bit (19 Sep 2026)
+Options in effect:
+  --export
+
+Hostname: lulab243
+Working directory: /data/home/tusr1/git/script
+Start time: Mon Oct 12 16:42:02 2026
+
+Error: --export requires at least one output format.  (Did you forget 'ped' or
+'vcf'?)
+For more info, try "plink2 --help <flag name>" or "plink2 --help | more".
+
+End time: Mon Oct 12 16:42:02 2026

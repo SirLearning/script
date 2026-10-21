@@ -10,6 +10,10 @@ code_repo: /data/home/tusr1/git/script
 domain:
   - path: domain/taxa_bam_map.yaml
     summary: taxaBamMap population membership, paths, and job concat scope
+  - path: domain/sample_cohorts.yaml
+    summary: WAP phenotyped association panel vs WGS-core and external groups
+  - path: domain/ref_v1_resources.yaml
+    summary: RefSeq v1.0 FASTA; AGP gap BEDs; IWGSC v1.0 CLARITE TE GFF; IWGSC v1.1 Lulab GFF / official HC GFF/CDS; SnpEff 4.3 Lulab DB
   - path: domain/directory_layout.yaml
     summary: Three roots — code repo, vmap4 run cwd, data1 publish tree
   - path: domain/data_publish_tree.yaml
@@ -24,11 +28,17 @@ workspace:
   - path: workspace/vmap4_00data.yaml
     summary: Frozen inputs under 00data (BAM, taxaBamMap, refs)
   - path: workspace/vmap4_10stats_genome.yaml
-    summary: PopDep / main_raw_popdepth runs (current stats module)
+    summary: PopDep / main_raw_popdepth runs (NN 01–99; successor is 12stats.genome)
+  - path: workspace/vmap4_12stats_genome.yaml
+    summary: Genotype-stats runs (NN 01–99; successor is 14stats.genome)
+  - path: workspace/vmap4_14stats_genome.yaml
+    summary: Current genotype-stats runs (successor of 12stats.genome)
   - path: workspace/vmap4_08stats_genome.yaml
     summary: Legacy stats module (assess, LD, wheat, chr compare; many runs)
   - path: workspace/vmap4_04runScreens.yaml
     summary: FastCall scan screens, CS_mp debug runs, proper-pair relabel
+  - path: workspace/vmap4_06transfer_watkins.yaml
+    summary: Watkins transfer runs and single-sample VCF split timing
   - path: workspace/vmap4_11aneuploidy.yaml
     summary: Mosdepth aneuploidy benchmark runs and publish layout
   - path: workspace/vmap4_12depth.yaml

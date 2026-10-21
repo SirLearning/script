@@ -202,12 +202,14 @@ def _plot_mac_hetfrac_heatmap(
     mac_max: int = 100,
     het_bin_width: float = 0.05,
     x_tick_step: int = 5,
+    title: str | None = None,
+    stem: str = "heatmap_mac_hetfrac.0_100",
 ) -> None:
     """
     Heatmap: x = MAC (0..mac_max), y = Het_Fraction bins among minor-allele genotypes;
     cell value = fraction of sites at that MAC with Het_Fraction in the bin.
     """
-    out_file = f"{output_prefix}.heatmap_mac_hetfrac.0_100.png"
+    out_file = f"{output_prefix}.{stem}.png"
     df_sub = df[(df["MAC"] >= 1) & (df["MAC"] <= mac_max)].dropna(subset=["Het_Fraction"])
     if len(df_sub) < 10:
         print("[Warning] Too few rows for MAC vs Het_Fraction heatmap; writing placeholder plot.")
@@ -217,31 +219,82 @@ def _plot_mac_hetfrac_heatmap(
     y_bins = np.arange(0.0, 1.0 + het_bin_width, het_bin_width)
     n_y_bins = len(y_bins) - 1
     n_x = mac_max + 1
-    matrix = np.zeros((n_y_bins, n_x))
-
-    for mac_val in range(1, mac_max + 1):
-        subset = df_sub[df_sub["MAC"] == mac_val]
-        if subset.empty:
-            continue
-        counts, _ = np.histogram(subset["Het_Fraction"], bins=y_bins)
-        total = counts.sum()
-        if total > 0:
-            matrix[:, mac_val] = counts / total
-
-    matrix = np.flipud(matrix)
-    x_labels = [str(i) for i in range(0, mac_max + 1)]
+    mac_i = np.clip(np.round(pd.to_numeric(df_sub["MAC"], errors="coerce").to_numpy()), 0, mac_max).astype(int)
+    het = pd.to_numeric(df_sub["Het_Fraction"], errors="coerce").to_numpy()
+    edges_x = np.arange(n_x + 1) - 0.5
+    counts, _, _ = np.histogram2d(mac_i, het, bins=[edges_x, y_bins])
+    denom = counts.sum(axis=1, keepdims=True)
+    frac = np.divide(counts, denom, out=np.zeros_like(counts, dtype=float), where=denom > 0)
+    matrix = np.flipud(frac.T)
+    x_labels = [str(i) for i in range(0, n_x)]
     y_labels = [f"{(1.0 - i * het_bin_width):.2f}" for i in range(n_y_bins)]
 
     plot_heatmap_custom(
         data_matrix=matrix,
         x_labels=x_labels,
         y_labels=y_labels,
-        title=f"Observed heterozygosity (minor-allele het fraction) per MAC (0-{mac_max})",
+        title=title
+        or f"Observed heterozygosity (minor-allele het fraction) per MAC (0-{mac_max})",
         filename=out_file,
         xlabel="Minor allele count (MAC)",
         ylabel="Het fraction among minor-allele copies",
         cbar_label="Fraction of sites",
         x_tick_step=x_tick_step,
+    )
+
+
+def _plot_mac_h_heatmap(
+    df: pd.DataFrame,
+    output_prefix: str,
+    mac_max: int = 100,
+    x_tick_step: int = 5,
+    title: str | None = None,
+    stem: str = "heatmap_mac_h.0_100",
+    cmap: str | object = "viridis",
+    gamma: float | None = None,
+    vmax: float | None = None,
+    overlays: list | None = None,
+    vlines: list | None = None,
+) -> None:
+    """Heatmap: x = MAC (0..mac_max), y = heterozygous count H; cell = fraction of sites at that MAC."""
+    out_file = f"{output_prefix}.{stem}.png"
+    h_col = "H" if "H" in df.columns else "HET_REF_ALT_CTS"
+    need = ["MAC", h_col]
+    missing = [c for c in need if c not in df.columns]
+    if missing:
+        fail(f"MAC vs H heatmap needs columns {need}; missing {missing}")
+    df_sub = df[(df["MAC"] >= 1) & (df["MAC"] <= mac_max)].dropna(subset=[h_col])
+    if len(df_sub) < 10:
+        print("[Warning] Too few rows for MAC vs H heatmap; writing placeholder plot.")
+        _save_mac_plot_placeholder(out_file, f"No variants with MAC 1-{mac_max} for H heatmap")
+        return
+
+    n_bin = mac_max + 1
+    mac_i = np.clip(np.round(pd.to_numeric(df_sub["MAC"], errors="coerce").to_numpy()), 0, mac_max).astype(int)
+    h_i = np.clip(np.round(pd.to_numeric(df_sub[h_col], errors="coerce").to_numpy()), 0, mac_max).astype(int)
+    edges = np.arange(n_bin + 1) - 0.5
+    counts, _, _ = np.histogram2d(mac_i, h_i, bins=[edges, edges])
+    denom = counts.sum(axis=1, keepdims=True)
+    frac = np.divide(counts, denom, out=np.zeros_like(counts, dtype=float), where=denom > 0)
+    matrix = np.flipud(frac.T)
+    x_labels = [str(i) for i in range(0, n_bin)]
+    y_labels = [str(i) for i in range(mac_max, -1, -1)]
+
+    plot_heatmap_custom(
+        data_matrix=matrix,
+        x_labels=x_labels,
+        y_labels=y_labels,
+        title=title or f"Heterozygous sample count (H) per MAC (0-{mac_max})",
+        filename=out_file,
+        xlabel="Minor allele count (MAC)",
+        ylabel="Heterozygous sample count (H)",
+        cbar_label="Fraction of sites",
+        x_tick_step=x_tick_step,
+        cmap=cmap,
+        gamma=gamma,
+        vmax=vmax,
+        overlays=overlays,
+        vlines=vlines,
     )
 
 

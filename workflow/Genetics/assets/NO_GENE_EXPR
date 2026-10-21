@@ -1,0 +1,2 @@
+# Placeholder staged when variant_sets runs without a gene expression table.
+# Processes detect it by filename and skip the expressed-gene sets.

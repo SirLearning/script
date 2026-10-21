@@ -14,13 +14,53 @@ folders:
       sample: CS_mp_2018_8X
       path: bam1/ABD/CS_mp_2018_8X.bam
   - id: "03ref"
-    role: Reference genomes and indexes
+    role: Reference genomes, indexes, and AGP-derived gap BEDs
+    path: /data/home/tusr1/01projects/vmap4/00data/03ref
+    knowledge: domain/ref_v1_resources.yaml
+    subpaths:
+      - path: "{01A,05B,04D,02AB,03ABD}/"
+        role: IWGSC RefSeq v1.0 FASTA + .fai/.gzi (numeric 0-44 contig names)
+      - path: 07snpeff/
+        role: Prebuilt SnpEff 4.3 Lulab genome (wheat_lulab_v1.1, longest transcript)
+        knowledge: domain/ref_v1_resources.yaml
+      - path: gaps/
+        role: AGP scaffold-gap BEDs derived from IWGSC 2018 AGP (not seqtk N-runs)
+        source: /data/public_data/wheat/00_genome/reference/IWGSC_ref/iwgsc_refseqv1.0_all_chromosomes/161010_Chinese_Spring_v1.0_pseudomolecules_AGP.tsv
+        files:
+          - path: iwgsc_refseqv1.0_agp_gaps.chr.bed.gz
+            role: Linear chr1A..chr7D + chrUn, 0-based half-open
+          - path: iwgsc_refseqv1.0_agp_gaps.parts.bed.gz
+            role: IWGSC parts names (chr1A_part1/part2), same intervals clipped to parts
+      - path: annotation/iwgsc_v1.0/
+        role: IWGSC RefSeq Annotations v1.0 CLARITE TE GFF (repeat class for test_popdep)
+        files:
+          - path: iwgsc_refseqv1.0_TransposableElements_2017Mar13.gff3
+            role: CLARITE repeat_region / nested_repeat / repeat_fragment on chr1A..chrUn
+          - path: iwgsc_refseqv1.0_TransposableElements_2017Mar13.gff3.zip
+            role: Upstream zip (md5 7b6338d5774f314bfbba2a6722f3c287)
   - id: "04depth"
     role: Depth-related auxiliary data
+    subpaths:
+      - path: n500_mapq30/
+        role: N500 GAM panel mosdepth -Q 30 summaries (500 files; 05run completed 2026-08-19)
+
   - id: "05taxaBamMap"
     role: Canonical taxa→BAM maps
-    files: ["A.taxaBamMap.txt", "B.taxaBamMap.txt", "D.taxaBamMap.txt", "ABD.taxaBamMap.txt", "ALL.taxaBamMap.txt", "all.*.taxaBamMap.txt", "final.*.taxaBamMap.txt", "popdep/tb.N500_popdep_final.taxaBamMap.txt"]
+    files: ["A.taxaBamMap.txt", "B.taxaBamMap.txt", "D.taxaBamMap.txt", "ABD.taxaBamMap.txt", "WAP.taxaBamMap.txt", "ALL.taxaBamMap.txt", "all.*.taxaBamMap.txt", "final.*.taxaBamMap.txt", "popdep/tb.N500_popdep_final.taxaBamMap.txt", "popdep/tb.N500_gam_credible_deep.taxaBamMap.txt", "popdep/tb.N500_gam_credible_deep_mapq30.taxaBamMap.txt"]
     knowledge: domain/taxa_bam_map.yaml
+  - id: "06maf"
+    role: 29-way Triticeae MAF alignments and Wheat-Aegilops syntenic base matrices
+    path: /data/home/tusr1/01projects/vmap4/00data/06maf
+    files:
+      - path: "*_MZ_29_triticeae.maf.gz"
+        role: Roast 29-species MAF; wheat prefix traesA/traesB/traesD
+      - path: species_wheat_aegilops_synteny.txt
+        role: Lineage prefixes for A/B/D outgroups
+    subpaths:
+      - path: subset_wheat_aegilops/
+        role: MAF subset to Wheat-Aegilops-complex prefixes
+      - path: syntenic_sites_k2/
+        role: Per-chromosome k≥2 syntenic base matrix (0-based ref_pos); ancestral-allele source for LoF polarization
   - id: popdep_bench
     role: Truncated BAM panels for PopDep benchmarks
     subpaths:
@@ -56,6 +96,13 @@ folders:
       Fasta copied from /data/tmp/youqing (2026-08-04).
       Annotation + ccsmeth bed via Dryad API bearer (same method as 08timopheevii_dryad).
       VMap1 CRA001951 WGS-A FASTQ via https://download.cncb.ac.cn/gsa3/CRA001951/.
+  - id: "10meta_data"
+    role: External metadata tables (Wu et al. 2025 LD blocks and related)
+    path: /data/home/tusr1/01projects/vmap4/00data/10meta_data
+    files:
+      - Wu_2025_LD_block_size.csv
+      - path: species_LD.csv
+        role: Comparative LD decay vs genome size; includes Homo sapiens; genome_assembly filled for maize, rice, soybean, human
   - id: "08timopheevii_dryad"
     role: Triticum timopheevii Dryad assembly/annotation staging (doi:10.5061/dryad.mpg4f4r6p)
     path: /data/home/tusr1/01projects/vmap4/00data/08timopheevii_dryad
@@ -76,3 +123,113 @@ folders:
       - README.md
     excluded:
       - Tim.S95.v2.hifi.5mC.3col.bed
+  - id: "11epi_anno"
+    role: Per-base conservation and epigenome features (featHighRes matrix), one BED per chromosome
+    path: /data/home/tusr1/01projects/vmap4/00data/11epi_anno
+    consumer: partial_task site_anno -> genetics.genomics.variant.site_anno
+    coordinate_system: refchr_linear
+    coordinate_check: >-
+      chr1A ends at 594102056, which equals the two-arm total in
+      src/python/infra/wheat/ref_v1.py (471304005 + 122798051). So these files
+      join to *_refchr pfiles on (CHROM, POS) with no lift-over, and do NOT
+      match the segment coordinates the GFF/FASTA and VEP use.
+    schema: >-
+      33 columns: chrom, start (0-based), end, then the 30 features of README
+      section #02 in order. Column names live in site_anno.EPI_FEATURE_COLUMNS.
+    degeneracy_encoding: >-
+      The README gives no meaning for the degeneration codes. Verified against
+      fold degeneracy computed from reference codons on 271k chr1A CDS bases:
+      2 = 0-fold (non-degenerate), 1 = 4-fold, 0 = 2-fold or 3-fold. Note this
+      is the inverse of the intuitive reading; 4-fold neutral sites are code 1.
+    gaps: >-
+      Not a contiguous per-base file. Positions with no annotation are absent
+      rather than zero-filled, so a positional join must be interval-based and
+      line number is not position.
+    coverage: chr1A-chr7D only; no chrUn / Mit / Chl, so subgenome Others has no source
+    sparse_columns: >-
+      SIFT, PPH2 and LIST2 are populated on roughly 0.1-0.6% of CDS bases, so
+      they cannot stand in for a missing VEP SIFT/PolyPhen run.
+    index: none shipped; site_anno_extract streams the files instead of building tabix
+    files:
+      - path: chr{1..7}{A,B,D}_featHighRes.bed.gz
+        role: 21 BGZF BEDs, 7.5-13 GB each
+      - path: README
+        role: Section #01 DFE binary matrix (not unpacked here), section #02 this matrix
+      - path: wheat.epi_anno.tar.gz
+        role: 222 GB archive, not unpacked; expected to hold the section #01 DFE matrix
+  - id: "12cs_tpm"
+    role: Chinese Spring / RefSeq v1.0 gene expression atlases
+    path: /data/home/tusr1/01projects/vmap4/00data/12cs_tpm
+    former_path: 00data/12cs_tmp/wheat_expression (renamed; do not reference)
+    consumer: partial_task gene_expr -> genetics.genomics.gene.expression
+    gene_id_rule: >-
+      camp matrices are already v1.1 (TraesCS1D02G…); ramirez is v1.0
+      (TraesCS1A01G…). Map v1.0 to v1.1 with the previous_id attribute on the
+      gene rows of wheat_v1.1_Lulab.gff3 — 104200 of 107891 v1.1 genes carry
+      one. Never normalize by stripping the LC suffix: HC and LC are numbered
+      independently in v1.0, so that merges distinct genes. The GFF is HC-only,
+      so the 158793 LC genes are dropped.
+    subpaths:
+      - path: ramirez2018_refseq1/
+        role: Ramirez-Gonzalez et al. 2018 expVIP RefSeq v1.0 ByGene Azhurnaya Development atlas
+        source: https://opendata.earlham.ac.uk/wheat/under_license/toronto/Ramirez-Gonzalez_etal_2018-06025-Transcriptome-Landscape/expvip
+        shape: 269583 genes x 209 samples; default_metadata.txt groups them by tissue/age/variety/stress
+        files:
+          - Development_tpm.tsv.gz
+          - Development_count.tsv.gz
+          - Development_summary.tsv
+          - default_metadata.txt
+          - factor_order.txt
+          - HC_triads_for_expvip.tab
+      - path: camp/
+        role: FC/SC/TC panels at three ploidies (2x D, 4x AB, 6x ABD), TPM on v1.1 gene ids
+        shape: FC6.ABD carries 519 sample columns; no sample metadata table ships with it
+        files:
+          - "{FC,SC,TC}{2.D,4.AB,6.ABD}.tpm.noERCC.strict_gam_rpk.tsv.gz"
+          - ABD_111.tsv
+  - id: "13phenotype"
+    role: WAP field-trial phenotype sources, keyed to genotype IIDs
+    path: /data/home/tusr1/01projects/vmap4/00data/13phenotype
+    builder: genetics.phenotype.trial_source.run_trial_source_extract
+    upstream_export: /data/home/tusr1/git/DBone/src/main/resources/db/tmp/wap_z18_z20_p_plant_height_phenotype.csv
+    id_rule: >-
+      Plot ids are Z<yy>-P<nnnn>; the genotype IID is the same P number with or
+      without a trailing A (registry sample_cohorts id_prefix "P / PA"). The two
+      numeric ranges do not collide, so stripping the A is an unambiguous join key.
+    check_rule: >-
+      Jimai22 occupies 83 fixed plot slots. Only the 2019 rows carry the -Jimai22
+      label; the same slots in 2018 and 2020 are unlabelled and have no genotype.
+      All three years of those slots belong to the check source, not the panel.
+    files:
+      - path: wap_plant_height.plot.tsv
+        role: Tidy accession source, one row per (IID, year, replicate)
+      - path: wap_plant_height.pheno.tsv
+        role: Wide per-year and overall replicate means; feeds phenotype_wap_input
+      - path: jimai22_plant_height.plot.tsv
+        role: Jimai22 check-cultivar source, keyed by plot slot
+      - path: wap_plant_height.src.th.tsv
+        role: Extraction counts
+  - id: "14wheat_omics"
+    role: Staged WheatOmics / GEO CS epigenome peaks and MNase-derived tracks (no RAW.tar, no BAM)
+    path: /data/home/tusr1/01projects/vmap4/00data/14wheat_omics
+    subpaths:
+      - path: wheat_epigenome/GSE139019/
+        role: Seven untreated tissues × H3K27me3/H3K4me3/H3K9ac × 2 reps (42 peaks) plus DHS narrowPeak
+        source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE139019
+      - path: wheat_epigenome/GSE121903/
+        role: Seedling DNaseI, H3K27ac, H3K4me3, H3K9ac, H3K27me3 peaks (8 files)
+        source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE121903
+      - path: wheat_epigenome/GSE133885/
+        role: ATAC narrowPeak (required) and 2 kb-smoothed bigWig (optional coverage)
+        source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE133885
+      - path: wheat_epigenome/GSE153289/
+        role: MSF and MRF bigWig classification tracks (not the multi-GB MNase score bw)
+        source: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE153289
+  - id: software
+    role: Third-party binaries not in conda run/stats/anno (Beagle jar, SINGER)
+    path: /data/home/tusr1/01projects/vmap4/00data/software
+    files:
+      - path: beagle/beagle.22Jul22.46e.jar
+        role: Beagle 5.4 (Browning) for missing-genotype imputation
+      - path: singer-0.1.9-linux/
+        role: SINGER 0.1.9-beta Linux (singer_master, singer binary, convert_to_tskit)

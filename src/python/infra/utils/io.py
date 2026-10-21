@@ -78,10 +78,13 @@ def load_df_from_excel(path, sheet_name=0, header=0):
         return pd.DataFrame()
 
 
-def save_df_to_tsv(df, output_file, float_format='%.4f'):
+def save_df_to_tsv(df, output_file, float_format='%.4f', na_rep=''):
     """
     Saves a Pandas DataFrame to a TSV file.
     Automatically creates parent directories.
+
+    Pass na_rep='NA' for files read by whitespace-splitting tools such as
+    PLINK2, which collapse empty fields and then see a short row.
     """
     if df is None:
         fail(f"DataFrame is None; cannot save to {output_file}")
@@ -91,7 +94,7 @@ def save_df_to_tsv(df, output_file, float_format='%.4f'):
         if parent_dir and not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
 
-        df.to_csv(output_file, sep='\t', index=False, float_format=float_format)
+        df.to_csv(output_file, sep='\t', index=False, float_format=float_format, na_rep=na_rep)
         logger.info("Saved data to %s", output_file)
     except Exception as e:
         fail(f"Failed to save to {output_file}: {e}")

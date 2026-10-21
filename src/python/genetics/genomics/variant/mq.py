@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from genetics.genomics.variant.variant_utils import load_df_from_plink_variant
+from infra.wheat.ref_v1 import is_ref_v1_chr_name
 from infra.utils.graph import (
     LEGEND_FONT_SIZE,
     TICK_FONT_SIZE,
@@ -298,6 +299,13 @@ def annotate_variants_mq_from_pvar(
             if line.startswith("#"):
                 continue
             parts = line.rstrip("\n").split("\t", 4)
+            # Frozen MQ grids are per arm segment with arm-local positions, so a merged
+            # ref-chr pvar cannot be joined against them.
+            if is_ref_v1_chr_name(parts[0]):
+                raise ValueError(
+                    f"{pvar_path} carries merged ref-chr names (#CHROM={parts[0]}); "
+                    "annotate MQ on the arm-numbered source pfile instead."
+                )
             chrom = int(parts[0])
             pos = int(parts[1])
             variant_id = parts[2]

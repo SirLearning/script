@@ -41,7 +41,7 @@ You are an expert bioinformatics software engineer for the **Genetics Analysis P
     - **Every** `nextflow run` (including **`-preview`**) must **`cd` to the run folder first** so session artefacts stay under `01projects/vmap4/…`, never under `git/script`.
     - Benchmark or scratch outputs that must not overwrite production frozen files still publish under **`/data1/.../vmap4.VCF.v1/…`** (e.g. a dedicated subpath), not under `01projects/vmap4/<run>/publish/`.
 11. **Repo is source-only, vmap4 is run-only:** `/data/home/tusr1/git/script` — edit code, rules, docs only. `/data/home/tusr1/01projects/vmap4/...` — Nextflow session dirs, logs, run-local configs. `/data1/dazheng_tusr1/vmap4.VCF.v1/...` — published process/stats trees and frozen reference assets.
-12. **Conda envs (`run` vs `stats`):** Use conda **`run`** for **`screen`**, **`nextflow`**, and related pipeline runtime (bcftools/plink2 invoked by NF processes on the host when applicable). Use conda **`stats`** for Python stats tooling and **`pytest`/`ruff`** in CI or local unit tests.
+12. **Conda envs (`run` vs `stats` vs `anno`):** Use conda **`run`** for **`screen`**, **`nextflow`**, and related pipeline runtime (bcftools/plink2 invoked by NF processes on the host when applicable). Use conda **`stats`** for Python stats tooling and **`pytest`/`ruff`** in CI or local unit tests. Use conda **`anno`** (`environment_anno.yml`) for **Ensembl VEP** and **SnpEff**; do not install those into `stats` (Hail pins JDK 11; a full VEP solve pulls OpenMPI and breaks post-link).
 13. **`screen` must come from conda `run` (mandatory):** `screen` is installed in env `run` via repo-root `environment_run.yml`. **Do not** use the system `/usr/bin/screen` for production or long-lived pipeline sessions.
     - **Always** `source ~/.bashrc && conda activate run` **before** any `screen -S`, `screen -dmS`, or `screen -r` used to launch or attach pipeline work.
     - After attach, **re-activate** `run` inside the session (`conda activate run`) — non-login shells may not inherit conda.
@@ -81,7 +81,7 @@ All **versioned project text**—including source, Nextflow/R/Python/Java, confi
 - `src/r/`, `src/java/`: R and Java tools.
 - `note/`: notes and docs.
 - `doc/`: daily **progress log** (`progress/YYYY-MM-DD.md` — narrative + **`#### NF replay`** commands; index `PROGRESS_README.md`) and **structured project knowledge** (`KNOWLEDGE_README.md`, `project_knowledge/*.yaml`). Task backlog lives outside the repo (GitHub Issues / vault).
-- Root `*.yml`: Conda envs (`EnvStats`, `EnvRun`, `EnvTiger`). **`pytest.ini`** — pytest discovers `tests/` with `pythonpath = src/python`. **CI:** `.github/workflows/ci.yml` (ruff + pytest on push/PR).
+- Root `*.yml`: Conda envs (`EnvStats`, `EnvRun`, `EnvAnno`, `EnvTiger`). **`pytest.ini`** — pytest discovers `tests/` with `pythonpath = src/python`. **CI:** `.github/workflows/ci.yml` (ruff + pytest on push/PR).
 - **No repo `resources/`:** WeaTE and ad-hoc scripts read **`transposon/`** relative to the **run cwd** under `vmap4/`, not a versioned repo folder.
 
 # Infra plotting (`src/python/infra/utils/graph.py`)

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from infra.utils.graph import plot_distribution_with_stats, plot_scatter_with_thresholds
+from infra.utils.graph import plot_distribution_with_stats, plot_scatter_density
 from infra.utils.io import load_df_generic, save_df_to_tsv
 
 BLOCK_SIZE_COL = "Block size (Mb)"
@@ -121,13 +121,13 @@ def plot_ld_block_size_vs_n_genes(
     block_df: pd.DataFrame,
     output_png: str | Path,
 ) -> Path:
-    """Scatter of block size (Mb) vs number of genes with mean/median vertical guides."""
+    """Scatter of block size (Mb) vs number of genes, colored by local point density."""
     sizes = block_df["block_size_mb"]
     mean_mb = float(sizes.mean())
     median_mb = float(sizes.median())
     std_mb = float(sizes.std(ddof=1))
     mean_label = f"Mean: {mean_mb:.4f}\nSD: {std_mb:.4f}"
-    plot_scatter_with_thresholds(
+    plot_scatter_density(
         block_df,
         x_col="block_size_mb",
         y_col="n_genes",
@@ -135,10 +135,9 @@ def plot_ld_block_size_vs_n_genes(
         filename=str(output_png),
         xlabel="Block size (Mb)",
         ylabel="Number of genes",
-        color="#4c72b0",
-        alpha=0.35,
-        s=18,
-        figure_size=(10, 6),
+        s=56,
+        figure_size=(12, 6),
+        cmap="inferno",
         thresholds_v=[
             {
                 "value": mean_mb,

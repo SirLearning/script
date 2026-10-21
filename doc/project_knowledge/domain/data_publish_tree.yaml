@@ -9,19 +9,27 @@ home_data:
     - id: "02bam"
       role: Source BAMs (e.g. bam1/ABD/*.bam)
     - id: "03ref"
-      role: Reference FASTA and indexes
+      role: Reference FASTA, indexes, AGP gap BEDs under gaps/, IWGSC v1.0 TE GFF under annotation/iwgsc_v1.0/, and SnpEff 4.3 Lulab DB under 07snpeff/
+    - id: "04depth"
+      role: Per-BAM mosdepth summaries (unfiltered {cohort}/ plus n500_mapq30/ for MAPQ>=30 N500)
     - id: "05taxaBamMap"
       role: Canonical {pop}.taxaBamMap.txt files
     - id: popdep_bench
       role: Truncated BAM extracts for PopDep benchmarks
+    - id: "12cs_tmp"
+      role: Staging for CS / RefSeq v1.0 expression downloads (Ramirez-Gonzalez 2018 expVIP)
+    - id: "14wheat_omics"
+      role: Staged GEO CS epigenome peaks (GSE139019, GSE121903, GSE133885, GSE153289)
 
 publish_tree:
   root: /data1/dazheng_tusr1/vmap4.VCF.v1
   jobs:
     - id: test_plink
-      role: Primary test job (test_thin, test_common_thin mods)
+      role: Primary test job (test_thin, test_wap, test_wap_refchr, test_wap_thin_refchr, test_wap_exon, test_hex_thin, test_common_thin, test_popdep mods)
       layout:
         process: "{job}/process/{mod}/…"
+        process_ibs: "{job}/process/{mod}/ibs/{A,B,D}.ibs.mibs  # PLINK --distance ibs square"
+        process_ibs_hom_snp: "{job}/process/{mod}/ibs_hom_snp/{A,B,D}.ibs_hom_snp.mibs  # SNPs + both-homozygous"
         stats: "{job}/stats/{mod}/{plots,info,thresholds,logs}/…"
         assess: "{job}/assess/{mod}/…"
         integrated: "{job}/integrated/{mod}/…"

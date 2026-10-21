@@ -49,6 +49,8 @@ Common fields: `id`, `title`, `path`, `summary`, `nf_cmd_ref`, `artefacts`.
 | File | Summary |
 |------|---------|
 | [`domain/taxa_bam_map.yaml`](project_knowledge/domain/taxa_bam_map.yaml) | taxaBamMap population membership, paths, job concat scope |
+| [`domain/sample_cohorts.yaml`](project_knowledge/domain/sample_cohorts.yaml) | WAP association panel vs WGS-core (~5000) and external groups |
+| [`domain/ref_v1_resources.yaml`](project_knowledge/domain/ref_v1_resources.yaml) | RefSeq v1.0 FASTA; AGP gap BEDs; IWGSC v1.0 CLARITE TE GFF; IWGSC v1.1 Lulab GFF / official HC GFF/CDS; SnpEff 4.3 Lulab DB |
 | [`domain/directory_layout.yaml`](project_knowledge/domain/directory_layout.yaml) | Code repo vs vmap4 run cwd vs data1 publish |
 | [`domain/data_publish_tree.yaml`](project_knowledge/domain/data_publish_tree.yaml) | `00data` folders and data1 `{job}/process|stats` layout |
 | [`domain/main_raw_variant_assets.yaml`](project_knowledge/domain/main_raw_variant_assets.yaml) | main_raw VCF/plink per chr, chr032 paths, PopDep vs VCF gate |
@@ -59,9 +61,12 @@ Common fields: `id`, `title`, `path`, `summary`, `nf_cmd_ref`, `artefacts`.
 |------|---------|
 | [`workspace/vmap4_root.yaml`](project_knowledge/workspace/vmap4_root.yaml) | Top-level module index under `01projects/vmap4` |
 | [`workspace/vmap4_00data.yaml`](project_knowledge/workspace/vmap4_00data.yaml) | BAM, refs, taxaBamMap under `00data` |
-| [`workspace/vmap4_10stats_genome.yaml`](project_knowledge/workspace/vmap4_10stats_genome.yaml) | PopDep / `main_raw_popdepth` runs (`01`–`16`) |
+| [`workspace/vmap4_10stats_genome.yaml`](project_knowledge/workspace/vmap4_10stats_genome.yaml) | PopDep / genotype-stats runs (`01`–`99`; successor `12stats.genome`) |
+| [`workspace/vmap4_12stats_genome.yaml`](project_knowledge/workspace/vmap4_12stats_genome.yaml) | Genotype-stats runs (`01`–`99`; successor `14stats.genome`) |
+| [`workspace/vmap4_14stats_genome.yaml`](project_knowledge/workspace/vmap4_14stats_genome.yaml) | Current genotype-stats runs (successor of `12stats.genome`) |
 | [`workspace/vmap4_08stats_genome.yaml`](project_knowledge/workspace/vmap4_08stats_genome.yaml) | Legacy assess / LD / wheat / MAC runs |
 | [`workspace/vmap4_04runScreens.yaml`](project_knowledge/workspace/vmap4_04runScreens.yaml) | FastCall scan screens, CS_mp run folders |
+| [`workspace/vmap4_06transfer_watkins.yaml`](project_knowledge/workspace/vmap4_06transfer_watkins.yaml) | Watkins transfer runs and single-sample VCF split timing |
 | [`workspace/vmap4_11aneuploidy.yaml`](project_knowledge/workspace/vmap4_11aneuploidy.yaml) | Mosdepth aneuploidy benchmark module + publish layout |
 
 ### Operational logs (Markdown, append-only — agents do not read for facts)

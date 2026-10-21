@@ -1,0 +1,81 @@
+kind: domain_concept
+id: sample_cohorts
+title: Sample cohort roles (WGS vs association)
+version: "1.0"
+verified: "2026-09-02"
+
+summary: >
+  WAP is the phenotyped association panel. GWAS, burden, and heritability
+  may use only WAP accessions as genetic samples. Other sample_group labels
+  are WGS-only unless a later contract says otherwise.
+
+canonical_files:
+  sample_group: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/sample_group.txt
+  wap_taxa_bam_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/WAP.taxaBamMap.txt
+  accession_lookup: germplasm/LuLab/V4_germplasm.xlsx
+
+cohorts:
+  - id: WAP
+    role: assoc_pheno
+    n_samples: 2012
+    sample_group: WAP
+    taxa_bam_map: WAP.taxaBamMap.txt
+    bam_dir: 00data/02bam/bam1/ABD
+    depth_dir: 00data/04depth/08WAP
+    id_prefix: "P / PA"
+    overlap_with_ABD_map: 0
+    may_enter:
+      - common_variant_gwas
+      - rare_variant_burden
+      - heritability
+      - AF_WAP
+      - LD_WAP
+    must_not: Treat plot-level field replicates as extra genetic samples.
+
+  - id: wgs_core
+    role: wgs_frequency
+    n_samples: 4880
+    sample_groups: [A, AB, ABD, WAP, HZNU, Nature]
+    includes_wap: true
+    may_enter:
+      - AF_wgs
+      - LD_reference
+      - variant_qc
+      - pLoF_counts
+      - constraint
+    must_not: Treat this set as the association N; only WAP has phenotypes.
+
+  - id: wgs_other
+    role: wgs_external
+    sample_groups: [S, D, Watkins]
+    may_enter:
+      - AF_subpopulation
+      - technical_qc
+    must_not: Enter association tests; do not fold into AF_wgs unless a later contract says so.
+
+sample_group_counts_2026_09_02:
+  source: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/sample_group.txt
+  total: 8285
+  groups:
+    Watkins: 2795
+    WAP: 2012
+    ABD: 1256
+    Nature: 786
+    D: 600
+    AB: 446
+    HZNU: 289
+    A: 91
+    S: 10
+
+pipeline_hooks:
+  keep_builder: prepare_test_wap_keep
+  keep_param: test_wap_include_groups
+  default_include: WAP
+  mods: [test_wap, test_wap_refchr, test_wap_thin_refchr, test_wap_common_refchr, test_wap_exon]
+  python: genetics.genomics.variant.group_maf_intersection.write_sample_group_keep_file
+
+notes:
+  - sample_group WAP IDs match WAP.taxaBamMap.txt exactly (2012 / 2012).
+  - WGS-core (A+AB+ABD+WAP+HZNU+Nature = 4880) is the named ~5000 WGS panel.
+  - Do not invent a second 2000-sample keep list; use Group=WAP.
+  - Pipeline: partial_task sample_manifest writes assoc.keep and wgs_core.keep.

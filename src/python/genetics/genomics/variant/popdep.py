@@ -13,6 +13,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import chi2
 
 from genetics.genomics.variant.mq import load_mq_data
+from infra.wheat.ref_v1 import is_ref_v1_chr_name
 from infra.utils.graph import (
     DEFAULT_AXIS_PADDING_FRACTION,
     axis_limits_with_adaptive_upper,
@@ -371,6 +372,13 @@ def annotate_variants_popdep_from_pvar(
             if line.startswith("#"):
                 continue
             parts = line.rstrip("\n").split("\t", 4)
+            # Frozen popdep grids are per arm segment with arm-local positions, so a
+            # merged ref-chr pvar cannot be joined against them.
+            if is_ref_v1_chr_name(parts[0]):
+                raise ValueError(
+                    f"{pvar_path} carries merged ref-chr names (#CHROM={parts[0]}); "
+                    "annotate popdep on the arm-numbered source pfile instead."
+                )
             chrom = int(parts[0])
             pos = int(parts[1])
             variant_id = parts[2]

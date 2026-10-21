@@ -52,6 +52,7 @@ popdep:
 popdep_publish:
   main_raw: "{root}/variant/chrNNN.popdep.txt.bgz"
   gam_credible_n500: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible/variant/
+  gam_credible_n500_mapq30: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_mapq30/variant/
   gam_credible_n500_runs:
     - run: 31run_popdep_n500_gam_credible
       app: PopDepCrossChr
@@ -61,3 +62,27 @@ popdep_publish:
       app: PopDepFull
       chr: "032 only"
       status: launched_2026-06-28
+    - run: 12stats.genome/21run_popdep_n500_gam_mapq30
+      app: PopDepCrossChr
+      jar: TIGER_PD_20260818.jar
+      min_mapq: 30
+      chr: "000–044 minus 032 (44 files)"
+      publish: gam_credible_n500_mapq30
+      status: stopped_wrong_coverage_map
+    - run: 12stats.genome/22run_popdep_n500_gam_mapq30_cov
+      app: PopDepCrossChr
+      jar: TIGER_PD_20260818.jar
+      min_mapq: 30
+      taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep_mapq30.taxaBamMap.txt
+      chr: "000–044 minus 032 (44 files)"
+      publish: gam_credible_n500_mapq30
+      status: completed_2026-08-21
+  gam_credible_n500_ntaxa500: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_ntaxa500/variant/
+  gam_credible_n500_ntaxa500_runs:
+    - run: 14stats.genome/19run_popdep_n500_crosschr_ntaxa500
+      app: PopDepCrossChr
+      jar: TIGER_PD_20260619.jar
+      chr: "000–044 (45 files)"
+      nTaxa: 500
+      note: Override taxaBamMap nTaxa=500 on all chr; does not overwrite gam_credible_n500
+      status: running_2026-09-17

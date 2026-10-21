@@ -94,7 +94,10 @@ workflow RUN_MAIN_RAW_POPDEPTH {
         if (pd_config.app_name == 'PopDepCrossChr') {
             def tb_path = params.popdep_taxa_bam_file ?: getPopDepTaxaBamFileAll_v1(params.home_dir)
             def ckpt = params.popdep_crosschr_checkpoint_dir ?: 'off'
-            log.info "PopDepCrossChr: scan ${tb_path}; per-chr nTaxa A=${countPopDepTaxaFile_v1(params.home_dir, 'A')} B=${countPopDepTaxaFile_v1(params.home_dir, 'B')} D=${countPopDepTaxaFile_v1(params.home_dir, 'D')} Others/ALL=${countPopDepTaxaFile_v1(params.home_dir, 'ALL')}; threads=${params.popdep_crosschr_threads} memory=${params.popdep_crosschr_memory_gb}G taxa_order=${params.popdep_crosschr_taxa_order} checkpoint=${ckpt} checkpoint_interval=${params.popdep_crosschr_checkpoint_interval}"
+            log.info "PopDepCrossChr: scan ${tb_path}; per-chr nTaxa A=${countPopDepTaxaFile_v1(params.home_dir, 'A')} B=${countPopDepTaxaFile_v1(params.home_dir, 'B')} D=${countPopDepTaxaFile_v1(params.home_dir, 'D')} Others/ALL=${countPopDepTaxaFile_v1(params.home_dir, 'ALL')}; threads=${params.popdep_crosschr_threads} memory=${params.popdep_crosschr_memory_gb}G taxa_order=${params.popdep_crosschr_taxa_order} min_mapq=${params.popdep_min_mapq ?: 0} checkpoint=${ckpt} checkpoint_interval=${params.popdep_crosschr_checkpoint_interval}"
+            if (params.popdep_taxa_bam_file) {
+                log.info "PopDepCrossChr: chromosomeLength nTaxa comes from override taxaBamMap (not the A/B/D/ALL counts above)"
+            }
             calc_population_depth_crosschr(channel.value(chr_list), ch_tiger_config)
             ch_crosschr_gz = calc_population_depth_crosschr.out.tiger_gz
                 .flatMap { gzs ->

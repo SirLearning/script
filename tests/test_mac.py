@@ -141,3 +141,58 @@ def test_summarize_mac_zero_sites_none():
     summary = _summarize_mac_zero_sites(mac_df)
     assert summary.loc[0, "category"] == "none"
     assert summary.loc[0, "n_sites"] == 0
+
+
+def test_plot_heatmap_custom_matches_graph_font_conventions(tmp_path, monkeypatch):
+    import matplotlib.pyplot as plt
+
+    from infra.utils import graph as graph_mod
+    from infra.utils.graph import (
+        HEATMAP_AXIS_FONT_SIZE,
+        HEATMAP_LEGEND_FONT_SIZE,
+        HEATMAP_TICK_FONT_SIZE,
+        HEATMAP_TITLE_FONT_SIZE,
+        plot_heatmap_custom,
+    )
+
+    captured = {}
+
+    def _save(*args, **kwargs):
+        captured["fig"] = plt.gcf()
+        captured["save_kw"] = kwargs
+
+    monkeypatch.setattr(graph_mod.plt, "savefig", _save)
+    monkeypatch.setattr(graph_mod.plt, "close", lambda *a, **k: None)
+
+    plot_heatmap_custom(
+        data_matrix=[[0.0, 0.2], [0.5, 1.0]],
+        x_labels=["0", "1"],
+        y_labels=["1", "0"],
+        title="Heatmap title",
+        filename=str(tmp_path / "heatmap.png"),
+        xlabel="X axis",
+        ylabel="Y axis",
+        cbar_label="Fraction of sites",
+        overlays=[{"x": [0, 2], "y": [0.5, 0.5], "color": "k", "label": "cutoff"}],
+        vlines=[{"x": 1.0, "color": "r", "linestyle": "--", "label": "MAC < 5"}],
+    )
+    fig = captured["fig"]
+    fig.canvas.draw()
+    ax = fig.axes[0]
+    assert ax.title.get_fontsize() == HEATMAP_TITLE_FONT_SIZE
+    assert ax.xaxis.label.get_fontsize() == HEATMAP_AXIS_FONT_SIZE
+    assert ax.yaxis.label.get_fontsize() == HEATMAP_AXIS_FONT_SIZE
+    xtick_sizes = [t.get_fontsize() for t in ax.get_xticklabels() if t.get_text()]
+    ytick_sizes = [t.get_fontsize() for t in ax.get_yticklabels() if t.get_text()]
+    assert xtick_sizes and all(s == HEATMAP_TICK_FONT_SIZE for s in xtick_sizes)
+    assert ytick_sizes and all(s == HEATMAP_TICK_FONT_SIZE for s in ytick_sizes)
+    legend = ax.get_legend()
+    assert legend is not None
+    assert legend.get_frame_on() is False
+    assert legend._loc == 2
+    assert all(t.get_fontsize() == HEATMAP_LEGEND_FONT_SIZE for t in legend.get_texts())
+    cbar_ax = fig.axes[1]
+    assert cbar_ax.yaxis.label.get_fontsize() == HEATMAP_AXIS_FONT_SIZE
+    assert captured["save_kw"]["dpi"] == 300
+    assert captured["save_kw"]["bbox_inches"] == "tight"
+    plt.close(fig)

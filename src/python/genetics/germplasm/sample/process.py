@@ -303,6 +303,9 @@ def process_subgroup_as(db_dir, taxa_dir):
     
     results, missing = [], []
     for sub, fn in {'A': 'A.taxaBamMap.txt', 'S': 'S.taxaBamMap.txt', 'C': 'C.taxaBamMap.txt'}.items(): # Added C just in case, logic specific
+        tbm_path = os.path.join(taxa_dir, fn)
+        if not os.path.isfile(tbm_path):
+            continue
         t_map = read_taxa_list(taxa_dir, fn)
         for t, cov in t_map.items():
             t_cl = t.replace('_', '')

@@ -15,8 +15,13 @@ include {
 include {
     fastcall3_disc
     fastcall3_blib
+    fastcall3_vlib
+    fastcall3_clib
     fastcall3_scan
+    fastcall3_scan_iac
     fastcall3_scan2
+    fastcall3_scan3
+    fastcall3_scan4
 } from './caller_fastcall.nf'
 
 /*
@@ -40,21 +45,26 @@ def helpMessage() {
           --home_dir <HOME> \
           --user_dir <USER_BASE> \
           --job <JOB_NAME> \
-          --mod <full|disc_only|blib_only|scan_only|from_disc|from_blib>
+          --mod <full|disc_only|blib_only|scan_only|scan_iac|from_disc|from_blib|vlib|clib|scan2|scan3|scan4>
 
     Required parameters:
         --home_dir       Project home with data/libs (e.g. /data/.../vmap4)
         --user_dir       User base containing lib/jvm (e.g. /data/dazheng)
         --job            Job name (used for outputs under output/<job>)
-        --mod            Workflow mode: full | disc_only | blib_only | scan_only | from_disc | from_blib
+        --mod            Workflow mode: full | disc_only | blib_only | scan_only | scan_iac | from_disc | from_blib | vlib | clib | scan2 | scan3 | scan4
 
     Optional directories:
         --ing_dir        Disc outputs (.ing.gz). Default: output/<job>/ing
         --vlib_dir       Blib outputs (.lib.gz). Default: output/<job>/vLib
-        --gen_dir        Scan outputs (VCF). Default: output/<job>/gen
+        --gen_dir        Scan outputs (indiCounts .iac + VCF). Default: output/<job>/gen
+        --scan3_dir      scan3 outputs. Default: output/<job>/gen3
+        --scan3_source_dir  Prior scan dir with indiCounts/ (default: --gen_dir)
+        --scan3_merge_map   Merge table for scan3 (-p). Required when --mod scan3.
+        --clib_positions Position list for clib (-b). Required when --mod clib.
+        --clib_dir       clib outputs. Default: output/<job>/vLib_custom
 
     Software settings:
-        --tiger_jar      TIGER jar filename under <home_dir>/lib (default: auto-detect TIGER_F3_*.jar)
+        --tiger_jar      TIGER jar filename under <home_dir>/lib (default: TIGER_F3_20261012.jar)
         --workshop_jar   Workshop jar filename under <home_dir>/lib (default: Workshop.jar)
         --samtools       Samtools executable (default: samtools)
 
@@ -85,15 +95,33 @@ def helpMessage() {
         --blib_MAO       Minor allele occurrence threshold (default: 2)
 
     Scan parameters:
-        --scan_min_MQ    Minimum mapping quality (default: 30)
-        --scan_min_BQ    Minimum base quality (default: 20)
-        --scan_error_rate Combined error rate of sequencing/misalignment (default: 0.05)
+        --scan_min_MQ    Minimum mapping quality (default: 30); scan only
+        --scan_min_BQ    Minimum base quality (default: 20); scan only
+        --scan_baq       BAQ: 0 off / 1 on (default: 0); scan only
+        --scan_error_rate Combined sequencing+alignment error rate (default: 0.05)
+        --scan_midr      MiDR: site depth / taxa Coverage below this → VCF ./. (default: 0.2)
+
+        .iac is always unfiltered raw AD. MiDR applies only when writing VCF.
+        TIGER_F3_20261012 has no MaDR flag and no absolute min depth (MDC).
+        Change the MiDR filter with scan2 or scan4; do not re-mpileup.
+        scan4 is scan2 with 256-site windows (does not keep a whole bin of AD/VCF lines).
+        scan_iac uses the same pileup parameters as scan, writes indiCounts/*.iac.gz, then stops.
+        Those .iac.gz files are the inputs for scan2, scan3, and scan4.
+
+        Logging: TIGER writes progress to stderr (captured in the process *.log).
+        scan / scan2 / scan3 / scan4 write VCF to stdout; the process pipes it through bgzip -c
+        to {gen_dir}/VCF/chrNNN.vcf.gz. Do not redirect Java stdout into the log.
+        scan_iac writes no VCF; Java stdout and stderr both go to the process log.
 
     Execution semantics:
         - full: blib starts per chromosome only after disc emits .ing.gz for that chromosome;
                 scan starts per chromosome only after blib emits the corresponding .lib.gz.
         - from_disc: chromosomes are derived from existing --ing_dir and filtered by reference .fai.
         - scan_only/from_blib: consumes existing .lib.gz under --vlib_dir for selected chromosomes.
+        - scan_iac: same entry as scan_only (existing .lib.gz). Runs -mod scan_iac and writes
+          {gen_dir}/indiCounts/<taxon>/<chrom>_<binStart>_<binEnd>.iac.gz only.
+        - vlib: dump each chromosome .lib.gz under --vlib_dir to a sibling .txt (TIGER -mod vlib).
+        - clib: subset each chromosome .lib.gz with --clib_positions; writes --clib_dir (default output/<job>/vLib_custom).
         - Staging avoids input filename collisions; blib discovers .ing.gz files at runtime.
 
     Examples:
@@ -115,10 +143,10 @@ def helpMessage() {
             --gen_dir {/path/to/gen} \
             --server {s243, s107} \
             --job {all, test_chr12} \
-            --mod {full, from_blib, scan_only, scan2} \
+            --mod {full, from_blib, scan_only, scan_iac, vlib, clib, scan2, scan3, scan4} \
             {--gen_tbm 1} \
             {--chr 1|2} \
-            {--tiger_jar TIGER_F3_20251016.jar}
+            {--tiger_jar TIGER_F3_20261012.jar}
         // blib MAO=1 rebuild
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/modules/local/genotype/calling/caller.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
@@ -330,6 +358,7 @@ workflow run_FastCall3 {
             ING directory           : ${ing_dir_resolved}
             vLib directory          : ${vlib_dir_resolved}
             GEN directory           : ${gen_dir_resolved}
+            Scan MiDR               : ${params.scan_midr}
             ========================================
             """.stripIndent()
         }
@@ -455,6 +484,17 @@ workflow run_FastCall3 {
             samtools_input,
             gen_dir_resolved
         )
+    } else if (params.mod == "scan_iac") {
+        def blib_chr_config_lib_ch = load_lib_files(
+            vlib_dir_resolved,
+            chr_config_ch
+        ).ch_lib
+        scan_results = fastcall3_scan_iac(
+            blib_chr_config_lib_ch,
+            tiger_jar_input,
+            samtools_input,
+            gen_dir_resolved
+        )
     } else if (params.mod == "scan2") {
         // Start from existing blib (vLib) results (only scan)
         def blib_chr_config_lib_ch = load_lib_files(
@@ -464,12 +504,77 @@ workflow run_FastCall3 {
         scan_results = fastcall3_scan2(
             blib_chr_config_lib_ch,
             tiger_jar_input,
-            samtools_input,
             gen_dir_resolved
+        )
+    } else if (params.mod == "scan4") {
+        def blib_chr_config_lib_ch = load_lib_files(
+            vlib_dir_resolved,
+            chr_config_ch
+        ).ch_lib
+        scan_results = fastcall3_scan4(
+            blib_chr_config_lib_ch,
+            tiger_jar_input,
+            gen_dir_resolved
+        )
+    } else if (params.mod == "scan3") {
+        def scan3_source = (params.scan3_source_dir ?: gen_dir_resolved).toString().replaceAll(/\/+/, "/")
+        def scan3_out = (params.scan3_dir ?: "${output_path}/gen3").toString().replaceAll(/\/+/, "/")
+        if (!params.scan3_merge_map) {
+            log.error "scan3 requires --scan3_merge_map (TIGER -p merge table)"
+            exit 1
+        }
+        def merge_map_file = file(params.scan3_merge_map)
+        if (!merge_map_file.exists()) {
+            log.error "scan3 merge map not found: ${merge_map_file}"
+            exit 1
+        }
+        file(scan3_out).mkdirs()
+        def blib_chr_config_lib_ch = load_lib_files(
+            vlib_dir_resolved,
+            chr_config_ch
+        ).ch_lib
+        scan_results = fastcall3_scan3(
+            blib_chr_config_lib_ch,
+            tiger_jar_input,
+            scan3_source,
+            merge_map_file,
+            scan3_out
+        )
+    } else if (params.mod == "vlib") {
+        def blib_chr_config_lib_ch = load_lib_files(
+            vlib_dir_resolved,
+            chr_config_ch
+        ).ch_lib
+        fastcall3_vlib(
+            blib_chr_config_lib_ch,
+            tiger_jar_input,
+            vlib_dir_resolved
+        )
+    } else if (params.mod == "clib") {
+        if (!params.clib_positions) {
+            log.error "clib requires --clib_positions (TIGER -b position list)"
+            exit 1
+        }
+        def positions_file = file(params.clib_positions)
+        if (!positions_file.exists()) {
+            log.error "clib positions file not found: ${positions_file}"
+            exit 1
+        }
+        def clib_out = (params.clib_dir ?: "${output_path}/vLib_custom").toString().replaceAll(/\/+/, "/")
+        file(clib_out).mkdirs()
+        def blib_chr_config_lib_ch = load_lib_files(
+            vlib_dir_resolved,
+            chr_config_ch
+        ).ch_lib
+        fastcall3_clib(
+            blib_chr_config_lib_ch,
+            tiger_jar_input,
+            positions_file,
+            clib_out
         )
     } else {
         log.error "Unknown workflow mode: ${params.mod}"
-        log.error "Available modes: full, disc_only, blib_only, scan_only, from_disc, from_blib"
+        log.error "Available modes: full, disc_only, blib_only, scan_only, scan_iac, from_disc, from_blib, vlib, clib, scan2, scan3, scan4"
         exit 1
     }    
 }

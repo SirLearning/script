@@ -1,0 +1,2 @@
+# Placeholder staged when an association run tests all variants.
+# Processes detect it by filename and omit the --extract flag.

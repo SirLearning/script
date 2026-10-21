@@ -37,21 +37,23 @@ workflow {
     if (!params.output_dir || !params.job) {
         error 'popdep_stats: --output_dir and --job are required'
     }
-    if (!(params.mod in ['test_thin', 'test_common_thin'])) {
-        error "popdep_stats: unsupported mod ${params.mod} (use test_thin or test_common_thin)"
+    def vmiss_mod = params.popdep_vmiss_mod ?: params.mod
+    if (!(vmiss_mod in ['test_thin', 'test_common_thin'])) {
+        error "popdep_stats: vmiss mod must be test_thin or test_common_thin (got ${vmiss_mod})"
     }
 
-    def proc = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+    def proc_popdep = "${params.output_dir}/${params.job}/process/${params.mod}/variant"
+    def proc_vmiss = "${params.output_dir}/${params.job}/process/${vmiss_mod}/variant"
     def subgenomes = ['A', 'B', 'D', 'Others']
 
     ch_popdep = channel.from(
         subgenomes.collect { sg ->
-            tuple(sg, "sub_${sg}", file("${proc}/${sg}.popdep.info.tsv"))
+            tuple(sg, "sub_${sg}", file("${proc_popdep}/${sg}.popdep.info.tsv"))
         }
     )
     ch_vmis = channel.from(
         subgenomes.collect { sg ->
-            tuple(sg, "sub_${sg}", file("${proc}/${sg}.info.vmiss"))
+            tuple(sg, "sub_${sg}", file("${proc_vmiss}/${sg}.info.vmiss"))
         }
     )
 

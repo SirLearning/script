@@ -1,0 +1,2 @@
+# Placeholder staged when a TPM matrix has no sample metadata table.
+# Processes detect it by filename and skip per-group means and tau.

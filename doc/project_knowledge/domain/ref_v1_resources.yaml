@@ -1,0 +1,136 @@
+kind: domain_concept
+id: ref_v1_resources
+title: Chinese Spring RefSeq v1.0 coordinate freeze
+version: "1.4"
+verified: "2026-09-17"
+
+summary: >
+  All current vmap4 genotypes were called on IWGSC Chinese Spring RefSeq v1.0.
+  This project stays on v1.0 coordinates. Gene models are IWGSC RefSeq v1.1
+  (HC, 2017-07-06) on that assembly. Do not lift the cohort to RefSeq v2.1.
+
+assembly:
+  name: IWGSC Chinese Spring RefSeq v1.0
+  chromosome_map: src/python/infra/wheat/ref_v1.py
+  nextflow: workflow/Genetics/modules/local/infra/infra_ref_v1.nf
+  fasta:
+    A: /data/home/tusr1/01projects/vmap4/00data/03ref/01A/a_iwgscV1.fa.gz
+    B: /data/home/tusr1/01projects/vmap4/00data/03ref/05B/b_iwgscV1.fa.gz
+    D: /data/home/tusr1/01projects/vmap4/00data/03ref/04D/d_iwgscV1.fa.gz
+    AB: /data/home/tusr1/01projects/vmap4/00data/03ref/02AB/ab_iwgscV1.fa.gz
+    ABD: /data/home/tusr1/01projects/vmap4/00data/03ref/03ABD/abd_iwgscV1.fa.gz
+  fasta_status: present
+  gaps:
+    source: /data/public_data/wheat/00_genome/reference/IWGSC_ref/iwgsc_refseqv1.0_all_chromosomes/161010_Chinese_Spring_v1.0_pseudomolecules_AGP.tsv
+    derived_dir: /data/home/tusr1/01projects/vmap4/00data/03ref/gaps
+    chr_bed: /data/home/tusr1/01projects/vmap4/00data/03ref/gaps/iwgsc_refseqv1.0_agp_gaps.chr.bed.gz
+    parts_bed: /data/home/tusr1/01projects/vmap4/00data/03ref/gaps/iwgsc_refseqv1.0_agp_gaps.parts.bed.gz
+    n_intervals: 138277
+    gap_len_bp: 100
+    total_bp: 13827700
+    chrom_names:
+      chr_bed: linear chr1A..chr7D plus chrUn (refchr_linear)
+      parts_bed: IWGSC published parts names (chr1A_part1/part2); clip via ref_v1
+    note: >
+      AGP component type U only (all 100 bp). 134503 of 138277 rows are chrUn.
+      No gap spans the part1/part2 split; the published split itself is a gap
+      (e.g. chr1A 471304005-471304105 = chr1A_part2 0-100). BED is 0-based
+      half-open. These are AGP joins, not a seqtk N-run extract of the FASTA.
+
+  repeats:
+    source: IWGSC RefSeq Annotations v1.0 CLARITE TE GFF
+    url: https://urgi.versailles.inrae.fr/download/iwgsc/IWGSC_RefSeq_Annotations/v1.0/iwgsc_refseqv1.0_TransposableElements_2017Mar13.gff3.zip
+    dir: /data/home/tusr1/01projects/vmap4/00data/03ref/annotation/iwgsc_v1.0
+    gff: /data/home/tusr1/01projects/vmap4/00data/03ref/annotation/iwgsc_v1.0/iwgsc_refseqv1.0_TransposableElements_2017Mar13.gff3
+    chrom_names: chr1A..chr7D plus chrUn
+    feature_types: [repeat_region, nested_repeat, repeat_fragment]
+    status: present
+    note: >
+      IWGSC v1.0 does not ship GC or CNV tracks. test_popdep derives GC from the
+      ABD FASTA (1 kb windows, GC>=0.55 or GC<=0.35) and CNV from published
+      allmapq_1mb.*.popdep_bins.tsv (cnv_frac >= 0.2).
+
+annotation:
+  intended_gene_models: IWGSC RefSeq v1.1 HC on assembly v1.0
+  calling_matched:
+    dir: /data/public_data/wheat/00_genome/reference/annotation/gene/v1.1
+    gff: /data/public_data/wheat/00_genome/reference/annotation/gene/v1.1/wheat_v1.1_Lulab.gff3
+    gtf: /data/public_data/wheat/00_genome/reference/annotation/gene/v1.1/wheat_v1.1_Lulab.gtf
+    chrom_names: vmap4 numeric IDs (1, 2, …) matching FastCall / main_raw VCF
+    source: IWGSC_v1.1_201706 recoded by Lulab
+    status: present
+  official_hc:
+    dir: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06
+    gff: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706.gff3
+    cds: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706_cds.fasta
+    transcripts: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706_transcripts.fasta
+    pep: /data/public_data/wheat/00_genome/reference/annotation/gene/download/iwgsc_refseqv1.1_genes_2017July06/IWGSC_v1.1_HC_20170706_pep.fasta
+    chrom_names: chr1A, chr1B, …
+    status: present
+  homoeolog_triads:
+    status: present
+    path: /data/home/tusr1/01projects/vmap4/00data/12cs_tpm/ramirez2018_refseq1/HC_triads_for_expvip.tab
+    source: Ramirez-Gonzalez et al. 2018 expVIP (RefSeq v1.0 HC triads)
+  gene_id_versions:
+    v11_ids: TraesCS1A02G000100 (the "02G" infix); what VEP reports in its Gene column
+    v10_ids: TraesCS1A01G000100 (the "01G" infix); used by the ramirez expression atlas
+    map: >-
+      wheat_v1.1_Lulab.gff3 gene rows carry previous_id=<v1.0 id>. 104200 of the
+      107891 v1.1 genes have one; the rest are new in v1.1. Use this attribute
+      rather than rewriting 01G to 02G.
+    lc_warning: >-
+      HC and LC genes are numbered independently in v1.0, so TraesCS1A01G000100
+      and TraesCS1A01G000100LC are different genes. Stripping the LC suffix to
+      "normalize" merges them. The Lulab GFF is HC-only (107891 genes).
+  vep_note: >
+    Use wheat_v1.1_Lulab.gff3 against vmap4 VCF chromosome IDs. Official HC GFF
+    uses chr1A names and needs a chrom-map if the VCF is numeric.
+  snpeff:
+    path: /data/home/tusr1/01projects/vmap4/00data/03ref/07snpeff
+    genome: wheat_lulab_v1.1
+    program_version: 4.3
+    jar: /data/home/tusr1/01projects/vmap4/00data/03ref/07snpeff/snpeff_4.3t_dist/snpEff/snpEff.jar
+    gff: /data/home/tusr1/01projects/vmap4/00data/03ref/07snpeff/genes.gff
+    predictor: /data/home/tusr1/01projects/vmap4/00data/03ref/07snpeff/snpEffectPredictor.bin
+    chrom_names: vmap4 numeric IDs 0-42 (same as Lulab GFF / main_raw; segment 0 is still 0)
+    transcript_rule: longest transcript only (108566 mRNA vs 133744 in the full Lulab GFF)
+    note: >
+      Conda env anno ships SnpEff 5.4c, which cannot load this 4.3 bin. Annotate
+      with the bundled 4.3t jar. Do not rebuild from the ABD FASTA unless the
+      bin is missing. 01_aoyue/ is an older unused second copy.
+
+coordinate_systems:
+  segment:
+    used_by: [main_raw VCF, wheat_v1.1_Lulab.gff3/gtf, abd_iwgscV1.fa.gz]
+    chrom_ids: 0-42, each chromosome split into two arms (1A = 1 and 2, 2A = 7 and 8)
+    parts_names: >-
+      Numeric ids 1-42 are the IWGSC 2018 published split contigs
+      (chr1A_part1/part2, …) from
+      161010_Chinese_Spring_v1.0_pseudomolecules_parts.fasta. Split is at a
+      scaffold gap so part1 is ~450 Mb, not at the centromere. See
+      REF_V1_CHR_ID_TO_PARTS_NAME in src/python/infra/wheat/ref_v1.py.
+    note: This is the system VEP must see, because the GFF and FASTA both use it.
+  refchr_linear:
+    used_by:
+      - test_wap_refchr and other *_refchr pfiles
+      - 00data/11epi_anno/chr*_featHighRes.bed.gz (chrom named chr1A, not the numeric id)
+    chrom_ids: >-
+      Since 2026-09-03 the recode writes chromosome names into #CHROM: chr1A..chr7D
+      for A/B/D and chrUn / Mit / Chl for Others. POS runs the full chromosome length.
+    chrom_ids_before_2026_09_03: >-
+      The arm-1 id stood for the whole chromosome (A subgenome = 1, 7, 13, 19, 25,
+      31, 37). Readers must still accept this: it is what test_common_inter_refchr
+      carries, and a first arm has ref_start 0 so its POS was already linear and
+      correct. src/python/genetics/genomics/variant/ld_along_chr.py
+      load_pvar_ref_variants handles both codings.
+    renamed_mods: [test_wap_refchr, test_wap_common_refchr, test_wap_thin_refchr]
+    id_column_keeps_segment_coords: true
+    note: >-
+      The recode rewrote #CHROM and POS but left the variant ID as
+      <segment>-<segment_pos>, e.g. ID 2-56199649 on CHROM 1 POS 527503654
+      (471304005 + 56199649). So the ID column is already in GFF/FASTA
+      coordinates: build VEP input by parsing the ID, not from #CHROM/POS.
+
+do_not:
+  - Lift the production callset to RefSeq v2.1
+  - Mix v1.0 genotypes with v2.1 gene IDs

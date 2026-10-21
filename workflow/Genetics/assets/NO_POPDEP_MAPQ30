@@ -1,0 +1,2 @@
+# Placeholder staged when MAPQ>=30 popdep.info.tsv is not supplied.
+# Processes detect it by filename and skip the mapq30 depth join.

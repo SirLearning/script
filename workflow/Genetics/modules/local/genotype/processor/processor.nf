@@ -29,9 +29,14 @@ include {
     prepare_test_hex_keep
     subsampling_hex_pfile_for_test
     prepare_test_wap_keep
+    gff_feature_bed
+    extract_wap_exon_pfile
     subsampling_wap_pfile_for_test
+    subsampling_wap_common_pfile_for_test
     extract_collinear_pfile_for_test
     merge_subgenome_test_pfile
+    compute_abd_global_thin_rate
+    thin_merged_subgenome_pfile
 } from './processor_test.nf'
 
 include {
@@ -43,6 +48,8 @@ include {
     mk_plink_basic_info
     calc_plink_ld_unphased
     calc_plink_ld_crosschr_random
+    calc_plink_ld_focal_along_chr
+    recode_subgenome_pfile_ref_chromosomes
 } from './processor_plink2.nf'
 
 include { mk_vcftools_basic_info } from './processor_legacy.nf'
@@ -648,6 +655,243 @@ workflow test_common_inter_processor {
     popdep = popdep_out.popdep
 }
 
+workflow test_common_inter_refchr_processor {
+    main:
+    def source_dir = params.process_dir
+        ? params.process_dir
+        : "${params.output_dir}/${params.job}/process/test_common_inter"
+    if (!hasMergedSubgenomeTestPfiles(source_dir)) {
+        error "test_common_inter_refchr: missing source *_test.plink2 under ${source_dir}"
+    }
+    log.info "${params.c_green}Ref-chr recode from:${params.c_reset} ${source_dir}"
+
+    def source_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(source_dir))
+    def recode_out = recode_subgenome_pfile_ref_chromosomes(source_pfile)
+    def merge_pfile = recode_out.pfile
+    def merge_bfile = recode_out.bfile
+
+    basic_info_out = mk_plink_basic_info(merge_pfile)
+    ld_out = calc_plink_ld_unphased(merge_pfile)
+    ld_cross_out = calc_plink_ld_crosschr_random(merge_pfile)
+
+    if (hasVariantMqForMergedTests(source_dir)) {
+        log.info "${params.c_green}Reuse variant MQ from ${source_dir}/variant (join by variant ID; grids are PLINK-arm coordinates)${params.c_reset}"
+        mq_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            mq: [ id, chr, file("${source_dir}/variant/${id}.mq.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant MQ from source pfiles in ${source_dir}${params.c_reset}"
+        mq_out = annotate_subgenome_variant_mq(source_pfile)
+    }
+
+    if (hasVariantPopdepForMergedTests(source_dir)) {
+        log.info "${params.c_green}Reuse variant popdep from ${source_dir}/variant (join by variant ID; grids are PLINK-arm coordinates)${params.c_reset}"
+        popdep_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+            popdep: [ id, chr, file("${source_dir}/variant/${id}.popdep.info.tsv") ]
+        }
+    } else {
+        log.info "${params.c_green}Annotating variant popdep from source pfiles in ${source_dir}${params.c_reset}"
+        popdep_out = annotate_subgenome_variant_popdep(source_pfile)
+    }
+
+    def chroms = "${params.ld_along_chr_chromosomes}"
+        .split(',')
+        .collect { it.trim() }
+        .findAll { it }
+    if (!chroms) {
+        error 'test_common_inter_refchr: --ld_along_chr_chromosomes is empty'
+    }
+    Channel
+        .from(chroms)
+        .map { chrom ->
+            def token = chrom.replaceAll('^chr', '')
+            tuple(token[-1], token)
+        }
+        .set { ch_chrom }
+    merge_pfile
+        .combine(ch_chrom, by: 0)
+        .set { ch_pfile_chrom }
+    ld_along_out = calc_plink_ld_focal_along_chr(ch_pfile_chrom)
+
+    emit:
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+    ld_cross = ld_cross_out.ld
+    mq = mq_out.mq
+    popdep = popdep_out.popdep
+    ld_along = ld_along_out.ld
+}
+
+workflow test_wap_refchr_processor {
+    main:
+    def source_dir = params.process_dir
+        ? params.process_dir
+        : "${params.output_dir}/${params.job}/process/test_wap"
+    if (!hasMergedSubgenomeTestPfiles(source_dir)) {
+        error "test_wap_refchr: missing source *_test.plink2 under ${source_dir}"
+    }
+    log.info "${params.c_green}WAP ref-chr recode from:${params.c_reset} ${source_dir} (mixed MAF; does not overwrite test_wap or test_wap_common_refchr)"
+
+    def source_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(source_dir))
+    def recode_out = recode_subgenome_pfile_ref_chromosomes(source_pfile)
+    def merge_pfile = recode_out.pfile
+    def merge_bfile = recode_out.bfile
+
+    basic_info_out = mk_plink_basic_info(merge_pfile)
+    ld_out = calc_plink_ld_unphased(merge_pfile)
+
+    emit:
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+}
+
+workflow thin_merged_pfiles_to_site_target {
+    take:
+    source_pfile
+
+    main:
+    def ch_abd_pvar = source_pfile
+        .filter { id, _chr, _prefix, _pgen, _psam, _pvar -> id.toString() in ['A', 'B', 'D'] }
+        .map { _id, _chr, _prefix, _pgen, _psam, pvar -> pvar }
+    def rate_out = compute_abd_global_thin_rate(ch_abd_pvar.collect())
+    def ch_rate = rate_out.rate_file.map { it.text.trim() }
+    def thin_out = thin_merged_subgenome_pfile(source_pfile, ch_rate)
+
+    emit:
+    pfile = thin_out.pfile
+}
+
+workflow test_wap_thin_refchr_processor {
+    main:
+    def source_dir = params.process_dir
+        ? params.process_dir
+        : "${params.output_dir}/${params.job}/process/test_wap_refchr"
+    if (!hasMergedSubgenomeTestPfiles(source_dir)) {
+        error "test_wap_thin_refchr: missing source *_test.plink2 under ${source_dir}"
+    }
+    log.info "${params.c_green}WAP ref-chr thin from:${params.c_reset} ${source_dir} (one ABD-wide keep rate to ${params.test_set_target_n} sites, max ${params.test_set_max_n}; does not overwrite test_wap or test_wap_refchr)"
+
+    def source_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(source_dir))
+    def thin_out = thin_merged_pfiles_to_site_target(source_pfile)
+    def merge_pfile = thin_out.pfile
+
+    basic_info_out = mk_plink_basic_info(merge_pfile)
+    ld_out = calc_plink_ld_unphased(merge_pfile)
+
+    emit:
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+}
+
+workflow test_hex_thin_processor {
+    main:
+    def source_dir = params.process_dir
+        ? params.process_dir
+        : "${params.output_dir}/${params.job}/process/test_hex"
+    if (!hasMergedSubgenomeTestPfiles(source_dir)) {
+        error "test_hex_thin: missing source *_test.plink2 under ${source_dir}"
+    }
+    log.info "${params.c_green}Hex thin from:${params.c_reset} ${source_dir} (one ABD-wide keep rate to ${params.test_set_target_n} sites, max ${params.test_set_max_n}; does not overwrite test_hex)"
+
+    def source_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(source_dir))
+    def thin_out = thin_merged_pfiles_to_site_target(source_pfile)
+    def merge_pfile = thin_out.pfile
+
+    basic_info_out = mk_plink_basic_info(merge_pfile)
+    ld_out = calc_plink_ld_unphased(merge_pfile)
+
+    emit:
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
+    ld = ld_out.ld
+}
+
+workflow test_wap_common_refchr_processor {
+    take:
+    vcf_in
+
+    main:
+    def source_dir = params.process_dir
+        ? params.process_dir
+        : "${params.output_dir}/${params.job}/process/main_raw"
+    def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
+    log.info "${params.c_green}WAP common extract from:${params.c_reset} ${source_dir} (keep ${params.test_wap_include_groups}; --maf ${params.test_wap_common_maf}; --thin ${params.test_wap_common_thin_rate} for ~${params.test_wap_common_target_n} sites; then linear chrom recode)"
+
+    def map_subgenome = { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }
+
+    source_pfiles = vcf_in.map { id, chr, _vcf ->
+        def prefix = "${source_dir}/${id}.plink2"
+        def pgen = file("${prefix}.pgen")
+        def psam = file("${prefix}.psam")
+        def pvar = file("${prefix}.pvar")
+        return [ id, chr, prefix, pgen, psam, pvar ]
+    }
+    keep_out = prepare_test_wap_keep(group_file)
+    subsampling_out = subsampling_wap_common_pfile_for_test(keep_out.keep, source_pfiles)
+
+    def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
+    def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+    def recode_out = recode_subgenome_pfile_ref_chromosomes(merge_out.pfile)
+    def merge_pfile = recode_out.pfile
+    def merge_bfile = recode_out.bfile
+
+    def chroms = "${params.ld_along_chr_chromosomes}"
+        .split(',')
+        .collect { it.trim() }
+        .findAll { it }
+    if (!chroms) {
+        error 'test_wap_common_refchr: --ld_along_chr_chromosomes is empty'
+    }
+    Channel
+        .from(chroms)
+        .map { chrom ->
+            def token = chrom.replaceAll('^chr', '')
+            tuple(token[-1], token)
+        }
+        .set { ch_chrom }
+    merge_pfile
+        .combine(ch_chrom, by: 0)
+        .set { ch_pfile_chrom }
+    ld_along_out = calc_plink_ld_focal_along_chr(ch_pfile_chrom)
+
+    emit:
+    merged_bfile = merge_bfile
+    merged_pfile = merge_pfile
+    ld_along = ld_along_out.ld
+}
+
 workflow test_rare_only_processor {
     take:
     vcf_in
@@ -913,7 +1157,7 @@ workflow test_wap_processor {
             return [ id, chr, prefix, pgen, psam, pvar ]
         }
         keep_out = prepare_test_wap_keep(group_file)
-        log.info "${params.c_green}Building test_wap pfiles (--keep ${params.test_wap_include_groups}; --mac 2 drop monomorphic; --thin ${params.test_wap_thin_rate})${params.c_reset}"
+        log.info "${params.c_green}Building test_wap pfiles (--keep ${params.test_wap_include_groups}; --mac ${params.test_wap_min_mac}; --thin ${params.test_wap_thin_rate})${params.c_reset}"
         subsampling_out = subsampling_wap_pfile_for_test(keep_out.keep, source_pfiles)
 
         def grouped_pfile = subsampling_out.pfile.map(map_subgenome).groupTuple(by: 0)
@@ -964,6 +1208,77 @@ workflow test_wap_processor {
     ld_cross = ld_cross_out.ld
     mq = mq_out.mq
     popdep = popdep_out.popdep
+}
+
+workflow test_wap_exon_processor {
+    take:
+    vcf_in
+
+    main:
+    def reuseMerged = hasMergedSubgenomeTestPfiles(params.process_dir)
+    def merge_pfile
+
+    def map_subgenome = { id, chr, prefix, pgen, psam, pvar ->
+        def subgenome = "Others"
+        def c = chr.toString()
+        if (["1","2","7","8","13","14","19","20","25","26","31","32","37","38"].contains(c)) subgenome = "A"
+        else if (["3","4","9","10","15","16","21","22","27","28","33","34","39","40"].contains(c)) subgenome = "B"
+        else if (["5","6","11","12","17","18","23","24","29","30","35","36","41","42"].contains(c)) subgenome = "D"
+        return [ subgenome, id, chr, prefix, pgen, psam, pvar ]
+    }
+
+    if (reuseMerged) {
+        log.info "${params.c_green}Reuse merged test pfiles from:${params.c_reset} ${params.process_dir} (skip WAP exon extract + merge)"
+        merge_pfile = Channel.from(listMergedSubgenomeTestPfileTuples(params.process_dir))
+        if (hasPlinkBasicInfoForMergedTests(params.process_dir)) {
+            log.info "${params.c_green}Reuse PLINK2 basic info from ${params.process_dir}/variant${params.c_reset}"
+            basic_info_out = merge_pfile.multiMap { id, chr, prefix, pgen, psam, pvar ->
+                def d = params.process_dir
+                smiss: [ id, chr, file("${d}/sample/${id}.info.smiss") ]
+                vmiss: [ id, chr, file("${d}/variant/${id}.info.vmiss") ]
+                scount: [ id, chr, file("${d}/sample/${id}.info.scount") ]
+                gcount: [ id, chr, file("${d}/variant/${id}.info.gcount") ]
+                afreq: [ id, chr, file("${d}/variant/${id}.info.afreq") ]
+                hardy: [ id, chr, file("${d}/variant/${id}.info.hardy") ]
+            }
+        } else {
+            basic_info_out = mk_plink_basic_info(merge_pfile)
+        }
+    } else if (params.process_dir) {
+        def group_file = file("${params.output_dir}/meta_data/sample_group.txt")
+        def gff = file(params.test_wap_exon_gff ?: params.ref_v1_gff, checkIfExists: true)
+        log.info "${params.c_green}Building test_wap_exon from:${params.c_reset} ${params.process_dir} (keep ${params.test_wap_include_groups}; --extract bed0 ${params.test_wap_exon_gff_type}; --mac ${params.test_wap_min_mac}; no thin)"
+        keep_out = prepare_test_wap_keep(group_file)
+        bed_out = gff_feature_bed(gff)
+        source_pfiles = vcf_in
+            .filter { _id, chr, _vcf ->
+                def n = chr.toString().isInteger() ? chr.toString().toInteger() : -1
+                return n >= 1 && n <= 42
+            }
+            .map { id, chr, _vcf ->
+                def prefix = "${params.process_dir}/${id}.plink2"
+                def pgen = file("${prefix}.pgen")
+                def psam = file("${prefix}.psam")
+                def pvar = file("${prefix}.pvar")
+                return [ id, chr, prefix, pgen, psam, pvar ]
+            }
+        extract_out = extract_wap_exon_pfile(keep_out.keep, bed_out.bed, source_pfiles)
+        def grouped_pfile = extract_out.pfile.map(map_subgenome).groupTuple(by: 0)
+        def merge_out = merge_subgenome_test_pfile(grouped_pfile)
+        merge_pfile = merge_out.pfile
+        basic_info_out = mk_plink_basic_info(merge_out.pfile)
+    } else {
+        error "test_wap_exon requires --process_dir pointing at main_raw pfiles (or an existing test_wap_exon merge for reuse)."
+    }
+
+    emit:
+    merged_pfile = merge_pfile
+    smiss = basic_info_out.smiss
+    vmiss = basic_info_out.vmiss
+    scount = basic_info_out.scount
+    gcount = basic_info_out.gcount
+    afreq = basic_info_out.afreq
+    hardy = basic_info_out.hardy
 }
 
 workflow test_collinear_processor {

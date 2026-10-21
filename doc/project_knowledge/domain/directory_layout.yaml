@@ -27,7 +27,8 @@ roots:
       - run-local *.config
     must_not_contain:
       - pipeline source edits
-      - publishDir artefacts (those go to data1)
+      - genotype/stats publishDir artefacts (those go to data1)
+      - exception: mosdepth_single_bam.nf writes per-BAM summaries under 00data/04depth/
 
   - id: data_publish
     path: /data1/dazheng_tusr1/vmap4.VCF.v1

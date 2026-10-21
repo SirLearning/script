@@ -1,0 +1,2 @@
+# Placeholder staged when variant_sets runs without a site annotation table.
+# Processes detect it by filename and skip the conservation / regulatory sets.

@@ -15,6 +15,22 @@ def getServerPopulations(tbm_gen_server) {
 
 def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
     def tiger_jar_versions = [
+        "TIGER_F3_20261012.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
+        "TIGER_F3_20260930.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
+        "TIGER_F3_20260924.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
+        "TIGER_F3_20260916.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
         "TIGER_F3_2M_scan_20260129.jar": [
             java_version: "java17",
             app_name: "FastCall3"
@@ -36,15 +52,15 @@ def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
             app_name: "FastCall3"
         ],
         "TIGER_20250526.jar": [
-            java_version: "java8", 
+            java_version: "java8",
             app_name: "FastCall2"
         ],
         "TIGER_PD_20260112.jar": [
-            java_version: "java17", 
+            java_version: "java17",
             app_name: "PopDep"
         ],
         "TIGER_PD_20260130.jar": [
-            java_version: "java17", 
+            java_version: "java17",
             app_name: "PopDep"
         ],
         "TIGER_PD_20260615.jar": [
@@ -58,6 +74,10 @@ def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
         "TIGER_PD_20260619.jar": [
             java_version: "java17",
             app_name: "PopDepCrossChr"
+        ],
+        "TIGER_PD_20260818.jar": [
+            java_version: "java17",
+            app_name: "PopDepCrossChr"
         ]
     ]
 
@@ -66,7 +86,7 @@ def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
         throw new IllegalArgumentException("Unknown TIGER jar: ${tiger_jar_name}")
     }
     def tigerJar = file("${home_dir}/lib/${tiger_jar_name}")
-    
+
     return [
         path: tigerJar,
         app_name: app_name_override ?: config.app_name,

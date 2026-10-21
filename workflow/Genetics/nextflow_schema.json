@@ -10,7 +10,7 @@
     "output_dir": { "type": ["string", "null"] },
     "mod": {
       "type": ["string", "null"],
-      "description": "Pipeline mode: VCF/PLINK branch — v1_plink, test_thin, test_camp, test_common_thin, test_common_only, test_common_inter, test_rare_only, test_hex, test_wap, test_collinear; or wheat_* integrated modes."
+      "description": "Pipeline mode: VCF/PLINK branch — v1_plink, test_thin, test_camp, test_common_thin, test_common_only, test_common_inter, test_common_inter_refchr, test_wap_refchr, test_wap_thin_refchr, test_hex_thin, test_wap_common_refchr, test_rare_only, test_hex, test_wap, test_wap_exon, test_collinear; or wheat_* integrated modes."
     },
     "job": { "type": ["string", "null"] },
     "tool": { "type": ["string", "null"], "default": "plink" },
@@ -77,7 +77,57 @@
     },
     "partial_task": {
       "type": ["string", "null"],
-      "description": "Partial rerun selector for subworkflows/local/entry/partial_router.nf: assess_plink, assess_vcf, ld_redraw, mac_stats, mac_dist_redraw, chr_counts, chr_compare, rebuild_lib_stats, wheat_from_plink."
+      "description": "Partial rerun selector for subworkflows/local/entry/partial_router.nf: assess_plink, assess_vcf, ld_redraw, ld_rare_common, mac_stats, mac_het_excess, mac_dist_redraw, chr_counts, chr_compare, rebuild_lib_stats, wheat_from_plink, sample_manifest, cohort_freq, annotate_vep, variant_sets, assoc_wap, phenotype_wap."
+    },
+    "het_source_mod": {
+      "type": ["string", "null"],
+      "default": "test_common_only",
+      "description": "Common-SNP process mod supplying merged *_test.plink2 for PLINK2 --het (F_panel) in mac_het_excess."
+    },
+    "mac_het_f_grid": {
+      "type": "string",
+      "default": "0.90,0.95,0.98,0.99",
+      "description": "Comma-separated inbreeding coefficients swept in addition to the data-estimated F_panel."
+    },
+    "mac_het_p_thresholds": {
+      "type": "string",
+      "default": "0.05,1e-2,1e-3,1e-4,1e-5,1e-6,1e-7,1e-8,1e-9,1e-10,1e-12",
+      "description": "Comma-separated P_excess thresholds for the retain/drop sweep (no filtered pfile is written)."
+    },
+    "mac_het_retain_alpha": {
+      "type": "number",
+      "default": 1e-6,
+      "description": "P_excess retain threshold for MAC heatmaps and popdep het-filter scatters."
+    },
+    "mac_het_sweep": {
+      "type": "boolean",
+      "default": true,
+      "description": "Run the excess-het retain/drop probability sweep in mac_het_excess."
+    },
+    "mac_het_heatmap": {
+      "type": "boolean",
+      "default": true,
+      "description": "Draw MAC vs H and MAC vs H/MAC heatmaps in mac_het_excess."
+    },
+    "mac_het_popdep_scatter": {
+      "type": "boolean",
+      "default": true,
+      "description": "Draw test_rare_only popdep mean/SD and mean/CV scatters (linear and log-log) coloured by the excess-het retain/drop call. Requires filled process/<mod>/variant/*.popdep.info.tsv."
+    },
+    "mac_het_rh_diag": {
+      "type": "boolean",
+      "default": false,
+      "description": "Classify MAC vs H into bottom / middle / diagonal R_H=H/MAC bands; write robust F (excluding all-het sites) and depth/MQ/missing enrichment. Optional MAPQ>=30 popdep via mac_het_popdep_mapq30_mod."
+    },
+    "mac_het_rh_sample": {
+      "type": "boolean",
+      "default": true,
+      "description": "When mac_het_rh_diag is on, run PLINK2 --het on all-het (H=MAC, MAC>=5) sites and plot per-sample heterozygous burden."
+    },
+    "mac_het_popdep_mapq30_mod": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Process mod supplying MAPQ>=30 *.popdep.info.tsv for R_H band depth comparison (e.g. test_rare_only_mapq30). Genotypes stay on mac_het_variant_mod / params.mod."
     },
     "wheat_tagsnp_max_tags": { "type": "integer", "default": 1000 },
     "wheat_tagsnp_ld_threshold": { "type": "number", "default": 0.8 },
@@ -89,6 +139,31 @@
 
     "thin_rate": { "type": "number", "default": 0.001 },
     "hf_maf": { "type": "number", "default": 0.05 },
+    "test_wap_common_maf": {
+      "type": "number",
+      "default": 0.05,
+      "description": "test_wap_common_refchr: plink2 --maf on WAP-panel frequencies at extract from main_raw (keep MAF >= this)."
+    },
+    "test_wap_common_target_n": {
+      "type": "integer",
+      "default": 2000000,
+      "description": "Approximate genome-wide variant target used to set test_wap_common_thin_rate."
+    },
+    "test_wap_common_thin_rate": {
+      "type": "number",
+      "default": 0.01895,
+      "description": "test_wap_common_refchr plink2 --thin after --maf. Calibrated so retained sites are ~2e6 given the observed MAF>=0.05 rate on test_wap."
+    },
+    "test_set_target_n": {
+      "type": "integer",
+      "default": 2500000,
+      "description": "Genome-wide ABD target for oversized mixed-MAF test sets (test_wap_thin_refchr, test_hex_thin). One keep rate = target / ABD count, applied to every chromosome."
+    },
+    "test_set_max_n": {
+      "type": "integer",
+      "default": 3000000,
+      "description": "Skip extra thinning when A+B+D already has at most this many sites (upper end of the 2–3M test-set band)."
+    },
     "hf_geno": { "type": "number", "default": 0.2 },
     "hf_thin_rate": { "type": "number", "default": 0.005 },
 
@@ -125,6 +200,32 @@
       "default": false,
       "description": "Force rebuild of cached collinear prep artefacts."
     },
+    "test_popdep_target_bp": {
+      "type": "integer",
+      "default": 100000000,
+      "description": "Random popdep sites for test_popdep (genome-wide, not variants)."
+    },
+    "test_popdep_seed": {
+      "type": "integer",
+      "default": 42,
+      "description": "RNG seed for test_popdep site sampling."
+    },
+    "test_popdep_te_gff": {
+      "type": ["string", "null"],
+      "description": "IWGSC RefSeq v1.0 CLARITE transposable-element GFF3 (repeat class)."
+    },
+    "test_popdep_gap_bed": {
+      "type": ["string", "null"],
+      "description": "AGP gap BED (chr1A linear, 0-based) for the gap class."
+    },
+    "test_popdep_fasta": {
+      "type": ["string", "null"],
+      "description": "IWGSC v1.0 ABD FASTA used to derive extreme-GC windows."
+    },
+    "test_popdep_mapq_dir": {
+      "type": ["string", "null"],
+      "description": "Directory of allmapq_1mb.chr*.popdep_bins.tsv used as the CNV class."
+    },
     "syntenic_matrix_dir": {
       "type": ["string", "null"],
       "description": "Directory of *.syntenic.matrix.tsv.gz for full-lineage collinear prep."
@@ -152,8 +253,429 @@
     },
 
     "ld_window_kb": { "type": "integer", "default": 5000 },
+    "ld_block_snp_window": {
+      "type": "integer",
+      "default": 20,
+      "description": "PLINK 1.9 --ld-window (SNP count) for Circos LD-block r2/D' pairs."
+    },
+    "ld_block_window_kb": {
+      "type": "integer",
+      "default": 2000,
+      "description": "PLINK 1.9 --ld-window-kb for Circos LD-block r2/D' pairs."
+    },
+    "circos_ld_map_plot_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Replot Circos rare/common/LD-block map from published stats/<mod>/info/all.variant.circos_ld_map.{density,blocks}.info.tsv."
+    },
+    "circos_ld_block_coverage_frac": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Paint a circos_bin_bp window as an LD block when unioned SNP-block coverage is at least this fraction of the window; adjacent passing windows are merged."
+    },
+    "circos_ld_mod": {
+      "type": "string",
+      "description": "Optional process-tree mod for Circos LD-block bfiles and *.info.ld_block.ld (e.g. test_wap_common_refchr). Density still uses --mod. Defaults to --mod."
+    },
     "ld_decay_max_kb": { "type": "integer", "default": 5000 },
     "ld_decay_bin_kb": { "type": "integer", "default": 50 },
+    "ld_decay_r2_threshold": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Pair-weighted mean r2 threshold for fine-bin all-pairs decay distance."
+    },
+    "ld_decay_fine_bin_kb": {
+      "type": "integer",
+      "default": 1,
+      "description": "Bin width (kb) for fine-bin mean-r2 threshold distance. Does not overwrite ld_decay_bin_kb=50 artefacts."
+    },
+    "ld_decay_fine_max_kb": {
+      "type": "integer",
+      "default": 100,
+      "description": "Max distance (kb) when scanning for ld_decay_r2_threshold on all-pairs vcor."
+    },
+    "tajima_d_window_bp": {
+      "type": "integer",
+      "default": 100000,
+      "description": "vcftools --TajimaD window size in bp for stacked A/B/D Tajima D plots (tmp subgenome_maf_tajima.nf)."
+    },
+    "tajima_d_plot_only": {
+      "type": "boolean",
+      "default": false,
+      "description": "Replot stacked Tajima D from published *.Tajima.D without PLINK2 VCF export."
+    },
+    "ld_decay_maf_scatter_points": {
+      "type": "integer",
+      "default": 100000,
+      "description": "Random pair cap for the MAF-vs-MAF scatter coloured by LD r2. Pair table is *.maf_scatter.info.tsv (IDs, global MAF, pairwise-complete MAF, N_PAIRWISE, r2, r2_max)."
+    },
+    "ld_along_chr_n_focal": {
+      "type": "integer",
+      "default": 80,
+      "description": "Legacy even-sample count per chromosome. Along-chr LD now uses ld_along_chr_n_focal_per_bin."
+    },
+    "ld_along_chr_n_focal_per_bin": {
+      "type": "integer",
+      "default": 100,
+      "description": "Focals sampled in each spatial bin. Each focal uses the full --ld-window-kb, not just sites inside the bin. Then the bin value is the mean decay-to-r2 distance of those focals."
+    },
+    "ld_along_chr_spatial_bin_mb": {
+      "type": "number",
+      "default": 5,
+      "description": "Along-chromosome window (Mb) for averaging focal decay distances."
+    },
+    "ld_along_chr_max_kb": {
+      "type": "integer",
+      "default": 20000,
+      "description": "PLINK2 --ld-window-kb and max distance when finding where mean r2 falls to ld_along_chr_r2."
+    },
+    "ld_along_chr_bin_kb": { "type": "integer", "default": 10 },
+    "ld_along_chr_r2": {
+      "type": "number",
+      "default": 0.2,
+      "description": "Mean r2 threshold for along-chromosome LD decay distance."
+    },
+    "ld_along_chr_min_pairs_per_bin": { "type": "integer", "default": 5 },
+    "ld_along_chr_chromosomes": {
+      "type": "string",
+      "default": "1A,2A,3A,4A,5A,6A,7A,1B,2B,3B,4B,5B,6B,7B,1D,2D,3D,4D,5D,6D,7D",
+      "description": "Comma-separated vmap4 chromosome names. Along-chr plots stack chr1-chr7 in one PNG per A/B/D subgenome."
+    },
+
+    "popdep_min_mapq": {
+      "type": "integer",
+      "default": 0,
+      "description": "TIGER PopDep/PopDepFull/PopDepCrossChr -g: minimum samtools MAPQ (depth -q). 0 = no MAPQ filter."
+    },
+
+    "wgs_core_groups": {
+      "type": "string",
+      "default": "A,AB,ABD,WAP,HZNU,Nature",
+      "description": "sample_group labels that form the WGS-core frequency/QC panel (includes WAP)."
+    },
+    "assoc_groups": {
+      "type": "string",
+      "default": "WAP",
+      "description": "sample_group labels allowed into association tests. Default WAP."
+    },
+    "sample_group_file": {
+      "type": ["string", "null"],
+      "description": "Two-column Sample Group file. Default {output_dir}/meta_data/sample_group.txt."
+    },
+    "taxa_bam_map_dir": {
+      "type": ["string", "null"],
+      "description": "Directory of *.taxaBamMap.txt files. Default {home_dir}/00data/05taxaBamMap."
+    },
+    "dual_af_rare_max": {
+      "type": "number",
+      "default": 0.01,
+      "description": "MAF upper bound used to flag rare sites in WGS-core vs WAP AF join."
+    },
+    "coding_vep_table": {
+      "type": ["string", "null"],
+      "description": "VEP-like TSV for coding_mask_chr_pilot.nf."
+    },
+    "coding_mask_prefix": { "type": ["string", "null"] },
+    "wgs_afreq": {
+      "type": ["string", "null"],
+      "description": "PLINK2 afreq for the WGS-core keep set (dual_af_from_afreq.nf)."
+    },
+    "wap_afreq": {
+      "type": ["string", "null"],
+      "description": "PLINK2 afreq for the WAP keep set (dual_af_from_afreq.nf)."
+    },
+    "ref_v1_gff": {
+      "type": ["string", "null"],
+      "description": "IWGSC v1.1 GFF with vmap4 numeric chromosome IDs (wheat_v1.1_Lulab.gff3)."
+    },
+    "ref_v1_gff_hc": {
+      "type": ["string", "null"],
+      "description": "Official IWGSC v1.1 HC GFF (chr1A names)."
+    },
+    "ref_v1_cds_hc": { "type": ["string", "null"] },
+    "ref_v1_transcripts_hc": { "type": ["string", "null"] },
+
+    "cohort_keep_dir": {
+      "type": ["string", "null"],
+      "description": "Directory holding assoc.keep / wgs_core.keep. Default {output_dir}/{job}/process/sample_manifest."
+    },
+    "cohort_freq_cohorts": {
+      "type": "string",
+      "default": "wgs_core,assoc",
+      "description": "Cohorts to compute PLINK2 --freq for in partial_task cohort_freq."
+    },
+    "snpeff_genome": {
+      "type": "string",
+      "default": "wheat_lulab_v1.1",
+      "description": "Custom SnpEff genome name built from the Lulab GFF and ABD FASTA."
+    },
+    "snpeff_genome_dir": {
+      "type": ["string", "null"],
+      "description": "Existing SnpEff data dir (snpEff.config + data/). Default {home_dir}/00data/03ref/07snpeff when present, else process/{mod}/annotate/snpeff_genome."
+    },
+    "snpeff_jar": {
+      "type": ["string", "null"],
+      "description": "SnpEff jar matching the prebuilt genome. Default the 4.3t jar under 00data/03ref/07snpeff; else conda snpEff."
+    },
+    "test_wap_exon_gff": {
+      "type": ["string", "null"],
+      "description": "GFF for test_wap_exon BED extract. Default params.ref_v1_gff."
+    },
+    "test_wap_exon_gff_type": {
+      "type": "string",
+      "default": "exon",
+      "description": "Comma-separated GFF types to extract (exon includes UTR)."
+    },
+    "vep_from_mod": {
+      "type": ["string", "null"],
+      "description": "Pfile mod whose variant IDs are turned into sites VCFs for VEP. Alternative to vep_vcf."
+    },
+    "vep_subgenomes": {
+      "type": ["string", "null"],
+      "description": "Comma-separated subgenomes to annotate under vep_from_mod, e.g. 'A,B' or 'Others'."
+    },
+    "vep_vcf": {
+      "type": ["string", "null"],
+      "description": "Single VCF annotated by partial_task annotate_vep (e.g. main_raw/chr032.vcf.gz)."
+    },
+    "vep_id": { "type": ["string", "null"], "description": "Output id for annotate_vep. Default from the VCF name." },
+    "vep_gff": {
+      "type": ["string", "null"],
+      "description": "GFF for VEP. Default params.ref_v1_gff (numeric chromosome IDs)."
+    },
+    "vep_prepared_gff": {
+      "type": ["string", "null"],
+      "description": "Already sorted/bgzipped/tabix-indexed GFF; skips the prepare step."
+    },
+    "vep_fasta": {
+      "type": ["string", "null"],
+      "description": "Reference FASTA for VEP. Default {home_dir}/00data/03ref/03ABD/abd_iwgscV1.fa.gz."
+    },
+    "vep_species": { "type": "string", "default": "triticum_aestivum" },
+    "vep_buffer_size": { "type": "integer", "default": 5000 },
+    "vep_fields": {
+      "type": ["string", "null"],
+      "description": "VEP --tab columns. No Ensembl cache for wheat, so SIFT/PolyPhen are unavailable."
+    },
+    "vep_extra_args": { "type": ["string", "null"], "description": "Extra flags appended to the vep command." },
+    "site_anno_dir": {
+      "type": ["string", "null"],
+      "description": "featHighRes BED folder. Null uses {home_dir}/00data/11epi_anno."
+    },
+    "site_anno_from_mod": {
+      "type": ["string", "null"],
+      "description": "Mod whose pfiles supply the variant positions. Null uses params.mod."
+    },
+    "site_anno_subgenomes": {
+      "type": ["string", "null"],
+      "description": "Comma-separated subgenomes. Null runs A,B,D; Others has no featHighRes source."
+    },
+    "site_anno_phylop_min": {
+      "type": "number",
+      "default": 2.0,
+      "description": "Monocot phyloP cut used with phastCons to call a site conserved."
+    },
+    "site_anno_phastcons_min": {
+      "type": "number",
+      "default": 0.8,
+      "description": "Monocot phastCons cut used with phyloP to call a site conserved."
+    },
+    "site_anno_gerp_min": {
+      "type": "number",
+      "default": 2.0,
+      "description": "GERP score that calls a site conserved on its own."
+    },
+    "gene_expr_from_dir": {
+      "type": ["string", "null"],
+      "description": "Folder of *tpm*.tsv[.gz] matrices, e.g. 00data/12cs_tpm/ramirez2018_refseq1."
+    },
+    "gene_expr_tpm": {
+      "type": ["string", "null"],
+      "description": "Comma-separated TPM matrices, used instead of gene_expr_from_dir."
+    },
+    "gene_expr_metadata": {
+      "type": ["string", "null"],
+      "description": "Sample metadata table. Null picks up default_metadata.txt beside the matrices."
+    },
+    "gene_expr_gff": {
+      "type": ["string", "null"],
+      "description": "GFF3 supplying the v1.0 to v1.1 gene map via previous_id. Null uses ref_v1_gff."
+    },
+    "gene_expr_sample_col": { "type": "string", "default": "run_accession" },
+    "gene_expr_group_col": { "type": "string", "default": "High level tissue" },
+    "gene_expr_detect_min": {
+      "type": "number",
+      "default": 0.5,
+      "description": "TPM at or above which a gene counts as expressed in a sample."
+    },
+    "variant_sets_from_mod": {
+      "type": ["string", "null"],
+      "description": "Mod whose publish tree supplies per-subgenome VEP tables and cohort afreq pairs."
+    },
+    "variant_sets_wgs_cohort": {
+      "type": "string",
+      "default": "wgs_core",
+      "description": "Cohort name for the WGS-side afreq under variant_sets_from_mod."
+    },
+    "variant_sets_wap_cohort": {
+      "type": "string",
+      "default": "assoc",
+      "description": "Cohort name for the WAP-side afreq under variant_sets_from_mod."
+    },
+    "variant_sets_coding_mask": {
+      "type": ["string", "null"],
+      "description": "*.coding_mask.tsv input for partial_task variant_sets."
+    },
+    "variant_sets_dual_af": {
+      "type": ["string", "null"],
+      "description": "*.dual_af.tsv input for partial_task variant_sets."
+    },
+    "variant_sets_prefix": { "type": ["string", "null"] },
+    "variant_sets_names": {
+      "type": ["string", "null"],
+      "description": "Subset of set names (e.g. plof_rare_wgs,neutral_4fold). Null keeps all."
+    },
+    "variant_sets_common_min": {
+      "type": "number",
+      "default": 0.05,
+      "description": "MAF lower bound for the common_wap frequency class."
+    },
+    "variant_sets_site_anno": {
+      "type": ["string", "null"],
+      "description": "One *.site_anno.tsv for the single-pair input mode."
+    },
+    "variant_sets_site_anno_dir": {
+      "type": ["string", "null"],
+      "description": "Folder of per-subgenome *.site_anno.tsv. Null uses the from_mod stats info folder."
+    },
+    "variant_sets_gene_expr": {
+      "type": ["string", "null"],
+      "description": "*.gene_expr.tsv enabling the expressed-gene sets."
+    },
+    "assoc_wap_keep": { "type": ["string", "null"], "description": "Keep list for assoc_wap. Default assoc.keep." },
+    "assoc_wap_pheno": {
+      "type": ["string", "null"],
+      "description": "PLINK2 pheno file from partial_task phenotype_wap."
+    },
+    "assoc_wap_trait": { "type": ["string", "null"], "description": "Trait column tested by assoc_wap." },
+    "assoc_wap_covar": { "type": ["string", "null"], "description": "Optional covariate file (e.g. PLINK2 PCs). Overrides assoc_wap_pca." },
+    "assoc_wap_pca": {
+      "type": "boolean",
+      "default": true,
+      "description": "Compute LD-pruned PCs on the WAP panel and use them as GLM covariates."
+    },
+    "assoc_wap_pca_maf": {
+      "type": "number",
+      "default": 0.05,
+      "description": "MAF floor for the variants entering the WAP structure PCA."
+    },
+    "assoc_wap_pca_source": {
+      "type": "string",
+      "default": "A",
+      "description": "Merged subgenome pfile supplying the structure PCs, reused across subgenomes."
+    },
+    "assoc_wap_extract": {
+      "type": ["string", "null"],
+      "description": "variant_sets *.extract list restricting the GLM."
+    },
+    "assoc_wap_burden": {
+      "type": "boolean",
+      "default": false,
+      "description": "Run the rare-variant gene burden track instead of the single-variant GLM."
+    },
+    "assoc_wap_burden_set": {
+      "type": ["string", "null"],
+      "description": "variant_sets set name to collapse, e.g. plof_rare_wap. Required with --assoc_wap_burden."
+    },
+    "assoc_wap_burden_extract": {
+      "type": ["string", "null"],
+      "description": "One explicit *.extract list. Default discovers {id}.{set}.extract per subgenome."
+    },
+    "assoc_wap_burden_sets_dir": {
+      "type": ["string", "null"],
+      "description": "Folder holding {id}.variant_sets.tsv gene maps. Default {output_dir}/{job}/stats/{mod}/info."
+    },
+    "assoc_wap_burden_collapse": {
+      "type": "string",
+      "default": "count",
+      "enum": ["count", "carrier"],
+      "description": "Gene score rule: sum of minor alleles, or a 0/1 carrier indicator."
+    },
+    "assoc_wap_burden_gff": {
+      "type": ["string", "null"],
+      "description": "GFF for gene-level Manhattan loci. Default params.ref_v1_gff_hc (chr1A names)."
+    },
+    "phenotype_wap_input": {
+      "type": ["string", "null"],
+      "description": "Wide phenotype table for partial_task phenotype_wap."
+    },
+    "phenotype_wap_keep": { "type": ["string", "null"], "description": "Keep list. Default assoc.keep." },
+    "phenotype_wap_prefix": { "type": ["string", "null"] },
+    "phenotype_wap_traits": {
+      "type": ["string", "null"],
+      "description": "Comma-separated trait columns. Null keeps every non-ID column."
+    },
+    "phenotype_wap_id_col": { "type": "string", "default": "IID" },
+    "phenotype_wap_aggregate_duplicates": {
+      "type": "boolean",
+      "default": false,
+      "description": "Average repeated sample rows instead of keeping the first."
+    },
+    "singer_source_mod": {
+      "type": "string",
+      "default": "test_common_inter_refchr",
+      "description": "Merged *_test.plink2 source for the SINGER 2 Mb window (tmp singer_arg_common_inter.nf)."
+    },
+    "singer_subgenome": { "type": "string", "default": "A" },
+    "singer_plink_chr": {
+      "type": "string",
+      "default": "1",
+      "description": "PLINK --chr token in the source pvar (numeric 1 = chr1A on test_common_inter_refchr)."
+    },
+    "singer_ref_chrom": { "type": "string", "default": "chr1A" },
+    "singer_start_bp": { "type": "integer", "default": 2000000 },
+    "singer_end_bp": { "type": "integer", "default": 4000000 },
+    "singer_keep": { "type": ["string", "null"], "description": "Optional PLINK2 --keep file for the SINGER window." },
+    "singer_n_windows": { "type": "integer", "default": 64, "description": "Number of 2 Mb SINGER windows to scatter." },
+    "singer_window_bp": { "type": "integer", "default": 2000000 },
+    "singer_min_snps": { "type": "integer", "default": 50, "description": "Minimum SNPs in a 2 Mb bin to be eligible." },
+    "singer_country": { "type": "string", "default": "China" },
+    "singer_germplasm_tsv": { "type": ["string", "null"], "description": "WAP r1 germplasm TSV (r1_id, country). Default ~/git/DBone/.../wap_r1_germplasm_table.tsv." },
+    "singer_mut_rate": { "type": "number", "default": 1.6e-8 },
+    "singer_n": { "type": "integer", "default": 20, "description": "SINGER posterior ARG samples (-n)." },
+    "singer_thin": { "type": "integer", "default": 20, "description": "SINGER MCMC thinning (-thin)." },
+    "singer_polar": { "type": "number", "default": 0.5 },
+    "singer_from_beagle": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip extract/phase/Beagle; run SINGER on published *.beagle.vcf.gz for windows missing singer_*_nodes_0.txt."
+    },
+    "singer_seed": {
+      "type": ["integer", "null"],
+      "description": "Fixed SINGER -seed. Null draws our own random seeds (not singer_master -debug, not 42)."
+    },
+    "singer_seed_attempts": {
+      "type": "integer",
+      "default": 3,
+      "description": "How many of our random -seed values to try per failed window when singer_seed is null."
+    },
+    "singer_relate_n_positions": {
+      "type": "integer",
+      "default": 11,
+      "description": "Local trees per ARG window when ranking sample TMRCA."
+    },
+    "singer_relate_top_k": {
+      "type": "integer",
+      "default": 5,
+      "description": "Nearest neighbors to keep per sample."
+    },
+    "singer_relate_top_pairs": {
+      "type": "integer",
+      "default": 200,
+      "description": "Closest sample pairs to write."
+    },
+    "beagle_jar": { "type": ["string", "null"], "description": "Beagle 5.x jar. Default {home_dir}/00data/software/beagle/beagle.22Jul22.46e.jar." },
+    "singer_bin_dir": { "type": ["string", "null"], "description": "Folder with singer_master and the singer binary. Default {home_dir}/00data/software/singer-0.1.9-linux." },
 
     "c_reset": { "type": "string", "description": "ANSI reset (terminal log styling)." },
     "c_dim": { "type": "string", "description": "ANSI dim (terminal log styling)." },

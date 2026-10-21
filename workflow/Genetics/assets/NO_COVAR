@@ -1,0 +1,2 @@
+# Placeholder staged when an association run has no covariate file.
+# Processes detect it by filename and omit the --covar flag.

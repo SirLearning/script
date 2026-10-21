@@ -2,11 +2,15 @@
 
 from pathlib import Path
 
+import matplotlib.image as mpimg
+import numpy as np
+
 from genetics.germplasm.meta.ld_block_size_plot import (
     load_wu_ld_block_table,
     run_ld_block_size_plot,
     summarize_ld_block_sizes,
 )
+from infra.utils.graph import local_xy_density
 
 LD_BLOCK_CSV = """Table S26. Detailed information of LD blocks referred to Figure S2.,,,,,
 Block number,Chromosome,Start (V2.1),End (V2.1),Number of Gene,Block size (Mb)
@@ -59,3 +63,14 @@ def test_run_ld_block_size_plot_writes_outputs(tmp_path):
         "size_vs_genes_plot",
     ):
         assert outputs[key].exists()
+
+    img = mpimg.imread(str(outputs["size_vs_genes_plot"]))
+    height, width = img.shape[:2]
+    assert abs((width / height) - 2.0) < 0.08
+
+
+def test_local_xy_density_cluster_exceeds_outlier():
+    x = np.concatenate([np.zeros(40), [8.0]])
+    y = np.concatenate([np.zeros(40), [8.0]])
+    z = local_xy_density(x, y)
+    assert z[0] > z[-1]

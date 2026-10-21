@@ -10,6 +10,8 @@ purpose: >
 shared_assets:
   - path: all/vLib
     role: Read-only variant library for scan runs
+  - path: /data/home/tusr1/01projects/vmap4/lib/TIGER_F3_20261012.jar
+    role: Installed FastCall3 jar (Java 17). Default --tiger_jar. scan/scan2/scan3/scan4 write VCF on stdout; scan_iac writes indiCounts/*.iac.gz only. No MaDR.
 
 runs:
   - folder: 07run_cs_mp2018_scan_debug
@@ -30,6 +32,83 @@ runs:
       - validate_mpileup.sh
       - tlen_qc/
     nf_cmd_ref: doc/progress/ — 2026-06-22 proper-pair relabel and TLEN QC
+
+  - folder: 09run_scan2_chr36
+    summary: Failed scan2 chr36 (2 Mb jar vs 5 Mb .iac; Nextflow cwd leaked to git/script)
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan2, chr: 36, job: all, tiger_jar: TIGER_dazheng.jar}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/gen/VCF/chr036.vcf.gz
+      - /data1/dazheng_tusr1/vmap4.VCF.v1/chr036.vcf.gz
+    nf_cmd_ref: "doc/progress/2026-09-16.md — NF replay: scan2 chr36"
+
+  - folder: 10run_scan2_chr36
+    summary: scan2 chr36 with 5 Mb jar TIGER_F3_20260916.jar (18:30); stopped 19:28 for scan4
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan2, chr: 36, job: all, tiger_jar: TIGER_F3_20260916.jar}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/gen/VCF/chr036.vcf.gz
+      - /data1/dazheng_tusr1/vmap4.VCF.v1/chr036.vcf.gz
+    nf_cmd_ref: "doc/progress/2026-09-16.md — NF replay: scan2 chr36 5Mb"
+
+  - folder: 11run_scan4_chr36
+    summary: scan4 chr36 (256-site windows) with TIGER_dazheng.jar; left running at 8-core parallel batch
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan4, chr: 36, job: all, tiger_jar: TIGER_dazheng.jar}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/gen/VCF/chr036.vcf.gz
+      - /data1/dazheng_tusr1/vmap4.VCF.v1/chr036.vcf.gz
+    nf_cmd_ref: "doc/progress/2026-09-16.md — NF replay: scan4 chr36"
+
+  - folder: 12run_scan4_15chr
+    summary: scan4 15 chrs at 8 CPUs (D 5,6,11,12,17,18,23,24,29,30,35,41,42 + B 3,4); plus 11run chr36 = 16 concurrent
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan4, chr: '5|6|11|12|17|18|23|24|29|30|35|41|42|3|4', job: all, tiger_jar: TIGER_dazheng.jar}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/gen/VCF
+    nf_cmd_ref: "doc/progress/2026-09-16.md — NF replay: scan4 15chr"
+
+  - folder: 13run_scan4_filter_compare
+    summary: MiDR/MaDR prefix compare of stopped scan4 tmp VCFs vs data1 production
+    artefacts:
+      - run_compare.py
+      - run_compare_all.sh
+      - all16.vs_data1.summary.tsv
+    nf_cmd_ref: "doc/progress/2026-09-16.md — NF replay: scan4 filter compare all16"
+
+  - folder: 14run_scan4_madr_floor
+    summary: New-jar scan4 chr36 first 5 Mb to confirm MaDR absolute-depth floor
+    artefacts:
+      - chr036.filter.vcf.gz
+      - chr036.madr_floor.summary.tsv
+    nf_cmd_ref: "doc/progress/2026-09-17.md — NF replay: scan4 madr floor chr36"
+
+  - folder: 15run_scan_iac_final
+    summary: scan_iac chr 0-44 from all/vLib, 120 threads, one chromosome at a time; IAC under final/
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, chr: '0-44', job: all, server: s243, tiger_jar: TIGER_F3_20260930.jar, cpus: 120}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/vLib
+    nf_cmd_ref: "doc/progress/2026-09-30.md — NF replay: scan_iac final"
+
+  - folder: 16run_scan_iac_final_rest
+    summary: scan_iac remaining chromosomes after stopping 15run once chr8 Java finished; skips 1, 6, and 8
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, chr: '0|2-5|7|9-44', job: all, server: s243, tiger_jar: TIGER_F3_20260930.jar, cpus: 120}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/vLib
+    nf_cmd_ref: "doc/progress/2026-10-02.md — NF replay: scan_iac rest"
+
+  - folder: 17run_scan_iac_final_80x2
+    summary: Two concurrent scan_iac jobs at 80 threads after the host freed up; reruns unfinished chromosomes including partial chr21
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, chr: '0|5|12|13|21-44', job: all, server: s243, tiger_jar: TIGER_F3_20260930.jar, cpus: 80, maxForks: 2}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts
+      - /data/home/tusr1/01projects/vmap4/04runScreens/all/vLib
+    nf_cmd_ref: "doc/progress/2026-10-10.md — NF replay: scan_iac 80x2"
 
   - folder: all
     role: Production-scale scan job assets (vLib, configs)

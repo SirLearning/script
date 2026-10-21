@@ -4,9 +4,8 @@ title: PopDep and main_raw_popdepth runs
 version: "1.0"
 path: /data/home/tusr1/01projects/vmap4/10stats.genome
 purpose: >
-  Current stats module for TIGER PopDepFull / PopDepCrossChr partial tasks
-  (--partial_task main_raw_popdepth). Numbered runs from 01; 08stats.genome kept
-  for historical assess/LD/wheat work.
+  Stats module for TIGER PopDep / genotype-stats partials through NN=99.
+  New stats launches go to successor 12stats.genome.
 partial_task: main_raw_popdepth
 default_job: test_plink
 publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/variant/
@@ -407,3 +406,273 @@ runs:
     publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_site/
     publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_site/
     status: running
+
+  - folder: 79run_mac_het_excess_test_rare_only
+    summary: Wheat selfing excess-het P(H|MAC,F) retain sweep on test_rare_only (no filtered pfile)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het_excess test_rare_only"
+    screen: mac_het_excess
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 80run_ld_rare_common_test_thin
+    summary: Rare-rare vs rare-common LD r2 decay/dist/scatter on test_thin vcor+afreq
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common test_thin"
+    screen: ld_rare_common
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+
+  - folder: 81run_mac_het_heatmap_retain_test_rare_only
+    summary: MAC het-fraction heatmap on test_rare_only sites retained at median F and alpha 1e-6
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het heatmap retain 1e-6"
+    screen: mac_het_hm
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 82run_mac_het_heatmap_restore_test_rare_only
+    summary: Restore unfiltered MAC hetfrac heatmap; publish retained heatmap under a distinct name
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het heatmap retained+restore"
+    screen: mac_het_hm2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 83run_ld_rare_common_maf_scatter_test_thin
+    summary: Add sampled MAF-vs-MAF r2 scatter to test_thin rare/common LD plots
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common maf_scatter"
+    screen: ld_maf_scatter
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 84run_ld_rare_common_maf_scatter_0.2_test_thin
+    summary: test_thin MAF scatter subset r2>0.2 with larger markers
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common maf_scatter_0.2"
+    screen: ld_maf_scatter_02
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: interrupted
+
+  - folder: 85run_ld_rare_common_tab_parser_test_thin
+    summary: Re-run rare_common plots with tab C-engine vcor reader (includes maf_scatter_0.2)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common tab parser"
+    screen: ld_maf_tab
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 86run_mac_het_mac_h_heatmap_test_rare_only
+    summary: MAC vs H and dropped MAC vs H/MAC diagnostic heatmaps on test_rare_only
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het MAC vs H heatmaps"
+    screen: mac_het_mh
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 87run_ld_r2_maf_bound_diag_test_thin
+    summary: Polars scan of test_thin A.vcor for r2 vs r_max(global MAF) violations (run-cwd diagnostic, not publish)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: none (python diag in run cwd)"
+    mod: test_thin
+    job: test_plink
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/10stats.genome/87run_ld_r2_maf_bound_diag_test_thin/A.r2_ge_0.8.arrow
+      - /data/home/tusr1/01projects/vmap4/10stats.genome/87run_ld_r2_maf_bound_diag_test_thin/pair7_check.raw
+      - /data/home/tusr1/01projects/vmap4/10stats.genome/87run_ld_r2_maf_bound_diag_test_thin/pair25_check.raw
+    status: completed
+
+  - folder: 88run_mac_het_heatmap_mac200_500_test_rare_only
+    summary: MAC het/H heatmaps at 0-200 and 0-500 on test_rare_only (keep 0-100)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het heatmap MAC 200/500"
+    screen: mac_het_m500
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 89run_ld_rare_common_polars_r2max_test_thin
+    summary: Polars vcor reader + 100k MAF scatter TSV with IDs, OBS_CT, r2_max from global MAF
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common polars r2max"
+    screen: ld_r2max
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    params:
+      ld_decay_maf_scatter_points: 100000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 90run_mac_het_heatmap_mac1000_test_rare_only
+    summary: Add MAC 0-1000 het/H heatmaps on test_rare_only
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: mac_het heatmap MAC 1000"
+    screen: mac_het_m1000
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 91run_ld_rare_common_pairwise_maf_test_thin
+    summary: Replot 100k sampled LD pairs with pairwise-complete MAF from pfile; keep pair table as *.maf_scatter.info.tsv
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld_rare_common pairwise MAF"
+    screen: ld_pairmaf
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    mod: test_thin
+    job: test_plink
+    params:
+      ld_decay_maf_scatter_points: 100000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 92run_ld_maf_scatter_r2max_contours_test_thin
+    summary: Replot pairwise-MAF LD scatters with r_max^2 = 0.8/0.6/0.2 contour pairs (six curves)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld maf scatter r_max contours"
+    screen: ld_r2maxc
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 93run_ld_maf_scatter_rare_zoom_test_thin
+    summary: Add MAF 0-0.05 rare-rare zoom of pairwise LD scatter (*.maf_scatter_rare.png)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld maf scatter rare zoom"
+    screen: ld_rarezoom
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 94run_ld_maf_scatter_0.2_rare_zoom_test_thin
+    summary: Add r2>0.2 rare-rare MAF 0-0.05 scatter (*.maf_scatter_0.2_rare.png)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld maf scatter 0.2 rare zoom"
+    screen: ld_r02rare
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 95run_ld_maf_scatter_ultrarare_zoom_test_thin
+    summary: Add ultra-rare MAF 0-0.01 scatters (all + r2>0.2)
+    nf_cmd_ref: "doc/progress/2026-08-17.md — NF replay: ld maf scatter ultrarare zoom"
+    screen: ld_urare
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 96run_popdep_annotate_test_rare_only
+    summary: Re-annotate test_rare_only *.popdep.info.tsv from _popdep_n500_gam_credible (Depth_Mean was empty)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep annotate test_rare_only"
+    screen: popdep_ann_rare
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_annotate.nf
+    mod: test_rare_only
+    job: test_plink
+    params:
+      popdep_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_rare_only/variant/*.popdep.info.tsv
+    status: completed
+
+  - folder: 97run_popdep_het_filter_scatter_test_rare_only
+    summary: Popdep mean/SD and rel_mean/rel_SD scatters coloured by excess-het pass/fail on test_rare_only
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter scatter test_rare_only"
+    screen: popdep_het_sc
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 98run_popdep_het_filter_scatter_log_test_rare_only
+    summary: Log-log popdep mean/SD and rel_mean/rel_SD scatters coloured by excess-het pass/fail
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter scatter log-log test_rare_only"
+    screen: popdep_het_log
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 99run_popdep_het_filter_joint_test_rare_only
+    summary: Het-filter popdep JointGrid scatters with stacked x/y marginals (linear + log-log)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter JointGrid test_rare_only"
+    screen: popdep_het_jnt
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed

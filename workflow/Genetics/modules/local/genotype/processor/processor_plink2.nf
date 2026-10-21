@@ -302,3 +302,261 @@ process calc_plink_ld_crosschr_random {
         --out ${id}.info.ld.crosschr
     """
 }
+
+process plink2_het_inbreeding {
+    tag "plink2 het inbreeding: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.het_source_mod}/sample", mode: 'copy', pattern: "*.het"
+    publishDir "${params.output_dir}/${params.job}/process/${params.het_source_mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    cpus 8
+    memory '16.GB'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), path("${id}.info.het"), emit: het
+    tuple val(id), val(chr), path("${id}.info.het.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${id}.info.het.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --het \\
+        --threads ${task.cpus} \\
+        --out ${id}.info
+    """
+}
+
+process plink2_het_extract {
+    tag "plink2 het extract: ${id}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.het"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    cpus 8
+    memory '16.GB'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar), path(extract)
+
+    output:
+    tuple val(id), val(chr), path("${id}.all_het.info.het"), emit: het
+    tuple val(id), val(chr), path("${id}.all_het.info.het.log"), emit: log
+
+    when:
+    extract.size() > 0
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${id}.all_het.info.het.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --extract ${extract} \\
+        --het \\
+        --threads ${task.cpus} \\
+        --out ${id}.all_het.info
+    """
+}
+
+process calc_plink_ld_focal_along_chr {
+    tag "focal LD along chr${chrom}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/variant", mode: 'copy', pattern: "*.{vcor,focals.info.tsv,focals.id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar), val(chrom)
+
+    output:
+    tuple val(id), val(chrom), path("${id}.${chrom}.focal.ld.vcor"), path("${id}.${chrom}.focals.info.tsv"), emit: ld
+    tuple val(id), val(chrom), path("${id}.${chrom}.focal.ld.log"), emit: log
+
+    script:
+    """
+    set -euo pipefail
+    exec > ${id}.${chrom}.focal.ld.log 2>&1
+
+    python - <<'PY'
+from genetics.genomics.variant.ld_along_chr import (
+    sample_focals_per_spatial_bin_from_pvar,
+    write_ref_merge_update_maps,
+)
+
+write_ref_merge_update_maps(
+    "${pvar}",
+    "${chrom}",
+    "update.chr",
+    "update.map",
+)
+sample_focals_per_spatial_bin_from_pvar(
+    "${pvar}",
+    ["${chrom}"],
+    n_per_bin=${params.ld_along_chr_n_focal_per_bin},
+    bin_mb=${params.ld_along_chr_spatial_bin_mb},
+    output_prefix="${id}.${chrom}",
+)
+PY
+
+    CHR_IDS=\$(cat ${id}.${chrom}.plink_chr_ids.txt)
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --chr \${CHR_IDS} \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.${chrom}.extract
+
+    plink2 --pfile ${id}.${chrom}.extract \\
+        --allow-extra-chr \\
+        --update-chr update.chr \\
+        --update-map update.map \\
+        --sort-vars \\
+        --make-pgen \\
+        --threads ${task.cpus} \\
+        --out ${id}.${chrom}.refmerge
+
+    plink2 --pfile ${id}.${chrom}.refmerge \\
+        --allow-extra-chr \\
+        --ld-snp-list ${id}.${chrom}.focals.id \\
+        --r2-unphased \\
+        --ld-window-kb ${params.ld_along_chr_max_kb} \\
+        --ld-window ${params.ld_window} \\
+        --ld-window-r2 ${params.ld_window_r2} \\
+        --threads ${task.cpus} \\
+        --out ${id}.${chrom}.focal.ld
+    """
+}
+
+process recode_subgenome_pfile_ref_chromosomes {
+    tag "ref-chr recode: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}", mode: 'copy', pattern: "*.{bed,bim,fam,pgen,psam,pvar}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    tuple val(id), val(chr), val("${id}_test.plink2"), path("${id}_test.plink2.pgen"), path("${id}_test.plink2.psam"), path("${id}_test.plink2.pvar"), emit: pfile
+    tuple val(id), val(chr), val("${id}_test.plink"), path("${id}_test.plink.bed"), path("${id}_test.plink.bim"), path("${id}_test.plink.fam"), emit: bfile
+    tuple val(id), path("*.log"), emit: logs
+
+    script:
+    """
+    set -euo pipefail
+    exec > recode_refchr.${id}.log 2>&1
+
+    python - <<'PY'
+from genetics.genomics.variant.ld_along_chr import write_all_ref_merge_update_maps
+
+write_all_ref_merge_update_maps("${pvar}", "update.chr", "update.map")
+PY
+
+    if [ -s update.chr ]; then
+        plink2 --pfile ${prefix} \\
+            --allow-extra-chr \\
+            --update-chr update.chr \\
+            --update-map update.map \\
+            --sort-vars \\
+            --make-pgen \\
+            --threads ${task.cpus} \\
+            --out recoded
+    else
+        plink2 --pfile ${prefix} \\
+            --allow-extra-chr \\
+            --make-pgen \\
+            --threads ${task.cpus} \\
+            --out recoded
+    fi
+
+    plink2 --pfile recoded \\
+        --allow-extra-chr \\
+        --make-bed \\
+        --threads ${task.cpus} \\
+        --out recoded_bed
+
+    mv recoded.pgen ${id}_test.plink2.pgen
+    mv recoded.psam ${id}_test.plink2.psam
+    mv recoded.pvar ${id}_test.plink2.pvar
+    mv recoded_bed.bed ${id}_test.plink.bed
+    mv recoded_bed.bim ${id}_test.plink.bim
+    mv recoded_bed.fam ${id}_test.plink.fam
+    """
+}
+
+process plink2_vcftools_tajima_d {
+    tag "tajima D: ${id}"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/info", mode: 'copy', pattern: "*.Tajima.D"
+    publishDir "${params.output_dir}/${params.job}/stats/${params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    cpus 16
+    memory '128.GB'
+    maxForks 3
+    errorStrategy 'retry'
+    maxRetries 1
+
+    input:
+    tuple val(id), val(chr), val(prefix), path(pgen), path(psam), path(pvar)
+
+    output:
+    path "${id}.variant.tajima_d.${window_tag}.Tajima.D", emit: tajima
+    path "${id}.variant.tajima_d.${window_tag}.run.log", emit: log
+
+    script:
+    def window_bp = (params.tajima_d_window_bp ?: 100000) as int
+    window_tag = "${window_bp.intdiv(1000)}kb"
+    """
+    set -euo pipefail
+    exec > ${id}.variant.tajima_d.${window_tag}.run.log 2>&1
+
+    plink2 --pfile ${prefix} \\
+        --allow-extra-chr \\
+        --snps-only just-acgt \\
+        --export vcf-4.2 bgz \\
+        --threads ${task.cpus} \\
+        --out ${id}.export
+
+    vcftools --gzvcf ${id}.export.vcf.gz \\
+        --TajimaD ${window_bp} \\
+        --out ${id}.variant.tajima_d.${window_tag}
+
+    rm -f ${id}.export.vcf.gz
+    """
+}
+
+process plink1_ld_dprime_window {
+    tag "plink1 r2 dprime window: ${id}"
+    publishDir "${params.output_dir}/${params.job}/process/${params.circos_ld_mod ?: params.mod}/variant", mode: 'copy', pattern: "*.ld"
+    publishDir "${params.output_dir}/${params.job}/process/${params.circos_ld_mod ?: params.mod}/logs", mode: 'copy', pattern: "*.log"
+    conda "${params.user_dir}/miniconda3/envs/stats"
+    label 'cpus_32'
+    memory '64.GB'
+
+    input:
+    tuple val(id), val(prefix), path(bed), path(bim), path(fam)
+
+    output:
+    tuple val(id), path("${id}.info.ld_block.ld"), emit: ld
+    tuple val(id), path("${id}.info.ld_block.log"), emit: log
+
+    script:
+    def snp_window = params.ld_block_snp_window ?: 20
+    def window_kb = params.ld_block_window_kb ?: 2000
+    """
+    set -euo pipefail
+
+    plink --bfile ${prefix} \\
+        --allow-extra-chr \\
+        --r2 dprime \\
+        --ld-window ${snp_window} \\
+        --ld-window-kb ${window_kb} \\
+        --ld-window-r2 0 \\
+        --out ${id}.info.ld_block
+    """
+}

@@ -1,0 +1,1258 @@
+kind: workspace_module
+id: vmap4_12stats_genome
+title: Genotype stats runs (successor of 10stats.genome)
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/12stats.genome
+purpose: >
+  Successor stats module after 10stats.genome reached NN=99. Same science area
+  (genotype stats / assess / LD / MAC / popdep partials). Numbered runs from 01.
+  Highest run is 99run_*; new launches use successor 14stats.genome.
+partial_task: mac_het_excess
+default_job: test_plink
+publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/
+
+runs:
+  - folder: 01run_popdep_het_filter_fill_test_rare_only
+    summary: Het-filter popdep JointGrid with fill marginals (fail fraction vs depth, fail on top)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter fill marginals"
+    screen: popdep_het_fill
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 02run_popdep_het_filter_finebin_test_rare_only
+    summary: Het-filter popdep JointGrid fill bins 250x150; fail scatter last with higher alpha
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter fine bins"
+    screen: popdep_het_fine
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 03run_popdep_het_filter_uniform_alpha_test_rare_only
+    summary: Same 250x150 fill bins; scatter pass/fail share alpha 0.25 (fail still drawn last)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter uniform alpha"
+    screen: popdep_het_ualpha
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 04run_ld_maf_scatter_white_red_test_thin
+    summary: Replot LD MAF-vs-MAF r2 scatters with sequential white-to-red color (not blue-red)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: ld maf scatter white-red"
+    screen: ld_wred
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 05run_popdep_het_filter_cv_test_rare_only
+    summary: Add Mean vs CV and relative Mean vs relative CV JointGrids to het-filter popdep scatters
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: popdep het-filter mean vs CV"
+    screen: popdep_het_cv
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: false
+      mac_het_popdep_scatter: true
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: running
+
+  - folder: 06run_ld_dprime_decay_test_thin
+    summary: Compute |D'| from pairwise MAF and r2 on sampled LD pairs; plot |D'| decay
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: ld dprime decay"
+    screen: ld_dprime
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 07run_ld_dprime_scatter_test_thin
+    summary: Add |D'| vs distance two-colour scatter matching rare_common.scatter
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: ld dprime scatter"
+    screen: ld_dprime_sc
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 08run_ld_dprime_dosage_test_thin
+    summary: Recompute |D'| from pairwise dosages with sign-aware D_den (not r2/r_max)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: ld dprime dosage"
+    screen: ld_dprime_dos
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 09run_ld_dprime_dist_test_thin
+    summary: Fine-bin |D'| frequency-polygon density lines (rare-rare vs rare-common)
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: ld dprime dist"
+    screen: ld_dprime_dist
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 10run_ld_dprime_dist_log1p_test_thin
+    summary: Replot |D'| log density as log10(density + 1) with in-plot formula
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld dprime dist log1p"
+    screen: ld_dprime_log1p
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 11run_ld_dprime_pm1_ratio_test_thin
+    summary: Per-bin n(D'=+1)/n(D'=-1) vs distance for rare-rare vs rare-common
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld dprime pm1 ratio"
+    screen: ld_dprime_pm1
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 12run_ld_r2_decay_along_chr3_test_common_inter
+    summary: Merge PLINK arms of chr3A/3B/3D, even-sample focals, plot distance to mean r2=0.2
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld r2 decay along chr3"
+    screen: ld_along_chr3
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal: 15
+      ld_along_chr_max_kb: 20000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: running
+
+  - folder: 13run_test_common_inter_refchr
+    summary: Recode test_common_inter pfiles onto linear vmap4 chromosomes, republish subgenome pfiles, full TEST_PLINK_STATS plus chr3A/3B/3D along-chr r2=0.2
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: test_common_inter_refchr"
+    screen: refchr_stats
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_common_inter_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/
+    params:
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal: 15
+      ld_along_chr_max_kb: 20000
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter_refchr/
+    status: completed
+
+  - folder: 14run_ld_r2_decay_along_chr3_refchr_dense
+    summary: Recompute chr3A/3B/3D along-chr r2=0.2 with 80 focals, 10 kb bins, data-scaled y-axis
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld r2 decay along chr3 dense"
+    screen: ld_along_dense
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_common_inter_refchr
+    job: test_plink
+    params:
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal: 80
+      ld_along_chr_bin_kb: 10
+      ld_along_chr_max_kb: 20000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter_refchr/
+    status: running
+
+  - folder: 15run_ld_r2_decay_along_chr3_refchr_5mb_bins
+    summary: Per 5 Mb bin, 100 focals with full-window r2; plot mean distance to r2=0.2
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld r2 decay along chr3 5Mb bins"
+    screen: ld_along_5mb
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_common_inter_refchr
+    job: test_plink
+    params:
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal_per_bin: 100
+      ld_along_chr_spatial_bin_mb: 5
+      ld_along_chr_bin_kb: 10
+      ld_along_chr_max_kb: 20000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter_refchr/
+    status: completed
+
+  - folder: 16run_test_wap_common_refchr
+    summary: Recode test_wap pfiles onto linear vmap4 chromosomes; chr3A/3B/3D along-chr r2=0.2 (5 Mb x 100 focals)
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: test_wap_common_refchr"
+    screen: wap_refchr
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap/
+    params:
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal_per_bin: 100
+      ld_along_chr_spatial_bin_mb: 5
+      ld_along_chr_bin_kb: 10
+      ld_along_chr_max_kb: 20000
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 17run_test_wap_common_refchr_maf05
+    summary: Recode test_wap with WAP-panel MAF>=0.05 onto linear chroms; chr3A/3B/3D along-chr r2=0.2
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: test_wap_common_refchr maf05"
+    screen: wap_refchr_maf
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap/
+    params:
+      test_wap_common_maf: 0.05
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_n_focal_per_bin: 100
+      ld_along_chr_spatial_bin_mb: 5
+      ld_along_chr_bin_kb: 10
+      ld_along_chr_max_kb: 20000
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 18run_ld_along_chr_unreached_cap_replot
+    summary: Replot along-chr r2=0.2 with unreached 5 Mb bins at 20000 kb (crimson dashed)
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld along chr unreached cap replot"
+    screen: ld_unreach
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    params:
+      ld_along_chr_plot_only: true
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_max_kb: 20000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 19run_ld_along_chr_unreached_markers
+    summary: Replot unreached cap bins with larger crimson markers
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld along chr unreached markers"
+    screen: ld_unreach2
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    params:
+      ld_along_chr_plot_only: true
+      ld_along_chr_chromosomes: "3A,3B,3D"
+      ld_along_chr_max_kb: 20000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 20run_test_wap_common_refchr_from_main_raw
+    summary: Extract WAP MAF>=0.05 from main_raw, thin 0.01895 (~2M sites), recode linear chroms, along-chr r2=0.2
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: test_wap_common_refchr from main_raw"
+    screen: wap_common_raw
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/
+    params:
+      test_wap_common_maf: 0.05
+      test_wap_common_thin_rate: 0.01895
+      test_wap_common_target_n: 2000000
+      ld_along_chr_chromosomes: "3A,3B,3D"
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 21run_popdep_n500_gam_mapq30
+    summary: PopDepCrossChr N500 GAM credible-deep with MAPQ>=30 (TIGER -g 30); new publish tree
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: n500 popdep mapq30"
+    screen: popdep_n500_q30
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: main_raw_popdepth
+    mod: main_raw_popdepth
+    job: test_plink
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_mapq30/variant/
+    params:
+      popdep_tiger_jar: TIGER_PD_20260818.jar
+      popdep_tiger_app: PopDepCrossChr
+      popdep_min_mapq: 30
+      popdep_chr_exclude: "32"
+      popdep_crosschr_threads: 64
+      popdep_crosschr_memory_gb: 640
+      popdep_skip_vcf_check: true
+    status: stopped
+    note: "Stopped 2026-08-19 — taxaBamMap Coverage was MAPQ0 mosdepth; relaunch 22run with mapq30 coverage map"
+
+  - folder: 22run_popdep_n500_gam_mapq30_cov
+    summary: PopDepCrossChr N500 MAPQ>=30 depths and MAPQ>=30 mosdepth Coverage denominators
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: n500 popdep mapq30 cov map"
+    screen: popdep_n500_q30
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: main_raw_popdepth
+    mod: main_raw_popdepth
+    job: test_plink
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep_mapq30.taxaBamMap.txt
+    publish: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_mapq30/variant/
+    params:
+      popdep_tiger_jar: TIGER_PD_20260818.jar
+      popdep_tiger_app: PopDepCrossChr
+      popdep_min_mapq: 30
+      popdep_chr_exclude: "32"
+      popdep_crosschr_threads: 64
+      popdep_crosschr_memory_gb: 640
+      popdep_skip_vcf_check: true
+    status: completed
+
+  - folder: 23run_ld_along_chr_all_homoeologs
+    summary: Along-chr r2=0.2 for chr1-chr7 x A/B/D on test_wap_common_refchr; one stacked PNG per subgenome
+    nf_cmd_ref: "doc/progress/2026-08-19.md — NF replay: ld along chr all homoeologs"
+    screen: ld_allchr
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_r2_decay_along_chr.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    params:
+      ld_along_chr_chromosomes: "1A,2A,3A,4A,5A,6A,7A,1B,2B,3B,4B,5B,6B,7B,1D,2D,3D,4D,5D,6D,7D"
+      ld_along_chr_n_focal_per_bin: 100
+      ld_along_chr_spatial_bin_mb: 5
+      ld_along_chr_max_kb: 20000
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 24run_ld_dprime_signed_classes_test_thin
+    summary: Signed D' five-class window stats and figures A/B/C on test_thin
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld dprime signed classes"
+    screen: ld_dprime_signed
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 25run_ld_dprime_signed_blue_red_test_thin
+    summary: Replot signed D' A/B/C with blue/red two-category contrast (not red/green)
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld dprime signed blue-red"
+    screen: ld_dprime_br
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 26run_ld_dprime_pplus_vs_q_test_thin
+    summary: Validate P(D'=+1 | |D'|=1) vs background MAF q for rare-rare and rare-common
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld dprime pplus vs q"
+    screen: ld_pplus_q
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 27run_ld_dprime_pplus_vs_q_square_test_thin
+    summary: Replot P+ vs q with square axes so identity P+=q is readable
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld dprime pplus vs q square"
+    screen: ld_pplus_sq
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_scatter_r2max_replot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+
+  - folder: 28run_ld_decay_test_wap_common_refchr
+    summary: All-pairs LD decay + cross-chr plots from recoded test_wap_common_refchr pfiles
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld decay test_wap_common_refchr"
+    screen: wap_ld_decay
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_decay_from_pfile.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 29run_ld_decay_by_chr_test_wap_common_refchr
+    summary: Replot LD decay with per-chromosome coloured mean curves and overall dashed mean
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld decay by chrom test_wap_common_refchr"
+    screen: wap_ld_chr
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_decay_from_pfile.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/
+    params:
+      ld_decay_plot_only: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 30run_ld_homoeolog_compare_test_wap_common_refchr
+    summary: A/B/D homoeolog LD parallel-coordinate and rank bump plots from by_chr mean r2
+    nf_cmd_ref: "doc/progress/2026-08-20.md — NF replay: ld homoeolog compare test_wap_common_refchr"
+    screen: wap_ld_abd
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_homoeolog_compare.nf
+    mod: test_wap_common_refchr
+    job: test_plink
+    source_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/info/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/
+    status: completed
+
+  - folder: 31run_popdep_mapq30_plots
+    summary: Annotate test_thin/test_rare_only from MAPQ30 popdep grids; QC + het-filter JointGrids
+    nf_cmd_ref: "doc/progress/2026-08-22.md — NF replay: popdep mapq30 plots"
+    screen: popdep_mq30_plot
+    entry_nf: workflow/Genetics/subworkflows/tmp/popdep_annotate.nf
+    job: test_plink
+    popdep_dir: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/_popdep_n500_gam_credible_mapq30
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/{test_thin_mapq30,test_rare_only_mapq30}/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin_mapq30,test_rare_only_mapq30}/
+    status: completed
+
+  - folder: 32run_test_wap_refchr_ld
+    summary: Recode mixed-MAF test_wap onto linear vmap4 chromosomes; overall LD decay plus rare-rare / rare-common / common-common class plots
+    nf_cmd_ref: "doc/progress/2026-08-23.md — NF replay: test_wap_refchr ld"
+    screen: wap_refchr
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: failed
+    note: Recode + basic info + windowed LD succeeded for A/B/D/Others. A/B/D plot tasks failed (Polars 2^32-1 row cap on vcor). Others plots published.
+
+  - folder: 33run_test_wap_refchr_ld_plots
+    summary: Replot test_wap_refchr overall LD decay and rare/common/common class plots from existing vcor (Polars byte-window reader)
+    nf_cmd_ref: "doc/progress/2026-08-24.md — NF replay: test_wap_refchr ld plots"
+    screen: wap_refchr_plot
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: ld_rare_common
+    also_entry: workflow/Genetics/subworkflows/tmp/ld_decay_from_pfile.nf
+    mod: test_wap_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/
+    status: stopped
+    note: Stopped 2026-08-24 ~15:09; A/B/D vcor too large for class-LD plots. Follow-up is test_wap_thin_refchr (2–3M ABD sites, one global keep rate).
+
+  - folder: 34run_test_wap_thin_refchr
+    summary: Thin test_wap_refchr to 2–3M ABD sites with one global keep rate; recompute windowed LD and class plots
+    nf_cmd_ref: "doc/progress/2026-08-24.md — NF replay: test_wap_thin_refchr"
+    screen: wap_thin_refchr
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_thin_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+    note: 20 succeeded, 1 ignored fail (Others rare_common, empty vcor). ABD 2.50M sites; vcor A 45G / B 47G / D 34G.
+
+  - folder: 35run_test_hex_thin
+    summary: Thin test_hex to 2–3M ABD sites with one global keep rate; recompute windowed LD and class plots
+    nf_cmd_ref: "doc/progress/2026-08-24.md — NF replay: test_hex_thin"
+    screen: hex_thin
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_hex_thin
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_hex/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_hex_thin/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_hex_thin/
+    status: completed
+    note: 21 succeeded, 0 failed. ABD 2.50M sites; vcor A 47G / B 46G / D 34G.
+
+  - folder: 36run_test_thin_filter_cascade_maf
+    summary: test_thin het → MAC≥5 → WAP MAC≥2 cascade counts + MAF rare/common plot (MAF=0.05, WAP panel)
+    mod: test_thin
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin/
+    outputs: /data/home/tusr1/01projects/vmap4/12stats.genome/36run_test_thin_filter_cascade_maf/
+    status: completed
+    note: Python filter_cascade_maf_plot.py; 2.82M → 1.01M sites; rare 92.4% at MAF<0.05.
+
+  - folder: 37run_test_thin_filter_cascade_publish
+    summary: NF publish filter cascade MAF plot to stats/test_thin/plots/
+    nf_cmd_ref: "doc/progress/2026-08-26.md — NF replay: test_thin filter cascade publish"
+    entry_nf: workflow/Genetics/subworkflows/tmp/filter_cascade_maf_plot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+    note: plots/all.variant.filter_cascade.maf_rare_common.png + thresholds/info/logs.
+
+  - folder: 38run_test_thin_maf_class_prop
+    summary: test_thin rare/common stratified genome projection + A/B/D horizontal proportion bars
+    nf_cmd_ref: "doc/progress/2026-08-26.md — NF replay: test_thin maf class prop"
+    entry_nf: workflow/Genetics/subworkflows/tmp/filter_cascade_maf_plot.nf
+    mod: test_thin
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: completed
+    note: subgenome_maf_rare_common_prop.png; genome_pipeline_maf_class_compare.tsv.
+
+  - folder: 41run_ld_rare_common_decay_replot_wap_thin
+    summary: Replot test_wap_thin_refchr class LD decay PNG from info.tsv with translucent rare-rare / rare-common lines
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: test_wap_thin_refchr rare_common decay replot"
+    screen: wap_thin_rc_decay
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_rare_common_decay_replot.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 42run_ld_rare_common_decay_replot_wap_thin
+    summary: Replot test_wap_thin_refchr class LD decay; only rare-common translucent
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 43run_ld_rare_common_decay_replot_wap_thin
+    summary: Replot test_wap_thin_refchr class LD decay; bright scarlet rare-common line
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: test_wap_thin_refchr rare_common decay bright red"
+    screen: wap_thin_rc_decay3
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_rare_common_decay_replot.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 44run_ld_block_wu2025_density_scatter
+    summary: Replot meta_data ld_block_wu2025 size-vs-n_genes scatter as 1:2 density heatmap
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: ld_block_wu2025 density scatter"
+    screen: wu_ld_dens
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_block_size_plot.nf
+    mod: ld_block_wu2025
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/ld_block_wu2025/
+    status: completed
+
+  - folder: 45run_ld_block_wu2025_density_scatter
+    summary: Attempted exact 1:2 density replot; nextflow.io version check hung
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_block_size_plot.nf
+    mod: ld_block_wu2025
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/ld_block_wu2025/
+    status: failed
+
+  - folder: 46run_ld_block_wu2025_density_scatter
+    summary: Replot meta_data ld_block_wu2025 size-vs-n_genes; exact 1:2 canvas, log density heatmap
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: ld_block_wu2025 density scatter 1:2"
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_block_size_plot.nf
+    mod: ld_block_wu2025
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/ld_block_wu2025/
+    status: completed
+
+  - folder: 47run_ld_block_wu2025_density_scatter
+    summary: Replot size-vs-n_genes scatter with width:height = 2:1 canvas
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: ld_block_wu2025 density scatter 2:1"
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_block_size_plot.nf
+    mod: ld_block_wu2025
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/ld_block_wu2025/
+    status: completed
+
+  - folder: 48run_ld_block_wu2025_density_scatter
+    summary: Move mean/SD/median legend below the axes on the 2:1 density scatter
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: ld_block_wu2025 legend below"
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_block_size_plot.nf
+    mod: ld_block_wu2025
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/ld_block_wu2025/
+    status: completed
+
+  - folder: 49run_ld_pplus_vs_q_1mb_wap_thin
+    summary: test_wap_thin_refchr overall P+ vs q using pairs within 1 Mb only
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: test_wap_thin_refchr pplus vs q 1Mb"
+    screen: wap_thin_pplus_1mb
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_pplus_vs_q_overall_replot.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 50run_subgenome_maf_tajima_wap_thin
+    summary: Stacked A/B/D MAF and Tajima D histograms for test_wap_thin_refchr
+    nf_cmd_ref: "doc/progress/2026-08-27.md — NF replay: test_wap_thin_refchr subgenome MAF Tajima D"
+    screen: wap_thin_maf_taj
+    entry_nf: workflow/Genetics/subworkflows/tmp/subgenome_maf_tajima.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      tajima_d_window_bp: 100000
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 51run_subgenome_maf_tajima_sharey
+    summary: Replot stacked A/B/D MAF and Tajima D with shared y-axis, no n in titles
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: test_wap_thin_refchr subgenome MAF Tajima D shared-y replot"
+    screen: wap_thin_maf_taj2
+    entry_nf: workflow/Genetics/subworkflows/tmp/subgenome_maf_tajima.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      tajima_d_window_bp: 100000
+      tajima_d_plot_only: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 52run_ld_maf_bin_decay_wap_thin
+    summary: Within-bin MAF LD decay curves for test_wap_thin_refchr
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: test_wap_thin_refchr within-bin MAF LD decay"
+    screen: wap_thin_maf_bin
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_bin_decay.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 53run_mac_het_heatmap_filter_overlay_test_rare_only
+    summary: MAC-vs-H filter overlay heatmap on test_rare_only (white-red PowerNorm, excess-het curve, MAC=5 line)
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: mac_het heatmap filter overlay"
+    screen: mac_het_filt
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: true
+      mac_het_popdep_scatter: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 54run_mac_het_heatmap_filter_0_200_500_test_rare_only
+    summary: MAC-vs-H filter overlay heatmaps at 0-100 / 0-200 / 0-500 on test_rare_only
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: mac_het heatmap filter 0-200 0-500"
+    screen: mac_het_filt2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: true
+      mac_het_popdep_scatter: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed
+
+  - folder: 55run_ld_maf_bin_decay_all_wap_thin
+    summary: Pooled A+B+D within-bin MAF LD decay for test_wap_thin_refchr
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: test_wap_thin_refchr pooled ABD MAF-bin LD decay"
+    screen: wap_thin_maf_bin_all
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_bin_decay.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      ld_maf_bin_plot_only: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 56run_mac_het_heatmap_graph_fonts_test_rare_only
+    summary: Republish MAC heatmaps with graph.py font and legend conventions
+    nf_cmd_ref: "doc/progress/2026-08-28.md — NF replay: mac_het heatmap graph fonts"
+    screen: mac_het_fonts
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: true
+      mac_het_popdep_scatter: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: running
+
+  - folder: 57run_sample_manifest
+    summary: WAP assoc keep + WGS-core keep + cohort QC + RefSeq v1.0 asset inventory
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: sample_manifest"
+    screen: null
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: sample_manifest
+    mod: sample_manifest
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/sample_manifest/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/sample_manifest/
+    status: completed_2026-09-02
+
+  - folder: 58run_cohort_assoc_skeleton_preview
+    summary: >-
+      -preview parse check for the five new partial tasks (cohort_freq,
+      annotate_vep, variant_sets, assoc_wap, phenotype_wap). No compute, no publish.
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: cohort-to-association skeleton preview"
+    screen: null
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: cohort_freq,annotate_vep,variant_sets,assoc_wap,phenotype_wap
+    mod: null
+    job: null
+    status: completed_2026-09-02
+
+  - folder: 59run_wap_ph_gwas_chain
+    summary: >-
+      First real execution of the cohort-to-association chain on test_wap_refchr:
+      plant-height source extraction, phenotype_wap, cohort_freq, and the assoc_wap
+      debugging iterations.
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: WAP plant height chain"
+    screen: wapfreq, wapgwas
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: phenotype_wap,cohort_freq,assoc_wap
+    mod: wap_ph, test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/{wap_ph,test_wap_refchr}/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{wap_ph,test_wap_refchr}/
+    status: completed_2026-09-02
+
+  - folder: 60run_wap_ph_assoc_final
+    summary: >-
+      Clean uncached assoc_wap rerun for PH_M_cm_mean after the GLM output-naming
+      and Manhattan-plot fixes. 9/9 tasks succeeded.
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: WAP plant height chain"
+    screen: wapgwas2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/assoc/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{plots,info}/
+    status: completed_2026-09-02
+
+  - folder: 61run_wap_annotate_vep
+    summary: >-
+      Genome-wide VEP on test_wap_refchr via --vep_from_mod. Sites VCFs built from
+      the pvar ID column (segment coordinates). A/B/D in 13m34s; Others needed the
+      chrUn rename first.
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: WAP annotate_vep and variant_sets"
+    screen: wapvep, wapvep2, wapvep3
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: annotate_vep
+    mod: test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/{variant,annotate}/
+    status: completed_2026-09-03
+
+  - folder: 62run_wap_variant_sets
+    summary: >-
+      variant_sets --variant_sets_from_mod: per-subgenome coding_mask + dual_af +
+      set extracts. 8 succeeded. dual_af degenerate on this WAP-only mod.
+    nf_cmd_ref: "doc/progress/2026-09-02.md — NF replay: WAP annotate_vep and variant_sets"
+    screen: wapsets
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: variant_sets
+    mod: test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/variant/*.extract
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,thresholds,plots}/
+    status: completed_2026-09-03
+
+  - folder: 63run_wap_site_anno
+    summary: >-
+      First site_anno run: 21 streaming passes over 00data/11epi_anno featHighRes
+      BEDs, one per chromosome, giving per-variant conservation / degeneracy /
+      regulatory classes for subgenomes A, B and D.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: site_anno and gene_expr"
+    screen: wapsite
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: site_anno
+    mod: test_wap_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,thresholds,plots,logs}/
+    notes: Others has no featHighRes source and is skipped; about one hour per chromosome, maxForks 8
+    status: completed_2026-09-03
+
+  - folder: 64run_wap_gene_expr
+    summary: >-
+      gene_expr on the ramirez expVIP atlas: 104200 of 269583 genes mapped to
+      v1.1 ids through the GFF previous_id attribute, 88590 expressed.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: site_anno and gene_expr"
+    screen: wapexpr
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: gene_expr
+    mod: test_wap_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,thresholds,plots,logs}/
+    status: completed_2026-09-03
+
+  - folder: 65run_wap_variant_sets_anno
+    summary: >-
+      variant_sets rebuilt with the site_anno and gene_expr tables wired in, so
+      the run also emits neutral_4fold, conserved_noncoding, regulatory and the
+      conserved / expressed pLoF subsets alongside the original coding sets.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: variant_sets with site anno and expression"
+    screen: wapsets2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: variant_sets
+    mod: test_wap_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,thresholds,plots,logs}/
+    notes: >-
+      Others carries no featHighRes annotation, so the site-based specs drop out
+      there automatically and only the expression-based pLoF set is added.
+    status: completed_2026-09-03
+
+  - folder: 66run_refchr_rename
+    summary: >-
+      Rewrote #CHROM of the three WAP ref-chr mods from the first arm's numeric id
+      to chromosome names (chr1A..chr7D, chrUn/Mit/Chl). Rename only: POS and
+      variant IDs untouched, so every annotation table still joins.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: refchr rename over the three WAP mods"
+    screen: refchrname
+    entry_nf: workflow/Genetics/subworkflows/tmp/refchr_rename.nf
+    mods: [test_wap_refchr, test_wap_common_refchr, test_wap_thin_refchr]
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/{mod}/{A,B,D,Others}_test.plink2.*
+    notes: >-
+      Publishes back over the same mod. Verified afterwards: per-subgenome variant
+      counts and per-chromosome max POS unchanged, and site_anno / variant_sets join
+      onto the renamed pvar at 100%. test_common_inter_refchr was left numeric.
+    status: completed_2026-09-03
+
+  - folder: 67run_wap_ph_gwas_named
+    summary: >-
+      Re-ran the plant-height assoc_wap track after the rename to confirm the
+      Manhattan axis reads chr1A..chr7A with an unchanged point cloud.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: plant-height GWAS on the renamed pfiles"
+    screen: wapgwas2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,plots,logs}/
+    status: completed_2026-09-03
+
+  - folder: 68run_wap_ph_burden
+    summary: >-
+      First run of the newly implemented gene burden track (plof_rare_wap,
+      plant height). Exited 0 but the results were wrong: missing calls were
+      zero-filled before the counted allele was flipped, turning each into a
+      homozygous carrier. Superseded by 69run_wap_ph_burden_fix.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: wap plant-height burden, plof_rare_wap"
+    screen: wapburden
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_refchr
+    job: test_plink
+    status: superseded_2026-09-03
+
+  - folder: 69run_wap_ph_burden_fix
+    summary: >-
+      Gene burden for plant height over plof_rare_wap on all four subgenomes,
+      after the flip-order fix. Carrier counts match the annotated MAF; no gene
+      passes Bonferroni.
+    nf_cmd_ref: "doc/progress/2026-09-03.md — NF replay: wap plant-height burden, plof_rare_wap"
+    screen: wapburden2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/assoc/{A,B,D,Others}.PH_M_cm_mean.plof_rare_wap.burden.tsv
+    notes: >-
+      Burden needs both {id}.{set}.extract (process/{mod}/variant) and
+      {id}.variant_sets.tsv (stats/{mod}/info) per subgenome; the extract lists
+      carry variant IDs only, so the gene map has to come from the set table.
+    status: completed_2026-09-03
+
+  - folder: 70run_wap_ph_burden_protein_altering
+    summary: >-
+      Gene burden for plant height over protein_altering_rare_both on
+      test_wap_refchr (wider mask than plof_rare_wap).
+    nf_cmd_ref: "doc/progress/2026-09-04.md — NF replay: wap plant-height burden, protein_altering_rare_both"
+    screen: wapburden3
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_refchr/assoc/{A,B,D,Others}.PH_M_cm_mean.protein_altering_rare_both.burden.tsv
+    status: completed_2026-09-04
+
+  - folder: 71run_wap_ph_gwas_common
+    summary: >-
+      Single-variant plant-height GLM on the MAF-filtered test_wap_common_refchr
+      pfiles (named chromosomes).
+    nf_cmd_ref: "doc/progress/2026-09-04.md — NF replay: plant-height GWAS on test_wap_common_refchr"
+    screen: wapgwas3
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_common_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_common_refchr/assoc/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_common_refchr/{info,plots,logs}/
+    status: completed_2026-09-04
+
+  - folder: 72run_wap_burden_replot
+    summary: >-
+      Gene-level Manhattan and QQ from the published plant-height burden TSVs
+      on test_wap_refchr (plof_rare_wap and protein_altering_rare_both).
+    nf_cmd_ref: "doc/progress/2026-09-05.md — NF replay: burden Manhattan/QQ replot"
+    screen: wapbplot
+    entry_nf: workflow/Genetics/subworkflows/tmp/burden_replot.nf
+    mod: test_wap_refchr
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_refchr/{info,plots,logs}/
+    status: completed_2026-09-05
+
+  - folder: 73run_ibs_merge_clusters_test_common_inter
+    summary: Cluster mergeable samples from test_common_inter A/B/D square IBS
+    nf_cmd_ref: "doc/progress/2026-09-05.md — IBS merge clusters on test_common_inter"
+    entry_py: 12stats.genome/73run_ibs_merge_clusters_test_common_inter/cluster_ibs.py
+    mod: test_common_inter
+    job: test_plink
+    artefacts:
+      - 12stats.genome/73run_ibs_merge_clusters_test_common_inter/out/ibs_consensus_clusters_0.995.tsv
+      - 12stats.genome/73run_ibs_merge_clusters_test_common_inter/out/ibs_merge_clusters.tsv
+    status: completed_2026-09-05
+
+  - folder: 74run_sample_identity_test_thin
+    summary: KING / rare Jaccard / discord / IBD / somalier-style identity on test_thin A/B/D
+    nf_cmd_ref: "doc/progress/2026-09-05.md — NF replay: sample identity test_thin"
+    screen: id_thin
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_compare.nf
+    mod: test_thin
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_thin/identity/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_thin/
+    status: launched_2026-09-05
+
+  - folder: 75run_sample_identity_test_common_inter
+    summary: KING / rare Jaccard / discord / IBD / somalier-style identity on test_common_inter A/B/D
+    nf_cmd_ref: "doc/progress/2026-09-05.md — NF replay: sample identity test_common_inter"
+    screen: id_cinter
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_compare.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/identity/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: launched_2026-09-05
+
+  - folder: 76run_test_wap_exon
+    summary: >-
+      Unthinned WAP exon extract from main_raw, then VEP, SnpEff, and plant-height
+      burden (plof_rare_wap + protein_altering_rare_both).
+    nf_cmd_ref: "doc/progress/2026-09-05.md — NF replay: test_wap_exon extract+annotate+burden"
+    screen: wapexon
+    entry_nf: workflow/Genetics/main.nf
+    mod: test_wap_exon
+    job: test_plink
+    source_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/main_raw/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_exon/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/
+    status: extract_completed_2026-09-05
+
+  - folder: 77run_test_wap_exon_annotate
+    summary: >-
+      VEP + SnpEff + plant-height burden on the published test_wap_exon pfiles
+      after 76run extract succeeded and the first chain died on a Groovy compile error.
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: test_wap_exon VEP SnpEff burden restart"
+    screen: wapexon2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: annotate_vep
+    mod: test_wap_exon
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_exon/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/
+    status: launched_2026-09-06
+
+  - folder: 78run_identity_dist_replot
+    summary: Republish identity pair-score histograms for test_thin and test_common_inter
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: identity pair-score distributions"
+    screen: id_dist
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_dist_replot.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/plots/
+    status: launched_2026-09-06
+
+  - folder: 79run_test_wap_exon_snpeff
+    summary: >-
+      SnpEff 4.3t on test_wap_exon sites VCFs using the prebuilt Lulab genome
+      at 00data/03ref/07snpeff (no FASTA rebuild).
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: test_wap_exon annotate_snpeff"
+    screen: wapexonsnpeff
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: annotate_snpeff
+    mod: test_wap_exon
+    job: test_plink
+    snpeff_genome_dir: /data/home/tusr1/01projects/vmap4/00data/03ref/07snpeff
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_exon/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/
+    status: completed_2026-09-06
+
+  - folder: 80run_ibs_hom_snp
+    summary: >-
+      Extra SNPs-only both-homozygous IBS on test_thin and test_common_inter
+      A/B/D, compared to existing PLINK square IBS (does not overwrite ibs/).
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: hom-SNP IBS vs PLINK IBS"
+    screen: ibs_hom
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/{test_thin,test_common_inter}/ibs_hom_snp/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: failed_2026-09-06_5of6_common_inter_B_segfault
+
+  - folder: 82run_ibs_hom_snp_fix
+    summary: >-
+      Replot all six hom-SNP IBS compares from published matrices; recompute
+      only the missing test_common_inter B matrix with 4 BLAS threads.
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: hom-SNP IBS B retry plus publish"
+    screen: ibs_hom2
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/{test_thin,test_common_inter}/ibs_hom_snp/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: launched_2026-09-06
+
+  - folder: 84run_ibs_hom_snp_density
+    summary: >-
+      Replot PLINK vs hom-SNP IBS as inferno density scatters (no 0.97 pair
+      cutoff; random 200k pairs; Wu 2025 style).
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: hom-SNP IBS density replot"
+    screen: ibs_dens
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/plots/
+    status: completed_2026-09-06
+
+  - folder: 85run_ibs_hom_snp_density_s12
+    summary: Replot hom-SNP vs PLINK density scatters with smaller points (s=12)
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: hom-SNP IBS density smaller points"
+    screen: ibs_s12
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/plots/
+    status: completed_2026-09-06
+
+  - folder: 86run_ibs_hom_snp_density_square
+    summary: Square equal-aspect PLINK vs hom-SNP IBS density scatters
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: hom-SNP IBS square density"
+    screen: ibs_sq
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/plots/
+    status: completed_2026-09-06
+
+  - folder: 87run_ibs_hom_eq1
+    summary: Extract hom-SNP IBS=1 pairs and plot their PLINK IBS
+    nf_cmd_ref: "doc/progress/2026-09-07.md — NF replay: hom-SNP IBS=1 vs PLINK"
+    screen: ibs_eq1
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_eq1.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: completed_2026-09-07
+
+  - folder: 88run_ibs_pair_dist
+    summary: >-
+      Full-range PLINK and hom-SNP IBS pair histograms from the 200k
+      proportional vs_plink sample (linear and log count).
+    nf_cmd_ref: "doc/progress/2026-09-07.md — NF replay: IBS pair full-range dist"
+    screen: ibs_dist
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_ibs_pair_dist.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: completed_2026-09-07
+
+  - folder: 89run_ibs_ploidy_dist
+    summary: >-
+      Within-ploidy PLINK and hom-SNP IBS pair histograms (AA/SS/DD/AABB/AABBDD
+      after aneuploidy chr-depth correction).
+    nf_cmd_ref: "doc/progress/2026-09-07.md — NF replay: IBS within-ploidy dist"
+    screen: ibs_ploidy
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_ploidy_ibs_dist.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: completed_2026-09-07
+
+  - folder: 90run_ibs_ploidy_breachr
+    summary: >-
+      Within-ploidy IBS histograms using sample_group plus breachr
+      subgenome_absent / subgenome_reference_mismatch corrections.
+    nf_cmd_ref: "doc/progress/2026-09-07.md — NF replay: IBS within-ploidy breachr"
+    screen: ibs_ploidy_br
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_ploidy_ibs_dist.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: completed_2026-09-07
+
+  - folder: 91run_ibs_ploidy_group
+    summary: >-
+      Within-ploidy IBS using each class's own subgenomes together
+      (AA/A, SS/B, DD/D, AABB mean A+B, AABBDD mean A+B+D).
+    nf_cmd_ref: "doc/progress/2026-09-07.md — NF replay: IBS within-ploidy group"
+    screen: ibs_ploidy_grp
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_ploidy_group_ibs_dist.nf
+    mod: test_thin,test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/{test_thin,test_common_inter}/
+    status: launched_2026-09-07
+
+  - folder: 81run_test_wap_exon_burden_protein
+    summary: >-
+      Retry plant-height gene burden for protein_altering_rare_both on
+      test_wap_exon after streaming collapse (77run A/B/D exit 139).
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: test_wap_exon protein_altering burden"
+    screen: wapexonprot
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_exon
+    job: test_plink
+    params:
+      assoc_wap_burden: true
+      assoc_wap_burden_set: protein_altering_rare_both
+      assoc_wap_trait: PH_M_cm_mean
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_exon/assoc/{A,B,D}.PH_M_cm_mean.protein_altering_rare_both.burden.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/plots/
+    status: stopped_2026-09-06_single_thread_raw_scan
+
+  - folder: 83run_test_wap_exon_burden_traw
+    summary: >-
+      protein_altering_rare_both plant-height burden on test_wap_exon via
+      plink2 --export Av (.traw, one-pass collapse) after 81run sat on
+      single-thread pandas scans of sample-major .raw.
+    nf_cmd_ref: "doc/progress/2026-09-06.md — NF replay: test_wap_exon protein_altering Av burden"
+    screen: wapexontraw
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: assoc_wap
+    mod: test_wap_exon
+    job: test_plink
+    params:
+      assoc_wap_burden: true
+      assoc_wap_burden_set: protein_altering_rare_both
+      assoc_wap_trait: PH_M_cm_mean
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_exon/assoc/{A,B,D}.PH_M_cm_mean.protein_altering_rare_both.burden.tsv
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_exon/plots/
+    status: completed_2026-09-06
+
+  - folder: 92run_species_ld_vs_genome
+    summary: Species LD decay distance vs genome size, colored by mating system
+    nf_cmd_ref: "doc/progress/2026-09-08.md — NF replay: species LD vs genome"
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: aborted_2026-09-08_label_solver_too_slow
+
+  - folder: 93run_species_ld_vs_genome
+    summary: Species LD vs genome size; unlabeled and labeled scatters
+    nf_cmd_ref: "doc/progress/2026-09-08.md — NF replay: species LD vs genome unlabeled+labeled"
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed_2026-09-08
+
+  - folder: 94run_species_ld_vs_genome
+    summary: Larger points/labels and tighter log-axis limits on species LD scatters
+    nf_cmd_ref: "doc/progress/2026-09-08.md — NF replay: species LD vs genome larger marks"
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed_2026-09-08
+
+  - folder: 95run_ld_maf_bin_r2_superscript
+    summary: Replot MAF-bin LD decay with r-squared as mathtext superscript
+    nf_cmd_ref: "doc/progress/2026-09-08.md — NF replay: test_wap_thin_refchr MAF-bin r-squared superscript"
+    screen: wap_thin_maf_bin_r2
+    entry_nf: workflow/Genetics/subworkflows/tmp/ld_maf_bin_decay.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    params:
+      ld_maf_bin_plot_only: true
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: completed
+
+  - folder: 96run_species_ld_vs_genome
+    summary: Replot species LD after maize/rice/soybean genome_size and genome_assembly updates
+    nf_cmd_ref: "doc/progress/2026-09-09.md — NF replay: species LD vs genome maize rice soybean"
+    entry_nf: workflow/Genetics/subworkflows/tmp/species_ld_plot.nf
+    mod: species_ld
+    job: meta_data
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/meta_data/stats/species_ld/
+    status: completed_2026-09-09
+
+  - folder: 97run_mac_het_heatmap_larger_fonts_test_rare_only
+    summary: Republish MAC heatmaps with larger heatmap-only fonts
+    nf_cmd_ref: "doc/progress/2026-09-10.md — NF replay: mac_het heatmap larger fonts"
+    screen: mac_het_fonts2
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: true
+      mac_het_popdep_scatter: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed_2026-09-10
+
+  - folder: 98run_mac_het_heatmap_larger_fonts_xtick_test_rare_only
+    summary: Republish MAC heatmaps with larger fonts and sparser x ticks
+    nf_cmd_ref: "doc/progress/2026-09-10.md — NF replay: mac_het heatmap larger fonts xtick"
+    screen: mac_het_fonts3
+    entry_nf: workflow/Genetics/subworkflows/local/entry/partial_router.nf
+    partial_task: mac_het_excess
+    mod: test_rare_only
+    het_source_mod: test_common_only
+    job: test_plink
+    params:
+      mac_het_sweep: false
+      mac_het_heatmap: true
+      mac_het_popdep_scatter: false
+      mac_het_retain_alpha: 1.0e-6
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_rare_only/
+    status: completed_2026-09-10
+
+  - folder: 99run_circos_ld_map_test_wap_thin_refchr
+    summary: Three-ring Circos of rare/common density and r2/D-prime LD blocks
+    nf_cmd_ref: "doc/progress/2026-09-10.md — NF replay: circos ld map test_wap_thin_refchr"
+    screen: circos_ld_map
+    entry_nf: workflow/Genetics/subworkflows/tmp/circos_ld_map.nf
+    mod: test_wap_thin_refchr
+    job: test_plink
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_wap_thin_refchr/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_thin_refchr/
+    status: aborted

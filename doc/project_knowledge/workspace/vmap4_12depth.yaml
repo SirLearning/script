@@ -7,7 +7,9 @@ status: active
 purpose: >
   Ad-hoc ct_depth_with_mosdepth reruns for individual BAMs via
   workflow/Genetics/subworkflows/tmp/mosdepth_single_bam.nf.
-  Publishes mosdepth artefacts to 00data/04depth/{cohort}/.
+  Publishes per-BAM mosdepth artefacts to 00data/04depth/ (including
+  n500_mapq30/ for MAPQ-filtered N500). Do not overwrite unfiltered
+  {cohort}/ summaries. Analysis plots/tables go to data1, not these trees.
 
 entry_nf: workflow/Genetics/subworkflows/tmp/mosdepth_single_bam.nf
 config: workflow/Genetics/conf/mosdepth_single_bam.config
@@ -24,6 +26,57 @@ runs:
     cwd: /data/home/tusr1/01projects/vmap4/12depth/02run_ABD_0915_0938_mosdepth
     publish_dir: /data/home/tusr1/01projects/vmap4/00data/04depth/03ABD
     outcome: succeeded (~8m43s); summary mean 6.41x (0915), 6.23x (0938)
+
+  - folder: 03run_n500_mapq30_mosdepth
+    role: N500 GAM panel mosdepth -Q 30, 64 threads
+    cwd: /data/home/tusr1/01projects/vmap4/12depth/03run_n500_mapq30_mosdepth
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    publish_dir: /data/home/tusr1/01projects/vmap4/00data/04depth/n500_mapq30
+    screen: mosdepth_n500_q30
+    params:
+      mosdepth_cpus: 64
+      mosdepth_mapq: 30
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: N500 mosdepth MAPQ30"
+    status: stopped
+    note: >
+      Stopped ~17:24 so remaining BAMs could rerun at -t 8 x 8 forks.
+      6 summaries already in 00data/04depth/n500_mapq30/ were kept.
+
+  - folder: 04run_n500_mapq30_mosdepth
+    role: N500 remaining mosdepth -Q 30, 8 threads x 8 forks (64 threads total)
+    cwd: /data/home/tusr1/01projects/vmap4/12depth/04run_n500_mapq30_mosdepth
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    publish_dir: /data/home/tusr1/01projects/vmap4/00data/04depth/n500_mapq30
+    screen: mosdepth_n500_t8
+    params:
+      mosdepth_cpus: 8
+      mosdepth_max_forks: 8
+      mosdepth_mapq: 30
+    bam_list_n: 494
+    skipped_summaries: 6
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: N500 mosdepth MAPQ30 t8x8"
+    status: stopped
+    note: >
+      Stopped ~17:28 after ~3 min at 8x8. No new summaries beyond the 6 from 03run.
+
+  - folder: 05run_n500_mapq30_mosdepth
+    role: N500 remaining mosdepth -Q 30, 8 threads x 16 forks (128 threads total)
+    cwd: /data/home/tusr1/01projects/vmap4/12depth/05run_n500_mapq30_mosdepth
+    taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/popdep/tb.N500_gam_credible_deep.taxaBamMap.txt
+    publish_dir: /data/home/tusr1/01projects/vmap4/00data/04depth/n500_mapq30
+    screen: mosdepth_n500_t8x16
+    params:
+      mosdepth_cpus: 8
+      mosdepth_max_forks: 16
+      mosdepth_mapq: 30
+    bam_list_n: 494
+    skipped_summaries: 6
+    nf_cmd_ref: "doc/progress/2026-08-18.md — NF replay: N500 mosdepth MAPQ30 t8x16"
+    status: completed
+    outcome: 494/494 succeeded (0 failed); 500 summaries with 6 from 03run; finished 2026-08-19 10:26
+    note: >
+      Continues 03/04run; skips existing *.mosdepth.summary.txt.
+      Matches executor.cpus=128 (16 x 8). Output stays in 00data/04depth/n500_mapq30/.
 
 artefacts:
   - path: /data/home/tusr1/01projects/vmap4/00data/04depth/04D/D_0132.bam.mosdepth.summary.txt

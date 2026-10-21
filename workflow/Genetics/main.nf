@@ -13,9 +13,15 @@ include {
     RUN_TEST_COMMON_THIN
     RUN_TEST_COMMON_ONLY
     RUN_TEST_COMMON_INTER
+    RUN_TEST_COMMON_INTER_REFCHR
+    RUN_TEST_WAP_REFCHR
+    RUN_TEST_WAP_THIN_REFCHR
+    RUN_TEST_HEX_THIN
+    RUN_TEST_WAP_COMMON_REFCHR
     RUN_TEST_RARE_ONLY
     RUN_TEST_HEX
     RUN_TEST_WAP
+    RUN_TEST_WAP_EXON
     RUN_TEST_COLLINEAR
 } from './subworkflows/local/plink/plink_genotype_modes.nf'
 include {
@@ -33,6 +39,18 @@ workflow {
     if (params.mod != null && params.mod.toString().startsWith('wheat_')) {
         log.info "${params.c_purple}Wheat integrated analytics (${params.mod}).${params.c_reset}"
         RUN_WHEAT_INTEGRATED()
+    } else if (params.mod == 'test_common_inter_refchr') {
+        log.info "${params.c_yellow}Using PLINK COMMON-INTER REF-CHR module (test_common_inter_refchr).${params.c_reset}"
+        RUN_TEST_COMMON_INTER_REFCHR()
+    } else if (params.mod == 'test_wap_refchr') {
+        log.info "${params.c_yellow}Using PLINK WAP REF-CHR module (test_wap_refchr).${params.c_reset}"
+        RUN_TEST_WAP_REFCHR()
+    } else if (params.mod == 'test_wap_thin_refchr') {
+        log.info "${params.c_yellow}Using PLINK WAP THIN REF-CHR module (test_wap_thin_refchr).${params.c_reset}"
+        RUN_TEST_WAP_THIN_REFCHR()
+    } else if (params.mod == 'test_hex_thin') {
+        log.info "${params.c_yellow}Using PLINK HEX THIN module (test_hex_thin).${params.c_reset}"
+        RUN_TEST_HEX_THIN()
     } else {
         def input_out = check_input()
         def ch_vcf = input_out.vcf
@@ -66,6 +84,12 @@ workflow {
         } else if (params.mod == 'test_wap') {
             log.info "${params.c_yellow}Using PLINK WAP-PANEL TEST module (test_wap).${params.c_reset}"
             RUN_TEST_WAP(ch_vcf)
+        } else if (params.mod == 'test_wap_exon') {
+            log.info "${params.c_yellow}Using PLINK WAP EXON module (test_wap_exon; no thin).${params.c_reset}"
+            RUN_TEST_WAP_EXON(ch_vcf)
+        } else if (params.mod == 'test_wap_common_refchr') {
+            log.info "${params.c_yellow}Using PLINK WAP COMMON REF-CHR module (test_wap_common_refchr).${params.c_reset}"
+            RUN_TEST_WAP_COMMON_REFCHR(ch_vcf)
         } else if (params.mod == 'test_collinear') {
             log.info "${params.c_yellow}Using PLINK COLLINEAR TEST module (test_collinear).${params.c_reset}"
             def process_dir = params.process_dir ?: "${params.output_dir}/${params.job}/process/test_collinear"
@@ -92,9 +116,15 @@ workflow {
               - test_common_thin
               - test_common_only
               - test_common_inter
+              - test_common_inter_refchr
+              - test_wap_refchr
+              - test_wap_thin_refchr
+              - test_hex_thin
+              - test_wap_common_refchr
               - test_rare_only
               - test_hex
               - test_wap
+              - test_wap_exon
               - test_collinear
 
             Wheat integrated mods (no VCF channel):

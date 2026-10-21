@@ -20,11 +20,27 @@ modules:
     note: New stats work uses 10stats.genome from NN=01.
 
   - id: "10stats.genome"
-    role: Current PopDep / main_raw_popdepth / genotype-stats test runs
+    role: Stats module through NN=99 (PopDep / genotype-stats test runs)
+    status: full
     knowledge: workspace/vmap4_10stats_genome.yaml
     note: >
-      Default module for new stats launches (NN up to 99). When NN would exceed 99,
-      create successor 12stats.genome (+2 prefix). Do not add runs to 08stats.genome.
+      Highest run is 99run_*. New stats work uses successor 12stats.genome.
+      Do not add 100run_* here. Do not add runs to 08stats.genome.
+
+  - id: "12stats.genome"
+    role: Genotype-stats test runs through NN=99 (successor of 10stats.genome)
+    status: full
+    knowledge: workspace/vmap4_12stats_genome.yaml
+    note: >
+      Highest run is 99run_*. New stats work uses successor 14stats.genome.
+      Distinct from 12depth (mosdepth reruns).
+
+  - id: "14stats.genome"
+    role: Current genotype-stats test runs (successor of 12stats.genome)
+    knowledge: workspace/vmap4_14stats_genome.yaml
+    note: >
+      Default module for new stats launches (NN from 01). Same science area as
+      12stats.genome. Distinct from 12depth (mosdepth reruns).
 
   - id: "11aneuploidy"
     role: Mosdepth aneuploidy benchmark + MAPQ bin cohort scan
@@ -41,6 +57,7 @@ modules:
 
   - id: "06transfer.watkins"
     role: Watkins transfer pipeline work
+    knowledge: workspace/vmap4_06transfer_watkins.yaml
 
   - id: "07germ.check"
     role: Germplasm check workflows

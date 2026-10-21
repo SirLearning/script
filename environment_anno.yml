@@ -1,0 +1,21 @@
+name: anno
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+dependencies:
+  - ensembl-vep
+  - snpeff
+
+# Variant annotation only. Do not add Hail or the stats Python stack.
+# Bioconda ensembl-vep still pulls blast/mysql/gcc/ViennaRNA here; that
+# is expected and must stay out of stats. SnpEff 5.3+ needs Java 21+.
+# The prebuilt Lulab DB under 00data/03ref/07snpeff is SnpEff 4.3; annotate
+# it with that tree's 4.3t jar, not this env's 5.4c.
+# Create with libmamba so the SAT stays fast.
+#
+# 1. can be created with:
+# conda env create -f environment_anno.yml --solver=libmamba
+# 2. or update an existing environment with:
+# conda env update -f environment_anno.yml --solver=libmamba

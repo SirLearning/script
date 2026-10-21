@@ -15,17 +15,27 @@
  * bam_list TSV (no header): prefix<TAB>absolute_bam_path
  * BAI is resolved as {bam_path}.bai and staged alongside the BAM.
  * Use prefix D_0132.bam to match existing 04depth/04D mosdepth file names.
+ *
+ * Optional: --mosdepth_mapq 30 (default 0; mosdepth -Q), --mosdepth_cpus
+ * (process cpus / mosdepth -t; default 10), --mosdepth_max_forks (cap
+ * concurrent BAMs; 0 = executor default). N500 8-wide: --mosdepth_cpus 8
+ * --mosdepth_max_forks 8.
  */
 
 nextflow.enable.dsl=2
 
 params.depth_publish_dir = "${params.home_dir}/00data/04depth/04D"
 params.bam_list = null
+params.mosdepth_mapq = 0
+params.mosdepth_cpus = 10
+params.mosdepth_max_forks = 0
 
 process ct_depth_with_mosdepth {
     tag "ct_depth_${prefix}"
 
     conda "${params.user_dir}/miniconda3/envs/stats"
+    stageInMode 'symlink'
+    maxForks params.mosdepth_max_forks > 0 ? params.mosdepth_max_forks : 1000
 
     publishDir "${params.depth_publish_dir}", mode: 'copy', pattern: '*.mosdepth.*'
     publishDir "${params.depth_publish_dir}", mode: 'copy', pattern: 'ct_depth_*.log'
@@ -37,14 +47,17 @@ process ct_depth_with_mosdepth {
     tuple val(prefix), path("${prefix}.mosdepth.summary.txt"), emit: summary
 
     script:
+    def mapq_arg = (params.mosdepth_mapq as Integer) > 0 ? "-Q ${params.mosdepth_mapq}" : ''
     """
     set -euo pipefail
     exec > ct_depth_${prefix}.log 2>&1
 
-    echo "Calculating coverage depth for ${input_bam} with mosdepth..."
+    echo "Calculating coverage depth for ${input_bam} with mosdepth (mapq=${params.mosdepth_mapq})..."
     mosdepth \\
         -t ${task.cpus} \\
-        -n ${prefix} \\
+        -n \\
+        ${mapq_arg} \\
+        ${prefix} \\
         ${input_bam}
     echo "Coverage depth calculated and saved as ${prefix}.mosdepth.*"
     """
