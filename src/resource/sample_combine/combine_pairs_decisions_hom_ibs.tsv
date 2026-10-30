@@ -1,0 +1,879 @@
+cohort	germplasm_name	germplasm_id	sample1	sample2	pair_type	same_ploidy	hom_ibs	plink_ibs	coverage_min	cutoff	pair_status	above_0_999	decision
+wap_vmap3		549b749b-1c5e-4df8-bd5d-21cc4d3e7835	P0309	P0591	within_wap	yes	0.974655	0.964103	3.39	0.995	fail	no	
+wap_vmap3		31f307df-88ea-4dd8-85b9-28276590b910	ABD_1098	P0455	cross	yes	0.975701	0.964472	2.64	0.995	fail	no	
+wap_vmap3		31f307df-88ea-4dd8-85b9-28276590b910	ABD_1175	P0455	cross	yes	0.976183	0.964452	2.64	0.995	fail	no	
+wap_vmap3		810ccd3b-8e6a-4f76-ba64-ebcf3d2ec7dc	ABD_1060	P0079	cross	yes	0.976601	0.966545	2.41	0.995	fail	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1202	P0452	cross	yes	0.977157	0.965886	2.78	0.995	fail	no	
+wap_vmap3		810ccd3b-8e6a-4f76-ba64-ebcf3d2ec7dc	ABD_1060	ABD_1164	within_vmap3	yes	0.977223	0.968052	3.32	0.995	fail	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1174	ABD_1202	within_vmap3	yes	0.977475	0.967427	3.44	0.995	fail	no	
+wap_vmap3		16874cbc-b8a2-4aa2-af00-02ca391caba4	ABD_0497	ABD_0513	within_vmap3	yes	0.97768	0.967978	7.58	0.995	fail	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1188	P0452	cross	yes	0.977699	0.967418	2.78	0.995	fail	no	
+wap_vmap3		337a5863-6a78-4ce7-a677-6eba10da6b8a	P0448	P0872	within_wap	yes	0.977702	0.966731	3.09	0.995	fail	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1174	ABD_1188	within_vmap3	yes	0.977873	0.968806	3.55	0.995	fail	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1172	ABD_1186	within_vmap3	yes	0.977953	0.968071	3.33	0.995	fail	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1186	P0334	cross	yes	0.978058	0.966914	3.53	0.995	fail	no	
+wap_vmap3		c91a486d-aa97-4762-92cf-763de90a4a49	P0495	P0754	within_wap	yes	0.978146	0.966049	3.02	0.995	fail	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1104	ABD_1172	within_vmap3	yes	0.978223	0.968708	3.33	0.995	fail	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1104	P0334	cross	yes	0.978354	0.967756	4.13	0.995	fail	no	
+wap_vmap3		ec939f52-ab7d-4f69-8226-b2d204a3df33	ABD_1092	ABD_1173	within_vmap3	yes	0.979205	0.972014	3.67	0.995	fail	no	
+wap_vmap3		ec939f52-ab7d-4f69-8226-b2d204a3df33	ABD_1092	P0393	cross	yes	0.979321	0.971437	2.66	0.995	fail	no	
+wap_vmap3		7abe9e38-c12e-4a55-bebc-7d16bfc3c92c	ABD_0508	P0644	cross	yes	0.979974	0.969465	3.22	0.995	fail	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	ABD_1179	P0109	cross	yes	0.980027	0.968338	2.81	0.995	fail	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	P0109	P0698	within_wap	yes	0.980167	0.967937	2.81	0.995	fail	no	
+wap_vmap3		7abe9e38-c12e-4a55-bebc-7d16bfc3c92c	ABD_0508	ABD_0524	within_vmap3	yes	0.980172	0.970633	7.46	0.995	fail	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1188	ABD_1202	within_vmap3	yes	0.980366	0.970037	3.44	0.995	fail	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	ABD_1165	P0698	cross	yes	0.980818	0.969494	3.32	0.995	fail	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	ABD_1165	ABD_1179	within_vmap3	yes	0.980962	0.970583	3.3	0.995	fail	no	
+wap_vmap3		5154ccb7-e28b-47c5-8d4a-90a1e876565d	ABD_1182	ABD_1196	within_vmap3	yes	0.981181	0.971369	3.41	0.995	fail	no	
+wap_vmap3		16874cbc-b8a2-4aa2-af00-02ca391caba4	ABD_0497	P0256	cross	yes	0.981632	0.968947	3.14	0.995	fail	no	
+wap_vmap3		8fd8448f-30b9-4ddc-8cf2-12f3ce44ff87	P0812	P0840	within_wap	yes	0.981647	0.971324	2.99	0.995	fail	no	
+wap_vmap3		0b1eae41-9b40-4866-a54a-0a7f3999975f	P1763A	P1790A	within_wap	yes	0.98478	0.979814	4.05	0.995	fail	no	
+wap_vmap3		f49c2247-9c45-4501-b276-ba651f68389c	P0024	P0087	within_wap	yes	0.986783	0.973146	2.54	0.995	fail	no	
+wap_vmap3		371fb970-f666-4edc-9fc7-a3265a895feb	ABD_0462	P0011	cross	yes	0.986822	0.978218	2.45	0.995	fail	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_0951	P0545	cross	yes	0.98747	0.975875	3.12	0.995	fail	no	
+wap_vmap3		371fb970-f666-4edc-9fc7-a3265a895feb	ABD_0462	ABD_1053	within_vmap3	yes	0.987532	0.981091	8.05	0.995	fail	no	
+wap_vmap3		da455701-a255-4689-bee5-13ddb16c08aa	P1471A	P1871A	within_wap	yes	0.987866	0.982614	5.1	0.995	fail	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_1058	P0545	cross	yes	0.987885	0.974979	3.12	0.995	fail	no	
+wap_vmap3		6048bf46-6789-47f3-b1f8-2c28a7837bdc	P1642A	P1861A	within_wap	yes	0.988041	0.984017	3.61	0.995	fail	no	
+wap_vmap3		cd8a5513-1dcd-4268-8694-57c2614d48c9	P0723	P0835	within_wap	yes	0.988535	0.972258	2.95	0.995	fail	no	
+wap_vmap3		6feefd75-7c4e-4ea7-ac6c-f3cf9ae07d1b	ABD_0448	P0314	cross	yes	0.989305	0.975032	3.4	0.995	fail	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_0951	ABD_1176	within_vmap3	yes	0.989394	0.980561	3.44	0.995	fail	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_1058	ABD_1176	within_vmap3	yes	0.989537	0.978819	3.44	0.995	fail	no	
+wap_vmap3		61869bf1-6a2e-49dd-8fc9-85e0d50d157a	P0857	P1031A	within_wap	yes	0.99041	0.983352	3.11	0.995	fail	no	
+wap_vmap3		61e8cd04-7c83-4bbe-b783-9dbab71254c2	ABD_0180	P1476A	cross	yes	0.990552	0.983412	4.66	0.995	fail	no	
+wap_vmap3		16874cbc-b8a2-4aa2-af00-02ca391caba4	ABD_0513	P0256	cross	yes	0.990848	0.980616	3.14	0.995	fail	no	
+wap_vmap3		df6eba42-6a40-49d9-9e33-759e74464337	ABD_1108	P0664	cross	yes	0.992265	0.97772	3.53	0.995	fail	no	
+wap_vmap3		df6eba42-6a40-49d9-9e33-759e74464337	ABD_1001	P0664	cross	yes	0.992698	0.97744	3.53	0.995	fail	no	
+wap_vmap3		650882ba-05ad-4259-85ff-877fd17cbcef	ABD_1095	P0137	cross	yes	0.993023	0.980559	2.95	0.995	fail	no	
+wap_vmap3		650882ba-05ad-4259-85ff-877fd17cbcef	ABD_1167	P0137	cross	yes	0.993143	0.979756	2.95	0.995	fail	no	
+wap_vmap3		d3b2bbe3-2581-4b9d-afa9-72d1f029c6dc	ABD_0500	P0130	cross	yes	0.993324	0.985554	2.75	0.995	fail	no	
+wap_vmap3		372eb75a-9f84-4849-a8b7-7640243ad722	ABD_1168	P0174	cross	yes	0.993405	0.980719	3.02	0.995	fail	no	
+wap_vmap3		9db1ab10-f827-4d81-9f99-45df564d6af6	ABD_0460	P0148	cross	yes	0.994256	0.986828	3.63	0.995	fail	no	
+wap_vmap3		2e5fa785-7fd9-4868-b8b4-97ef80091e86	AB_0092	AB_0144	within_vmap3	yes	0.995203	0.976457	1.9	0.995	unjudged_low_coverage	no	
+wap_vmap3		c0db6a0a-cd2b-42c0-b4ec-0ffafe465321	AB_0043	AB_0205	within_vmap3	yes	0.995245	0.976475	2.05	0.995	pass	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_1176	P0545	cross	yes	0.995282	0.984078	3.12	0.995	pass	no	
+wap_vmap3		7558dbe7-9552-490c-acad-c073a0645b28	ABD_0509	P0176	cross	yes	0.995911	0.988046	2.93	0.995	pass	no	
+wap_vmap3		65820b0c-b317-4ad6-9073-e36da6102007	ABD_1102	P0038	cross	yes	0.996241	0.989853	4.12	0.995	pass	no	
+wap_vmap3		65820b0c-b317-4ad6-9073-e36da6102007	ABD_1102	ABD_1162	within_vmap3	yes	0.996264	0.990325	3.58	0.995	pass	no	
+wap_vmap3		b83e3e4a-b867-4abb-81bd-5c04c34c86dd	P0924	P1027A	within_wap	yes	0.996269	0.982268	3.84	0.995	pass	no	
+wap_vmap3		f43d605c-4570-4220-8165-42a320cb6939	ABD_0951	ABD_1058	within_vmap3	yes	0.99694	0.989782	6.68	0.995	pass	no	
+wap_vmap3		3994bfde-fa1e-47f0-803d-bfa36d64b8bd	ABD_1187	P0066	cross	yes	0.997289	0.989405	3.26	0.995	pass	no	
+wap_vmap3		2052b42a-b325-4705-ab7d-86f14171436d	ABD_1107	P0085	cross	yes	0.997403	0.989545	2.6	0.995	pass	no	
+wap_vmap3		68e4a803-d51d-43b3-86e8-26e23a0ac618	ABD_0491	P0281	cross	yes	0.99748	0.98996	3.66	0.995	pass	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1104	ABD_1186	within_vmap3	yes	0.997509	0.992132	3.53	0.995	pass	no	
+wap_vmap3		810ccd3b-8e6a-4f76-ba64-ebcf3d2ec7dc	ABD_1164	P0079	cross	yes	0.997511	0.989367	2.41	0.995	pass	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	ABD_1165	P0109	cross	yes	0.997598	0.988244	2.81	0.995	pass	no	
+wap_vmap3		31f307df-88ea-4dd8-85b9-28276590b910	ABD_1098	ABD_1175	within_vmap3	yes	0.997681	0.991577	3.42	0.995	pass	no	
+wap_vmap3		4e8ccdea-8200-4782-bb31-461c0a1d51aa	P0139	P0626	within_wap	yes	0.997845	0.988497	2.87	0.995	pass	no	
+wap_vmap3		ec939f52-ab7d-4f69-8226-b2d204a3df33	ABD_1173	P0393	cross	yes	0.997847	0.990505	2.66	0.995	pass	no	
+wap_vmap3		4e8ccdea-8200-4782-bb31-461c0a1d51aa	ABD_1177	P0139	cross	yes	0.997955	0.988817	2.87	0.995	pass	no	
+wap_vmap3		ba55a5a9-b216-418f-93e7-a8e225b0a2f3	ABD_1161	P0020	cross	yes	0.997978	0.990057	2.41	0.995	pass	no	
+wap_vmap3		82a65f22-bc43-425f-815f-84a7d8a0e7bd	ABD_0540	P0460	cross	yes	0.998131	0.989787	2.74	0.995	pass	no	
+wap_vmap3		650882ba-05ad-4259-85ff-877fd17cbcef	ABD_1095	ABD_1167	within_vmap3	yes	0.998225	0.992629	3.62	0.995	pass	no	
+wap_vmap3		32a6d0a3-5cb8-4795-aa52-ad5ec5edebce	ABD_1170	P0197	cross	yes	0.998229	0.990899	2.83	0.995	pass	no	
+wap_vmap3		c40e3934-5456-4dba-ae9c-ff57f2c3ff21	ABD_1179	P0698	cross	yes	0.998241	0.989987	3.3	0.995	pass	no	
+wap_vmap3		9e8c8141-171a-4d0e-a653-b4bae55a13fa	ABD_1166	P0113	cross	yes	0.998242	0.991083	2.69	0.995	pass	no	
+wap_vmap3		4e8ccdea-8200-4782-bb31-461c0a1d51aa	ABD_1177	P0626	cross	yes	0.998253	0.989708	3.16	0.995	pass	no	
+wap_vmap3		2a84de85-62d7-4fb3-9214-9b51668db11e	ABD_0452	P0009	cross	yes	0.998282	0.991409	3.18	0.995	pass	no	
+wap_vmap3		ca5baafc-699e-4d0f-b301-b3c4d44c1fba	ABD_1174	P0452	cross	yes	0.998297	0.991122	2.78	0.995	pass	no	
+wap_vmap3		2031aa09-cf41-4ab9-8668-9a2c6020bea3	ABD_1159	P0484	cross	yes	0.998454	0.989861	3.25	0.995	pass	no	
+wap_vmap3		e817b6d8-8d1b-4009-8650-4bdf6ca1d21d	ABD_1169	P0184	cross	yes	0.99846	0.990435	3.22	0.995	pass	no	
+wap_vmap3		172675c0-1b9d-4dec-b7b8-aed8e8bf0b32	ABD_0222	P1805A	cross	yes	0.99847	0.993127	4.06	0.995	pass	no	
+wap_vmap3		dd463e19-3981-4cd1-8a1c-ac718edbbd97	ABD_1171	P0214	cross	yes	0.9985	0.991516	2.86	0.995	pass	no	
+wap_vmap3		2052b42a-b325-4705-ab7d-86f14171436d	ABD_0457	P0085	cross	yes	0.998524	0.990495	2.6	0.995	pass	no	
+wap_vmap3		1a606eb6-b7ff-4562-966a-6656ec44cc4f	ABD_0466	P0394	cross	yes	0.998538	0.990704	2.67	0.995	pass	no	
+wap_vmap3		6b006cd8-443d-4119-a9a7-7d7acc9717d2	P0494	P0714	within_wap	yes	0.99857	0.989727	2.95	0.995	pass	no	
+wap_vmap3		bd6f4674-edf2-43df-941b-ad9e4772d89e	ABD_0528	P0028	cross	yes	0.998618	0.991658	2.68	0.995	pass	no	
+wap_vmap3		371fb970-f666-4edc-9fc7-a3265a895feb	ABD_1053	P0011	cross	yes	0.998651	0.99245	2.45	0.995	pass	no	
+wap_vmap3		cb724dd2-a800-443a-9fe1-1e1f98c5b1e8	P0757	P1038A	within_wap	yes	0.998657	0.991534	2.98	0.995	pass	no	
+wap_vmap3		dd463e19-3981-4cd1-8a1c-ac718edbbd97	ABD_1064	P0214	cross	yes	0.998693	0.992764	2.86	0.995	pass	no	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_1180	P0361	cross	yes	0.998694	0.991142	2.99	0.995	pass	no	
+wap_vmap3		2052b42a-b325-4705-ab7d-86f14171436d	ABD_0457	ABD_1107	within_vmap3	yes	0.998713	0.992612	7.39	0.995	pass	no	
+wap_vmap3		ab67db49-488e-41d4-95d5-06ea5eca8c2a	AB_0081	AB_0165	within_vmap3	yes	0.998726	0.991763	2.44	0.995	pass	no	
+wap_vmap3		ef207f0e-a72d-43ab-9f1a-8a4d0308e631	ABD_0474	P0054	cross	yes	0.998792	0.991306	3.85	0.995	pass	no	
+wap_vmap3		9debdc96-74c3-4aae-b02c-0d119265503d	ABD_1172	P0334	cross	yes	0.998802	0.990493	3.33	0.995	pass	no	
+wap_vmap3		2177ad88-3b07-4f2c-9e15-a52847ab5153	ABD_1178	P0670	cross	yes	0.998823	0.991692	3.36	0.995	pass	no	
+wap_vmap3		2177ad88-3b07-4f2c-9e15-a52847ab5153	ABD_1101	ABD_1178	within_vmap3	yes	0.998891	0.992993	3.36	0.995	pass	no	
+wap_vmap3		0b82230d-725e-4f3c-a728-5a7f25e5806f	ABD_1181	P0682	cross	yes	0.998891	0.99167	3.46	0.995	pass	no	
+wap_vmap3		7c547d5b-d76d-47d1-aee9-254f217e8885	ABD_0504	P0191	cross	yes	0.998892	0.991986	3.21	0.995	pass	no	
+wap_vmap3		65820b0c-b317-4ad6-9073-e36da6102007	ABD_1162	P0038	cross	yes	0.998927	0.991773	3.58	0.995	pass	no	
+wap_vmap3		ddd72851-ec8f-4e96-bb8c-ad2c448817b8	P0960	P1018A	within_wap	yes	0.998966	0.992379	3.15	0.995	pass	no	
+wap_vmap3		2177ad88-3b07-4f2c-9e15-a52847ab5153	ABD_1101	P0670	cross	yes	0.99898	0.992963	3.97	0.995	pass	no	
+wap_vmap3		177da184-ddd1-43db-82eb-c795501d4c41	ABD_1158	P0359	cross	yes	0.998994	0.991579	3.48	0.995	pass	no	
+wap_vmap3		28cf6c87-78d0-4fba-ab76-23d392edfb40	AB_0091	AB_0163	within_vmap3	yes	0.999011	0.992754	2.32	0.995	pass	yes	
+wap_vmap3		dd463e19-3981-4cd1-8a1c-ac718edbbd97	ABD_1064	ABD_1171	within_vmap3	yes	0.999025	0.993882	3.51	0.995	pass	yes	
+wap_vmap3		8d637408-983d-4ad4-84d4-de0a0142c3cc	ABD_0471	P0329	cross	yes	0.99915	0.991978	4.03	0.995	pass	yes	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_0451	ABD_1180	within_vmap3	yes	0.999155	0.992793	2.99	0.995	pass	yes	
+wap_vmap3		bdf1d293-d56f-4dfc-a6a0-f1baae0ebabf	ABD_0465	P0326	cross	yes	0.999188	0.993055	3.27	0.995	pass	yes	
+wap_vmap3		9f27b547-6e50-4c6b-962b-ce255ff3bf12	AB_0089	AB_0164	within_vmap3	yes	0.999209	0.993573	2.48	0.995	pass	yes	
+wap_vmap3		37c00d67-cddf-4e9e-889c-ab6ed125823c	ABD_0531	P0520	cross	yes	0.999233	0.992521	3.82	0.995	pass	yes	
+wap_vmap3		7abe9e38-c12e-4a55-bebc-7d16bfc3c92c	ABD_0524	P0644	cross	yes	0.999234	0.992955	3.22	0.995	pass	yes	
+wap_vmap3		b462d8c9-ead4-4160-a53e-d9e94c5c8b66	ABD_1160	P1539A	cross	yes	0.999245	0.994086	3.1	0.995	pass	yes	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_0451	P0361	cross	yes	0.99927	0.99235	3.66	0.995	pass	yes	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_1063	ABD_1180	within_vmap3	yes	0.999286	0.9933	2.99	0.995	pass	yes	
+wap_vmap3		c4e1d234-2aa8-4dc2-a96d-ea94efd16af9	ABD_1091	ABD_1197	within_vmap3	yes	0.999322	0.993395	3.39	0.995	pass	yes	
+wap_vmap3		3a553ed9-d4f6-4865-9d12-a7a3648a4705	P1373A	P1682A	within_wap	yes	0.999357	0.993358	4.09	0.995	pass	yes	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_1063	P0361	cross	yes	0.999387	0.992912	3.66	0.995	pass	yes	
+wap_vmap3		1ef144dd-2c67-4ba4-acfa-7a50c6a5c993	P1181A	P1183A	within_wap	yes	0.999404	0.99424	3.66	0.995	pass	yes	
+wap_vmap3		d2cfc2ca-a165-4579-9fa0-a7675b07f6d0	ABD_0527	P0338	cross	yes	0.999419	0.992896	4.21	0.995	pass	yes	
+wap_vmap3		2978789c-87b5-4cab-9acb-f669ac5700a5	P1355A	P1447A	within_wap	yes	0.999449	0.995816	3.97	0.995	pass	yes	
+wap_vmap3		647cac3f-6bad-48d4-bb3b-70adcfd87ad2	ABD_0488	P0313	cross	yes	0.999469	0.993368	4.39	0.995	pass	yes	
+wap_vmap3		8334e14c-67cc-4afd-b49b-db9b3fe8ebc4	ABD_0362	P1188A	cross	yes	0.999493	0.99402	4.23	0.995	pass	yes	
+wap_vmap3		df6eba42-6a40-49d9-9e33-759e74464337	ABD_1001	ABD_1108	within_vmap3	yes	0.99972	0.994455	5.9	0.995	pass	yes	
+wap_vmap3		cc532cde-1788-4de3-9b79-c6d11b9278b9	ABD_0451	ABD_1063	within_vmap3	yes	0.999741	0.994614	8.12	0.995	pass	yes	
+wap_vmap3	'Albidum 721'	dcfff990-c843-41e4-b71c-53d02c140c07	ABD_0205	P1912A	cross	yes	0.96808	0.959187	3.07	0.995	fail	no	
+wap_vmap3	'Chul'	b21561a0-cfe7-40fd-9d0d-2a34989b28f6	ABD_0112	P1378A	cross	yes	0.99935	0.992677	3.29	0.995	pass	yes	
+wap_vmap3	'Hodominska Holica'	ec5ed886-3cf1-499e-994e-98c9856a6692	ABD_0225	P1603A	cross	yes	0.991033	0.978559	3.22	0.995	fail	no	
+wap_vmap3	'Lutescens 479'	63ccb9cc-6fe7-445d-bc7d-fc28fbca544c	ABD_0272	P1177A	cross	yes	0.992788	0.986577	4.4	0.995	fail	no	
+wap_vmap3	'Mariache 50'	0bc36686-30ec-4067-8991-7b2bbf3816a4	ABD_0242	P1451A	cross	yes	0.999586	0.995223	3.88	0.995	pass	yes	
+wap_vmap3	'N.A. 95'	aeffe6e9-ab61-4272-b914-ba1131d47337	ABD_0337	P1885A	cross	yes	0.999417	0.993909	4	0.995	pass	yes	
+wap_vmap3	'Novinka'	2286b008-3e95-4674-96ea-3d7cf866ead4	ABD_0223	P2043A	cross	yes	0.97735	0.96929	4.57	0.995	fail	no	
+wap_vmap3	'Novinka'	2286b008-3e95-4674-96ea-3d7cf866ead4	ABD_0223	ABD_0232	within_vmap3	yes	0.977973	0.971243	11.43	0.995	fail	no	
+wap_vmap3	'Novinka'	2286b008-3e95-4674-96ea-3d7cf866ead4	ABD_0232	P2043A	cross	yes	0.999584	0.994741	4.57	0.995	pass	yes	
+wap_vmap3	'Sutton's Sensation'	98add01b-037c-484d-a2fb-e560bbe65968	ABD_0202	P1942A	cross	yes	0.999287	0.993547	3.66	0.995	pass	yes	
+wap_vmap3	'Tokai 66'	360f3d19-6b13-46b5-a61b-2268db212f38	ABD_0276	P1626A	cross	yes	0.999588	0.996381	3.19	0.995	pass	yes	
+wap_vmap3	'Varonne'	e2d4dbaf-9b31-42f6-9e13-4e37c03c33e6	ABD_0212	P1917A	cross	yes	0.999322	0.993764	3.3	0.995	pass	yes	
+wap_vmap3	09J40	39dd7d30-62f8-4159-8963-1f951c06de36	ABD_0518	P0699	cross	yes	0.998695	0.990654	3.16	0.995	pass	no	
+wap_vmap3	10090	8b801716-e773-434e-871a-6c45bfb7be08	AB_0074	AB_0138	within_vmap3	yes	0.998893	0.992374	2.35	0.995	pass	no	
+wap_vmap3	10185	60efed2a-8c2b-4d2a-957d-9970b79c4183	AB_0065	AB_0139	within_vmap3	yes	0.996909	0.989449	4.52	0.995	pass	no	
+wap_vmap3	102	82216782-1118-4919-9b89-dd80c7d059cb	ABD_0286	P1645A	cross	yes	0.999365	0.993696	3.59	0.995	pass	yes	
+wap_vmap3	10516	7e6d56f4-0f4c-4d54-83a5-2a3b2ce5c7e8	ABD_0736	P1616A	cross	yes	0.995503	0.98951	3.21	0.995	pass	no	
+wap_vmap3	111	b16c5c9b-bcd2-449a-a306-eeafd33fc1b7	ABD_0178	P1674A	cross	yes	0.99946	0.994792	3.29	0.995	pass	yes	
+wap_vmap3	1134	3f1b6ee8-7260-488a-a72d-2a8dd33e9030	ABD_0343	P1121A	cross	yes	0.976201	0.968186	3.94	0.995	fail	no	
+wap_vmap3	12611	9715c38b-73a4-45a9-9967-f3f70fa532dc	ABD_0714	P1817A	cross	yes	0.999667	0.994921	4.49	0.995	pass	yes	
+wap_vmap3	127	189424da-85e3-44d9-8298-57400d9aab8e	ABD_0329	P1478A	cross	yes	0.973364	0.963767	3.52	0.995	fail	no	
+wap_vmap3	127	189424da-85e3-44d9-8298-57400d9aab8e	ABD_0329	ABD_0345	within_vmap3	yes	0.978219	0.96798	11.33	0.995	fail	no	
+wap_vmap3	127	189424da-85e3-44d9-8298-57400d9aab8e	ABD_0345	P1478A	cross	yes	0.98279	0.971007	3.52	0.995	fail	no	
+wap_vmap3	139	ee839219-f706-4fbd-9970-e9eb008ea60d	ABD_0073	P1749A	cross	yes	0.973469	0.965258	4.41	0.995	fail	no	
+wap_vmap3	14/17	3c196cf8-ec50-4c5b-b33c-a4afedb7656f	ABD_0632	P1482A	cross	yes	0.999444	0.993743	3.64	0.995	pass	yes	
+wap_vmap3	14053	8579ae82-bc91-4c88-815a-7841a31cecbd	ABD_0602	P1358A	cross	yes	0.999727	0.99574	4.77	0.995	pass	yes	
+wap_vmap3	14224	2d4d8ac3-57d6-43d6-b3d3-3f19022474d5	ABD_0625	P1390A	cross	yes	0.999564	0.994706	3.99	0.995	pass	yes	
+wap_vmap3	148	5dd36e83-69eb-42c5-ae1a-ddd5dbf56407	ABD_0208	P1844A	cross	yes	0.999422	0.993943	4.02	0.995	pass	yes	
+wap_vmap3	148	5dd36e83-69eb-42c5-ae1a-ddd5dbf56407	ABD_0108	ABD_0208	within_vmap3	yes	0.999528	0.994585	10.4	0.995	pass	yes	
+wap_vmap3	148	5dd36e83-69eb-42c5-ae1a-ddd5dbf56407	ABD_0108	P1844A	cross	yes	0.999549	0.994149	4.02	0.995	pass	yes	
+wap_vmap3	161	80fcc65c-57dd-4a4e-89d7-0bae7b457e64	ABD_0209	P2076A	cross	yes	0.999445	0.993991	4.01	0.995	pass	yes	
+wap_vmap3	1708	bdea9df0-6c11-4150-8def-211ac96faa57	ABD_0673	P1723A	cross	yes	0.999555	0.994917	3.27	0.995	pass	yes	
+wap_vmap3	185	1ec8a3f9-9c3d-4f79-a352-2e0d99a98fc6	ABD_0210	P1699A	cross	yes	0.979003	0.970528	3.22	0.995	fail	no	
+wap_vmap3	185	a2d07b87-fc27-4df4-bb74-d49951ad6d85	ABD_0710	P1545A	cross	yes	0.999621	0.995173	3.49	0.995	pass	yes	
+wap_vmap3	1881	7344bee5-a8df-448a-9334-15c557be4c43	ABD_0712	P1762A	cross	yes	0.989009	0.979376	3.69	0.995	fail	no	
+wap_vmap3	1893	1b3c45e4-4a52-4f1b-bb6f-619e807a9902	ABD_0689	P1971A	cross	yes	0.999501	0.994437	3.39	0.995	pass	yes	
+wap_vmap3	1976-1-1	07668790-83a5-4904-8ae2-25de3bbb7a24	ABD_0636	P1362A	cross	yes	0.999552	0.994515	3.84	0.995	pass	yes	
+wap_vmap3	200	3ee0641e-0b6d-484a-abfe-c1bceb2727ed	ABD_0319	P1654A	cross	yes	0.983856	0.975951	3.37	0.995	fail	no	
+wap_vmap3	200	3ee0641e-0b6d-484a-abfe-c1bceb2727ed	ABD_0319	ABD_0335	within_vmap3	yes	0.984624	0.977837	10.37	0.995	fail	no	
+wap_vmap3	200	3ee0641e-0b6d-484a-abfe-c1bceb2727ed	ABD_0335	P1654A	cross	yes	0.999238	0.993271	3.37	0.995	pass	yes	
+wap_vmap3	21	d01edac5-e3fd-4a11-8619-7ecc0b307f71	AB_0036	AB_0196	within_vmap3	yes	0.997597	0.987511	2.27	0.995	pass	no	
+wap_vmap3	212	7604138d-a6a6-4740-ac9a-401767c88c16	ABD_0113	P1418A	cross	yes	0.999358	0.993811	3.53	0.995	pass	yes	
+wap_vmap3	2137	a168846a-f4c6-407e-9534-c3e2bc5a308e	ABD_0551	P1033A	cross	yes	0.998786	0.993197	3.9	0.995	pass	no	
+wap_vmap3	2174	2797d070-9f4e-4444-b71a-a03f0fa0e1b5	ABD_0562	P1067A	cross	yes	0.999591	0.994464	4.12	0.995	pass	yes	
+wap_vmap3	23-J	11d75f46-26df-4606-9f4a-6491e4689e7e	ABD_0251	P1789A	cross	yes	0.999418	0.994618	3.53	0.995	pass	yes	
+wap_vmap3	251	6a248bd2-165d-49a7-965b-a495effdd4a2	ABD_0065	P1916A	cross	yes	0.986618	0.975194	3.27	0.995	fail	no	
+wap_vmap3	253	3b708c04-d798-4b6c-b788-006dddeddf99	ABD_0255	P1246A	cross	yes	0.999545	0.994273	4.97	0.995	pass	yes	
+wap_vmap3	273	dd8e9443-7665-47ea-9681-261b1218f2d4	AB_0080	AB_0133	within_vmap3	yes	0.998942	0.992615	2.1	0.995	pass	no	
+wap_vmap3	293	f9d2f9e0-bdb2-499d-91d2-818abe6c94ae	AB_0087	AB_0141	within_vmap3	yes	0.999183	0.993166	2.83	0.995	pass	yes	
+wap_vmap3	294	7b47186e-61b8-47dc-bb10-fc7ac1b3f37b	AB_0084	AB_0134	within_vmap3	yes	0.999299	0.992976	3.28	0.995	pass	yes	
+wap_vmap3	294	b6a4995c-c443-43fa-8a39-7f5013e2e11b	ABD_0176	P1212A	cross	yes	0.999521	0.995577	3.19	0.995	pass	yes	
+wap_vmap3	3063	23fed671-6e6b-4656-9ee8-084bc6ff2a6f	ABD_0698	P1593A	cross	yes	0.979909	0.972746	3.26	0.995	fail	no	
+wap_vmap3	32	f905ea6e-e74a-4116-b017-80791051e418	ABD_0721	P1565A	cross	yes	0.999418	0.993632	3.59	0.995	pass	yes	
+wap_vmap3	324	c1589279-5011-460d-b615-5f10d6defd40	ABD_0200	P2047A	cross	yes	0.978386	0.970415	4.59	0.995	fail	no	
+wap_vmap3	3418	c4310d29-3a54-495b-ad44-99b583e20557	ABD_0771	P1543A	cross	yes	0.964794	0.95517	4.91	0.995	fail	no	
+wap_vmap3	3418	c4310d29-3a54-495b-ad44-99b583e20557	ABD_0182	ABD_0771	within_vmap3	yes	0.965119	0.956254	8.31	0.995	fail	no	
+wap_vmap3	3418	c4310d29-3a54-495b-ad44-99b583e20557	ABD_0182	P1543A	cross	yes	0.999589	0.994436	4.91	0.995	pass	yes	
+wap_vmap3	37	99860e5f-9f7c-45f1-b56f-c93baea79c6e	ABD_0344	P1015A	cross	yes	0.974411	0.966365	4.43	0.995	fail	no	
+wap_vmap3	3880	e62d2998-4e93-42ef-911d-dce3c0ff1032	ABD_0675	P1724A	cross	yes	0.999525	0.994845	3.2	0.995	pass	yes	
+wap_vmap3	39	f1729ed9-08d1-4fba-860b-ef281a5c2720	AB_0026	AB_0198	within_vmap3	yes	0.998714	0.991235	2.35	0.995	pass	no	
+wap_vmap3	399	5c7f9747-bb9e-4d58-8dc8-f33e86e2a855	ABD_0364	P2030A	cross	yes	0.999611	0.995155	4.09	0.995	pass	yes	
+wap_vmap3	4	cf0d3f9f-9b62-4fad-9027-5fe86163c03d	ABD_0707	P1594A	cross	yes	0.999579	0.994855	3.72	0.995	pass	yes	
+wap_vmap3	403	018a074f-5728-4a1c-907e-7e41a23b1deb	ABD_0291	P1658A	cross	yes	0.99927	0.993593	3.62	0.995	pass	yes	
+wap_vmap3	407-IV/60	065b7557-092c-4147-b2fc-7758503416b7	ABD_0257	P1387A	cross	yes	0.999386	0.994418	4.61	0.995	pass	yes	
+wap_vmap3	408-IV/61	2a6a2080-9ebd-4e06-a7a7-1c1e7ab4990d	ABD_0052	P2045A	cross	yes	0.999254	0.991845	3.5	0.995	pass	yes	
+wap_vmap3	4244	391b4501-4084-438b-a8c2-c21c41baa5dc	ABD_0753	P1760A	cross	yes	0.999586	0.9945	4.28	0.995	pass	yes	
+wap_vmap3	429	76f9cef1-ac20-48f5-91af-6f67d90f6a3d	ABD_0055	ABD_0057	within_vmap3	yes	0.979383	0.973256	9.97	0.995	fail	no	
+wap_vmap3	429	76f9cef1-ac20-48f5-91af-6f67d90f6a3d	ABD_0055	P2009A	cross	yes	0.979758	0.97299	4.09	0.995	fail	no	
+wap_vmap3	429	76f9cef1-ac20-48f5-91af-6f67d90f6a3d	ABD_0057	P2009A	cross	yes	0.999592	0.99497	4.09	0.995	pass	yes	
+wap_vmap3	432	7cc2037b-e980-4380-b3e6-f641f1911fe7	ABD_0701	P1660A	cross	yes	0.990772	0.983047	4.11	0.995	fail	no	
+wap_vmap3	4473	67bb2f26-9b23-467a-b24b-27c588b7ae40	ABD_0652	P1344A	cross	yes	0.999601	0.994628	4.18	0.995	pass	yes	
+wap_vmap3	448	d35d67af-3dd0-4d31-a239-41e338bf9ad3	ABD_0742	P1889A	cross	yes	0.999545	0.993952	4.16	0.995	pass	yes	
+wap_vmap3	451	73ddc863-9a03-4d54-8de3-13de4a63a69d	ABD_0656	P1522A	cross	yes	0.999598	0.995003	3.82	0.995	pass	yes	
+wap_vmap3	455	ade27cee-3b37-48dc-a5dd-e75c4f6782ad	ABD_0643	P0446	cross	yes	0.969691	0.958473	2.83	0.995	fail	no	
+wap_vmap3	4B269-10-10-15-2-3	34d61b8f-7f47-4e1f-a659-73818805058c	ABD_0463	P0272	cross	yes	0.987931	0.977833	3.48	0.995	fail	no	
+wap_vmap3	500	68c30396-40bd-4cdf-9e14-8d393097f467	ABD_0293	P1815A	cross	yes	0.999374	0.994101	3.97	0.995	pass	yes	
+wap_vmap3	510-I/1	270a6d83-c919-4121-82bf-793825ba376a	ABD_0258	P1127A	cross	yes	0.986295	0.978365	4.7	0.995	fail	no	
+wap_vmap3	520B	17293686-0e6c-42c1-a0ff-dd81804dd347	ABD_0253	P1797A	cross	yes	0.999519	0.994234	4.27	0.995	pass	yes	
+wap_vmap3	59	bdd58f62-30b1-4b19-989f-b840246b2e92	AB_0048	AB_0197	within_vmap3	yes	0.998247	0.988376	2.54	0.995	pass	no	
+wap_vmap3	600	dd7b96b1-be92-48ba-945f-1cbeb7182c99	ABD_0670	P1809A	cross	yes	0.999727	0.996418	3.77	0.995	pass	yes	
+wap_vmap3	6319	643a062b-795a-4d32-bf0d-b0039a26ff42	ABD_0677	P1412A	cross	yes	0.984957	0.97265	3.67	0.995	fail	no	
+wap_vmap3	6333	74e698fa-d2e2-4653-87d7-f303eaf529e3	ABD_0722	P1876A	cross	yes	0.976272	0.967323	3.92	0.995	fail	no	
+wap_vmap3	69Z108.1	946a0bd8-6d63-49bc-9642-6732935766fc	ABD_0260	P1827A	cross	yes	0.999058	0.993855	3.68	0.995	pass	yes	
+wap_vmap3	69Z108.127	76182a41-8b66-4d3d-9c10-f905fb049d1c	ABD_0264	P0007	cross	yes	0.994463	0.987878	2.75	0.995	fail	no	
+wap_vmap3	69Z2.102/85A	67ee5747-af1b-406a-9b09-5a2eaa4564a4	ABD_0266	P1666A	cross	yes	0.999276	0.993558	3.83	0.995	pass	yes	
+wap_vmap3	74	436a3b67-72b4-4aa6-9458-c0696ad87300	ABD_0285	P0907	cross	yes	0.999121	0.993361	3.22	0.995	pass	yes	
+wap_vmap3	79TK098-519A	5396871c-0f3d-419d-aa0e-36ac366d40bb	ABD_0685	P1752A	cross	yes	0.999606	0.994638	3.95	0.995	pass	yes	
+wap_vmap3	79TK104-552B	555b21c3-abce-4a6b-bc28-23d877be9c7b	ABD_0659	P1281A	cross	yes	0.999481	0.99421	3.31	0.995	pass	yes	
+wap_vmap3	79TK109-595	458fd867-d6d3-437d-b39f-12cd2e8edfab	ABD_0705	P1830A	cross	yes	0.999587	0.994275	4.41	0.995	pass	yes	
+wap_vmap3	79TK112-1067B	2bf315b0-ad88-487c-8838-b8b6728e8ee8	ABD_0106	P1811A	cross	yes	0.999537	0.994629	3.88	0.995	pass	yes	
+wap_vmap3	8241	e9fad6c6-792a-4556-8ee9-407d6fd78de8	ABD_0738	P1923A	cross	yes	0.99956	0.994402	3.88	0.995	pass	yes	
+wap_vmap3	8269	4f9c02ba-8290-495c-b712-586c37f14dff	ABD_0739	P1988A	cross	yes	0.999711	0.995275	4.66	0.995	pass	yes	
+wap_vmap3	84	7c0a17e8-59c2-4105-b164-7a4eda959c73	ABD_0634	P1493A	cross	yes	0.987685	0.980537	3.92	0.995	fail	no	
+wap_vmap3	84TK056-140.1	8615b89f-eacb-4a90-bcb0-385af930da3d	ABD_0754	P1829A	cross	yes	0.979655	0.971205	4.52	0.995	fail	no	
+wap_vmap3	84TK105-056.0	8d947587-380e-41b9-b652-680678fafa96	ABD_0696	P1849A	cross	yes	0.999453	0.993696	3.8	0.995	pass	yes	
+wap_vmap3	85	e564299f-91af-4d0e-ac31-2e883f419a15	AB_0076	AB_0142	within_vmap3	yes	0.998953	0.991644	2.9	0.995	pass	no	
+wap_vmap3	86PK1287-001.14	561d2cb2-b2cc-4336-a424-eb7e67c7e061	ABD_0759	P0970	cross	yes	0.999116	0.992077	3.48	0.995	pass	yes	
+wap_vmap3	86PK1304-001.00	86cc8825-8888-45b2-8571-3e5400059e38	ABD_0671	P1628A	cross	yes	0.999521	0.994623	3.33	0.995	pass	yes	
+wap_vmap3	86PK1305-001.00	a4ac2398-b119-4e10-bb81-066c5f57b97a	ABD_0716	P1413A	cross	yes	0.999589	0.994987	3.59	0.995	pass	yes	
+wap_vmap3	86PK1307-001.00	2a69e15b-956c-457f-98ae-d00fcfb6e466	ABD_0734	P1771A	cross	yes	0.999619	0.995448	3.81	0.995	pass	yes	
+wap_vmap3	86PK1308-001.07	f209423f-7fe9-4a66-a57f-913970410e39	ABD_0715	P1638A	cross	yes	0.999554	0.994715	3.55	0.995	pass	yes	
+wap_vmap3	86PK1308-001.11	2484a1c6-d9c2-4d08-acdb-62247aeb50c0	ABD_0702	P1483A	cross	yes	0.985155	0.978878	4.01	0.995	fail	no	
+wap_vmap3	8916-1	bb21cacb-18da-4020-9c2e-65e97d9d0226	ABD_0741	P2032A	cross	yes	0.999721	0.995416	4.7	0.995	pass	yes	
+wap_vmap3	8916-2	99e35e1e-7b69-4270-909d-0f8edd52b150	ABD_0647	P1639A	cross	yes	0.999475	0.994284	3.55	0.995	pass	yes	
+wap_vmap3	9	8099e6b0-992b-4f58-869e-9bb6830c92c0	AB_0044	AB_0195	within_vmap3	yes	0.998119	0.988112	2.73	0.995	pass	no	
+wap_vmap3	911-IX/4	9417a874-5822-4588-9c76-9214f8f1c426	ABD_0259	P1997A	cross	yes	0.999524	0.994086	5.2	0.995	pass	yes	
+wap_vmap3	914R1	dde6cc53-1390-4cf4-bdfa-e4bc227fef31	ABD_0063	ABD_0066	within_vmap3	yes	0.969305	0.961275	9.62	0.995	fail	no	
+wap_vmap3	914R1	dde6cc53-1390-4cf4-bdfa-e4bc227fef31	ABD_0063	P1874A	cross	yes	0.969476	0.960979	3.66	0.995	fail	no	
+wap_vmap3	914R1	dde6cc53-1390-4cf4-bdfa-e4bc227fef31	ABD_0066	P1874A	cross	yes	0.999616	0.994986	3.66	0.995	pass	yes	
+wap_vmap3	93	22cb1863-1a5b-429e-9644-cef6638928b9	ABD_0076	P1461A	cross	yes	0.999572	0.994876	3.64	0.995	pass	yes	
+wap_vmap3	9648	3ab0e54a-aa5f-440b-bc83-6346daa954a7	ABD_0240	P1879A	cross	yes	0.994388	0.988539	4.3	0.995	fail	no	
+wap_vmap3	A+24	301a3baa-076e-4215-843c-c385ee8240f1	AB_0024	AB_0184	within_vmap3	yes	0.998721	0.990086	2.79	0.995	pass	no	
+wap_vmap3	A+25	03224599-278b-492a-b5f0-2bb250eea3d9	AB_0049	AB_0188	within_vmap3	yes	0.998773	0.990127	3.32	0.995	pass	no	
+wap_vmap3	A+63	2a82cbcb-636a-40ba-88a7-edced70cf4c0	AB_0030	AB_0189	within_vmap3	yes	0.998277	0.989395	2.46	0.995	pass	no	
+wap_vmap3	Abbondanza	de79c1cc-18e9-4bcd-9872-2c4894ccc5bc	ABD_1078	P1162A	cross	yes	0.999606	0.994699	3.99	0.995	pass	yes	
+wap_vmap3	Above	6628a02c-b6c9-481c-8671-91634c48b1f3	ABD_0564	P1072A	cross	yes	0.999488	0.993088	4.46	0.995	pass	yes	
+wap_vmap3	Afrikanski	09b17a91-d65d-4a04-b23d-6ee41dee0ed8	AB_0122	P2029A	cross	yes	0.982652	0.973661	2.13	0.995	fail	no	
+wap_vmap3	Aifeng 3	f59270d1-1e29-4d81-830a-e3f01011355b	ABD_1140	P0412	cross	yes	0.999323	0.994008	3.2	0.995	pass	yes	
+wap_vmap3	Akagomughi	a6e17094-2c05-4d68-943a-9a077de63eed	ABD_1089	P0720	cross	yes	0.982934	0.973992	3.19	0.995	fail	no	
+wap_vmap3	Alas	57a0b7d9-8ce1-409d-8f69-14fbcf41817c	AB_0067	AB_0161	within_vmap3	yes	0.998941	0.992896	2.23	0.995	pass	no	
+wap_vmap3	Albania V	b980b01c-6575-4e39-b434-a8240ef0677e	ABD_0256	P1744A	cross	yes	0.996347	0.990151	3.19	0.995	pass	no	
+wap_vmap3	Aleppo 1	0afa0d69-a377-4f42-b38c-f4b1af402b67	ABD_0600	P1251A	cross	yes	0.970401	0.962758	3.71	0.995	fail	no	
+wap_vmap3	Alhama	4bf5c71e-825e-4965-9145-b2498f70e980	ABD_0186	P1262A	cross	yes	0.970163	0.961127	3.57	0.995	fail	no	
+wap_vmap3	Alice	19c3650e-f5e3-4d5f-8c72-d22d917a91ca	ABD_0523	P0911	cross	yes	0.999063	0.992625	2.79	0.995	pass	yes	
+wap_vmap3	Alliance	f3322ed5-884f-4f74-82a8-4d28dd3d0102	ABD_0607	P1371A	cross	yes	0.999454	0.993862	3.47	0.995	pass	yes	
+wap_vmap3	Ankor	f3d9e520-fd11-4102-8916-df15b6db4009	ABD_0599	P1576A	cross	yes	0.96648	0.958504	3.19	0.995	fail	no	
+wap_vmap3	Antelope	16fb14cf-e77f-4db7-afdb-a9338e8f4a3f	ABD_0529	P0927	cross	yes	0.999276	0.993165	3.55	0.995	pass	yes	
+wap_vmap3	Arlin	b7768102-6d7c-48a1-9680-21d172b26f76	ABD_0553	P0997	cross	yes	0.999261	0.993139	3.07	0.995	pass	yes	
+wap_vmap3	Arrowsmith	db7bfd6a-0643-4019-a011-47a14117e7d5	ABD_0635	P1259A	cross	yes	0.999469	0.993748	3.84	0.995	pass	yes	
+wap_vmap3	Australith	44ddadf7-536c-4454-a956-a0da4133f891	ABD_0363	P1589A	cross	yes	0.975467	0.967566	3.64	0.995	fail	no	
+wap_vmap3	B 192	0ba30550-ab8f-4353-8e88-3f7eca18e863	ABD_0183	P1873A	cross	yes	0.996867	0.991561	3.74	0.995	pass	no	
+wap_vmap3	B-872	e78430fd-8e29-455f-aee2-9599090ec42c	ABD_0688	P1848A	cross	yes	0.999535	0.994452	3.42	0.995	pass	yes	
+wap_vmap3	B-938	2329226d-efdd-4047-ad17-ae97b9d3c929	ABD_0706	P1966A	cross	yes	0.996195	0.990297	3.77	0.995	pass	no	
+wap_vmap3	B-941	e740c33f-c2cb-4d52-a082-a80ab0b89754	ABD_0718	P1831A	cross	yes	0.998516	0.993151	3.16	0.995	pass	no	
+wap_vmap3	BW23924	1dce1226-1a08-48a6-aa81-9a292ddcb70e	D_0040	D_0253	within_vmap3	yes	0.990798	0.951079	7.82	0.995	fail	no	
+wap_vmap3	BW23925	d6f4d91a-7ccd-4988-9a1b-158979bde11f	D_0043	D_0254	within_vmap3	yes	0.999412	0.990487	5.17	0.995	pass	yes	
+wap_vmap3	BW_01003	4a80254b-228c-4d84-8ae7-284feef456c3	D_0036	D_0064	within_vmap3	yes	0.999439	0.991054	8.57	0.995	pass	yes	
+wap_vmap3	BW_01098	36ddc07d-19ab-4eb0-bdc9-888c07c7f5a8	D_0031	D_0135	within_vmap3	yes	0.999353	0.990594	9.01	0.995	pass	yes	
+wap_vmap3	BaiBianSui	dcfd75c6-cf4f-4f80-bae2-7fcfd75006dc	ABD_0934	P1859A	cross	yes	0.99511	0.979516	4.09	0.995	pass	no	
+wap_vmap3	BaiDaTou	6e629402-0f95-4ee4-b874-b2103c43d53f	ABD_0857	P1585A	cross	yes	0.971866	0.963113	3.22	0.995	fail	no	
+wap_vmap3	BaiGeDa	a3b39495-8a6a-48bf-a768-f5e70f42eb57	ABD_0609	P1043A	cross	yes	0.999722	0.996135	4.56	0.995	pass	yes	
+wap_vmap3	BaiHuoMai	476ef1b8-9011-4878-aff9-ead56bee4a9b	ABD_0929	P1236A	cross	yes	0.988576	0.983675	3.33	0.995	fail	no	
+wap_vmap3	BaiMangXiaoMai	f4fe8359-b0f7-4822-8c1f-ce9a0ec62bc5	ABD_0978	P1462A	cross	yes	0.999718	0.996331	3.75	0.995	pass	yes	
+wap_vmap3	BaiQiuMai	56b335f6-5f8a-407f-afdf-e2d89a0ac606	ABD_0138	P1924A	cross	yes	0.981319	0.973237	3.92	0.995	fail	no	
+wap_vmap3	Baihuamai	e724dc52-9e4c-46ef-a3af-80df16bfb7e0	ABD_1126	P1597A	cross	yes	0.997101	0.989721	3.18	0.995	pass	no	
+wap_vmap3	Baimazha	2012480d-6229-47b3-9909-f67517e0f74d	ABD_1125	P1173A	cross	yes	0.999673	0.995719	3.39	0.995	pass	yes	
+wap_vmap3	Bainong 3217	8461193a-05f8-4266-87bd-4ebfb16adf87	ABD_0957	ABD_1030	within_vmap3	yes	0.999763	0.995409	6.73	0.995	pass	yes	
+wap_vmap3	Barabas-Fele	56b2b1cb-4353-447e-9993-2807ad7a7120	ABD_0072	P1921A	cross	yes	0.998262	0.986444	3.46	0.995	pass	no	
+wap_vmap3	Barabas-Fele	56b2b1cb-4353-447e-9993-2807ad7a7120	ABD_0072	ABD_0244	within_vmap3	yes	0.998341	0.987122	10.32	0.995	pass	no	
+wap_vmap3	Barabas-Fele	56b2b1cb-4353-447e-9993-2807ad7a7120	ABD_0244	P1921A	cross	yes	0.999427	0.994365	3.46	0.995	pass	yes	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_0958	P0961	cross	yes	0.99707	0.991518	3.78	0.995	pass	no	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_1076	P0961	cross	yes	0.997224	0.992266	3.78	0.995	pass	no	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_0131	ABD_0958	within_vmap3	yes	0.998217	0.99324	6.86	0.995	pass	no	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_0131	ABD_1076	within_vmap3	yes	0.998244	0.993858	8.68	0.995	pass	no	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_0131	P0961	cross	yes	0.998829	0.992788	3.78	0.995	pass	no	
+wap_vmap3	BeiJing8	b3b65320-df9d-4983-8c8a-728c86274cce	ABD_0958	ABD_1076	within_vmap3	yes	0.999518	0.995906	6.86	0.995	pass	yes	
+wap_vmap3	Bekaa	cc3aae24-382b-4e2a-8908-865914edf950	ABD_0325	ABD_0341	within_vmap3	yes	0.978744	0.966231	11.18	0.995	fail	no	
+wap_vmap3	BenDiHuangHua	2365c8b1-fd36-47cb-982a-507a1742111b	ABD_0974	P2051A	cross	yes	0.999794	0.996263	5.84	0.995	pass	yes	
+wap_vmap3	BenDiHuangHua	2365c8b1-fd36-47cb-982a-507a1742111b	ABD_0167	P2051A	cross	yes	0.99981	0.996674	5.88	0.995	pass	yes	
+wap_vmap3	BenDiHuangHua	2365c8b1-fd36-47cb-982a-507a1742111b	ABD_0167	ABD_0974	within_vmap3	yes	0.999823	0.996784	5.84	0.995	pass	yes	
+wap_vmap3	Betty	88e79e6a-5817-4b45-b409-ad1a61a2a5df	ABD_0582	P1021A	cross	yes	0.999552	0.994258	3.78	0.995	pass	yes	
+wap_vmap3	BianBaChunMai6	312d7d4e-5902-439b-8c75-ee59976114b6	ABD_0977	P1631A	cross	yes	0.999598	0.995782	3.22	0.995	pass	yes	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	P1134A	P1427A	within_wap	yes	0.998778	0.994084	4.07	0.995	pass	no	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	ABD_0947	P1134A	cross	yes	0.998895	0.994484	5.12	0.995	pass	no	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	ABD_1071	P1134A	cross	yes	0.998916	0.994945	5.12	0.995	pass	no	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	ABD_0947	P1427A	cross	yes	0.999682	0.995527	4.07	0.995	pass	yes	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	ABD_1071	P1427A	cross	yes	0.99973	0.996011	4.07	0.995	pass	yes	
+wap_vmap3	Bima 4	c26566ac-12b3-45b4-b3ba-d69c027ce187	ABD_0947	ABD_1071	within_vmap3	yes	0.999851	0.996503	7.24	0.995	pass	yes	
+wap_vmap3	Bima1	90f23245-d8a7-4491-9ca1-71e42019de60	ABD_1009	P1167A	cross	yes	0.995532	0.990751	3.82	0.995	pass	no	
+wap_vmap3	Blaue Dame	316f08d5-c9a7-49de-9972-05b06c97b2f3	ABD_0248	P2070A	cross	yes	0.999396	0.994187	3.65	0.995	pass	yes	
+wap_vmap3	Bond CL	9c3330ec-fc4d-44e2-9a50-564fc9c41ed9	ABD_0626	P1160A	cross	yes	0.999591	0.994264	4.36	0.995	pass	yes	
+wap_vmap3	Brkulja	73f51f91-e805-4b8d-a7f9-c2ef974a38d7	ABD_0059	ABD_0226	within_vmap3	yes	0.990948	0.981071	9.12	0.995	fail	no	
+wap_vmap3	Burchett	3593ad93-5f78-4c85-9077-67f0c111e822	ABD_0546	P0892	cross	yes	0.980124	0.970951	2.5	0.995	fail	no	
+wap_vmap3	Burgoyne Fife	f9a1c5bb-fed3-43c6-b8ee-8e470b7c0021	ABD_0204	P1969A	cross	yes	0.999387	0.993735	3.98	0.995	pass	yes	
+wap_vmap3	C 10859	cf87f483-79ef-4c33-b358-ca52a3404e94	ABD_0214	P1136A	cross	yes	0.993862	0.98882	4.19	0.995	fail	no	
+wap_vmap3	C 10866	1630ccbe-6f7c-4549-98a7-e4eff464376c	ABD_0215	P1973A	cross	yes	0.999362	0.993404	3.9	0.995	pass	yes	
+wap_vmap3	C 9968	9d72599b-686a-4add-97a0-9f04b5350434	ABD_0213	P1678A	cross	yes	0.999201	0.993696	3.81	0.995	pass	yes	
+wap_vmap3	C-1	5fc13195-8409-45f4-9b40-2febefefe7f7	ABD_0653	P1556A	cross	yes	0.999493	0.994127	3.61	0.995	pass	yes	
+wap_vmap3	C104	ddb295f4-f570-4452-932a-21b18645beb5	ABD_0470	P0544	cross	yes	0.998855	0.990767	2.99	0.995	pass	no	
+wap_vmap3	CI 2608	7f970ed9-f39f-46a3-92f6-d856fc20943f	ABD_0096	P1277A	cross	yes	0.97134	0.963037	3.25	0.995	fail	no	
+wap_vmap3	CI 2804	19f04e69-e7df-4239-9e37-b5b140f55c8c	ABD_0088	ABD_0188	within_vmap3	yes	0.999644	0.995186	10.51	0.995	pass	yes	
+wap_vmap3	CItr 4075	c8655e07-8b83-4ad9-bb9c-127694cd8d92	ABD_0197	P1788A	cross	yes	0.999319	0.993815	3.36	0.995	pass	yes	
+wap_vmap3	CItr 5478	adf6042a-4e25-4c90-aebf-b0e9b5ebd2ce	ABD_0070	P1590A	cross	yes	0.972112	0.963463	3.56	0.995	fail	no	
+wap_vmap3	CItr 5478	adf6042a-4e25-4c90-aebf-b0e9b5ebd2ce	ABD_0067	ABD_0070	within_vmap3	yes	0.974034	0.965784	9.6	0.995	fail	no	
+wap_vmap3	CItr 5478	adf6042a-4e25-4c90-aebf-b0e9b5ebd2ce	ABD_0067	P1590A	cross	yes	0.975708	0.96697	3.56	0.995	fail	no	
+wap_vmap3	Cankiri	37304fa2-86ad-4162-b355-443a9890cbc6	ABD_0732	P1753A	cross	yes	0.999509	0.994426	3.72	0.995	pass	yes	
+wap_vmap3	Chanbuzhi	98331ac1-fa9e-4b1b-90e7-230aeb9e1305	ABD_1118	P1329A	cross	yes	0.999752	0.997013	3.58	0.995	pass	yes	
+wap_vmap3	Chang6154	fd7c68cf-0d1a-4aa9-9630-218afebd431c	ABD_0541	ABD_0557	within_vmap3	yes	0.982703	0.974046	7.1	0.995	fail	no	
+wap_vmap3	Chang6154	fd7c68cf-0d1a-4aa9-9630-218afebd431c	ABD_0541	P0994	cross	yes	0.982717	0.972781	3.89	0.995	fail	no	
+wap_vmap3	Chang6154	fd7c68cf-0d1a-4aa9-9630-218afebd431c	ABD_0557	P0994	cross	yes	0.999343	0.993266	3.89	0.995	pass	yes	
+wap_vmap3	Chang6359	215e9a33-3235-4438-ae2d-ef9e02fe91a5	ABD_0758	P0856	cross	yes	0.999032	0.991693	2.92	0.995	pass	yes	
+wap_vmap3	ChangHe24	977ebc77-c0ca-4854-8498-28025a8310cb	ABD_0456	P0207	cross	yes	0.998894	0.992067	3.27	0.995	pass	no	
+wap_vmap3	ChangZhi6406	e0d1486b-2745-42b9-a507-dc84bcf13347	ABD_0128	ABD_0943	within_vmap3	yes	0.995051	0.988773	6.81	0.995	pass	no	
+wap_vmap3	Chengduguangtou	4e8f618b-c078-4015-b551-278e70149f53	ABD_1075	P1524A	cross	yes	0.999906	0.998856	4.07	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	CS_sg_2014_3X	P1359A	cross	yes	0.999067	0.99783	2.55	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_0749	CS_sg_2014_3X	within_vmap3	yes	0.999097	0.997911	2.55	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	CS_sg_2014_3X	CS_sg_2017_60X	within_vmap3	yes	0.999101	0.998143	2.55	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_1090	CS_sg_2014_3X	within_vmap3	yes	0.999103	0.99804	2.55	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_0749	P1359A	cross	yes	0.999919	0.999203	4.13	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	CS_sg_2017_60X	P1359A	cross	yes	0.999922	0.999407	4.13	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_1090	P1359A	cross	yes	0.999936	0.999346	4.13	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_0749	CS_sg_2017_60X	within_vmap3	yes	0.999949	0.999467	7.82	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_0749	ABD_1090	within_vmap3	yes	0.999965	0.999405	7.82	0.995	pass	yes	
+wap_vmap3	Chinese Spring	7980618e-de83-404a-b8bc-4fe782548e9f	ABD_1090	CS_sg_2017_60X	within_vmap3	yes	0.99997	0.999559	13.39	0.995	pass	yes	
+wap_vmap3	ChuShanBao	efdd66ef-d4ab-4675-9a7a-c272241ef729	ABD_0137	P1758A	cross	yes	0.983906	0.969044	3.36	0.995	fail	no	
+wap_vmap3	ChuShanBao	efdd66ef-d4ab-4675-9a7a-c272241ef729	ABD_0137	ABD_0140	within_vmap3	yes	0.988483	0.970988	8.97	0.995	fail	no	
+wap_vmap3	ChuShanBao	efdd66ef-d4ab-4675-9a7a-c272241ef729	ABD_0140	P1758A	cross	yes	0.99634	0.985795	3.36	0.995	pass	no	
+wap_vmap3	Ciento Cinquento	fd5de820-015b-43da-99b7-b46728acfada	ABD_0230	P1985A	cross	yes	0.999502	0.994074	5.04	0.995	pass	yes	
+wap_vmap3	Cisco	431a5d7c-3e99-476d-b99a-cd14382c2d4d	ABD_0530	P0810	cross	yes	0.999117	0.992832	3.04	0.995	pass	yes	
+wap_vmap3	Cologna Veneto	39f557f2-8eac-4dd6-98b5-8bb30b4500d2	ABD_0206	P2061A	cross	yes	0.991494	0.984847	3.61	0.995	fail	no	
+wap_vmap3	Cologna Veneto	39f557f2-8eac-4dd6-98b5-8bb30b4500d2	ABD_0084	ABD_0206	within_vmap3	yes	0.998762	0.989786	9.61	0.995	pass	no	
+wap_vmap3	Cologna Veneto	39f557f2-8eac-4dd6-98b5-8bb30b4500d2	ABD_0084	P2061A	cross	yes	0.999078	0.989552	3.61	0.995	pass	yes	
+wap_vmap3	Cougar	9680e401-dfe2-4f92-88ae-c0f1936de2eb	ABD_0613	P1291A	cross	yes	0.999365	0.992692	3.51	0.995	pass	yes	
+wap_vmap3	Crete 15	ffd43116-4e42-49b5-80e0-3f610c5b459d	ABD_0247	P1657A	cross	yes	0.99916	0.993016	3.18	0.995	pass	yes	
+wap_vmap3	Crimson	2b6872aa-a4fc-4110-803f-bc198414cb5e	ABD_0537	P0958	cross	yes	0.998645	0.991703	2.48	0.995	pass	no	
+wap_vmap3	Cutter	ba4204aa-1f6f-4f94-bd3d-1c833bd9f00b	ABD_0565	P1019A	cross	yes	0.999551	0.994156	3.94	0.995	pass	yes	
+wap_vmap3	Cyprus 2	f1b411ba-52b1-42ab-baf1-3f14f3b81bf3	ABD_0365	P1796A	cross	yes	0.999418	0.993786	3.79	0.995	pass	yes	
+wap_vmap3	D7502	4e503ca2-e71c-47d5-bb83-d02a434311e8	ABD_0326	ABD_0342	within_vmap3	yes	0.972068	0.96508	10.69	0.995	fail	no	
+wap_vmap3	DaBaiMai	cb667bd2-fb45-45be-9d38-52ce2b75b55d	ABD_0854	P1096A	cross	yes	0.973169	0.964809	3.52	0.995	fail	no	
+wap_vmap3	DaKouMai	b16116f2-9dc1-4768-bdb1-097979c5f23e	ABD_0143	P1473A	cross	yes	0.986547	0.980568	3.51	0.995	fail	no	
+wap_vmap3	DaKouMai	b16116f2-9dc1-4768-bdb1-097979c5f23e	ABD_0143	ABD_0146	within_vmap3	yes	0.986611	0.980709	9.09	0.995	fail	no	
+wap_vmap3	DaKouMai	b16116f2-9dc1-4768-bdb1-097979c5f23e	ABD_0146	P1473A	cross	yes	0.999748	0.996157	3.51	0.995	pass	yes	
+wap_vmap3	DaLi1	c925b002-1ba3-4d05-be5f-d76499348ef0	ABD_0515	P0674A	cross	yes	0.999637	0.99374	5.01	0.995	pass	yes	
+wap_vmap3	DaLiBanMang	e2d2f717-a9d7-4810-82c0-373b2ec46507	ABD_0935	P1739A	cross	yes	0.999633	0.994831	3.97	0.995	pass	yes	
+wap_vmap3	DaYuHua	34837b8d-1f5a-4b78-80c7-864bda629169	ABD_0159	P1608A	cross	yes	0.999627	0.996194	3.22	0.995	pass	yes	
+wap_vmap3	Damaskus 6	5502b1b9-c04a-4391-a7f6-fd9ae4213697	ABD_0612	P1336A	cross	yes	0.999534	0.994237	4.15	0.995	pass	yes	
+wap_vmap3	Defiance	f4aa1d47-3b0e-4f42-96a2-b242733f85a3	ABD_0198	P1748A	cross	yes	0.99959	0.995763	3.17	0.995	pass	yes	
+wap_vmap3	DianXiHongKeYangMai	f10301b9-7b4a-41c4-84c8-7cc9be5bafbc	ABD_0172	P1069A	cross	yes	0.999693	0.996013	3.91	0.995	pass	yes	
+wap_vmap3	Dikwa 39	0b9615a4-e9ca-493d-825a-86f4648cf5d9	ABD_0278	P1062A	cross	yes	0.999684	0.995932	4.2	0.995	pass	yes	
+wap_vmap3	DingXingZhai	d0800834-d56a-4169-b4f5-b612fbef166a	ABD_0928	P1485A	cross	yes	0.999644	0.995873	3.32	0.995	pass	yes	
+wap_vmap3	ELS 6404-129-2	c9055a27-d259-4ee5-a708-3a7c409bf092	AB_0066	AB_0128	within_vmap3	yes	0.998667	0.991318	2.35	0.995	pass	no	
+wap_vmap3	Early Premium	8b094d24-79bd-40e3-a2fd-4a049568c59a	ABD_1070	P1364A	cross	yes	0.990574	0.979724	3.4	0.995	fail	no	
+wap_vmap3	EnMai4	f1f5bbeb-9371-4ec9-a0ee-f3c4866c9d98	ABD_0945	P0952	cross	yes	0.999186	0.992513	3.9	0.995	pass	yes	
+wap_vmap3	Endurance	b3d39153-0a47-48d8-a169-0d59557cd251	ABD_0563	P1054A	cross	yes	0.999582	0.994198	3.88	0.995	pass	yes	
+wap_vmap3	ErMangMai	3d859ac8-cc52-4564-a30d-f83447eeef71	ABD_0598	P1119A	cross	yes	0.999684	0.99613	3.43	0.995	pass	yes	
+wap_vmap3	F-58	2f3ac788-6c20-431e-a846-35b7a524c645	AB_0040	AB_0193	within_vmap3	yes	0.996846	0.983784	2.33	0.995	pass	no	
+wap_vmap3	FAO 33.213	434fa320-29ed-4086-bb17-a0212249c36c	ABD_0669	P1538A	cross	yes	0.989844	0.978985	3.87	0.995	fail	no	
+wap_vmap3	FAO 33.214	9da420d8-fd6c-4446-8538-6407239c129c	ABD_0608	P1182A	cross	yes	0.999567	0.995137	3.4	0.995	pass	yes	
+wap_vmap3	FL Col 4408	3eb6ed05-73a5-43df-b5bf-73767198329e	ABD_0220	P1767A	cross	yes	0.983121	0.976509	3.31	0.995	fail	no	
+wap_vmap3	Fan 6	70d6afb3-b4c0-4d88-b9f6-152c04746f59	ABD_0950	P0690A	cross	yes	0.998912	0.993619	4.73	0.995	pass	no	
+wap_vmap3	Fan 6	70d6afb3-b4c0-4d88-b9f6-152c04746f59	ABD_0950	ABD_1081	within_vmap3	yes	0.999048	0.994631	5.91	0.995	pass	yes	
+wap_vmap3	Fan 6	70d6afb3-b4c0-4d88-b9f6-152c04746f59	ABD_1081	P0690A	cross	yes	0.999715	0.995137	4.73	0.995	pass	yes	
+wap_vmap3	FengChan3	1f83b86f-264b-4fc2-b10a-12b83b544b4a	ABD_0948	P1417A	cross	yes	0.999699	0.996436	3.25	0.995	pass	yes	
+wap_vmap3	FengChan3	1f83b86f-264b-4fc2-b10a-12b83b544b4a	ABD_1017	P1417A	cross	yes	0.999734	0.99646	3.25	0.995	pass	yes	
+wap_vmap3	FengChan3	1f83b86f-264b-4fc2-b10a-12b83b544b4a	ABD_0948	ABD_1017	within_vmap3	yes	0.999888	0.997104	7.3	0.995	pass	yes	
+wap_vmap3	FengMai11	36f05e2e-b731-4407-a24b-d69fb75e8823	ABD_0116	P1149A	cross	yes	0.976157	0.967621	3.57	0.995	fail	no	
+wap_vmap3	Floransa	9fc71ab5-4bfb-43fd-bccc-d1a1750e6d1a	ABD_0617	P1377A	cross	yes	0.999539	0.994211	4.04	0.995	pass	yes	
+wap_vmap3	Floransa B	c83b281a-f02c-417f-b817-f2753d200c70	ABD_0695	P1761A	cross	yes	0.97056	0.962608	4.16	0.995	fail	no	
+wap_vmap3	Forma Vinda de Varmland	d1f4756f-da92-4ed6-a8d1-a6d7ef27a935	ABD_0237	P1938A	cross	yes	0.999448	0.994492	3.33	0.995	pass	yes	
+wap_vmap3	Forma Vinda de Varmland	d1f4756f-da92-4ed6-a8d1-a6d7ef27a935	ABD_0099	P1938A	cross	yes	0.99951	0.994548	3.33	0.995	pass	yes	
+wap_vmap3	Forma Vinda de Varmland	d1f4756f-da92-4ed6-a8d1-a6d7ef27a935	ABD_0099	ABD_0237	within_vmap3	yes	0.999649	0.995455	9.8	0.995	pass	yes	
+wap_vmap3	Funo	e2dc0f5b-e9f7-4173-9515-489c2e7bcbc9	ABD_0083	ABD_1068	within_vmap3	yes	0.980411	0.972135	11.01	0.995	fail	no	
+wap_vmap3	Funo	e2dc0f5b-e9f7-4173-9515-489c2e7bcbc9	ABD_0083	P1042A	cross	yes	0.980651	0.972023	3.76	0.995	fail	no	
+wap_vmap3	Funo	e2dc0f5b-e9f7-4173-9515-489c2e7bcbc9	ABD_1068	P1042A	cross	yes	0.999627	0.994862	3.76	0.995	pass	yes	
+wap_vmap3	G1392	f332273c-d04b-4946-b121-cd6231306e76	AB_0023	AB_0170	within_vmap3	yes	0.999081	0.992954	2.43	0.995	pass	yes	
+wap_vmap3	G2045	ef9c1b57-67d9-403a-a527-f4d011c00c7b	AB_0041	AB_0203	within_vmap3	yes	0.998987	0.99232	2.34	0.995	pass	no	
+wap_vmap3	G2046	6de5b495-4ae6-4a24-a4b3-3af49b1db2cf	AB_0050	AB_0171	within_vmap3	yes	0.998818	0.991521	2.76	0.995	pass	no	
+wap_vmap3	G2076	e8caac2c-59ab-4d38-849d-7f664d786281	AB_0033	AB_0172	within_vmap3	yes	0.998994	0.993559	2.04	0.995	pass	no	
+wap_vmap3	G2141	3ec5f9f2-624f-4ed8-9012-97a31557ed05	AB_0038	AB_0174	within_vmap3	yes	0.999082	0.991885	3.39	0.995	pass	yes	
+wap_vmap3	G3011	28ae289f-183c-4b61-ac90-666b9d0eec02	AB_0032	AB_0176	within_vmap3	yes	0.999226	0.993701	2.54	0.995	pass	yes	
+wap_vmap3	G3030	09cae82f-0eb8-4a0d-a697-b8be23d23c81	AB_0029	AB_0177	within_vmap3	yes	0.998717	0.991441	2.27	0.995	pass	no	
+wap_vmap3	G3078	2f745994-46de-4c41-b5c5-c295dd4f8ceb	AB_0042	AB_0204	within_vmap3	yes	0.998616	0.989916	2.6	0.995	pass	no	
+wap_vmap3	G3106	6a4964cb-f54c-4104-a9b9-a93110b3f57e	AB_0031	AB_0179	within_vmap3	yes	0.99885	0.990751	2.89	0.995	pass	no	
+wap_vmap3	GR 2	50771859-0882-4d3b-8640-2e85a1865c05	ABD_0218	P1370A	cross	yes	0.999448	0.994376	3.91	0.995	pass	yes	
+wap_vmap3	Galway Land Wheat	9457df8a-5b5a-4b8f-bb3f-746b07eb257b	ABD_0179	P1821A	cross	yes	0.967522	0.959491	4.2	0.995	fail	no	
+wap_vmap3	Gandom	02172c75-3280-4447-a7d4-ae5613d1bbe8	ABD_0757	P1582A	cross	yes	0.991942	0.985875	3.86	0.995	fail	no	
+wap_vmap3	Gandom-i-Safade	9a82474f-d2f4-428f-945c-1977f82621a0	ABD_0624	P1507A	cross	yes	0.9996	0.995355	3.87	0.995	pass	yes	
+wap_vmap3	Gandom-i-Safadek	a56325aa-5b3a-4015-9edf-edf23a78928f	ABD_0731	P1903A	cross	yes	0.999554	0.99494	3.17	0.995	pass	yes	
+wap_vmap3	Gandum	d0a2f6db-b444-4768-a500-bf663a9be54c	ABD_0708	P1935A	cross	yes	0.999442	0.99439	3.47	0.995	pass	yes	
+wap_vmap3	Ganmai 8	1a633b33-b551-4e9e-bba1-dc3ada82a9ad	ABD_1019	P1346A	cross	yes	0.999655	0.994802	4.33	0.995	pass	yes	
+wap_vmap3	GaoMai8901	265cef20-ffb4-4c2a-8aa0-ace1d8b45f22	ABD_0472	P0134	cross	yes	0.980591	0.970602	2.97	0.995	fail	no	
+wap_vmap3	GaoYuan506	eb6be6c2-f803-4171-a5af-45c507724f75	ABD_0120	P1123A	cross	yes	0.997915	0.992453	4.8	0.995	pass	no	
+wap_vmap3	Gaocheng 8901	30aacc72-d9f7-493a-93aa-9f7a6a7916de	ABD_1093	P0728	cross	yes	0.994865	0.980004	4.54	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	ABD_0478	P0608	cross	yes	0.979928	0.96979	3.22	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	ABD_1050	P0608	cross	yes	0.982242	0.97385	3.22	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	P0608	P0798	within_wap	yes	0.982691	0.973192	3.22	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	ABD_0478	P0798	cross	yes	0.983858	0.974392	3.5	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	ABD_0478	ABD_1050	within_vmap3	yes	0.987015	0.979163	7.44	0.995	fail	no	
+wap_vmap3	Gaoyou 503	ba7c12f5-a0b7-41c8-b5e8-47de373df0e8	ABD_1050	P0798	cross	yes	0.989263	0.982274	3.5	0.995	fail	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0217	P2033A	cross	yes	0.97292	0.964103	4.12	0.995	fail	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0053	P2033A	cross	yes	0.974465	0.964995	3.49	0.995	fail	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0060	P2033A	cross	yes	0.976058	0.964914	4.12	0.995	fail	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0053	ABD_0217	within_vmap3	yes	0.992229	0.985445	3.49	0.995	fail	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0060	ABD_0217	within_vmap3	yes	0.997898	0.990074	10.47	0.995	pass	no	
+wap_vmap3	Goiana	3d4958b6-cdb9-4fb9-ad68-20a5260a3a98	ABD_0053	ABD_0060	within_vmap3	yes	0.999308	0.990309	3.49	0.995	pass	yes	
+wap_vmap3	Goodstreak	83335804-25b7-4046-9064-7e49423b6e61	ABD_0666	P1537A	cross	yes	0.999518	0.994166	4.13	0.995	pass	yes	
+wap_vmap3	Grande del Norte	59e62845-df10-4c1c-87f7-93d4724b0267	ABD_0177	P1126A	cross	yes	0.9905	0.984637	4	0.995	fail	no	
+wap_vmap3	Guang Siu Zi	74288e1d-ba9f-4e9f-b820-f24061fe1605	ABD_0686	P2008A	cross	yes	0.99976	0.996303	4.37	0.995	pass	yes	
+wap_vmap3	Hallam	fe5edf82-d0db-437f-a9f3-201f0fa57205	ABD_0619	P1242A	cross	yes	0.999569	0.994081	4.22	0.995	pass	yes	
+wap_vmap3	Halt	143b5dcd-5246-403d-b299-d17b9ebdc02e	ABD_0591	P1006A	cross	yes	0.982457	0.973881	3.69	0.995	fail	no	
+wap_vmap3	Han4589	6250e7eb-8741-422a-bd36-9bcc83beedd5	ABD_0447	P0083	cross	yes	0.998697	0.990564	3.01	0.995	pass	no	
+wap_vmap3	HanMai13	daf37239-2786-4420-aafa-84cec345ec3a	ABD_0467	P0124	cross	yes	0.998822	0.990958	2.93	0.995	pass	no	
+wap_vmap3	HanZhongBai	76b60e0f-b107-45f5-9301-301bf6aa7f56	ABD_0161	ABD_0164	within_vmap3	yes	0.985675	0.976913	8.55	0.995	fail	no	
+wap_vmap3	HanZhongBai	76b60e0f-b107-45f5-9301-301bf6aa7f56	ABD_0161	P1572A	cross	yes	0.985825	0.976732	3.34	0.995	fail	no	
+wap_vmap3	HanZhongBai	76b60e0f-b107-45f5-9301-301bf6aa7f56	ABD_0164	P1572A	cross	yes	0.999472	0.996653	3.34	0.995	pass	yes	
+wap_vmap3	Harding	9244033d-b3de-466d-83de-cf468311dd49	ABD_0614	P1254A	cross	yes	0.999487	0.993476	4.12	0.995	pass	yes	
+wap_vmap3	Harry	99000d28-5d83-4e62-bbff-d8aa99e0a6eb	ABD_0539	P0965	cross	yes	0.977488	0.967148	3.34	0.995	fail	no	
+wap_vmap3	Hatcher	81fe7172-da64-49c4-9584-be2384e8ec92	ABD_0571	P0893	cross	yes	0.999095	0.992868	3.21	0.995	pass	yes	
+wap_vmap3	Hawasia	cdeb42e9-b1af-4b51-9447-1feaddab35b9	ABD_0584	P1411A	cross	yes	0.999589	0.994157	4.27	0.995	pass	yes	
+wap_vmap3	HeNong825	edd24da2-4e66-4fb0-8384-98cffadf4253	ABD_0550	P0429	cross	yes	0.99899	0.991887	3.05	0.995	pass	no	
+wap_vmap3	Heyne	e8ceb9f6-9d90-428d-a629-d57a3fc66374	ABD_0570	P1092A	cross	yes	0.999488	0.993948	3.58	0.995	pass	yes	
+wap_vmap3	Homara	4b5e47b6-076d-4331-9dad-4ec9e0e59cb5	ABD_0077	P1403A	cross	yes	0.974569	0.966802	3.61	0.995	fail	no	
+wap_vmap3	Homara	4b5e47b6-076d-4331-9dad-4ec9e0e59cb5	ABD_0077	ABD_0080	within_vmap3	yes	0.97546	0.967157	9.76	0.995	fail	no	
+wap_vmap3	Homara	4b5e47b6-076d-4331-9dad-4ec9e0e59cb5	ABD_0080	P1403A	cross	yes	0.998658	0.99206	3.61	0.995	pass	no	
+wap_vmap3	Homara Mania	bedc37b4-37e2-4949-a5f5-b2ecccd7b0a1	ABD_0618	P1683A	cross	yes	0.999466	0.993934	3.69	0.995	pass	yes	
+wap_vmap3	Hondo	995a9137-a992-479b-8f36-a666ab6b728e	ABD_0596	P1077A	cross	yes	0.999516	0.99341	4.18	0.995	pass	yes	
+wap_vmap3	Hong Huo Mai	c593e769-b632-437e-9d13-4dc507439bd2	ABD_0703	P1804A	cross	yes	0.988918	0.981183	3.35	0.995	fail	no	
+wap_vmap3	HongChunMai	4a38380a-dd19-4783-a98b-2122a9f5d2dc	ABD_0984	P1651A	cross	yes	0.973534	0.966654	3.32	0.995	fail	no	
+wap_vmap3	HongDongMai	609760af-d7e6-4ec3-a9d3-3943440ba663	ABD_0985	P1851A	cross	yes	0.979788	0.973658	4.79	0.995	fail	no	
+wap_vmap3	HongJinBaoYin	5e470ee9-476d-4890-af25-fcf6698cd7a2	ABD_0986	P1869A	cross	yes	0.977917	0.970968	4.13	0.995	fail	no	
+wap_vmap3	HongQiMai	5d317f05-c4c4-44a0-a290-5ff1aaec0000	ABD_0852	P1840A	cross	yes	0.9824	0.976808	3.64	0.995	fail	no	
+wap_vmap3	HongTuZi	2bd18366-240b-4003-8114-9026e98cb6e1	ABD_0171	P1472A	cross	yes	0.97476	0.967023	3.49	0.995	fail	no	
+wap_vmap3	HongTuZi	2bd18366-240b-4003-8114-9026e98cb6e1	ABD_0168	P1472A	cross	yes	0.97562	0.966902	3.49	0.995	fail	no	
+wap_vmap3	HongTuZi	2bd18366-240b-4003-8114-9026e98cb6e1	ABD_0168	ABD_0171	within_vmap3	yes	0.986512	0.980354	6.89	0.995	fail	no	
+wap_vmap3	HongYouZi	94aa0132-403e-4e56-a2ed-8c6bbd057885	ABD_0667	P1433A	cross	yes	0.999687	0.996212	3.3	0.995	pass	yes	
+wap_vmap3	HuLuTou	54c35162-26b8-4d7a-ae8e-1f3afe2cf68d	ABD_0646	P1228A	cross	yes	0.999731	0.995982	4.09	0.995	pass	yes	
+wap_vmap3	HuaPei6	8a6b6172-eb9e-4f10-ae7e-3c2ddfa447bf	ABD_0469	P0185	cross	yes	0.998552	0.990432	2.83	0.995	pass	no	
+wap_vmap3	HuaiMai22	2ce47b86-1eb6-4df7-94f6-7da249749eaf	ABD_0479	P0218	cross	yes	0.99842	0.989512	2.89	0.995	pass	no	
+wap_vmap3	HuaiMai25	0e09b789-32f2-42a0-9e0f-73f614e058c0	ABD_0516	P0691	cross	yes	0.99836	0.989648	2.65	0.995	pass	no	
+wap_vmap3	Huaimai 20	fa56737a-a68d-43bf-9bea-ab3deaecf1bc	ABD_1059	P0491	cross	yes	0.999025	0.991599	3.35	0.995	pass	yes	
+wap_vmap3	HuiNing10	75938bb4-3f7a-4678-bc3e-89e6a6167971	ABD_0125	P1687A	cross	yes	0.999081	0.989505	3.72	0.995	pass	yes	
+wap_vmap3	HuoLiaoMai	d0c9c050-f96c-4a12-85b5-b84e16b38754	ABD_0132	P1907A	cross	yes	0.999501	0.994304	3.36	0.995	pass	yes	
+wap_vmap3	HuoMai	e2882ddb-6ad9-4a87-95e4-6013ccbd43f5	ABD_0141	P1368A	cross	yes	0.987534	0.982518	4.03	0.995	fail	no	
+wap_vmap3	Huoliyan	27d290f9-eb2a-41b3-8e56-072cf5eb18ea	ABD_0983	P1836A	cross	yes	0.994876	0.987325	3.39	0.995	fail	no	
+wap_vmap3	Huoliyan	27d290f9-eb2a-41b3-8e56-072cf5eb18ea	ABD_1124	P1836A	cross	yes	0.995293	0.990883	3.39	0.995	pass	no	
+wap_vmap3	Huoliyan	27d290f9-eb2a-41b3-8e56-072cf5eb18ea	ABD_0983	ABD_1124	within_vmap3	yes	0.995726	0.98871	5.35	0.995	pass	no	
+wap_vmap3	I-1021	07cc5e1e-2c06-4253-850e-1a5ffc72d95a	ABD_0252	P1468A	cross	yes	0.999541	0.994709	3.94	0.995	pass	yes	
+wap_vmap3	I-33	d35b7dfe-c0a3-406a-ac41-a2ca86e59123	AB_0025	AB_0192	within_vmap3	yes	0.998223	0.987521	2.82	0.995	pass	no	
+wap_vmap3	IWA8604006	c8f5912b-f3f8-4f0b-b817-29978d36432e	ABD_0630	P1185A	cross	yes	0.987638	0.981147	3.85	0.995	fail	no	
+wap_vmap3	IWA8604010	39b87798-84b1-4362-add6-fe8d805fa1dc	ABD_0581	P1249A	cross	yes	0.99973	0.995399	5.27	0.995	pass	yes	
+wap_vmap3	IWA8604165	0d737ceb-13b4-48dd-9ee1-34355c55b9ea	ABD_0684	P1516A	cross	yes	0.974588	0.967021	4.24	0.995	fail	no	
+wap_vmap3	IWA8604628	8d0648eb-fdc2-4815-abba-051378fa7567	ABD_0733	P1791A	cross	yes	0.987018	0.980947	3.52	0.995	fail	no	
+wap_vmap3	IWA8604735	f7b06b0a-b6a0-4f66-8855-aea8dda5a0d9	ABD_0078	P1646A	cross	yes	0.999352	0.994566	3.14	0.995	pass	yes	
+wap_vmap3	IWA8604850	8ec24e29-4465-411b-a7c8-b57f4d7c56dd	ABD_0740	P1936A	cross	yes	0.999529	0.994621	3.46	0.995	pass	yes	
+wap_vmap3	IWA8607807	069f3110-971f-494f-875d-822a430da9ea	ABD_0631	P1226A	cross	yes	0.99958	0.994783	3.7	0.995	pass	yes	
+wap_vmap3	IWA8608636	d9f098c1-1400-4aa3-9ff7-a58bd8a7716d	ABD_0711	P1684A	cross	yes	0.999563	0.994555	3.94	0.995	pass	yes	
+wap_vmap3	IWA8612682	218c3eb4-09e4-49eb-8322-bd53bf2eb0d1	ABD_0650	P1404A	cross	yes	0.968852	0.960114	3.57	0.995	fail	no	
+wap_vmap3	IWA8614070	5bb9696a-9eb0-443b-b37a-4cfdfdf5f427	ABD_0717	P1726A	cross	yes	0.973932	0.967898	3.48	0.995	fail	no	
+wap_vmap3	Intrada	370f8337-1ef4-4e0e-b76c-a338d304296e	ABD_0555	P1039A	cross	yes	0.999503	0.993462	3.85	0.995	pass	yes	
+wap_vmap3	Jagalene	ef9b5756-94f3-4d3d-a051-783afb1b23be	ABD_0559	P1046A	cross	yes	0.980816	0.972665	3.85	0.995	fail	no	
+wap_vmap3	Jagger	b9034819-9d11-431d-a21a-ad952bdfd848	ABD_0568	P0940	cross	yes	0.972371	0.962221	3	0.995	fail	no	
+wap_vmap3	JiChun1016	cc183148-dabd-4c81-af8c-e96e182a324b	ABD_0114	ABD_0117	within_vmap3	yes	0.977972	0.969219	7.83	0.995	fail	no	
+wap_vmap3	JiShi42	d2f0ed64-75f4-40f9-8fcb-02ed7388bfd8	ABD_0473	P0791	cross	yes	0.971224	0.961981	3.68	0.995	fail	no	
+wap_vmap3	JiaHongMai	297c7621-847d-46ff-b2fa-9551e71cf1b1	ABD_0139	P1566A	cross	yes	0.98284	0.976111	3.17	0.995	fail	no	
+wap_vmap3	JiaHongMai	297c7621-847d-46ff-b2fa-9551e71cf1b1	ABD_0139	ABD_0142	within_vmap3	yes	0.98435	0.974872	7.23	0.995	fail	no	
+wap_vmap3	JiaHongMai	297c7621-847d-46ff-b2fa-9551e71cf1b1	ABD_0142	P1566A	cross	yes	0.998222	0.990965	3.17	0.995	pass	no	
+wap_vmap3	Jiangdongmen	3d3d4c53-98d0-45c3-9987-ab604059ffdf	ABD_1067	P1372A	cross	yes	0.999784	0.996651	4.61	0.995	pass	yes	
+wap_vmap3	JiaoMai668	ccd8229d-1f19-4598-82ea-4d20b8349377	ABD_0480	P0459	cross	yes	0.977697	0.966875	2.6	0.995	fail	no	
+wap_vmap3	Jimai 38	1ffa9500-9ffd-4842-9f12-d6292abbbeb5	ABD_1051	P0094	cross	yes	0.978105	0.968699	2.77	0.995	fail	no	
+wap_vmap3	Jimai20	04e11d76-59de-4d69-b956-4d21067ae15f	P0101	P0511	within_wap	yes	0.997967	0.990001	2.9	0.995	pass	no	
+wap_vmap3	Jimai20	04e11d76-59de-4d69-b956-4d21067ae15f	ABD_1040	P0101	cross	yes	0.998766	0.99199	2.9	0.995	pass	no	
+wap_vmap3	Jimai20	04e11d76-59de-4d69-b956-4d21067ae15f	ABD_1040	P0511	cross	yes	0.999016	0.993382	4.55	0.995	pass	yes	
+wap_vmap3	JinHuangMai	582e4a07-2a5e-44f2-816f-f991d2ff91a1	ABD_0169	P1704A	cross	yes	0.999586	0.995109	3.71	0.995	pass	yes	
+wap_vmap3	JinMai49	e501f5d1-2f7c-493f-a545-0d0c1ac9d2a2	ABD_0502	P0395	cross	yes	0.998536	0.9904	2.84	0.995	pass	no	
+wap_vmap3	JinMai8	7c58d65c-fe22-4e13-82b2-86c0f17dbbbc	ABD_0126	P0692	cross	yes	0.979034	0.967207	3.37	0.995	fail	no	
+wap_vmap3	JinNong207	59a7643c-c2cf-4c6f-ab3c-de9f9c748a75	ABD_0535	P0703	cross	yes	0.998946	0.991302	3.18	0.995	pass	no	
+wap_vmap3	Jinan 16	87e1b42c-2c17-4777-8948-f3e690719ea9	ABD_1039	P0631	cross	yes	0.999232	0.992638	3.95	0.995	pass	yes	
+wap_vmap3	Jinan 17	65fc3314-efcb-4d9d-8730-86e95ad55f28	ABD_1042	P0355	cross	yes	0.979059	0.96933	3.81	0.995	fail	no	
+wap_vmap3	Jinan 17	65fc3314-efcb-4d9d-8730-86e95ad55f28	ABD_0949	P0355	cross	yes	0.979505	0.969198	3.81	0.995	fail	no	
+wap_vmap3	Jinan 17	65fc3314-efcb-4d9d-8730-86e95ad55f28	ABD_0949	ABD_1042	within_vmap3	yes	0.99979	0.995391	7.34	0.995	pass	yes	
+wap_vmap3	Jinan 9	f408fcce-1dea-48f5-8aca-4600bd41c052	ABD_1014	P0453	cross	yes	0.977482	0.966824	2.8	0.995	fail	no	
+wap_vmap3	Jinan2	e12701f9-48d0-47a3-82f4-c06448563d27	ABD_1011	P1078A	cross	yes	0.999678	0.995193	4.11	0.995	pass	yes	
+wap_vmap3	Jing411	869a33a0-9a5b-4ecf-9e29-b4c95f4e8d0e	ABD_0532	P0464	cross	yes	0.998594	0.99258	3.24	0.995	pass	no	
+wap_vmap3	Jing411	869a33a0-9a5b-4ecf-9e29-b4c95f4e8d0e	ABD_1003	P0464	cross	yes	0.998854	0.992359	3.24	0.995	pass	no	
+wap_vmap3	Jing411	869a33a0-9a5b-4ecf-9e29-b4c95f4e8d0e	ABD_0532	ABD_1003	within_vmap3	yes	0.999074	0.993774	4.8	0.995	pass	yes	
+wap_vmap3	Jining3	88e40a69-5c81-4d6e-9c4c-338b0d47e478	ABD_1129	P0979	cross	yes	0.998232	0.992726	3.32	0.995	pass	no	
+wap_vmap3	Jinmai47	5c1fd28b-035f-4107-abb6-f3e491f16910	ABD_1096	P0742	cross	yes	0.977041	0.966773	2.86	0.995	fail	no	
+wap_vmap3	Jinmai47	5c1fd28b-035f-4107-abb6-f3e491f16910	ABD_1000	P0742	cross	yes	0.977331	0.966566	2.86	0.995	fail	no	
+wap_vmap3	Jinmai47	5c1fd28b-035f-4107-abb6-f3e491f16910	ABD_1000	ABD_1096	within_vmap3	yes	0.999679	0.995072	6.18	0.995	pass	yes	
+wap_vmap3	Jules	7780aa81-e705-49ec-93ce-610f8a2c3a5e	ABD_0594	P0547	cross	yes	0.998645	0.991246	2.79	0.995	pass	no	
+wap_vmap3	K1140	f071bf36-f39c-4a30-9b87-2b3337ccc4cc	ABD_0350	P1676A	cross	yes	0.99958	0.994936	4.23	0.995	pass	yes	
+wap_vmap3	K17	372048fb-4e6f-4ca3-9f11-998fd7ca1ab4	ABD_0699	P1564A	cross	yes	0.999667	0.996656	3.31	0.995	pass	yes	
+wap_vmap3	K18	8f19b61d-1692-4bd6-a83c-4354c80d3958	ABD_0681	P1957A	cross	yes	0.999705	0.996642	3.76	0.995	pass	yes	
+wap_vmap3	K2003-108	a534f0af-83f6-46e2-a9c0-71d2dadbf2f5	ABD_0645	P1130A	cross	yes	0.976769	0.968074	3.98	0.995	fail	no	
+wap_vmap3	K2003-8	ff70a689-f5f7-45a4-8fd3-62463e315618	ABD_0629	P1193A	cross	yes	0.999584	0.994188	4.35	0.995	pass	yes	
+wap_vmap3	K397	f01b51ef-cedd-4fcc-9ca3-58acc6f23f4f	ABD_0640	P1339A	cross	yes	0.999688	0.995576	4.74	0.995	pass	yes	
+wap_vmap3	KU 1523	af745650-84e8-4510-b45c-df21725ea26e	ABD_0336	P1919A	cross	yes	0.999468	0.994501	3.52	0.995	pass	yes	
+wap_vmap3	KU 1527	46e6b64f-5de0-457b-a528-51f290d2763b	ABD_0352	P1720A	cross	yes	0.999359	0.994143	3.2	0.995	pass	yes	
+wap_vmap3	KU 1533	f5006b2b-82a1-4952-9ba2-ca3f9a693355	AB_0090	AB_0160	within_vmap3	yes	0.998855	0.992168	2.43	0.995	pass	no	
+wap_vmap3	KU 1636	b198178d-3776-4412-be9d-b6eb300eafb0	ABD_0353	P1984A	cross	yes	0.999667	0.995046	5.57	0.995	pass	yes	
+wap_vmap3	KU-2013	cd790eb1-7e48-4014-a2ec-a4e9c9c26f17	D_0002	D_0350	within_vmap3	yes	0.987404	0.943284	2.93	0.995	fail	no	
+wap_vmap3	KaShiBaiPi	58f7fd8e-3491-4c10-b534-bc041d863c02	ABD_0173	P1649A	cross	yes	0.999421	0.994167	3.11	0.995	pass	yes	
+wap_vmap3	Kabka3	090d9408-2c29-452f-808d-7813d1670da7	ABD_0968	P1179A	cross	yes	0.976527	0.966468	3.45	0.995	fail	no	
+wap_vmap3	Kalvesta	caaba39b-1eea-45c5-b34d-1ffe09cf7492	ABD_0525	P0588	cross	yes	0.975326	0.963585	3.34	0.995	fail	no	
+wap_vmap3	Kamchtka	f302a24b-03c8-419e-a7a1-2f9a0addaa67	ABD_0692	P1803A	cross	yes	0.999625	0.994626	4.11	0.995	pass	yes	
+wap_vmap3	Kamrakhat	10dc3b81-389b-4996-8f8d-61bd6a4f98dc	ABD_0690	P1880A	cross	yes	0.992123	0.98583	4.43	0.995	fail	no	
+wap_vmap3	Kandihari	d9041364-6125-405c-947a-2dadaf2147d6	ABD_0101	ABD_0104	within_vmap3	yes	0.991819	0.985749	9.71	0.995	fail	no	
+wap_vmap3	Kandihari	d9041364-6125-405c-947a-2dadaf2147d6	ABD_0101	P1238A	cross	yes	0.991878	0.985517	3.21	0.995	fail	no	
+wap_vmap3	Kandihari	d9041364-6125-405c-947a-2dadaf2147d6	ABD_0104	P1238A	cross	yes	0.999452	0.99422	3.21	0.995	pass	yes	
+wap_vmap3	KangXiu10	bd4d0d0c-3c3b-4824-9b75-cb268ca98083	ABD_0121	P0936	cross	yes	0.978682	0.96477	3.05	0.995	fail	no	
+wap_vmap3	KangXiu10	bd4d0d0c-3c3b-4824-9b75-cb268ca98083	ABD_0121	ABD_0124	within_vmap3	yes	0.983292	0.966889	8.8	0.995	fail	no	
+wap_vmap3	KangXiu10	bd4d0d0c-3c3b-4824-9b75-cb268ca98083	ABD_0124	P0936	cross	yes	0.986266	0.966915	3.05	0.995	fail	no	
+wap_vmap3	Karakilcik	5c71be09-522b-4763-9068-8fdcd27deba6	ABD_0105	P1615A	cross	yes	0.973862	0.966605	5.83	0.995	fail	no	
+wap_vmap3	Karmir	6c1d46a4-a1ad-454a-96c9-2c7e60018d0d	ABD_0678	P1659A	cross	yes	0.993743	0.987775	3.59	0.995	fail	no	
+wap_vmap3	Kaundouhari	e6726102-689b-44d3-b53f-65aceb524872	ABD_0351	P1324A	cross	yes	0.993228	0.987211	3.63	0.995	fail	no	
+wap_vmap3	KeFeng3	b75078b6-542c-44e6-ab07-05c8afa7d3e7	ABD_0115	P1309A	cross	yes	0.974478	0.965245	3.91	0.995	fail	no	
+wap_vmap3	KeNong1006	2fdd2ebe-e863-4113-8727-3d788ed79885	ABD_0483	P0203A	cross	yes	0.999618	0.993734	5.01	0.995	pass	yes	
+wap_vmap3	KeNong199	91786a30-6e1d-4936-9cee-a619a157f30e	P0199	P0463	within_wap	yes	0.996583	0.986846	2.79	0.995	pass	no	
+wap_vmap3	KeNong199	91786a30-6e1d-4936-9cee-a619a157f30e	ABD_0498	P0199	cross	yes	0.997873	0.990206	2.79	0.995	pass	no	
+wap_vmap3	KeNong199	91786a30-6e1d-4936-9cee-a619a157f30e	ABD_0498	P0463	cross	yes	0.998405	0.990097	2.8	0.995	pass	no	
+wap_vmap3	KeNong9204	377badbd-b215-45f4-84cf-da31760d1f94	ABD_0476	P0096	cross	yes	0.976481	0.966065	2.62	0.995	fail	no	
+wap_vmap3	KeNong9204	377badbd-b215-45f4-84cf-da31760d1f94	P0096	P0239	within_wap	yes	0.976506	0.965108	2.62	0.995	fail	no	
+wap_vmap3	KeNong9204	377badbd-b215-45f4-84cf-da31760d1f94	ABD_0476	P0239	cross	yes	0.998747	0.990712	2.95	0.995	pass	no	
+wap_vmap3	Kendiharia	ae3c094c-5cf6-43fd-8ee9-a3f8f5cdaed1	ABD_0760	P1605A	cross	yes	0.996678	0.990201	3.22	0.995	pass	no	
+wap_vmap3	Keota	2309f9c9-bd15-42bb-a823-a127d1d0fb41	ABD_0580	P1135A	cross	yes	0.999472	0.994083	3.54	0.995	pass	yes	
+wap_vmap3	Kilcikiz	415627e4-7c79-4c66-8388-914c43dd0297	ABD_0661	P1802A	cross	yes	0.999603	0.994062	5.05	0.995	pass	yes	
+wap_vmap3	Kirmizi Yazlik	cb97c46e-7d77-4df1-bca9-519f79dde59d	ABD_0103	P1784A	cross	yes	0.999506	0.994066	4.12	0.995	pass	yes	
+wap_vmap3	Krata	73e3e38a-e04a-473d-a08f-7962745cb604	ABD_0081	P1165A	cross	yes	0.999657	0.995336	4.53	0.995	pass	yes	
+wap_vmap3	Kunduru Menceki	210138dc-1104-454e-b5a9-f5e206d3e48d	ABD_0735	P1557A	cross	yes	0.99946	0.994008	3.23	0.995	pass	yes	
+wap_vmap3	L3B	cdb29899-fbe6-4615-a4e5-b6c080c54eba	ABD_0691	P2019A	cross	yes	0.999704	0.996273	3.92	0.995	pass	yes	
+wap_vmap3	L8	4b5b195c-f44a-4ad7-ae27-a945f4a33296	ABD_0651	P1280A	cross	yes	0.999704	0.997071	3.22	0.995	pass	yes	
+wap_vmap3	LanHuaMai	b118cc51-0629-4c07-bdd5-06c13bcf7a72	ABD_0972	P1218A	cross	yes	0.997543	0.986065	3.21	0.995	pass	no	
+wap_vmap3	LanKao86-1-2-8-1	53fa95b1-4c67-4563-af56-774d942204e1	ABD_0435	P0669	cross	yes	0.971003	0.961356	3.15	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	ABD_0441	ABD_0454	within_vmap3	yes	0.974648	0.965705	8.2	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	ABD_0454	P0027	cross	yes	0.976873	0.96557	2.62	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	ABD_0454	P0126	cross	yes	0.977571	0.966205	3.14	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	ABD_0441	P0126	cross	yes	0.986466	0.975433	3.14	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	ABD_0441	P0027	cross	yes	0.98695	0.975945	2.62	0.995	fail	no	
+wap_vmap3	LanKaoAiZao8	ec37ac9d-68a1-483d-b241-8cea67eea8a4	P0027	P0126	within_wap	yes	0.996452	0.986454	2.62	0.995	pass	no	
+wap_vmap3	LanXiZaoXiaoMai	8248df50-41d6-4901-9b72-a28dc5a9c52f	ABD_0154	P1210A	cross	yes	0.990805	0.986594	3.98	0.995	fail	no	
+wap_vmap3	LaoLaiXia	b52fdf98-6266-4df3-abe6-175d8a551629	ABD_0936	P1958A	cross	yes	0.990605	0.985289	4.33	0.995	fail	no	
+wap_vmap3	LaoMai	823dbbc4-c433-4962-a98b-392951389fd0	ABD_0136	P0854	cross	yes	0.997471	0.980177	3.85	0.995	pass	no	
+wap_vmap3	Laredo	c8752b3b-7f83-4110-8836-538e01fb6ec0	ABD_0561	P0955	cross	yes	0.99944	0.993716	4.16	0.995	pass	yes	
+wap_vmap3	Lerma	1409102c-cf82-4c63-a6e4-d9002b3cdb36	ABD_0300	P0995	cross	yes	0.999071	0.993585	2.97	0.995	pass	yes	
+wap_vmap3	Leucospermum	f6049809-4a93-4342-84e1-f32690d5e442	ABD_0079	P1171A	cross	yes	0.971777	0.964301	3.69	0.995	fail	no	
+wap_vmap3	LiangFeng998	4290413f-826c-43b8-8c01-1e2a076b862e	ABD_0512	P0606	cross	yes	0.999176	0.99182	3.94	0.995	pass	yes	
+wap_vmap3	LiangXing99	1b2a32b5-288f-49a3-884d-c1164faa3029	ABD_1099	P0230	cross	yes	0.97497	0.964778	2.75	0.995	fail	no	
+wap_vmap3	LiangXing99	1b2a32b5-288f-49a3-884d-c1164faa3029	ABD_0761	P0230	cross	yes	0.975647	0.965368	2.75	0.995	fail	no	
+wap_vmap3	LiangXing99	1b2a32b5-288f-49a3-884d-c1164faa3029	ABD_0761	ABD_1099	within_vmap3	yes	0.996528	0.991281	8.06	0.995	pass	no	
+wap_vmap3	LiuYueHuang	9c22b6e3-e488-46da-addb-615798db3d1b	ABD_0863	P1633A	cross	yes	0.985466	0.979351	3.17	0.995	fail	no	
+wap_vmap3	LiuZhuTou	0d68e742-d1c1-4645-8c07-aeb8efc83306	ABD_0152	ABD_0155	within_vmap3	yes	0.986145	0.981569	8.32	0.995	fail	no	
+wap_vmap3	LiuZhuTou	0d68e742-d1c1-4645-8c07-aeb8efc83306	ABD_0152	P1792A	cross	yes	0.986166	0.98146	4.36	0.995	fail	no	
+wap_vmap3	LiuZhuTou	0d68e742-d1c1-4645-8c07-aeb8efc83306	ABD_0155	P1792A	cross	yes	0.999793	0.996537	4.36	0.995	pass	yes	
+wap_vmap3	Longhorn	2d38ec86-5d82-4eed-bd86-c58dd9039def	ABD_0593	P1128A	cross	yes	0.999499	0.993249	4.07	0.995	pass	yes	
+wap_vmap3	LouGuDing	49b2e9da-381d-48f0-a7d5-346678dd3fa2	ABD_0158	P1244A	cross	yes	0.979836	0.974481	4.08	0.995	fail	no	
+wap_vmap3	Lovrin 10	2a5c5388-a023-4d9a-a079-c5168b81245b	ABD_0946	P1117A	cross	yes	0.999481	0.992828	4.12	0.995	pass	yes	
+wap_vmap3	Lovrin 10	2a5c5388-a023-4d9a-a079-c5168b81245b	ABD_1080	P1117A	cross	yes	0.999557	0.99363	4.12	0.995	pass	yes	
+wap_vmap3	Lovrin 10	2a5c5388-a023-4d9a-a079-c5168b81245b	ABD_0946	ABD_1080	within_vmap3	yes	0.99973	0.994407	6.52	0.995	pass	yes	
+wap_vmap3	Lumai 14	97bd1f56-e875-49c8-a479-47bb217f3f83	ABD_1020	P0315	cross	yes	0.998972	0.99169	3.8	0.995	pass	no	
+wap_vmap3	Lumai21	94946923-1102-4292-8573-cd01d1305930	ABD_1037	P0642	cross	yes	0.98687	0.978421	3.79	0.995	fail	no	
+wap_vmap3	Lumai21	94946923-1102-4292-8573-cd01d1305930	ABD_0887	P0642	cross	yes	0.986916	0.977798	3.79	0.995	fail	no	
+wap_vmap3	Lumai21	94946923-1102-4292-8573-cd01d1305930	ABD_0887	ABD_1037	within_vmap3	yes	0.999573	0.994312	6.01	0.995	pass	yes	
+wap_vmap3	LuoHan8	ff9ee253-d751-4fc4-96b3-4bff52119632	ABD_0517	P0354	cross	yes	0.999324	0.993059	3.67	0.995	pass	yes	
+wap_vmap3	LuoMai21	5e008601-c9ee-4287-8ae2-fa251380c0d4	ABD_0444	P0246	cross	yes	0.998816	0.990912	3.12	0.995	pass	no	
+wap_vmap3	LuoMai6	501b0110-ff4a-46d0-9304-a33a04c0c54e	ABD_0510	P0805	cross	yes	0.975325	0.96484	2.88	0.995	fail	no	
+wap_vmap3	MG 07712	749d1c45-b083-47e8-9558-03c09e9bfbb2	AB_0070	AB_0162	within_vmap3	yes	0.998387	0.990227	2.38	0.995	pass	no	
+wap_vmap3	Macarron	d11cf7c7-0b28-466f-8bbb-9fefad77a984	ABD_0175	P1512A	cross	yes	0.99935	0.994075	3.75	0.995	pass	yes	
+wap_vmap3	Mania	d7532717-3c5b-46dd-983f-2e203b31f5ad	ABD_0082	P1614A	cross	yes	0.999483	0.994232	3.76	0.995	pass	yes	
+wap_vmap3	Mazhamai	a9d162cb-7e08-4bfe-8b92-9eddfab625c3	ABD_0931	P1194A	cross	yes	0.999779	0.996341	4.17	0.995	pass	yes	
+wap_vmap3	Mazhamai	a9d162cb-7e08-4bfe-8b92-9eddfab625c3	ABD_1074	P1194A	cross	yes	0.999806	0.996907	4.17	0.995	pass	yes	
+wap_vmap3	Mazhamai	a9d162cb-7e08-4bfe-8b92-9eddfab625c3	ABD_0931	ABD_1074	within_vmap3	yes	0.999909	0.997399	7.32	0.995	pass	yes	
+wap_vmap3	Mentana	05fbe0c6-1b37-472a-aae2-55356bed9f24	ABD_1069	P1142A	cross	yes	0.988205	0.979144	3.88	0.995	fail	no	
+wap_vmap3	Mianyang26	203a6a75-a7d8-4ef3-9f38-d6c7edec66d0	ABD_1048	P0392	cross	yes	0.987977	0.981124	3.11	0.995	fail	no	
+wap_vmap3	Mianyang26	203a6a75-a7d8-4ef3-9f38-d6c7edec66d0	ABD_0506	ABD_1048	within_vmap3	yes	0.988159	0.983086	8.16	0.995	fail	no	
+wap_vmap3	Mianyang26	203a6a75-a7d8-4ef3-9f38-d6c7edec66d0	ABD_0506	P0392	cross	yes	0.998904	0.992405	3.11	0.995	pass	no	
+wap_vmap3	Minard	58d3210a-0879-4f26-b58b-bed3cf9548e3	ABD_0355	ABD_0371	within_vmap3	yes	0.979055	0.965379	11.09	0.995	fail	no	
+wap_vmap3	Misria	a813726c-7799-4a27-a44c-e272f52f0407	ABD_0637	P1315A	cross	yes	0.999693	0.995563	4.18	0.995	pass	yes	
+wap_vmap3	MoTuoXiaoMai	901ab329-3a44-4ce7-b4c3-e4ff98036662	ABD_0976	P1053A	cross	yes	0.999737	0.996326	4.05	0.995	pass	yes	
+wap_vmap3	Mocho Cabecudo	989fb7c6-e1e0-4787-9db6-703988fd6afb	ABD_0238	P1530A	cross	yes	0.999324	0.993812	3.85	0.995	pass	yes	
+wap_vmap3	Mugami	b813f3b8-484e-400b-8522-bb9f3793116e	ABD_0054	P1237A	cross	yes	0.999267	0.993337	2.93	0.995	pass	yes	
+wap_vmap3	NC08-2	97740113-c08d-4721-8ad6-45bb37d464fc	ABD_0482	P0752	cross	yes	0.998735	0.991995	2.75	0.995	pass	no	
+wap_vmap3	Neixiang 5	86047315-58b9-4440-ac23-4361babf9548	ABD_0123	ABD_1012	within_vmap3	yes	0.999436	0.991326	10.76	0.995	pass	yes	
+wap_vmap3	Neixiang 5	86047315-58b9-4440-ac23-4361babf9548	ABD_0123	P1484A	cross	yes	0.999475	0.990514	3.84	0.995	pass	yes	
+wap_vmap3	Neixiang 5	86047315-58b9-4440-ac23-4361babf9548	ABD_1012	P1484A	cross	yes	0.999713	0.995742	3.84	0.995	pass	yes	
+wap_vmap3	Nekota	d8f23298-1ab3-4eb1-a4c5-18d9c3a3668e	ABD_0583	P1116A	cross	yes	0.977939	0.968827	3.89	0.995	fail	no	
+wap_vmap3	Neosho	f19f0ebd-a07f-49e7-868e-2b96e642a67f	ABD_0547	P1013A	cross	yes	0.99958	0.994033	4.29	0.995	pass	yes	
+wap_vmap3	Niekerks	9e5cdaff-d58a-42a1-a95d-48fd15cfdd0a	ABD_0282	P1736A	cross	yes	0.999436	0.994509	3.67	0.995	pass	yes	
+wap_vmap3	Niobrara	f4305fb9-4092-472e-b227-ecbabfaa80d8	ABD_0572	P1066A	cross	yes	0.999595	0.994335	4.39	0.995	pass	yes	
+wap_vmap3	NongDa179	1f7a1346-61f4-432f-a642-9b459bfcb557	ABD_0536	P0878	cross	yes	0.973577	0.964758	2.81	0.995	fail	no	
+wap_vmap3	NongDa179	1f7a1346-61f4-432f-a642-9b459bfcb557	P0878	P0904	within_wap	yes	0.97379	0.964475	2.81	0.995	fail	no	
+wap_vmap3	NongDa179	1f7a1346-61f4-432f-a642-9b459bfcb557	ABD_0536	P0904	cross	yes	0.999047	0.992867	2.87	0.995	pass	yes	
+wap_vmap3	NongDa5181	91bf0f19-30bb-404e-9bf8-c846631ad765	ABD_0889	P0447	cross	yes	0.997073	0.989275	3.4	0.995	pass	no	
+wap_vmap3	NongLin10	180803bc-bce3-40f4-8b2f-e780f193bd3e	ABD_0970	P1253A	cross	yes	0.97875	0.970745	3.89	0.995	fail	no	
+wap_vmap3	Normal Yumusak	ebd05909-c81c-432b-8582-2c9c4708a2f0	ABD_0719	P1737A	cross	yes	0.999593	0.99456	3.95	0.995	pass	yes	
+wap_vmap3	Nyu Bai	30746c16-4759-4643-8ccd-81f6d8d3a549	ABD_0620	P1738A	cross	yes	0.999756	0.996625	3.82	0.995	pass	yes	
+wap_vmap3	OK00421	0ef8c4b8-34b9-46b5-adec-0d2cf7234bee	ABD_0554	P1023A	cross	yes	0.999587	0.994173	4.24	0.995	pass	yes	
+wap_vmap3	Odessa3	5044c925-9bc1-425b-a1c3-596fafcca19e	ABD_0969	P1620A	cross	yes	0.999418	0.993705	3.21	0.995	pass	yes	
+wap_vmap3	Ogallala	a25e76ab-c049-4455-8b2c-eae37cfe7277	ABD_0542	P0912	cross	yes	0.998992	0.992009	3.39	0.995	pass	no	
+wap_vmap3	Okfield	5c7fe227-262d-4bd5-ace2-e3e712c948ef	ABD_0587	P1103A	cross	yes	0.999537	0.993291	5.06	0.995	pass	yes	
+wap_vmap3	Oro Blanco	a7e26fc6-244a-43fb-ad67-f2fa5678e62f	ABD_0526	P0778	cross	yes	0.999177	0.992334	4.19	0.995	pass	yes	
+wap_vmap3	Orofen	0d691bbb-ba77-4020-8e60-f658ad8c701d	ABD_1077	P1445A	cross	yes	0.999591	0.994882	3.98	0.995	pass	yes	
+wap_vmap3	Ostmarker	c6f3a6c6-998e-4007-bc83-53d2db98cc5b	ABD_0064	P2039A	cross	yes	0.999634	0.994449	4.51	0.995	pass	yes	
+wap_vmap3	Overley	c5500856-a6d2-4514-aaae-9cfc24d4672d	ABD_0543	P0205	cross	yes	0.982619	0.97277	2.99	0.995	fail	no	
+wap_vmap3	PH 82-2-2	d87bdd16-9d85-4a65-8b88-16b9788c0da3	ABD_1136	P0255	cross	yes	0.937975	0.945408	0.42	0.995	unjudged_low_coverage	no	
+wap_vmap3	PH 82-2-2	d87bdd16-9d85-4a65-8b88-16b9788c0da3	ABD_0492	P0255	cross	yes	0.939265	0.946299	0.42	0.995	unjudged_low_coverage	no	
+wap_vmap3	PH 82-2-2	d87bdd16-9d85-4a65-8b88-16b9788c0da3	ABD_0492	ABD_1136	within_vmap3	yes	0.999627	0.994954	7.93	0.995	pass	yes	
+wap_vmap3	PLT 76-1946	122610ac-6ef3-4313-8720-47fffc3cdd3b	ABD_0283	ABD_0295	within_vmap3	yes	0.976722	0.969397	11.16	0.995	fail	no	
+wap_vmap3	PLT 76-1986	db1feb07-e3fc-4920-9fe9-b5b25faaf66d	ABD_0296	P1562A	cross	yes	0.986162	0.977284	3.29	0.995	fail	no	
+wap_vmap3	PNE 226-1	986f9078-d8b3-4e91-b822-d82e3b78e2e4	ABD_0641	P1252A	cross	yes	0.999644	0.995178	4.1	0.995	pass	yes	
+wap_vmap3	PNE 226-2	471d3e8e-2f01-4d25-b606-15fd11bcb9ec	ABD_0611	P1452A	cross	yes	0.996284	0.991492	3.68	0.995	pass	no	
+wap_vmap3	Paozimai	22049b5a-a6e9-445c-b9b2-3196e7426082	ABD_1120	P1310A	cross	yes	0.999657	0.994961	4.22	0.995	pass	yes	
+wap_vmap3	Pelon	f6700305-6d23-40a6-a3da-3de65c9ebebe	ABD_0109	P2013A	cross	yes	0.975406	0.966002	3.15	0.995	fail	no	
+wap_vmap3	Pelon	5b0003d8-5f82-41a6-9984-06008cd9da91	ABD_0110	P1833A	cross	yes	0.999395	0.993709	3.38	0.995	pass	yes	
+wap_vmap3	Pepital	2b0dfbd8-63e2-492e-a542-94cd84a73a3c	ABD_0090	P1108A	cross	yes	0.971783	0.962781	4.26	0.995	fail	no	
+wap_vmap3	Pepital	2b0dfbd8-63e2-492e-a542-94cd84a73a3c	P0737A	P1108A	within_wap	yes	0.972257	0.962527	4.26	0.995	fail	no	
+wap_vmap3	Pepital	2b0dfbd8-63e2-492e-a542-94cd84a73a3c	ABD_0090	P0737A	cross	yes	0.999577	0.99363	5.23	0.995	pass	yes	
+wap_vmap3	PingYang27	bfc302ae-8e89-419c-b909-4eb0e2897275	ABD_0119	P1131A	cross	yes	0.978917	0.967527	4.11	0.995	fail	no	
+wap_vmap3	PingYang27	bfc302ae-8e89-419c-b909-4eb0e2897275	ABD_0119	ABD_0122	within_vmap3	yes	0.98243	0.968585	9.52	0.995	fail	no	
+wap_vmap3	PingYang27	bfc302ae-8e89-419c-b909-4eb0e2897275	ABD_0122	P1131A	cross	yes	0.99935	0.990417	4.11	0.995	pass	yes	
+wap_vmap3	PingYuan50	140f120b-08ee-43aa-b385-bd05c2d55ef7	ABD_0773	P1207A	cross	yes	0.999529	0.995865	3.51	0.995	pass	yes	
+wap_vmap3	Platte	344452e5-98dd-4098-b695-bd1249f48645	ABD_0548	P0589A	cross	yes	0.970962	0.961059	4.06	0.995	fail	no	
+wap_vmap3	Poltavka	dcdb78f7-361e-4673-b5eb-f7fa247cb31b	ABD_0107	P2074A	cross	yes	0.999551	0.99483	3.47	0.995	pass	yes	
+wap_vmap3	Ponderosa	4773ffd4-0c45-41f2-aae3-71ec9d52b1b0	ABD_0544	P0991	cross	yes	0.999368	0.993596	3.21	0.995	pass	yes	
+wap_vmap3	Professeur Journee	b7aaef2a-decc-40af-86ee-fdefcfe4ce2d	ABD_0250	P1439A	cross	yes	0.999474	0.993885	4.26	0.995	pass	yes	
+wap_vmap3	Pronghorn	1e2cb38b-6335-47e3-9c31-fa91b9807988	ABD_0111	ABD_0622	within_vmap3	yes	0.990468	0.97893	8.05	0.995	fail	no	
+wap_vmap3	Pronghorn	1e2cb38b-6335-47e3-9c31-fa91b9807988	ABD_0622	P1292A	cross	yes	0.991038	0.978608	5.36	0.995	fail	no	
+wap_vmap3	Pronghorn	1e2cb38b-6335-47e3-9c31-fa91b9807988	ABD_0111	P1292A	cross	yes	0.999615	0.994236	5.36	0.995	pass	yes	
+wap_vmap3	Prowers	019f6c67-d7b5-47cb-8907-14f6acef6eba	ABD_0633	P1521A	cross	yes	0.999543	0.99442	3.74	0.995	pass	yes	
+wap_vmap3	Pschenitca	bba8372a-602a-4a9f-983b-7ac3332f2a29	ABD_0087	P1832A	cross	yes	0.99943	0.99357	4.03	0.995	pass	yes	
+wap_vmap3	PuYu1	5c058b4e-b12f-4a9b-a9b2-d67f35dce2f1	ABD_0487	P0719	cross	yes	0.984491	0.974577	3.23	0.995	fail	no	
+wap_vmap3	QinMai11	f138e355-2b67-4e45-9fc0-669f09c2fe8b	ABD_0494	P0449	cross	yes	0.998913	0.991609	3.2	0.995	pass	no	
+wap_vmap3	R.R. 21	48a7a9a0-5fcc-47cd-b578-55d984acf71a	ABD_0354	P1158A	cross	yes	0.999363	0.994102	3.87	0.995	pass	yes	
+wap_vmap3	Red Bearded Autumn	586d0aff-431c-4371-9695-d577725aef77	ABD_0201	P1842A	cross	yes	0.999551	0.995473	3.48	0.995	pass	yes	
+wap_vmap3	Red Kamsereti	72e3431b-76ec-4464-be96-d114cbc4e91d	ABD_0683	P1759A	cross	yes	0.991815	0.982373	4.36	0.995	fail	no	
+wap_vmap3	Redna	d9aef559-b4b9-4101-b677-9662b945d437	ABD_0305	ABD_0321	within_vmap3	yes	0.83079	0.843425	10.84	0.995	fail	no	
+wap_vmap3	RiKaZe54	ef126bd2-9a41-4f59-ae6b-73949b2f9223	ABD_0961	P1203A	cross	yes	0.987488	0.978867	3.38	0.995	fail	no	
+wap_vmap3	RiKaZe8	c11dfc88-523c-4922-9b47-88f4887219e2	ABD_0962	P1303A	cross	yes	0.999506	0.993655	3.85	0.995	pass	yes	
+wap_vmap3	Ripper	32fc5eca-d655-4c2d-beb8-c108c465d6bd	ABD_0577	P1014A	cross	yes	0.999561	0.994024	4.14	0.995	pass	yes	
+wap_vmap3	Ritana 1267	b74f376a-b404-467b-aa36-09cc7e5cfad3	ABD_0229	P1743A	cross	yes	0.999408	0.994156	3.44	0.995	pass	yes	
+wap_vmap3	Romano	06e73eee-634c-4540-8ab6-ee0e90bb87e8	ABD_0219	P1845A	cross	yes	0.999368	0.993889	3.55	0.995	pass	yes	
+wap_vmap3	Romano	06e73eee-634c-4540-8ab6-ee0e90bb87e8	ABD_0085	P1845A	cross	yes	0.999533	0.994275	3.55	0.995	pass	yes	
+wap_vmap3	Romano	06e73eee-634c-4540-8ab6-ee0e90bb87e8	ABD_0085	ABD_0219	within_vmap3	yes	0.99956	0.994839	10.25	0.995	pass	yes	
+wap_vmap3	RonL	fc341f7f-e266-46ed-bba3-5a075b17cd3c	ABD_0556	P1034A	cross	yes	0.999545	0.994438	3.8	0.995	pass	yes	
+wap_vmap3	Rosafe Argentino	5f2cfb9f-92ab-49b8-8e42-469cd9676e9a	ABD_0233	P1438A	cross	yes	0.999703	0.996162	4.17	0.995	pass	yes	
+wap_vmap3	Rowdy	2abb18c2-d7a5-4f64-a6f9-d1a9f684ee65	ABD_0486	P0829	cross	yes	0.994061	0.986376	2.95	0.995	fail	no	
+wap_vmap3	Rustproof	f81dc688-bb8d-4dc1-a63b-6008d9d07224	ABD_0199	P1449A	cross	yes	0.979577	0.968907	4.9	0.995	fail	no	
+wap_vmap3	S-10	c479ba5d-f0e4-400c-9016-dc333f64ae96	ABD_0644	P1343A	cross	yes	0.999674	0.995302	3.98	0.995	pass	yes	
+wap_vmap3	SD97538	2dc54521-cb87-4f71-b6d0-492169d4f5c5	ABD_0552	P1022A	cross	yes	0.999392	0.992868	3.6	0.995	pass	yes	
+wap_vmap3	SN-2111	55270290-10d2-45da-b706-41456587d072	ABD_0322	ABD_0338	within_vmap3	yes	0.973868	0.966597	11.37	0.995	fail	no	
+wap_vmap3	SN-2111	55270290-10d2-45da-b706-41456587d072	ABD_0322	P1195A	cross	yes	0.974405	0.96572	3.89	0.995	fail	no	
+wap_vmap3	SN-2111	55270290-10d2-45da-b706-41456587d072	ABD_0338	P1195A	cross	yes	0.991635	0.985088	3.89	0.995	fail	no	
+wap_vmap3	SY 20085	bbe4060b-3339-4268-b14e-5a87a8553c86	AB_0027	AB_0199	within_vmap3	yes	0.998472	0.990602	2.07	0.995	pass	no	
+wap_vmap3	SY 20121	688d1bab-fef7-458c-9674-b9853cfc1b7b	AB_0037	AB_0202	within_vmap3	yes	0.989123	0.952745	2.07	0.995	fail	no	
+wap_vmap3	Salonika 12	a46a63ae-3508-4d70-b886-5103622807fc	ABD_0246	P1498A	cross	yes	0.999573	0.994247	5.04	0.995	pass	yes	
+wap_vmap3	Sanshukomugi	01ecf0b1-787a-469a-9cd2-fe7628b433c5	ABD_0590	P1047A	cross	yes	0.999791	0.996579	4.45	0.995	pass	yes	
+wap_vmap3	Santa Fe	ae3266e1-ed0e-4452-bce1-cc7314ca9955	ABD_0566	P0956	cross	yes	0.999036	0.991768	3.57	0.995	pass	yes	
+wap_vmap3	Sanyuehuang	7d04e9df-c7ac-46fa-a2f4-f2ff2e6ee84e	ABD_1121	P1416A	cross	yes	0.9997	0.996473	3.22	0.995	pass	yes	
+wap_vmap3	Sari	a5e412d9-27d6-451f-835c-4c3676c964dd	ABD_0658	P1510A	cross	yes	0.999582	0.99433	4.29	0.995	pass	yes	
+wap_vmap3	Shan229	9029a406-0ed1-4899-a87b-601597b3cd2c	ABD_0475	P0327	cross	yes	0.980329	0.971125	4.8	0.995	fail	no	
+wap_vmap3	ShanMai	b8aa399f-bd84-4ea3-8a81-00d331fbb0a5	ABD_0858	P1282A	cross	yes	0.984696	0.978874	3.43	0.995	fail	no	
+wap_vmap3	ShanMai	b8aa399f-bd84-4ea3-8a81-00d331fbb0a5	ABD_0170	P1282A	cross	yes	0.986246	0.980739	3.43	0.995	fail	no	
+wap_vmap3	ShanMai	b8aa399f-bd84-4ea3-8a81-00d331fbb0a5	ABD_0170	ABD_0858	within_vmap3	yes	0.988469	0.982878	4.82	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	ABD_0499	P0386	cross	yes	0.976857	0.965475	3.01	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	P0181	P0386	within_wap	yes	0.977308	0.964316	3.01	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	P0386	P0389	within_wap	yes	0.979943	0.968018	3.01	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	P0181	P0389	within_wap	yes	0.986208	0.975889	3.25	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	ABD_0499	P0389	cross	yes	0.986427	0.977976	3.34	0.995	fail	no	
+wap_vmap3	ShanNong20	a5440816-6178-4afa-b100-c0fbe9d8713e	ABD_0499	P0181	cross	yes	0.998763	0.991044	3.25	0.995	pass	no	
+wap_vmap3	ShanYou225	80dc7237-ecc6-4622-83cc-1f4f5d04493e	ABD_0511	P0258	cross	yes	0.9864	0.977624	3.21	0.995	fail	no	
+wap_vmap3	Shavano	4f41bfd3-79b9-48ce-913f-99d3bfa971e0	ABD_0560	P1085A	cross	yes	0.99961	0.994325	4.36	0.995	pass	yes	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_1057	P0189	cross	yes	0.975879	0.964755	3.31	0.995	fail	no	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_0495	P0189	cross	yes	0.975978	0.964455	3.31	0.995	fail	no	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_0822	P0189	cross	yes	0.976617	0.964416	3.31	0.995	fail	no	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_0495	ABD_0822	within_vmap3	yes	0.999451	0.993237	5.55	0.995	pass	yes	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_0822	ABD_1057	within_vmap3	yes	0.999514	0.99393	5.55	0.995	pass	yes	
+wap_vmap3	Shi 4185	887a881d-863c-4fac-8a61-1af5e9336a59	ABD_0495	ABD_1057	within_vmap3	yes	0.999607	0.994765	7.48	0.995	pass	yes	
+wap_vmap3	Shi5033	0c7184ba-287e-4417-9c64-96abf7b3c004	ABD_0507	P0312	cross	yes	0.998716	0.991136	3.12	0.995	pass	no	
+wap_vmap3	ShiYou20	165e073b-528d-4c6a-94f8-90b503b15109	P0628	P0766	within_wap	yes	0.980698	0.969793	2.76	0.995	fail	no	
+wap_vmap3	ShiYou20	165e073b-528d-4c6a-94f8-90b503b15109	ABD_0505	P0766	cross	yes	0.980794	0.970602	2.76	0.995	fail	no	
+wap_vmap3	ShiYou20	165e073b-528d-4c6a-94f8-90b503b15109	ABD_0505	P0628	cross	yes	0.999249	0.993263	3.66	0.995	pass	yes	
+wap_vmap3	Shijiazhuang 8	db65809a-b2e0-437d-bf95-6328d5971046	ABD_1110	P0457	cross	yes	0.980263	0.970622	3.34	0.995	fail	no	
+wap_vmap3	Shijiazhuang54	88ac34d0-1450-43a0-a98d-dc9c9f414037	ABD_0959	P0915	cross	yes	0.999133	0.993147	3.17	0.995	pass	yes	
+wap_vmap3	Shijiazhuang54	88ac34d0-1450-43a0-a98d-dc9c9f414037	ABD_1010	P0915	cross	yes	0.999193	0.993973	3.17	0.995	pass	yes	
+wap_vmap3	Shijiazhuang54	88ac34d0-1450-43a0-a98d-dc9c9f414037	ABD_0959	ABD_1010	within_vmap3	yes	0.999811	0.996106	5.85	0.995	pass	yes	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_1094	P0072	cross	yes	0.998193	0.991994	3.62	0.995	pass	no	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_1094	ABD_1163	within_vmap3	yes	0.998239	0.992678	3.29	0.995	pass	no	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_0890	ABD_1094	within_vmap3	yes	0.99852	0.993747	7.48	0.995	pass	no	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_1163	P0072	cross	yes	0.998769	0.991647	3.29	0.995	pass	no	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_0890	P0072	cross	yes	0.999033	0.992454	3.62	0.995	pass	yes	
+wap_vmap3	Shiluan 02-1	e02c90a8-49bf-43ff-8d96-08e1fa8f98c8	ABD_0890	ABD_1163	within_vmap3	yes	0.999074	0.993185	3.29	0.995	pass	yes	
+wap_vmap3	ShuiLiZhan	d65e5832-a368-48cd-a501-1f50ad8dfbd7	ABD_0156	P1443A	cross	yes	0.999738	0.996564	3.84	0.995	pass	yes	
+wap_vmap3	Sierra Nevada	ded16b4e-626c-4460-ab92-1c0f2431a6ba	ABD_0231	P1623A	cross	yes	0.98092	0.972867	3.26	0.995	fail	no	
+wap_vmap3	Sindi	118a4dca-a107-4fad-8642-f828b9ff1657	ABD_0299	P1563A	cross	yes	0.999447	0.994662	3.4	0.995	pass	yes	
+wap_vmap3	SongRuiMai4	70c07aec-2c16-4589-a699-5d6ddab653ba	ABD_0151	P1186A	cross	yes	0.977672	0.969151	3.92	0.995	fail	no	
+wap_vmap3	St 1472/506	bf50822e-8190-4986-a13b-22db78801c3d	ABD_1016	P0562	cross	yes	0.998956	0.992271	3.06	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	ABD_0956	P0343	cross	yes	0.998578	0.991632	3.04	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	P0343	P0406	within_wap	yes	0.998597	0.990582	3.04	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	ABD_1079	P0343	cross	yes	0.99862	0.992256	3.04	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	ABD_1079	P0406	cross	yes	0.998825	0.9923	3.91	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	ABD_0956	P0406	cross	yes	0.998833	0.991711	3.91	0.995	pass	no	
+wap_vmap3	St 2422/464	9257f9a6-acc1-4528-bd05-e43900d644b9	ABD_0956	ABD_1079	within_vmap3	yes	0.99976	0.99533	7	0.995	pass	yes	
+wap_vmap3	Stanton	f4d1f0c8-c8c7-4912-931f-cc803f4ac356	ABD_0576	P1056A	cross	yes	0.99957	0.994128	4.17	0.995	pass	yes	
+wap_vmap3	Sturdy 2K	42147351-8464-49fb-8f1f-696a7dbe7b7a	ABD_0615	P1184A	cross	yes	0.980389	0.971915	4.86	0.995	fail	no	
+wap_vmap3	Sudani	d4ba7db0-eb9a-4765-a3d6-73ab2d4ef4b6	ABD_0333	P1091A	cross	yes	0.982904	0.973905	3.83	0.995	fail	no	
+wap_vmap3	Sufedak	53cb3031-5cd9-4589-b423-9d0737ec2e3b	ABD_0056	P1667A	cross	yes	0.991932	0.985395	3.48	0.995	fail	no	
+wap_vmap3	Sumai 3	b1e1de36-a04d-4e2f-80fc-88faf05d09de	ABD_0944	P1166A	cross	yes	0.999696	0.995336	4.63	0.995	pass	yes	
+wap_vmap3	Sumai 3	b1e1de36-a04d-4e2f-80fc-88faf05d09de	ABD_1100	P1166A	cross	yes	0.999746	0.995778	4.63	0.995	pass	yes	
+wap_vmap3	Sumai 3	b1e1de36-a04d-4e2f-80fc-88faf05d09de	ABD_0944	ABD_1100	within_vmap3	yes	0.999795	0.996078	6.63	0.995	pass	yes	
+wap_vmap3	Svalof	7d5bee5f-5cc6-407a-b411-dbe8d0ff2173	ABD_0207	P2004A	cross	yes	0.999344	0.99385	3.47	0.995	pass	yes	
+wap_vmap3	T 569	e578a7a1-7be4-4c08-8060-253c480701a2	AB_0064	AB_0156	within_vmap3	yes	0.998839	0.991934	2.63	0.995	pass	no	
+wap_vmap3	TAM 107	4a1ccfc7-d37d-4bb7-86ff-d1bd58b58081	ABD_0750	P0987	cross	yes	0.997314	0.985587	3.34	0.995	pass	no	
+wap_vmap3	TAM 112	93d92522-2d5c-483e-8da1-02ce7655d26e	ABD_0575	P1086A	cross	yes	0.999504	0.993505	4.05	0.995	pass	yes	
+wap_vmap3	TAM 202	530c02a0-052e-4fff-b73f-1685f1df33f8	ABD_0534	P1001A	cross	yes	0.999536	0.993493	4.06	0.995	pass	yes	
+wap_vmap3	TAM 303	dea90a4b-3e62-4142-a0bc-2586ff19d54a	ABD_0585	P1087A	cross	yes	0.999537	0.993863	4.03	0.995	pass	yes	
+wap_vmap3	TJK03-194	7b741f92-f873-40af-955b-899ebcf93bd3	ABD_0639	P1293A	cross	yes	0.99951	0.993622	3.91	0.995	pass	yes	
+wap_vmap3	TJK03-295	be3eedb1-3678-4de1-8d8f-3b9a4da143eb	ABD_0102	P1501A	cross	yes	0.998695	0.992483	3.99	0.995	pass	no	
+wap_vmap3	TJK04-3	8474ba33-8fb8-449b-90ce-263d01912d8f	ABD_0737	P1745A	cross	yes	0.993612	0.988027	3.19	0.995	fail	no	
+wap_vmap3	TJK04-420	499b90fd-35c9-4c42-b64e-344b8f2620e7	ABD_0723	P1824A	cross	yes	0.988174	0.978812	4.01	0.995	fail	no	
+wap_vmap3	TJK2006:204	740a6f42-cc66-46c7-831b-114900053550	ABD_0709	P1669A	cross	yes	0.977492	0.970472	4.18	0.995	fail	no	
+wap_vmap3	TJK2006:205	7cce915d-f62a-4f1e-8228-2a7f13693c51	ABD_0693	P1810A	cross	yes	0.99967	0.994626	4.63	0.995	pass	yes	
+wap_vmap3	TJK2006:291	3c360df0-b58e-4b17-a9b3-ec362077994d	ABD_0724	P1945A	cross	yes	0.999363	0.993172	3.39	0.995	pass	yes	
+wap_vmap3	TJK2006:298	7db646ba-6194-4edc-9d2a-61dd84eb04c2	ABD_0573	P1109A	cross	yes	0.999525	0.994276	3.5	0.995	pass	yes	
+wap_vmap3	TaiShan4033	b085f5d5-2c89-4fa3-bc87-6aadee96efa7	ABD_0485	P0371	cross	yes	0.980571	0.970718	3.21	0.995	fail	no	
+wap_vmap3	Taishan 1	720f70e4-404a-496a-8088-0799f16beda7	ABD_1018	P0977	cross	yes	0.993255	0.986219	3.38	0.995	fail	no	
+wap_vmap3	Taishan 1	720f70e4-404a-496a-8088-0799f16beda7	ABD_0954	P0977	cross	yes	0.993304	0.981403	3.38	0.995	fail	no	
+wap_vmap3	Taishan 1	720f70e4-404a-496a-8088-0799f16beda7	ABD_0954	ABD_1018	within_vmap3	yes	0.993855	0.983593	6.59	0.995	fail	no	
+wap_vmap3	Talavera	2541992b-d859-41b7-962f-05a116e023a5	ABD_0189	P1927A	cross	yes	0.999372	0.994194	3.24	0.995	pass	yes	
+wap_vmap3	Tandem	e29f3c85-0594-4844-91d8-46a80fa4d0b8	ABD_0655	P1627A	cross	yes	0.999438	0.993742	3.52	0.995	pass	yes	
+wap_vmap3	Thunderbolt	47aa206b-5c5b-4622-8d7b-7c6c59c71c13	ABD_0606	P1082A	cross	yes	0.999608	0.994409	4.66	0.995	pass	yes	
+wap_vmap3	Timor	f71bcc6a-a9e6-42ce-855c-b80cac1c50f7	ABD_0228	P1978A	cross	yes	0.999298	0.993823	3.5	0.995	pass	yes	
+wap_vmap3	Tirmai	32ad3124-0fae-40b5-8e1f-4217d7d4fd46	ABD_0694	P1668A	cross	yes	0.999629	0.995269	3.85	0.995	pass	yes	
+wap_vmap3	Tomahauk	0a35384c-2bf4-4b7d-9bc6-8e0cd6c3c59b	ABD_0578	P1147A	cross	yes	0.999526	0.994502	3.41	0.995	pass	yes	
+wap_vmap3	TongJiaBaXiaoMai	38f48540-27ad-4fa3-b721-177484b8f2fb	ABD_0160	P1453A	cross	yes	0.974336	0.960054	3.99	0.995	fail	no	
+wap_vmap3	Transvaal Wolkoren	b4f52a1c-44be-43e9-bd92-2fbd902bd1dd	ABD_0203	P1528A	cross	yes	0.99964	0.995204	4.54	0.995	pass	yes	
+wap_vmap3	Trego	3e2a697b-5662-4c83-ac5e-767c55457b91	ABD_0567	P0614	cross	yes	0.975602	0.965187	3.3	0.995	fail	no	
+wap_vmap3	Tremes Arroxeado	508607c6-e758-4049-a6e0-1794c6d3b7e0	ABD_0239	P1288A	cross	yes	0.999334	0.993367	3.73	0.995	pass	yes	
+wap_vmap3	Tremes Arroxeado	508607c6-e758-4049-a6e0-1794c6d3b7e0	ABD_0095	P1288A	cross	yes	0.999437	0.993642	3.73	0.995	pass	yes	
+wap_vmap3	Tremes Arroxeado	508607c6-e758-4049-a6e0-1794c6d3b7e0	ABD_0095	ABD_0239	within_vmap3	yes	0.999539	0.994384	10.4	0.995	pass	yes	
+wap_vmap3	Tres Granos	4a1eb073-2c02-40f0-8f1b-1852eace58fd	ABD_0254	P1592A	cross	yes	0.999327	0.994434	3.16	0.995	pass	yes	
+wap_vmap3	Triumph	1a2fb670-5413-46f0-88aa-c6a6fcf02e5f	P1523A	P1906A	within_wap	yes	0.999189	0.993437	3.2	0.995	pass	yes	
+wap_vmap3	TuMangMai	bca7b1fc-b0c3-4494-874e-935da70b0348	ABD_0145	P1320A	cross	yes	0.986397	0.981375	4.54	0.995	fail	no	
+wap_vmap3	Type No. 13	677ddd38-3b6b-41ad-96e8-056575ad8bd7	ABD_0621	P1305A	cross	yes	0.999671	0.99553	4.39	0.995	pass	yes	
+wap_vmap3	Type No. 19H	bd1935e4-bf16-4fec-a536-b4a17c1392a9	ABD_0588	P1290A	cross	yes	0.973861	0.96617	3.74	0.995	fail	no	
+wap_vmap3	Type No. 23	b5e3330c-0c13-4851-b441-9d5d08078cfa	P1617A	P1717A	within_wap	yes	0.999377	0.994681	3.2	0.995	pass	yes	
+wap_vmap3	Type No. 23	b5e3330c-0c13-4851-b441-9d5d08078cfa	ABD_0747	P1717A	cross	yes	0.999598	0.995347	3.2	0.995	pass	yes	
+wap_vmap3	Type No. 23	b5e3330c-0c13-4851-b441-9d5d08078cfa	ABD_0747	P1617A	cross	yes	0.999603	0.995138	3.93	0.995	pass	yes	
+wap_vmap3	Type No. 25	e098f323-88e7-4bc4-af97-971cd271a63b	ABD_0586	P1426A	cross	yes	0.99957	0.995394	3.67	0.995	pass	yes	
+wap_vmap3	Type No. 7	8e66787c-0366-4641-a9f2-c18ece30d954	ABD_0092	P1040A	cross	yes	0.999674	0.99559	3.83	0.995	pass	yes	
+wap_vmap3	VI/9-C	de320b84-9681-4486-b718-632b1ceb6561	ABD_0274	P1266A	cross	yes	0.999498	0.994042	4.31	0.995	pass	yes	
+wap_vmap3	VIII/26-X9	224b6d65-d5f0-45e0-82c4-e980b7fa9948	AB_0083	AB_0158	within_vmap3	yes	0.998779	0.992206	2.26	0.995	pass	no	
+wap_vmap3	Vernal Emmer	9d903627-fba1-4f9b-a909-f08103b2dc29	AB_0078	AB_0126	within_vmap3	yes	0.998879	0.991729	2.36	0.995	pass	no	
+wap_vmap3	Vilmorin27	30f5366e-dc8b-4faa-8bbd-d5b624725d95	ABD_0314	ABD_0330	within_vmap3	yes	0.978407	0.971289	11.08	0.995	fail	no	
+wap_vmap3	W120	ab06b1d0-fffa-4033-9f95-2d4174805421	ABD_0648	P1637A	cross	yes	0.999607	0.995546	3.46	0.995	pass	yes	
+wap_vmap3	W125	16399ddb-1165-476f-becc-3e60e2a47fe0	ABD_0558	P1065A	cross	yes	0.995679	0.979957	4	0.995	pass	no	
+wap_vmap3	W157	81b4ff0a-a8c2-4b4d-aa62-9f01b81b1dd0	ABD_0623	P1389A	cross	yes	0.999421	0.995137	4.64	0.995	pass	yes	
+wap_vmap3	W167	e9c884c4-bb19-46d5-89cd-ef18506b1c24	ABD_0638	P1470A	cross	yes	0.999299	0.994834	4.84	0.995	pass	yes	
+wap_vmap3	W168	998ac036-4ccc-4faa-a13b-a23c7638d6f6	ABD_0752	P1441A	cross	yes	0.988129	0.981545	4.11	0.995	fail	no	
+wap_vmap3	WB411W	15e9d622-fd0a-4c2a-81ec-56755126216e	ABD_0538	P0963	cross	yes	0.999165	0.99275	3.16	0.995	pass	yes	
+wap_vmap3	Wahoo	6fea9c36-0fb0-4e4d-bc8b-83dac7de9874	ABD_0605	P1076A	cross	yes	0.99953	0.994341	4.34	0.995	pass	yes	
+wap_vmap3	WanMai19	6fd563ee-056b-4cbd-bd42-3aaa125385fa	ABD_0477	P0376	cross	yes	0.999334	0.992827	3.85	0.995	pass	yes	
+wap_vmap3	WanYuanXuan9	eefb06a2-8f63-454b-8889-1eb8375a0edb	ABD_0455	P0196	cross	yes	0.99826	0.989837	2.61	0.995	pass	no	
+wap_vmap3	Wendy	029eecab-5a74-412a-a9b3-5a31ff894e32	ABD_0521	P1860A	cross	yes	0.968618	0.958921	4.19	0.995	fail	no	
+wap_vmap3	Windstar	719235ff-4857-492d-9724-19459f15b7a9	ABD_0604	P1070A	cross	yes	0.999564	0.993845	4.68	0.995	pass	yes	
+wap_vmap3	Woodie	00c07adf-a17d-4aee-a6a0-50b57e46de6a	ABD_0308	ABD_0324	within_vmap3	yes	0.976648	0.968893	10.86	0.995	fail	no	
+wap_vmap3	WuYuanMai	934ea07b-b6f9-4278-8134-7717fe1b13ba	ABD_0153	P1764A	cross	yes	0.999743	0.996663	3.3	0.995	pass	yes	
+wap_vmap3	Wuyimai	b97b11f7-415c-4e83-9c76-22a7406837f8	ABD_1066	P1057A	cross	yes	0.988487	0.982091	3.74	0.995	fail	no	
+wap_vmap3	XXiaoSanYueH	44be2ca6-486f-4df2-8584-e3a783683e89	ABD_0932	P1487A	cross	yes	0.999739	0.996777	3.26	0.995	pass	yes	
+wap_vmap3	XiNong2611	68dc5712-6aeb-46ec-a997-fc93a3b3e5ae	ABD_0445	P0078	cross	yes	0.998884	0.992265	3.14	0.995	pass	no	
+wap_vmap3	XiShanBianSui	371001fb-25b6-49aa-93dc-e1d6769a7c81	ABD_0933	P1243A	cross	yes	0.989975	0.975286	4.36	0.995	fail	no	
+wap_vmap3	XiaoBaiMang	cb6409d9-8c59-47bd-8a14-c05a113a7030	ABD_0601	P1558A	cross	yes	0.97591	0.968858	3.14	0.995	fail	no	
+wap_vmap3	XiaoFoShou	a60b00e3-f5d4-42f4-b185-698b62151bd9	ABD_0150	P1517A	cross	yes	0.997123	0.993215	3.61	0.995	pass	no	
+wap_vmap3	XiaoYan15	7df7d49e-c030-4ac5-b6ce-a780b176e850	ABD_0533	P0689	cross	yes	0.9987	0.991826	2.79	0.995	pass	no	
+wap_vmap3	XiaoYan39	60f6ea56-610f-49f1-89f4-e2abcdadfde3	ABD_0453	P0036	cross	yes	0.998944	0.99225	2.97	0.995	pass	no	
+wap_vmap3	XiaoYan4	abcf57cd-50c5-4ba0-8a62-0ae2ceafdc38	ABD_0522	P0524	cross	yes	0.998877	0.992525	2.9	0.995	pass	no	
+wap_vmap3	XiaoYan55	9ac5ef48-2389-4aa0-a8f9-040cb739bcec	ABD_0493	P0071	cross	yes	0.97759	0.967613	3.09	0.995	fail	no	
+wap_vmap3	XiaoYan6	594fef80-d10b-4d17-9bfa-94e74b6833ce	ABD_1083	P0590	cross	yes	0.999326	0.993338	3.23	0.995	pass	yes	
+wap_vmap3	Xiaoyan 22	649362f7-3fc8-4b12-8e83-f3b7c66a2d85	ABD_1109	P0064	cross	yes	0.981037	0.967071	2.94	0.995	fail	no	
+wap_vmap3	Xiaoyan 96	19c34c23-6c25-4ecb-93bc-f704d1ca90fe	ABD_1138	P0611	cross	yes	0.994254	0.988167	3.95	0.995	fail	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	P0153	P0221	within_wap	yes	0.996441	0.988065	2.8	0.995	pass	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	P0040	P0153	within_wap	yes	0.996675	0.988538	2.93	0.995	pass	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	ABD_0449	P0153	cross	yes	0.997152	0.990138	3.23	0.995	pass	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	P0040	P0221	within_wap	yes	0.997909	0.989976	2.8	0.995	pass	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	ABD_0449	P0221	cross	yes	0.998657	0.99177	2.8	0.995	pass	no	
+wap_vmap3	XinMai18	bf58f953-9262-40da-bc7f-a6d3d57374b5	ABD_0449	P0040	cross	yes	0.998667	0.992065	2.93	0.995	pass	no	
+wap_vmap3	XinMai20	481b3a67-ca83-4d19-9060-f17ebd39d760	ABD_0496	P0585	cross	yes	0.982743	0.972421	3.59	0.995	fail	no	
+wap_vmap3	XinMai20	481b3a67-ca83-4d19-9060-f17ebd39d760	ABD_0496	P0295	cross	yes	0.983927	0.969231	4	0.995	fail	no	
+wap_vmap3	XinMai20	481b3a67-ca83-4d19-9060-f17ebd39d760	P0295	P0585	within_wap	yes	0.991418	0.976738	3.59	0.995	fail	no	
+wap_vmap3	XinMai208	5aab6216-4905-43bf-9daf-9cd0ba7ab2a3	ABD_0440	P0182	cross	yes	0.989216	0.980639	2.7	0.995	fail	no	
+wap_vmap3	XinYang75256	9b16c5bb-3826-42af-bbd6-e035bac0e4de	ABD_0682	P1965A	cross	yes	0.999493	0.994133	3.4	0.995	pass	yes	
+wap_vmap3	Xinkehan 9	8f139fb4-165d-465e-8f37-0bb023c7e518	ABD_1029	P1596A	cross	yes	0.996265	0.990328	3.69	0.995	pass	no	
+wap_vmap3	Xinong 6028	2b12e53f-2f8e-4d3e-bb4c-653bd932dd9d	ABD_1072	P1316A	cross	yes	0.999401	0.99559	3.83	0.995	pass	yes	
+wap_vmap3	Xinong 881	84cd6528-36f8-466a-bd85-e5e97ae8206b	ABD_1137	P0378	cross	yes	0.977447	0.968227	2.41	0.995	fail	no	
+wap_vmap3	Xinong 881	84cd6528-36f8-466a-bd85-e5e97ae8206b	ABD_0468	P0378	cross	yes	0.977777	0.968252	2.41	0.995	fail	no	
+wap_vmap3	Xinong 881	84cd6528-36f8-466a-bd85-e5e97ae8206b	ABD_0468	ABD_1137	within_vmap3	yes	0.996412	0.991818	7.94	0.995	pass	no	
+wap_vmap3	Xumai856	54fbe365-45c8-48d3-86da-a10e76e1e71f	ABD_1105	P0026	cross	yes	0.984908	0.975973	2.62	0.995	fail	no	
+wap_vmap3	YanAn11	20459516-6582-4cb6-9968-5056edf3a034	ABD_0129	P1319A	cross	yes	0.999633	0.994764	5.19	0.995	pass	yes	
+wap_vmap3	YanDa1817	a9b7004e-3c0f-4b7d-a019-c69e4a9625b6	ABD_0774	ABD_1065	within_vmap3	yes	0.996248	0.992663	8.23	0.995	pass	no	
+wap_vmap3	YanNong15	f7e953ab-a00a-42f1-9ba6-428688143092	ABD_0886	P0391	cross	yes	0.996719	0.988731	3.41	0.995	pass	no	
+wap_vmap3	YangBaiMai	172e58b3-09a3-451a-8a9e-b1ea9e08f8a4	ABD_0679	P1420A	cross	yes	0.999743	0.996298	3.91	0.995	pass	yes	
+wap_vmap3	YangMai	6841923d-5694-4ff0-80d8-ac60b2e61472	ABD_0163	ABD_0166	within_vmap3	yes	0.98572	0.978086	9.63	0.995	fail	no	
+wap_vmap3	YangMai	6841923d-5694-4ff0-80d8-ac60b2e61472	ABD_0163	P1354A	cross	yes	0.985788	0.978001	3.81	0.995	fail	no	
+wap_vmap3	YangMai	6841923d-5694-4ff0-80d8-ac60b2e61472	ABD_0166	P1354A	cross	yes	0.999726	0.99632	3.81	0.995	pass	yes	
+wap_vmap3	Yangmai158	2558e368-5c45-460d-80d9-bdd9d1b4f196	ABD_1041	P0845	cross	yes	0.999132	0.993584	2.68	0.995	pass	yes	
+wap_vmap3	Yannong 19	5363d41c-dd9d-4082-a045-1255c82e3e63	ABD_1189	P0676	cross	yes	0.990984	0.982627	3.28	0.995	fail	no	
+wap_vmap3	Yannong 19	5363d41c-dd9d-4082-a045-1255c82e3e63	ABD_1038	ABD_1189	within_vmap3	yes	0.991458	0.984416	3.28	0.995	fail	no	
+wap_vmap3	Yannong 19	5363d41c-dd9d-4082-a045-1255c82e3e63	ABD_1038	P0676	cross	yes	0.998911	0.992245	3.46	0.995	pass	no	
+wap_vmap3	Yanshi 4	764d7dc5-04dc-45b3-b328-0c0059f17e44	ABD_1130	P0138	cross	yes	0.985301	0.966987	3.02	0.995	fail	no	
+wap_vmap3	YiZhiMai	fea5d491-0995-4fb3-b59a-db90428aafc1	ABD_0982	P1391A	cross	yes	0.999704	0.995632	4.39	0.995	pass	yes	
+wap_vmap3	Yosifia	0829aa26-99b8-4e91-b46d-99b6745bfbdf	ABD_0610	P1388A	cross	yes	0.968749	0.95973	4.93	0.995	fail	no	
+wap_vmap3	YouMangBaiFu	152b7bf3-9da4-4cd3-b9b5-abcced31f507	ABD_0144	ABD_0147	within_vmap3	yes	0.988262	0.983141	8.18	0.995	fail	no	
+wap_vmap3	YouMangBaiFu	152b7bf3-9da4-4cd3-b9b5-abcced31f507	ABD_0144	P1894A	cross	yes	0.988398	0.98283	3.41	0.995	fail	no	
+wap_vmap3	YouMangBaiFu	152b7bf3-9da4-4cd3-b9b5-abcced31f507	ABD_0147	P1894A	cross	yes	0.997458	0.994022	3.41	0.995	pass	no	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_0519	ABD_1073	within_vmap3	yes	0.994974	0.991505	7.48	0.995	fail	no	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_1073	P1068A	cross	yes	0.994975	0.991217	5	0.995	fail	no	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_0149	ABD_0519	within_vmap3	yes	0.995061	0.991124	7.48	0.995	pass	no	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_0149	P1068A	cross	yes	0.995078	0.990913	5	0.995	pass	no	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_0519	P1068A	cross	yes	0.999767	0.996113	5	0.995	pass	yes	
+wap_vmap3	YouZiMai	9bdfcd05-a265-4f2f-94ae-f85b08ba8533	ABD_0149	ABD_1073	within_vmap3	yes	0.999859	0.997039	9.16	0.995	pass	yes	
+wap_vmap3	Yu Hua Zi	26058d81-91a7-4d78-aff6-56f4fb481d04	ABD_0720	P2015A	cross	yes	0.999701	0.996104	3.61	0.995	pass	yes	
+wap_vmap3	YuBao1	60853e39-eb9b-4235-b469-16bb78bd0319	ABD_0459	P1240A	cross	yes	0.999387	0.993069	3.3	0.995	pass	yes	
+wap_vmap3	YuMai14	47a68daf-d7c1-4ebd-a527-7c4c87e76e9f	ABD_0520	P0673	cross	yes	0.975561	0.966033	4	0.995	fail	no	
+wap_vmap3	YuMai21	b1f03bc2-cab1-4004-8e18-ac9dcc1714a2	ABD_0955	P0051	cross	yes	0.997664	0.985401	2.94	0.995	pass	no	
+wap_vmap3	YuMai34	80baaa9e-2bc4-47e4-aa25-85d5b53aa8b8	ABD_0489	P0665	cross	yes	0.999397	0.993195	4.22	0.995	pass	yes	
+wap_vmap3	YuMai57	753db4e9-48b5-4343-b1b0-f66a8c7239f5	ABD_0464	P0213	cross	yes	0.998588	0.99114	2.66	0.995	pass	no	
+wap_vmap3	YuMai62	7daf7af2-e399-4fcb-89b5-d12acbcd96c9	ABD_0481	P0370	cross	yes	0.999291	0.992627	3.8	0.995	pass	yes	
+wap_vmap3	YuNong416	3235e054-3e6f-45b6-b4b2-f340042b3448	ABD_0437	P0030A	cross	yes	0.999566	0.994197	4.74	0.995	pass	yes	
+wap_vmap3	YuZhan89106	2afe4d61-5c3b-4c9c-9c29-c502d9a9300b	ABD_0461	P0291	cross	yes	0.99444	0.9787	4.37	0.995	fail	no	
+wap_vmap3	Yuejin 5	318456c1-a1cc-4f7e-9968-7b327579587f	ABD_1128	P1379A	cross	yes	0.972793	0.964425	3.97	0.995	fail	no	
+wap_vmap3	Yuma	5b97792c-1371-4a7f-9a31-23b4ecb78a46	ABD_0597	P1148A	cross	yes	0.999482	0.994181	3.52	0.995	pass	yes	
+wap_vmap3	Yumai 13	ae147d76-77e4-49a1-942f-4166ad7f0bba	ABD_1022	P0444	cross	yes	0.979295	0.969567	2.68	0.995	fail	no	
+wap_vmap3	Yumai 17	fda3800e-061a-49db-9547-c8ecaf94a446	ABD_1025	P0517	cross	yes	0.984952	0.96595	4.96	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0549	P0938	cross	yes	0.972652	0.961735	3.09	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0549	ABD_1046	within_vmap3	yes	0.974314	0.965917	7.07	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0549	ABD_0888	within_vmap3	yes	0.974585	0.96597	7.07	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	P0481	P0938	within_wap	yes	0.976228	0.965475	2.87	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0549	P0481	cross	yes	0.976822	0.967833	2.87	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_1046	P0481	cross	yes	0.977299	0.968823	2.87	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0888	P0481	cross	yes	0.977504	0.96876	2.87	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_1046	P0938	cross	yes	0.978613	0.968946	3.09	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0888	P0938	cross	yes	0.978828	0.968838	3.09	0.995	fail	no	
+wap_vmap3	Yumai 18	a934da42-fb4c-4c15-8cff-1a3d9e35dbd6	ABD_0888	ABD_1046	within_vmap3	yes	0.999787	0.995604	7.92	0.995	pass	yes	
+wap_vmap3	Yumai 41	f17fd0dd-aa4e-4933-8edf-e2ec826f5952	ABD_1047	P0408	cross	yes	0.978187	0.969547	2.43	0.995	fail	no	
+wap_vmap3	Yumusak B	b0a7e04e-9e40-45c8-a735-6b6927cfae46	ABD_0704	P1798A	cross	yes	0.968752	0.961473	3.74	0.995	fail	no	
+wap_vmap3	Z39-DaLiLengJiao	8a4a437f-67e9-48af-827a-58e3c0829320	ABD_0545	P0928	cross	yes	0.974106	0.961948	3.02	0.995	fail	no	
+wap_vmap3	ZFA 3629	b02a5a92-b99c-4909-a74e-d62bfda44f28	ABD_0297	P0989	cross	yes	0.998434	0.992529	3.43	0.995	pass	no	
+wap_vmap3	ZangDong4	55d18b85-17fe-412d-b9f7-26e31989c533	ABD_0960	P1074A	cross	yes	0.998496	0.992106	3.73	0.995	pass	no	
+wap_vmap3	ZaoWuTian	4de8bfcc-ec28-407f-b543-d3995da3563c	ABD_0148	P1939A	cross	yes	0.981159	0.975842	3.27	0.995	fail	no	
+wap_vmap3	ZhaHong	3f9d0c5a-7b11-41f1-9917-958ec04f8628	ABD_0975	P1688A	cross	yes	0.979856	0.974124	3.7	0.995	fail	no	
+wap_vmap3	ZhaoMin1006-08X3	e12eb248-8138-414a-8bd3-fb1de0a8ee89	ABD_0458	P0145	cross	yes	0.998935	0.991421	3.02	0.995	pass	no	
+wap_vmap3	ZhengMai0856	99297452-64e1-43c0-acd6-8975898b7a4b	ABD_0446	P0157	cross	yes	0.998773	0.990707	2.91	0.995	pass	no	
+wap_vmap3	ZhengMai336	4b7a92ca-1244-4064-8ef5-68eec05461c8	ABD_0442	P0018	cross	yes	0.998645	0.991904	2.62	0.995	pass	no	
+wap_vmap3	ZhengNong17	79f333e6-1733-4b9b-b53b-032ca14c9dfe	ABD_0450	P0059	cross	yes	0.998926	0.991591	2.89	0.995	pass	no	
+wap_vmap3	ZhengYou7	23a3839f-0c8e-4e20-836a-11747bb12bd8	ABD_0490	P0149	cross	yes	0.998969	0.992221	3.27	0.995	pass	no	
+wap_vmap3	ZhengYuMai9987	132981aa-963c-47be-a37a-36765e38f1d9	ABD_0439	P0088	cross	yes	0.990796	0.981672	2.31	0.995	fail	no	
+wap_vmap3	ZhengZhou6903	97b4aa69-f6c8-47ee-b8a5-4e2a517c9e9f	ABD_0574	P1141A	cross	yes	0.999499	0.994279	3.72	0.995	pass	yes	
+wap_vmap3	ZhengZi8709-4-4	8fdd80c9-a809-49f5-88ba-ab60c649f7a8	ABD_0501	P0660	cross	yes	0.977803	0.967606	3.29	0.995	fail	no	
+wap_vmap3	Zhongyou 9507	7d912ed6-0cbe-4778-b3b4-2b8f71018999	ABD_1097	P1227A	cross	yes	0.987735	0.981004	3.53	0.995	fail	no	
+wap_vmap3	Zhongyou 9507	7d912ed6-0cbe-4778-b3b4-2b8f71018999	ABD_0127	P1227A	cross	yes	0.987894	0.98098	3.53	0.995	fail	no	
+wap_vmap3	Zhongyou 9507	7d912ed6-0cbe-4778-b3b4-2b8f71018999	ABD_0127	ABD_1097	within_vmap3	yes	0.999798	0.996206	9.93	0.995	pass	yes	
+wap_vmap3	Zhou 8425B	8f4c52b2-256b-4819-8352-96d34dd2eec7	ABD_1085	P0159	cross	yes	0.998895	0.991821	2.94	0.995	pass	no	
+wap_vmap3	Zhoumai 18	4f2348d8-ae07-4c1a-912c-ca76e70b1fa0	ABD_1055	P0117	cross	yes	0.989911	0.981192	2.84	0.995	fail	no	
+wap_vmap3	Zhoumai 18	4f2348d8-ae07-4c1a-912c-ca76e70b1fa0	ABD_0885	ABD_1055	within_vmap3	yes	0.990719	0.98332	5.07	0.995	fail	no	
+wap_vmap3	Zhoumai 18	4f2348d8-ae07-4c1a-912c-ca76e70b1fa0	ABD_0885	P0117	cross	yes	0.998461	0.990163	2.84	0.995	pass	no	
+wap_vmap3	Zhoumai 22	e3336bab-3155-4a27-b296-3d1e502c9271	ABD_0438	P0151	cross	yes	0.983256	0.973404	2.92	0.995	fail	no	
+wap_vmap3	Zhoumai 22	e3336bab-3155-4a27-b296-3d1e502c9271	ABD_0438	ABD_1061	within_vmap3	yes	0.985182	0.97759	7.45	0.995	fail	no	
+wap_vmap3	Zhoumai 22	e3336bab-3155-4a27-b296-3d1e502c9271	ABD_1061	P0151	cross	yes	0.994641	0.987255	2.92	0.995	fail	no	
+wap_vmap3	Zhushimai	125b028d-ffc4-4b49-93b1-4838212c412d	ABD_1127	P1546A	cross	yes	0.99724	0.985244	4.06	0.995	pass	no	
+wap_vmap3	ZiJiuHong	6e6ffb2b-c9ed-40bb-acf5-0d7c52e922d4	ABD_0130	ABD_0133	within_vmap3	yes	0.979051	0.969975	8.46	0.995	fail	no	
+wap_vmap3	ZiPi	39b2b3d0-cd88-41a5-8484-6ce79e5800b6	ABD_0157	P1662A	cross	yes	0.984976	0.980577	3.47	0.995	fail	no	
+wap_vmap3	ZongZhuo	259d22c8-32ac-45c5-880a-2ed7b4d3801a	ABD_0980	P1839A	cross	yes	0.999592	0.995159	3.62	0.995	pass	yes	
+wap_vmap3	ZuoongSuiSui1	693465dc-64eb-4cb7-b252-e29693c6952f	ABD_0763	ABD_0779	within_vmap3	yes	0.972339	0.964361	6.21	0.995	fail	no	
+wap_vmap3	eJiaXiang	932be5db-e31f-40ed-82cc-9ad8988ef61e	ABD_0973	P1156A	cross	yes	0.981984	0.975728	4.44	0.995	fail	no	
+wap_vmap3	ok Bullet	a4180556-ebcc-4107-9cf8-4d512c5f951a	ABD_0589	P1159A	cross	yes	0.9995	0.993888	3.42	0.995	pass	yes	
+wap_vmap3	济麦22	f27d750e-76ac-4dcb-96de-f4168256328c	ABD_1002	ABD_1056	within_vmap3	yes	0.999175	0.994004	5	0.995	pass	yes	
+wap_vmap3	济麦22	f27d750e-76ac-4dcb-96de-f4168256328c	ABD_0748	ABD_1002	within_vmap3	yes	0.999248	0.993473	5	0.995	pass	yes	
+wap_vmap3	济麦22	f27d750e-76ac-4dcb-96de-f4168256328c	ABD_0748	ABD_1056	within_vmap3	yes	0.999453	0.994689	7.83	0.995	pass	yes	

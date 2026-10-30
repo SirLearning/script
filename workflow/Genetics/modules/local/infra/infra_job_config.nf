@@ -71,14 +71,16 @@ def getCallingJobConfig(job) {
             a_pop: ["A", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
-            chroms: []
+            chroms: [],
+            tbm_set: "final"
         ],
         "rebuild": [
             name: "rebuild",
             a_pop: ["A", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             b_pop: ["S", "AB", "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
             d_pop: ["D",       "ABD", "WAP", "HZNU", "Nature", "w115", "w66", "w203", "w204", "w243"],
-            chroms: []
+            chroms: [],
+            tbm_set: "final"
         ]
     ]
     
@@ -175,10 +177,28 @@ def getPopulationConfig(pop, home_dir) {
     return tuple(pop, config.depth_dir, config.bam_dir)
 }
 
-def getChrConfig(chr, home_dir, sub_genome_tbm) {
-    // Normalize possible prefixes like 'chr1' -> '1'
+def getSubGenome(chr) {
+    // Sub-genome of a chromosome number: A=1,2,7,..., B=3,4,9,..., D=5,6,11,...
+    // Chromosomes 0, 43 and 44 have no sub-genome and use the ALL reference/map.
     def normalized = chr.toString().replaceFirst(/^chr/, '')
+    def groupA = ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
+    def groupB = ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
+    def groupD = ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
+    def groupOthers = ["0","43","44"]
 
+    if (groupA.contains(normalized)) {
+        return "A"
+    } else if (groupB.contains(normalized)) {
+        return "B"
+    } else if (groupD.contains(normalized)) {
+        return "D"
+    } else if (groupOthers.contains(normalized)) {
+        return "ALL"
+    }
+    throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
+}
+
+def getChrConfig(chr, home_dir, sub_genome_tbm) {
     def subGenomeConfigs = [
         "A": [
             chromosome: chr,
@@ -206,23 +226,7 @@ def getChrConfig(chr, home_dir, sub_genome_tbm) {
         ]
     ]
 
-    def groupA = ["1","2","7","8","13","14","19","20","25","26","31","32","37","38"]
-    def groupB = ["3","4","9","10","15","16","21","22","27","28","33","34","39","40"]
-    def groupD = ["5","6","11","12","17","18","23","24","29","30","35","36","41","42"]
-    def groupOthers = ["0","43","44"]
-
-    def sub_genome
-    if (groupA.contains(normalized)) {
-        sub_genome = "A"
-    } else if (groupB.contains(normalized)) {
-        sub_genome = "B"
-    } else if (groupD.contains(normalized)) {
-        sub_genome = "D"
-    } else if (groupOthers.contains(normalized)) {
-        sub_genome = "ALL"
-    } else {
-        throw new IllegalArgumentException("Unknown chromosome: ${chr} (normalized: ${normalized})")
-    }
+    def sub_genome = getSubGenome(chr)
     def config = subGenomeConfigs[sub_genome]
     def ref = file(config.reference)
     def fai = file(config.fai_idx)

@@ -36,11 +36,19 @@ modules:
       Distinct from 12depth (mosdepth reruns).
 
   - id: "14stats.genome"
-    role: Current genotype-stats test runs (successor of 12stats.genome)
+    role: Genotype-stats test runs through NN=99 (successor of 12stats.genome)
+    status: full
     knowledge: workspace/vmap4_14stats_genome.yaml
     note: >
+      Highest run is 99run_*. New stats work uses successor 16stats.genome.
+      Distinct from 12depth (mosdepth reruns).
+
+  - id: "16stats.genome"
+    role: Current genotype-stats test runs (successor of 14stats.genome)
+    knowledge: workspace/vmap4_16stats_genome.yaml
+    note: >
       Default module for new stats launches (NN from 01). Same science area as
-      12stats.genome. Distinct from 12depth (mosdepth reruns).
+      14stats.genome. Distinct from 12depth (mosdepth reruns).
 
   - id: "11aneuploidy"
     role: Mosdepth aneuploidy benchmark + MAPQ bin cohort scan

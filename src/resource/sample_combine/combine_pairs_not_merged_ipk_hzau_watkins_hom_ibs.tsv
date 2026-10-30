@@ -1,0 +1,6 @@
+germplasm_name	germplasm_id	sample1	sample2	name1_raw	name2_raw	pair_type	ploidy1	ploidy2	same_ploidy	plink_ibs	hom_ibs	coverage_min	dedup_class	tier	plink_percentile	plink_random_class	decision
+TRI 341	db7b98c9-f6ef-4e82-aad1-72d54ae33d3e	SAMEA10943945	SAMEA10943994	SAMEA10943945	SAMEA10943994	within_ipk	AABBDD	AABBDD	yes	0.97144	0.978698	1.94	same_dedup_group	low	0.91774	low	
+TRI 8076	693c953b-eec8-4362-a267-45815c212611	SAMEA10943984	SAMEA10944631	SAMEA10943984	SAMEA10944631	within_ipk	AABBDD	AABBDD	yes	0.979683	0.98573	0.66	not_in_dedup	mid	0.995155	high	
+WATDE0409	99aaa3a0-12dd-4f6d-988c-39e03c4488e6	CRR877047	CRR877049	CRR877047	CRR877049	within_watkins	AABBDD	AABBDD	yes	0.988331	0.988701	0.08	same_dedup_group	mid	0.999565	high	keep_merge
+WATDE0334	7e4bc00e-3a93-4324-b6dd-03e003890567	CRR876901	CRR876903	CRR876901	CRR876903	within_watkins	AABBDD	AABBDD	yes	0.988185	0.988707	0.12	same_dedup_group	mid	0.999535	high	
+WATDE0344	6477d6b2-359b-416e-8cb6-9e03c2f2eb18	CRR876921	CRR876922	CRR876921	CRR876922	within_watkins	AABBDD	AABBDD	yes	0.987879	0.989942	0.16	same_dedup_group	mid	0.999495	high	

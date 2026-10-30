@@ -3266,6 +3266,338 @@ def plot_grouped_density_lines(
     plt.close(fig)
 
 
+def plot_kde_density_lines(
+    data,
+    x_col,
+    hue_col,
+    hue_order,
+    palette_map,
+    title,
+    filename,
+    xlabel=None,
+    ylabel="Density",
+    xlim=None,
+    bw_method=0.15,
+    hue_labels=None,
+    figure_size=(10, 6),
+    linewidth=2.0,
+    fill=True,
+    fill_alpha=0.16,
+    x_points=600,
+):
+    """Gaussian-KDE density curves, one per hue, with optional fill.
+
+    Use this instead of :func:`plot_grouped_density_lines` when a group has
+    only a few hundred values: the frequency polygon becomes jagged at that
+    size, while a KDE stays smooth. ``bw_method`` follows
+    :class:`scipy.stats.gaussian_kde` (float, ``"scott"`` or ``"silverman"``).
+    """
+    from scipy.stats import gaussian_kde
+
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=figure_size)
+    if xlabel is None:
+        xlabel = x_col
+    if hue_labels is None:
+        hue_labels = {k: k for k in hue_order}
+
+    plot_df = data[[x_col, hue_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    x_lo, x_hi = (0.0, 1.0) if xlim is None else (float(xlim[0]), float(xlim[1]))
+    if xlim is None and not plot_df.empty:
+        x_lo = float(np.nanmin(plot_df[x_col].to_numpy(dtype=np.float64)))
+        x_hi = float(np.nanmax(plot_df[x_col].to_numpy(dtype=np.float64)))
+        if not np.isfinite(x_lo) or not np.isfinite(x_hi) or x_hi <= x_lo:
+            x_lo, x_hi = 0.0, 1.0
+    xs = np.linspace(x_lo, x_hi, max(50, int(x_points)))
+
+    for hue in hue_order:
+        vals = plot_df.loc[plot_df[hue_col] == hue, x_col].to_numpy(dtype=np.float64)
+        if len(vals) < 2 or float(np.nanstd(vals)) <= 0.0:
+            continue
+        density = gaussian_kde(vals, bw_method=bw_method)(xs)
+        color = palette_map.get(hue, "steelblue")
+        if fill:
+            ax.fill_between(xs, 0.0, density, color=color, alpha=fill_alpha, linewidth=0)
+        ax.plot(
+            xs,
+            density,
+            color=color,
+            linestyle="-",
+            linewidth=float(linewidth),
+            label=hue_labels.get(hue, hue),
+        )
+
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    ax.set_xlim(x_lo, x_hi)
+    ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved {filename}")
+    plt.close(fig)
+
+
+def plot_grouped_histogram(
+    data,
+    x_col,
+    hue_col,
+    hue_order,
+    palette_map,
+    title,
+    filename,
+    xlabel=None,
+    ylabel="Density",
+    xlim=None,
+    bins=80,
+    density=True,
+    hue_labels=None,
+    figure_size=(10, 6),
+    thresholds_v=None,
+):
+    """Grouped histogram bars, one bar series per hue.
+
+    This is the bar-chart counterpart of :func:`plot_kde_density_lines`.
+    Each hue gets ``1 / len(hue_order)`` of every bin, so the bars stay
+    side-by-side and density-normalised when group sizes differ.
+    ``thresholds_v`` draws vertical reference lines, each a dict with
+    ``value`` plus optional ``color``, ``linestyle`` and ``label``.
+    """
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=figure_size)
+    if xlabel is None:
+        xlabel = x_col
+    if hue_labels is None:
+        hue_labels = {k: k for k in hue_order}
+    plot_df = data[[x_col, hue_col]].replace([np.inf, -np.inf], np.nan).dropna()
+    x_lo, x_hi = (0.0, 1.0) if xlim is None else (float(xlim[0]), float(xlim[1]))
+    if xlim is None and not plot_df.empty:
+        x_lo = float(np.nanmin(plot_df[x_col].to_numpy(dtype=np.float64)))
+        x_hi = float(np.nanmax(plot_df[x_col].to_numpy(dtype=np.float64)))
+        if not np.isfinite(x_lo) or not np.isfinite(x_hi) or x_hi <= x_lo:
+            x_lo, x_hi = 0.0, 1.0
+    bins = max(4, int(bins))
+    edges = np.linspace(x_lo, x_hi, bins + 1)
+    mids = 0.5 * (edges[:-1] + edges[1:])
+    n_hues = max(1, len(hue_order))
+    width = (edges[1] - edges[0]) / n_hues * 0.9
+
+    for position, hue in enumerate(hue_order):
+        vals = plot_df.loc[plot_df[hue_col] == hue, x_col].to_numpy(dtype=np.float64)
+        if len(vals) == 0:
+            continue
+        heights, _ = np.histogram(vals, bins=edges, density=bool(density))
+        offset = (position - (n_hues - 1) / 2.0) * width
+        ax.bar(
+            mids + offset,
+            heights.astype(np.float64),
+            width=width,
+            color=palette_map.get(hue, "steelblue"),
+            label=hue_labels.get(hue, hue),
+            linewidth=0,
+        )
+
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    ax.set_xlim(x_lo, x_hi)
+    if thresholds_v:
+        for thr in thresholds_v:
+            value = thr.get("value")
+            if value is None:
+                continue
+            ax.axvline(
+                x=value,
+                color=thr.get("color", "black"),
+                linestyle=thr.get("linestyle", "--"),
+                linewidth=thr.get("linewidth", 1.0),
+                label=thr.get("label", f"{value:.4f}"),
+                zorder=4,
+            )
+    ax.legend(
+        loc="upper left",
+        bbox_to_anchor=(0.0, -0.15),
+        fontsize=LEGEND_FONT_SIZE,
+        frameon=False,
+    )
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved {filename}")
+    plt.close(fig)
+
+
+def plot_connected_scatter(
+    points,
+    edges,
+    title,
+    filename,
+    x_col="PC1",
+    y_col="PC2",
+    id_col="id",
+    source_col="source",
+    target_col="target",
+    category_col="category",
+    edge_colors=None,
+    label_categories=None,
+    label_font_size=6,
+    background_color="#cccccc",
+    background_size=6,
+    point_size=26,
+    point_color="#444444",
+    xlabel=None,
+    ylabel=None,
+    figure_size=(10, 8),
+    focus=False,
+    focus_padding=0.08,
+    focus_percentiles=(0.01, 0.99),
+    xlim=None,
+    ylim=None,
+):
+    """Scatter with group edges drawn between its points.
+
+    ``points`` is one row per item (``id``, ``x_col``, ``y_col``); every point is
+    drawn as a light background. ``edges`` is one row per connection
+    (``source``, ``target``, ``category``); each edge is a line coloured by its
+    category, and the endpoints of edges belonging to ``label_categories`` are
+    annotated with their id. Edges pointing outside ``points`` are dropped.
+    ``focus`` crops the axes to the ``focus_percentiles`` band of the whole
+    point cloud plus ``focus_padding``: that keeps a few outlier samples from
+    flattening the figure without cropping away the population the edges sit in
+    (cropping to the connected points alone hides most of a small group).
+    ``xlim`` / ``ylim`` override that crop with explicit limits.
+    """
+    from matplotlib.collections import LineCollection
+    from matplotlib.lines import Line2D
+
+    sns.set_style("white")
+    fig, ax = plt.subplots(figsize=figure_size)
+    if xlabel is None:
+        xlabel = x_col
+    if ylabel is None:
+        ylabel = y_col
+    if edge_colors is None:
+        edge_colors = {}
+    label_categories = list(label_categories or [])
+
+    coords = points[[id_col, x_col, y_col]].dropna()
+    position = coords.set_index(id_col)[[x_col, y_col]]
+
+    edge_df = edges.dropna(subset=[source_col, target_col]).copy()
+    edge_df = edge_df.loc[
+        edge_df[source_col].isin(position.index)
+        & edge_df[target_col].isin(position.index)
+    ]
+    categories = list(edge_colors)
+    for category in edge_df[category_col].unique():
+        if category not in categories:
+            categories.append(category)
+
+    ax.scatter(
+        coords[x_col],
+        coords[y_col],
+        s=background_size,
+        color=background_color,
+        linewidths=0,
+        zorder=1,
+    )
+
+    for category in categories:
+        sub = edge_df.loc[edge_df[category_col] == category]
+        if sub.empty:
+            continue
+        segments = [
+            [
+                position.loc[source].to_numpy(dtype=float),
+                position.loc[target].to_numpy(dtype=float),
+            ]
+            for source, target in zip(sub[source_col], sub[target_col])
+        ]
+        ax.add_collection(
+            LineCollection(
+                segments,
+                colors=edge_colors.get(category, "grey"),
+                linewidths=1.2,
+                alpha=0.7,
+                zorder=2,
+            )
+        )
+
+    involved = sorted(
+        set(edge_df[source_col]) | set(edge_df[target_col])
+    )
+    if involved:
+        ax.scatter(
+            position.loc[involved, x_col],
+            position.loc[involved, y_col],
+            s=point_size,
+            color=point_color,
+            linewidths=0,
+            zorder=3,
+        )
+
+    labelled = sorted(
+        set(edge_df.loc[edge_df[category_col].isin(label_categories), source_col])
+        | set(edge_df.loc[edge_df[category_col].isin(label_categories), target_col])
+    )
+    for item in labelled:
+        ax.annotate(
+            str(item),
+            (position.loc[item, x_col], position.loc[item, y_col]),
+            fontsize=label_font_size,
+            xytext=(3, 3),
+            textcoords="offset points",
+            color="#333333",
+            zorder=4,
+        )
+
+    handles = [
+        Line2D(
+            [0],
+            [0],
+            color=edge_colors.get(category, "grey"),
+            linewidth=1.5,
+            label=str(category),
+        )
+        for category in categories
+        if not edge_df.loc[edge_df[category_col] == category].empty
+    ]
+    if handles:
+        ax.legend(
+            handles=handles,
+            loc="upper right",
+            fontsize=LEGEND_FONT_SIZE,
+            frameon=False,
+        )
+
+    ax.set_title(title, fontsize=TITLE_FONT_SIZE)
+    ax.set_xlabel(xlabel, fontsize=X_LABEL_FONT_SIZE)
+    ax.set_ylabel(ylabel, fontsize=Y_LABEL_FONT_SIZE)
+    ax.tick_params(axis="both", which="major", labelsize=TICK_FONT_SIZE)
+    if focus and not coords.empty:
+        lower_q, upper_q = focus_percentiles
+        for axis, column in ((ax.set_xlim, x_col), (ax.set_ylim, y_col)):
+            values = coords[column].to_numpy(dtype=float)
+            low = float(np.nanquantile(values, lower_q))
+            high = float(np.nanquantile(values, upper_q))
+            span = high - low
+            if span <= 0:
+                span = abs(high) or 1.0
+            pad = span * focus_padding
+            axis(low - pad, high + pad)
+    if xlim is not None:
+        ax.set_xlim(*xlim)
+    if ylim is not None:
+        ax.set_ylim(*ylim)
+    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    print(f"Saved {filename}")
+    plt.close(fig)
+
+
 def plot_scatter_with_thresholds(
     data, x_col, y_col,
     title, filename,
@@ -3279,6 +3611,7 @@ def plot_scatter_with_thresholds(
     xlim=None,
     ylim=None,
     group_col=None,
+    hue_palette=None,
     highlight_ids=None,
     id_col=None,
     highlight_color='crimson',
@@ -3295,6 +3628,7 @@ def plot_scatter_with_thresholds(
     identity_label=r"$y=x$",
     identity_color="#7f7f7f",
     size_col=None,
+    line_overlays=None,
     ax=None,
     save=True,
     show_legend=True,
@@ -3309,6 +3643,8 @@ def plot_scatter_with_thresholds(
         thresholds_h (list of dict): e.g. [{'value': 0.95, 'color': 'red', 'linestyle': '--', 'label': 'Cutoff'}]
         thresholds_v (list of dict): e.g. [{'value': 0.5, 'color': 'orange', 'linestyle': '--', 'label': 'Limit'}]
         group_col: Optional column name for hue (e.g. ``Group`` from ``anno_group``).
+        hue_palette: Optional seaborn palette (dict or list) used when
+            ``group_col`` is set but is not the canonical ``Group`` column.
         highlight_ids: Sample IDs to mark with a distinct marker and text label.
         id_col: Column holding sample IDs for ``highlight_ids`` (defaults to Sample, IID, #IID).
         x_spans: Optional interval shading on x, each dict with start/end and optional color/alpha/label.
@@ -3322,6 +3658,11 @@ def plot_scatter_with_thresholds(
         connect_flag_false_label: Legend label for False-flag points.
         identity_line: If True, draw y=x (two-category contrast uses blue vs this gray).
         size_col: Optional numeric column mapped to point area.
+        line_overlays: Optional list of dicts with ``x`` / ``y`` arrays and
+            optional ``color``, ``linestyle``, ``linewidth``, ``marker``,
+            ``markersize``, ``label``, and ``zorder`` (same shape as
+            ``plot_scatter_continuous_color``). Use it for a fitted trend or a
+            binned summary drawn over the points.
         ax: Optional existing axes. When set, draw on it instead of creating a figure.
         save: If False, skip ``savefig`` (use with ``ax`` for multi-panel figures).
         show_legend: If False, skip the legend even when labels exist.
@@ -3423,6 +3764,8 @@ def plot_scatter_with_thresholds(
     elif use_hue:
         plot_data = data[[x_col, y_col, group_col]].replace([np.inf, -np.inf], np.nan).dropna()
         hue_kw = _hue_kwargs_for_sample_group(plot_data, group_col)
+        if hue_palette is not None and "palette" not in hue_kw:
+            hue_kw["palette"] = hue_palette
         sns.scatterplot(
             data=plot_data, x=x_col, y=y_col,
             hue=group_col, alpha=alpha, s=s, edgecolor='w', zorder=2, ax=ax, **hue_kw,
@@ -3494,7 +3837,24 @@ def plot_scatter_with_thresholds(
                             fontweight='bold',
                             zorder=6,
                         )
-    
+    if line_overlays:
+        for overlay in line_overlays:
+            xs = overlay.get("x")
+            ys = overlay.get("y")
+            if xs is None or ys is None:
+                continue
+            ax.plot(
+                xs,
+                ys,
+                color=overlay.get("color", "black"),
+                linestyle=overlay.get("linestyle", "-"),
+                linewidth=overlay.get("linewidth", 2.0),
+                marker=overlay.get("marker"),
+                markersize=overlay.get("markersize", 5),
+                zorder=overlay.get("zorder", 4),
+                label=overlay.get("label"),
+            )
+
     # Horizontal Thresholds
     if thresholds_h:
         for thr in thresholds_h:
@@ -3547,7 +3907,10 @@ def plot_scatter_with_thresholds(
 
     span_labeled = bool(x_spans) and any(span.get("label") for span in x_spans)
     flag_labeled = use_flag and bool(connect_flag_true_label or connect_flag_false_label)
-    if show_legend and (use_hue or thresholds_h or thresholds_v or highlight_ids or span_labeled or flag_labeled or identity_line):
+    line_labeled = bool(line_overlays) and any(
+        overlay.get("label") for overlay in line_overlays
+    )
+    if show_legend and (use_hue or thresholds_h or thresholds_v or highlight_ids or span_labeled or flag_labeled or line_labeled or identity_line):
         legend_kw = dict(
             fontsize=LEGEND_FONT_SIZE,
             frameon=False,

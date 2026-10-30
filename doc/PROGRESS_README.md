@@ -4,6 +4,14 @@ Append-only engineering trail. Each day is `progress/YYYY-MM-DD.md` (narrative +
 
 ## Recent entries
 
+- [[progress/2026-10-30]]
+- [[progress/2026-10-29]]
+- [[progress/2026-10-28]]
+- [[progress/2026-10-27]]
+- [[progress/2026-10-26]]
+- [[progress/2026-10-24]]
+- [[progress/2026-10-23]]
+- [[progress/2026-10-22]]
 - [[progress/2026-10-20]]
 - [[progress/2026-10-19]]
 - [[progress/2026-10-15]]

@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl=2
 
-include { getCallingJobConfig; getPopulationConfig; getChrConfig } from '../../infra/infra_job_config.nf'
+include { getCallingJobConfig; getPopulationConfig; getChrConfig; getSubGenome } from '../../infra/infra_job_config.nf'
 include { getSoftwareConfig; validatePaths; getJavaSetupScript } from '../../infra/infra_tools.nf'
 include { getServerPopulations } from '../../infra/infra_tiger.nf'
 
@@ -33,6 +33,22 @@ include {
 
 // --- help info ---
 params.help = false
+params.tbm_set = null
+
+// scan3 -p table for one sub-genome: either the given file (used for every
+// chromosome) or <set>.<A|B|D|ALL>.taxaMergeMap.txt inside the given directory.
+def resolveScan3MergeMap(base_file, sub_genome, set_name) {
+    if (!base_file.isDirectory()) {
+        return base_file
+    }
+    def resolved = base_file.resolve("${set_name}.${sub_genome}.taxaMergeMap.txt")
+    if (!resolved.exists()) {
+        throw new IllegalArgumentException(
+            "scan3 merge map for sub-genome ${sub_genome} not found: ${resolved}"
+        )
+    }
+    return resolved
+}
 
 def helpMessage() {
     log.info """
@@ -60,11 +76,13 @@ def helpMessage() {
         --scan3_dir      scan3 outputs. Default: output/<job>/gen3
         --scan3_source_dir  Prior scan dir with indiCounts/ (default: --gen_dir)
         --scan3_merge_map   Merge table for scan3 (-p). Required when --mod scan3.
+                         Production table: src/resource/sample_combine/final.<A|B|D|ALL>.taxaMergeMap.txt
+                         (one line per final taxon; unmerged samples map to themselves).
         --clib_positions Position list for clib (-b). Required when --mod clib.
         --clib_dir       clib outputs. Default: output/<job>/vLib_custom
 
     Software settings:
-        --tiger_jar      TIGER jar filename under <home_dir>/lib (default: TIGER_F3_20261012.jar)
+        --tiger_jar      TIGER jar filename under <home_dir>/lib (default: TIGER_F3_20261028.jar)
         --workshop_jar   Workshop jar filename under <home_dir>/lib (default: Workshop.jar)
         --samtools       Samtools executable (default: samtools)
 
@@ -75,6 +93,10 @@ def helpMessage() {
     Taxa-BAM mapping (TBM):
         --tbm_gen_server Optional server key to generate TBM (e.g. s243). When provided, TBMs are prepared
                          per server populations, then concatenated for ALL/A/B/D.
+        --tbm_set        Use a prebuilt <name>.<sub_genome>.taxaBamMap.txt set under
+                         00data/05taxaBamMap instead of concatenating per-population files.
+                         Job 'all'/'rebuild' default to 'final'; --gen_tbm disables that default.
+                         A partial fill (e.g. a few missing taxa) passes its own set.
 
     Java/runtime management:
         - Java installs are expected in <user_dir>/lib/jvm: jdk-8, jdk-11, jdk-17, jdk-21
@@ -102,7 +124,7 @@ def helpMessage() {
         --scan_midr      MiDR: site depth / taxa Coverage below this → VCF ./. (default: 0.2)
 
         .iac is always unfiltered raw AD. MiDR applies only when writing VCF.
-        TIGER_F3_20261012 has no MaDR flag and no absolute min depth (MDC).
+        TIGER_F3_20261028 has no MaDR flag and no absolute min depth (MDC).
         Change the MiDR filter with scan2 or scan4; do not re-mpileup.
         scan4 is scan2 with 256-site windows (does not keep a whole bin of AD/VCF lines).
         scan_iac uses the same pileup parameters as scan, writes indiCounts/*.iac.gz, then stops.
@@ -146,7 +168,7 @@ def helpMessage() {
             --mod {full, from_blib, scan_only, scan_iac, vlib, clib, scan2, scan3, scan4} \
             {--gen_tbm 1} \
             {--chr 1|2} \
-            {--tiger_jar TIGER_F3_20261012.jar}
+            {--tiger_jar TIGER_F3_20261028.jar}
         // blib MAO=1 rebuild
         nextflow run /data/home/tusr1/git/script/workflow/Genetics/modules/local/genotype/calling/caller.nf \
             --home_dir /data/home/tusr1/01projects/vmap4 \
@@ -277,6 +299,30 @@ workflow run_FastCall3 {
     pipeline_info_dir.mkdirs()
 
     // --- set taxaBamMap.txt and reference genome for different populations ---
+    // A prebuilt set is <name>.<sub_genome>.taxaBamMap.txt under 00data/05taxaBamMap.
+    // --tbm_set overrides the job default; --gen_tbm always concatenates per-population files.
+    def tbm_set = params.tbm_set ?: (params.gen_tbm ? null : job_config.tbm_set)
+    def sub_genome_tbm_ch
+    if (tbm_set) {
+        def sub_genomes = []
+        if (job_config.a_pop.any()) { sub_genomes << "A" }
+        if (job_config.b_pop.any()) { sub_genomes << "B" }
+        if (job_config.d_pop.any()) { sub_genomes << "D" }
+        sub_genomes << "ALL"
+        def tbm_set_files = sub_genomes.collect { sub ->
+            tuple(sub, file("${params.home_dir}/00data/05taxaBamMap/${tbm_set}.${sub}.taxaBamMap.txt"))
+        }
+        def missing_tbm_files = tbm_set_files.findAll { item -> !item[1].exists() }
+        if (missing_tbm_files) {
+            log.error "Mode: prebuilt taxaBamMap set '${tbm_set}', but these files are missing:"
+            missing_tbm_files.each { item -> log.error "  - ${item[1]}" }
+            exit 1
+        }
+        log.info "Mode: Using prebuilt taxaBamMap set '${tbm_set}': ${tbm_set_files.collect { item -> item[1].name }}"
+        sub_genome_tbm_ch = channel.fromList(tbm_set_files)
+            .collect()
+            .map { flat_list -> flat_list.collate(2).collectEntries() }
+    } else {
     def server_pop = getServerPopulations(params.server)
     log.info "Server populations for taxaBamMap generation: ${server_pop}"
     def tbm_files = []
@@ -331,12 +377,13 @@ workflow run_FastCall3 {
             def pop_tbm_files = item[1]
             return tuple(pop_tbm_files, job_config.name, sub_genome)
         }
-    def sub_genome_tbm_ch = concatTaxaBamMap(pop_tbm_files_list_ch).tbm
+    sub_genome_tbm_ch = concatTaxaBamMap(pop_tbm_files_list_ch).tbm
         .collect()
-        .map { flat_list -> 
+        .map { flat_list ->
             log.info "show tuples: ${flat_list}"
             flat_list.collate(2).collectEntries()
         }
+    }
 
     sub_genome_tbm_ch
         .view { sub_genome_tbm -> 
@@ -528,16 +575,29 @@ workflow run_FastCall3 {
             log.error "scan3 merge map not found: ${merge_map_file}"
             exit 1
         }
+        // A directory is a per-sub-genome set: <tbm_set>.<A|B|D|ALL>.taxaMergeMap.txt.
+        // TIGER validates every source taxon against the -b map of the chromosome,
+        // so a single global table cannot cover A/B/D/ALL when it lists sources that
+        // only exist in one sub-genome.
+        if (merge_map_file.isDirectory()) {
+            log.info "scan3 merge map: per-sub-genome set under ${merge_map_file}"
+        }
         file(scan3_out).mkdirs()
         def blib_chr_config_lib_ch = load_lib_files(
             vlib_dir_resolved,
             chr_config_ch
         ).ch_lib
+        def scan3_input_ch = blib_chr_config_lib_ch.map { item ->
+            def sub_genome = getSubGenome(item[0].toString())
+            def merge_map = resolveScan3MergeMap(
+                file(params.scan3_merge_map), sub_genome, params.tbm_set ?: "final"
+            )
+            tuple(item[0], item[1], item[2], item[3], item[4], item[5], merge_map)
+        }
         scan_results = fastcall3_scan3(
-            blib_chr_config_lib_ch,
+            scan3_input_ch,
             tiger_jar_input,
             scan3_source,
-            merge_map_file,
             scan3_out
         )
     } else if (params.mod == "vlib") {

@@ -45,6 +45,21 @@ policies:
       IDs P*/PA*). It is disjoint from ABD.taxaBamMap.txt. WAP BAMs live
       under bam1/ABD; the map file is still WAP. See sample_cohorts.yaml.
 
+  - id: prebuilt_tbm_set
+    rule: >
+      caller.nf --tbm_set <name> reads <name>.<A|B|D|ALL>.taxaBamMap.txt
+      directly. Jobs all and rebuild default to final; --gen_tbm 1 disables
+      that default and concatenates the per-population files as before.
+    do_not: >
+      Assume per-population files include every production taxon. final.* is
+      the production superset: all.* plus ABD_0915, ABD_0938, and D_0132,
+      whose IAC was filled into final/indiCounts on 2026-10-27.
+    scan3_caveat: >
+      The Java -p merge table validates every source taxon against the -b
+      map. D_0132 exists only in final.D and final.ALL, so a single global
+      merge table containing D_0132 fails on A/B chromosomes; use
+      sub-genome-specific tables or run scan3 per sub-genome.
+
 examples:
   - sample_id: CS_mp_2018_8X
     canonical_file: ABD.taxaBamMap.txt

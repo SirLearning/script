@@ -1,0 +1,1365 @@
+kind: workspace_module
+id: vmap4_16stats_genome
+title: Genotype stats runs (successor of 14stats.genome)
+version: "1.0"
+path: /data/home/tusr1/01projects/vmap4/16stats.genome
+purpose: >
+  Successor stats module after 14stats.genome reached NN=99. Same science area
+  (genotype stats / assess / LD / MAC / popdep partials, combine IBS replots).
+  Numbered runs from 01.
+default_job: test_plink
+publish_base: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/
+
+runs:
+  - folder: 01run_combine_ibs_hist_bins
+    summary: >
+      Replot combine IBS histogram bars with --hist_bins 160 (finer bars than
+      the 99run defaults of 80 AABBDD / 60 by-ploidy); rewrites *.hist.png only
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS hist finer bins"
+    screen: combine_ibs_hist_bins_01
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      hist_bins: 160
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 02run_combine_ibs_hist_allgroups
+    summary: >
+      Same histograms, now with every ploidy that has random pairs (AA and SS
+      added; SS has no combine-name pairs and is drawn as the random reference
+      with 10 bins). --hist_bins 160 for the other groups.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS hist all ploidy groups"
+    screen: combine_ibs_hist_bins_02
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      hist_bins: 160
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 03run_combine_ibs_hist_threshold
+    summary: >
+      Superseded by 05run: drew the IBS 0.99 line on every panel, including the
+      PLINK IBS ones that are not a merge criterion.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS hist 0.99 threshold"
+    screen: combine_ibs_hist_thr_03
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      hist_bins: 160
+      ibs_threshold: 0.99
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 04run_combine_ibs_merge_threshold
+    summary: >
+      Python extract (not Nextflow) listing combine groups whose internal pairs
+      fail the merge criterion, resolved back to curated germplasm_id/name;
+      writes combine_groups_not_merged.tsv and combine_pairs_not_merged.tsv.
+      Metric is a flag (--metric, default hom_ibs); the plink_ibs pass is
+      diagnostic only.
+    cmd: >
+      python -I extract_not_merged.py --pairs <publish>/info/all.sample.combine_ibs.pairs.tsv
+      --combine src/resource/sample_combine/curation_germplasm_combine_name_groups.tsv
+      --metric hom_ibs --outdir hom_ibs --threshold 0.99
+    mod: test_common_inter
+    job: test_plink
+    source_published: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/info/
+    status: completed
+
+  - folder: 05run_combine_ibs_hist_thr_homsnp
+    summary: >
+      Republish the histogram series with the IBS 0.99 dashed line on the
+      hom-SNP panels only; the PLINK IBS panels are left unmarked because the
+      merge criterion is hom_ibs.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS hist hom-SNP threshold"
+    screen: combine_ibs_hist_thr_05
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      hist_bins: 160
+      ibs_threshold: 0.99
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 06run_combine_ibs_hist_two_lines
+    summary: >
+      Current histogram series: hom-SNP panels carry both cutoffs as dashed
+      lines (0.99 and 0.995); PLINK IBS panels stay unmarked.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS hist two cutoffs"
+    screen: combine_ibs_hist_two_06
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      hist_bins: 160
+      ibs_thresholds: "0.99,0.995"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 07run_combine_ibs_pca
+    summary: >
+      First PCA pass (superseded by 09run): every combine pair drawn as an edge
+      on the A/B/D/Others PCA of test_common_inter, red above the cohort
+      hom-SNP IBS cutoff and blue below with endpoint labels. Axes still
+      spanned the full PCA range, so the wired region collapsed into a corner.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS PCA"
+    screen: combine_ibs_pca_07
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      subgenomes: "A,B,D,Others"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: superseded
+
+  - folder: 08run_combine_ibs_pca_zoom
+    summary: >
+      PCA pass 2 (superseded by 09run): cropped the axes to the min/max of the
+      connected samples; one distant WAP group stretched the box again.
+    screen: combine_ibs_pca_08
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: superseded
+
+  - folder: 09run_combine_ibs_pca_pct
+    summary: >
+      Current PCA series: axes cropped to the 1st-99th percentile of the
+      connected samples, so the combine-group structure fills the figure in all
+      eight panels (two cohorts x A/B/D/Others). Dense clusters still stack
+      labels where many failing pairs sit together.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS PCA"
+    screen: combine_ibs_pca_09
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      subgenomes: "A,B,D,Others"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 10run_combine_ibs_pca_ld
+    summary: >
+      LD-pruned PCA series: reuses the pipeline's pca_ld eigenvecs
+      (--indep-pairwise 50 5 0.2, --pca approx 10) for A/B/D and redraws the
+      combine-group wiring as *_pca_ld.<sg>.png. Others is skipped: its 104k
+      variants prune down to 24, below the 22-per-PC minimum, and the pipeline
+      excludes Others from its own LD-PCA path for the same reason.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS PCA LD-pruned"
+    screen: combine_ibs_pca_ld_10
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pca_ld.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      subgenomes: "A,B,D"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/pca_ld/
+    status: completed
+
+  - folder: 11run_combine_ibs_ploidy_pca
+    summary: >
+      Superseded by 12run: per-ploidy genome-wide PCA. All four ploidy tasks
+      failed because the --keep file had two columns (FID IID) while the merged
+      psam carries IID only, leaving 0 samples.
+    screen: combine_ibs_ploidy_11
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    status: failed
+
+  - folder: 12run_combine_ibs_ploidy_pca_fix
+    summary: >
+      Per-ploidy PCA over the whole genome (no subgenome split): merges the 44
+      chr*.common.inter pfiles, then for each of AA/AABB/AABBDD/DD subsets the
+      samples, LD-prunes (maf 0.05, indep-pairwise 50 5 0.2) and runs
+      --pca approx 10; combine wiring drawn as *.pca_ploidy.<ploidy>.png.
+      AABBDD remains label-dense (834 pairs over 7125 samples).
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS ploidy PCA"
+    screen: combine_ibs_ploidy_12
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 13run_combine_ibs_ploidy_pca_skip
+    summary: >
+      Superseded by 15run. Added the "no pairs in this population" skip (a
+      single-ploidy cohort such as IPK/HZAU/Watkins produced empty AA/AABB/DD
+      panels). The view was still cropped to the connected samples, which hid
+      92 of the 96 AA samples.
+    screen: combine_ibs_ploidy_13
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    status: superseded
+
+  - folder: 15run_combine_ibs_ploidy_pca_nominal
+    summary: >
+      Current ploidy PCA series. Cropping now uses the 1st-99th percentile band
+      of the whole population instead of the few connected samples, and groups
+      follow nominal_ploidy (--ploidy_column nominal_ploidy) so the WAP P####
+      hexaploids no longer appear in the AABB panel. AA is skipped by the
+      no-pairs rule: all 91 A_ samples sit in singleton combine rows, so no AA
+      pair exists; the 2 pairs previously drawn there came from AB_ accessions
+      whose measured ploidy is AA.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS ploidy PCA"
+    screen: combine_ibs_ploidy_15
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+      ploidy_column: "nominal_ploidy"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 16run_combine_ibs_ploidy_pca_full
+    summary: >
+      Current ploidy PCA series: a population with no combine pairs is still
+      drawn (points only) instead of being skipped, and each cohort carries its
+      own panel list so IPK/HZAU/Watkins emits AABBDD alone. Outputs five
+      figures: WAP AA/AABB/AABBDD/DD plus IPK AABBDD. The AA panel is 91 grey
+      points with no edges because every A_ accession sits in a singleton
+      combine row.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS ploidy PCA"
+    screen: combine_ibs_ploidy_16
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+      ploidy_column: "nominal_ploidy"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 17run_pca_ibs_pc_association
+    summary: >
+      Analysis (not Nextflow): per-PC absolute distance vs hom-SNP IBS for the
+      4783 IPK/HZAU/Watkins pairs against 200k random AABBDD pairs, plus
+      cumulative PC1..k Euclidean distances and a range-matched random baseline
+      (IBS >= 0.9787, n=31,731). Across the full range PC1 dominates (rho -0.49);
+      inside the near-duplicate range no single PC leads and the combine pairs
+      show |rho| <= 0.15. Writes pca_ibs_pc_association.tsv to the run folder.
+    cmd: >
+      python -I pca_ibs_association.py
+      --eigenvec <publish>/process/test_common_inter/pca_ploidy/AABBDD.pca.eigenvec
+      --pairs <publish>/stats/test_common_inter/info/all.sample.combine_ibs_ipk_hzau_watkins.pairs.tsv
+      --random <publish>/stats/test_common_inter/info/all.sample.identity.ploidy_group_ibs.pairs.tsv
+      --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 35run_selfing_filtered_ibs
+    summary: >
+      hom-SNP IBS on PopDep keep80 plus the pipeline's selfing-model het filter
+      (p_excess from Binomial(MAC, (1-F)(1-MAC/2N)); median F A 0.860 / B 0.836 /
+      D 0.719; 60-65% of sites survive). Computed for 878 combine pairs and 2000
+      random AABBDD pairs on full and filtered sites. Median IBS full → filtered:
+      combine 0.99864 → 0.99933, random 0.97412 → 0.97014, so the gap widens
+      (0.0245 → 0.0292) rather than collapsing. Supersedes the HWE-based attempt
+      in 34run, which was the wrong null for a selfing species.
+    cmd: >
+      python -I selfing_filtered_ibs.py --src-dir <repo>/src
+      --process-dir <publish>/process/test_common_inter
+      --het-dir <publish>/process/test_common_only/sample
+      --popdep-dir <publish>/process/_popdep_n500_cv_reliable
+      --pairs <info>/all.sample.combine_ibs.pairs.tsv
+      --random <info>/all.sample.identity.ploidy_group_ibs.pairs.tsv --outdir full
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 38run_publish_selfing_hist_fix2
+    summary: >
+      Published the combine-vs-random IBS comparison figures for the selfing
+      filtered set through the new tmp entry publish_ibs_hist.nf:
+      all.sample.combine_ibs.vs_random.{all_sites,filtered}.hist.png.
+    screen: publish_selfing_38
+    entry_nf: workflow/Genetics/subworkflows/tmp/publish_ibs_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 31run_hom_ibs_site_counts
+    summary: >
+      Analysis (not Nextflow): counts the sites the hom-SNP IBS is actually built
+      from, by decoding the PLINK beds directly (the published pair tables carry
+      n_hom = 0). Median both-homozygous sites per pair on test_common_inter: A
+      574,818 / B 1,204,920 / D 208,798 (~2.0M genome-wide), so a 0.995 cutoff
+      tolerates ~10,000 homozygous-homozygous mismatches; the closest pairs show
+      11-28. Use it to price a cutoff in "sites that would flip hom->het".
+    cmd: >
+      python -I hom_ibs_site_counts.py --process-dir <publish>/process/test_common_inter
+      --pairs <publish>/stats/test_common_inter/info/all.sample.combine_ibs.pairs.tsv
+      --subgenome D --n-pairs 8 --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 30run_test_thin_combine_ibs
+    summary: >
+      Combine IBS validation run on the test_thin variant set (its ibs/ and
+      ibs_hom_snp/ matrices date from 2026-09-06, reused as-is), twice: PLINK IBS
+      (prefix all.sample.combine_ibs) and hom-SNP IBS (all.sample.combine_ibs.homsnp,
+      tiers 0.983/0.995). Outputs land in stats/test_thin/{info,plots}. Headline:
+      the separation rate is stable (78% of combine pairs above the random p95,
+      vs 79% on test_common_inter) but the margin shrinks ~3x and the random
+      baseline rises — 71.7% of random AABBDD pairs clear hom_ibs 0.99 on thin
+      vs 0.2% on test_common_inter, so the merge cutoff does not transfer
+      between variant sets.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: test_thin combine IBS"
+    screen: test_thin_ibs_30
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_thin
+    job: test_plink
+    status: completed
+
+  - folder: 29run_lowcov_fail_groups
+    summary: >
+      Analysis (not Nextflow): how much of the failing-group list is explained by
+      taxaBamMap coverage < 2x (coverage taken from the pair table's
+      coverage1/coverage2). WAP_PQ/VMap3: 1 of 228 failing groups contains such a
+      sample (PH 82-2-2, P0255 at 0.42x) and it passes once that pair is removed;
+      five groups (Redna, Sudani, Tucursindi, KU-2013, BW23924) have no coverage
+      value at all. IPK/HZAU/Watkins: all 5 failing groups contain low-coverage
+      samples (min 0.08-1.94x) and all 5 pass once those pairs are set aside.
+    cmd: >
+      python -I lowcov_fail_groups.py --pairs <publish>/stats/test_common_inter/info/<prefix>.pairs.tsv
+      --groups src/resource/sample_combine/combine_groups_not_merged_hom_ibs.tsv
+      --threshold 0.995 --label wap_vmap3 --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 28run_combine_ibs_edge_distance_hist
+    summary: >
+      Published grouped-bar histograms of PCoA edge length, pass vs fail, in the
+      same style as the by-ploidy IBS histograms (plot_grouped_histogram,
+      side-by-side bars, dpi 300). Four figures: *_pcoa_edge_distance.{AABB,
+      AABBDD,DD}.hist.png for WAP_PQ/VMap3 plus IPK/HZAU/Watkins AABBDD; AA is
+      skipped because it has no pairs.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: PCoA edge distance hist"
+    screen: combine_ibs_edge_hist_28
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_edge_distance_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 27run_pcoa_edge_lengths
+    summary: >
+      Analysis (not Nextflow): Euclidean length of every combine edge in PCoA
+      space (PC1-PC2 and PC1-PC10), split by pass/fail. WAP_PQ/VMap3 AABBDD is
+      the only group with enough failing pairs to test: median 0.0114 vs 0.0024
+      (4.7x, KS 0.82, Cliff's delta 0.92, Mann-Whitney p~1e-111). IPK/HZAU/
+      Watkins has 5 failing pairs whose lengths sit inside the passing bulk
+      (2.3x median, p=0.036), and AABB/DD have 1-2 failing pairs, too few to
+      test.
+    cmd: >
+      python -I pcoa_edge_lengths.py --pcoa-dir <publish>/process/test_common_inter/pcoa_ibs
+      --info-dir <publish>/stats/test_common_inter/info --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 24run_combine_ibs_ploidy_plot_split
+    summary: >
+      Superseded by 26run: first attempt at the pass/fail split for the variant
+      PCA series; emitted no figures because the cohort filter indexed
+      item[3] (the threshold) instead of item[4] (the allowed-ploidy list) and
+      nothing passed it.
+    screen: combine_ibs_split_24
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca_plot.nf
+    mod: test_common_inter
+    job: test_plink
+    status: failed
+
+  - folder: 25run_combine_ibs_pcoa_plot_split
+    summary: >
+      PCoA series split into combined / pass-only / fail-only figures: 8 PNGs
+      (*.pcoa.{pass,fail}.{AABB,AABBDD,DD}.png for WAP plus IPK AABBDD). The
+      split figures carry no sample labels; AA emits none because its pairs are
+      all singletons.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS pass/fail split"
+    screen: combine_ibs_split_25
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pcoa_plot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pcoa_dir: "16stats.genome/21run_ibs_pcoa_groups"
+      ploidies: "AA,AABB,AABBDD,DD"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 26run_combine_ibs_ploidy_plot_split_fix
+    summary: >
+      Variant PCA series split the same way, plotting straight from the
+      published pca_ploidy eigenvectors via the new plot-only entry
+      combine_ibs_ploidy_pca_plot.nf (no PCA recompute): 8 PNGs
+      (*.pca_ploidy.{pass,fail}.{AABB,AABBDD,DD}.png for WAP plus IPK AABBDD).
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS pass/fail split"
+    screen: combine_ibs_split_26
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca_plot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 21run_ibs_pcoa_groups
+    summary: >
+      Analysis (not Nextflow): one PCoA per ploidy group, each built from the
+      subgenome matrices that group carries (AA -> A, AABB -> A+B, AABBDD ->
+      A+B+D, DD -> D) with nominal_ploidy membership. Parses the three matrices
+      once and reuses them. PC1 explains 93.0% (AA), 40.1% (AABB), 29.7%
+      (AABBDD, matches 19run), 95.2% (DD); the AABBDD solve takes ~150 s.
+    cmd: >
+      python -I ibs_pcoa_groups.py --mibs-dir <publish>/process/test_common_inter/ibs_hom_snp
+      --samples <publish>/stats/test_common_inter/info/all.sample.identity.ploidy_group_ibs.samples.tsv
+      --groups AA,AABB,AABBDD,DD --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 23run_combine_ibs_pcoa_groups_plot_fix
+    summary: >
+      Current PCoA wiring series: WAP AA/AABB/AABBDD/DD plus IPK AABBDD, drawn
+      from the four 21run coordinate tables; the tables are published to
+      process/<mod>/pcoa_ibs/. 22run produced no panels because the cohort
+      filter indexed the wrong tuple fields after the published channel grew a
+      group element.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS PCoA plot"
+    screen: combine_ibs_pcoa_23
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pcoa_plot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pcoa_dir: "16stats.genome/21run_ibs_pcoa_groups"
+      ploidies: "AA,AABB,AABBDD,DD"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/pcoa_ibs/
+    status: completed
+
+  - folder: 20run_combine_ibs_pcoa_plot
+    summary: >
+      Combine-group wiring drawn on the IBS-PCoA coordinates (same style as the
+      ploidy PCA series: red above the cohort cutoff, blue below, blue
+      endpoints labelled). One panel per cohort, AABBDD only, because the PCoA
+      covers the 7138 samples present in all three subgenome matrices. Also
+      publishes the coordinate table to process/<mod>/pcoa_ibs/.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS PCoA plot"
+    screen: combine_ibs_pcoa_20b
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_pcoa_plot.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pcoa_label: "AABBDD"
+      cutoffs: "all.sample.combine_ibs=0.995, all.sample.combine_ibs_ipk_hzau_watkins=0.99"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/pcoa_ibs/
+    status: completed
+
+  - folder: 19run_ibs_pcoa
+    summary: >
+      Analysis (not Nextflow): classical MDS on the hom-SNP IBS matrices.
+      Intersects A/B/D sample sets (7138 = exactly the AABBDD samples), averages
+      the similarity matrices over finite subgenomes (6 empty pairs filled with
+      the median 0.9741), double-centres 1-IBS and solves with dense LAPACK.
+      Writes ibs_hom_snp.pcoa.eigenvec/.eigenval; PC1 explains 29.7%, top ten
+      99%. PCoA PC1 correlates 0.83 with variant PCA PC1, PC2 0.57, deeper axes
+      diverge.
+    cmd: >
+      python -I ibs_pcoa.py --mibs-dir <publish>/process/test_common_inter/ibs_hom_snp
+      --subgenomes A,B,D --n-pcs 10 --outdir .
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 18run_combine_ibs_ploidy_pca_publish
+    summary: >
+      Same ploidy PCA as 16run, now with publishDir on ploidy_pca so the ten-PC
+      eigenvectors land in process/<mod>/pca_ploidy/ (AA, AABB, AABBDD, DD plus
+      logs). 17run reproduces bit-identically from the published files.
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS ploidy PCA"
+    screen: combine_ibs_ploidy_18
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_ploidy_pca.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      ploidies: "AA,AABB,AABBDD,DD"
+      ploidy_column: "nominal_ploidy"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_inter/pca_ploidy/
+    status: completed
+
+  - folder: 35run_combine_ibs_lowcov_scatter
+    summary: >
+      First attempt at the Watkins low-coverage vs hom-SNP IBS scatter, using
+      equal-count depth bins. Superseded by 36run: a library-only Python edit
+      is not a Nextflow process input, so rerunning in the same folder reused
+      the cached task and republished the old figure.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage vs hom-SNP IBS scatter"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      coverage_floor: 2.0
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: superseded
+
+  - folder: 36run_combine_ibs_lowcov_scatter_bins
+    summary: >
+      Published scatter of low_coverage (the smaller of a pair's two sample
+      depths) against hom-SNP IBS for the 4,743 Watkins ground-truth pairs
+      that have depth; 29 pairs without a coverage value are dropped. Widened
+      fixed depth bins (0.05/0.15/0.3/0.5/0.75/1.5/3/20) replace equal-count
+      bins because coverage clusters on a few discrete sequencing depths.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage vs hom-SNP IBS scatter"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      coverage_floor: 2.0
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 37run_combine_ibs_lowcov_scatter_taxacov
+    summary: >
+      Same Watkins low-coverage vs hom-SNP IBS scatter, now backfilling sample
+      depths missing from the dedup snapshot from final.ALL.taxaBamMap.txt (58
+      sample slots, 25 CRR samples reported NotInWatkinsExcel by the dedup
+      run). All 4,772 within_watkins pairs now enter; the earlier figure had
+      4,743 because 29 pairs lacked coverage.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage scatter with taxaBamMap coverage"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      coverage_floor: 2.0
+      coverage_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 38run_combine_ibs_validate_taxacov
+    summary: >
+      WAP_PQ/VMap3 pair table rebuilt from the 88run frozen inputs with the
+      taxaBamMap coverage backfill in add_dedup_fields. Membership and IBS are
+      unchanged (882 rows); every pair now has coverage1/coverage2.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: rebuild combine pair tables with coverage backfill"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_output_prefix: all.sample.combine_ibs
+      input_source: 14stats.genome/88run_combine_ibs_validate/inputs
+      coverage_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 39run_combine_ibs_ipk_hzau_watkins_taxacov
+    summary: >
+      IPK/HZAU/Watkins pair table rebuilt from the 89run frozen inputs with the
+      same coverage backfill. 4,783 rows, unchanged membership; the 25 Watkins
+      samples missing from the dedup snapshot now carry taxaBamMap depth.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: rebuild combine pair tables with coverage backfill"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+      input_source: 14stats.genome/89run_combine_ibs_ipk_hzau_watkins/inputs
+      coverage_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 40run_combine_ibs_homsnp_taxacov
+    summary: >
+      WAP_PQ/VMap3 hom-SNP pair table rebuilt with coverage backfill (the
+      .homsnp variant used by hom-IBS analyses).
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: rebuild combine pair tables with coverage backfill"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_output_prefix: all.sample.combine_ibs.homsnp
+      combine_ibs_metric: hom_ibs
+      coverage_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 41run_combine_ibs_ipk_hzau_watkins_homsnp_taxacov
+    summary: >
+      IPK/HZAU/Watkins hom-SNP pair table rebuilt with coverage backfill.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: rebuild combine pair tables with coverage backfill"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+      combine_ibs_metric: hom_ibs
+      coverage_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 42run_pair_level_decisions_taxacov
+    summary: >
+      Regenerated the decisions/support and not-merged snapshots from the
+      rebuilt pair tables. coverage_min now uses np.minimum so a missing depth
+      stays NaN, and unknown depth is classified unjudged_low_coverage instead
+      of falling through to pass. Writes into src/resource/sample_combine/.
+    cmd: "bash run_all.sh"
+    mod: test_common_inter
+    job: test_plink
+    source_published: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/info/
+    status: completed
+
+  - folder: 43run_combine_ibs_lowcov_scatter_final
+    summary: >
+      Final Watkins low-coverage vs hom-SNP IBS scatter, read from the rebuilt
+      pair table: 4,772 pairs, 0 dropped, 0 depths backfilled at plot time,
+      Spearman rho 0.792, 4,769 pass 0.99.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage scatter with taxaBamMap coverage"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      coverage_floor: 2.0
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 44run_combine_ibs_lowcov_scatter_dualaxis
+    summary: >
+      Republished the Watkins low-coverage scatter in two forms: the log-depth
+      figure and a new linear-depth variant (*.linear.png). Both carry the 0.99
+      merge cutoff and a 0.999 review line.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage scatter, log and linear axes"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      review_cutoff: 0.999
+      coverage_floor: 2.0
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 45run_combine_ibs_lowcov_scatter_no_trend
+    summary: >
+      Republished both Watkins low-coverage scatters without the
+      median-per-depth-bin overlay and with the coverage floor moved from 2x
+      to 3x. The binned medians remain in the log table only.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: Watkins low-coverage scatter without the median line, 3× floor"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 46run_combine_ibs_lowcov_scatter_highlight48
+    summary: >
+      Both Watkins low-coverage scatters now colour the 2,256 pairs from the
+      two 48-member groups (WATDE0278 and WATDE0305, union_n=48) orange and
+      keep the remaining pairs blue.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: highlight the two 48-member groups"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      highlight_union_n: 48
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 47run_combine_ibs_lowcov_missing_rate
+    summary: >
+      Added four figures whose x axis is missing rate instead of depth:
+      low_missing_rate (the lower-coverage sample) and the sum of both samples'
+      rates, each in log and linear form. Per-sample rate is the mean F_MISS
+      over A/B/D. Spearman rho -0.81 and -0.98 against hom-SNP IBS.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: missing-rate x axes for the Watkins scatters"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      highlight_union_n: 48
+      x_axes: "low_coverage,low_missing_rate,missing_sum"
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 48run_combine_ibs_lowcov_high_missing_rate
+    summary: >
+      Corrected the second missing-rate x axis from the lower-coverage sample
+      to the higher-coverage sample (high_missing_rate), republishing that
+      figure pair in log and linear form. Spearman rho -0.93; the
+      low_missing_rate figures are superseded.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: high_missing_rate x axis"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      highlight_union_n: 48
+      x_axes: "low_coverage,high_missing_rate,missing_sum"
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 49run_combine_ibs_wap_vmap3_scatter
+    summary: >
+      Same six scatter figures for the WAP_PQ/VMap3 cohort (882 pairs, all
+      pair types), cohort cutoff 0.995, review line 0.999, 3x floor. Output
+      prefix all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp. Correlations
+      vs hom-SNP IBS: low_coverage 0.22, high_missing_rate -0.14, missing sum
+      -0.29; IBS range 0.831-1.000.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: WAP_PQ/VMap3 six scatter figures"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_table: all.sample.combine_ibs.pairs.tsv
+      pair_type: all
+      cutoff: 0.995
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      output_prefix: all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp
+      label: WAP_PQ/VMap3
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 50run_combine_ibs_wap_vmap3_scatter_ymin
+    summary: >
+      Republished the six WAP_PQ/VMap3 figures with the y axis fixed at
+      0.96-1.0, clipping 7 of 882 points (0.8%). The 5% rule would have used
+      0.9739 as the floor and hidden 44 points, so the fixed bound was chosen.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: WAP_PQ/VMap3 figures with y 0.96-1.0"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_table: all.sample.combine_ibs.pairs.tsv
+      pair_type: all
+      cutoff: 0.995
+      review_cutoff: 0.999
+      coverage_floor: 3.0
+      output_prefix: all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp
+      label: WAP_PQ/VMap3
+      y_min: 0.96
+      axes: "log,linear"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 51run_combine_ibs_loess_compare
+    summary: >
+      Analysis (not published): LOWESS comparison of hom-SNP IBS vs
+      missing-rate sum for WAP_PQ/VMap3 and Watkins, using the A/B/D mean
+      F_MISS. Curves are not consistent: WAP sits ~0.005 lower over the common
+      support 0.075-0.45 and crosses its 0.995 cutoff, while Watkins stays
+      near 0.999; above 0.45 WAP has only 8 points. Figure kept in the run
+      folder (loess_compare.png).
+    cmd: "python -I loess_compare.py && python -I loess_plot.py"
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 52run_combine_ibs_wap_vmap3_sumlines
+    summary: >
+      Republished the six WAP_PQ/VMap3 figures; the missing_sum pair now also
+      shows x=1 (missing-rate sum) and y=0.997 (IBS) reference lines. Keeps
+      the 0.96-1.0 y range and 0.995 cutoff.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: missing_sum reference lines for both cohorts"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_table: all.sample.combine_ibs.pairs.tsv
+      pair_type: all
+      cutoff: 0.995
+      output_prefix: all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp
+      label: WAP_PQ/VMap3
+      y_min: 0.96
+      reference_lines: "x=1,y=0.997"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 53run_combine_ibs_watkins_sumlines
+    summary: >
+      Republished the six Watkins figures; the missing_sum pair now also shows
+      x=1 (missing-rate sum) and y=0.997 (IBS) reference lines.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: missing_sum reference lines for both cohorts"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      pair_type: within_watkins
+      cutoff: 0.99
+      highlight_union_n: 48
+      reference_lines: "x=1,y=0.997"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 54run_combine_map_final_wiring
+    summary: >
+      First attempt at wiring the final WAP_PQ/VMap3 merge edges (364 pairs
+      from combine_map.pair_decisions.tsv) on PCA/PCoA. Superseded by 55run:
+      focus=True over the whole cloud left long PC tails that buried the
+      merge region.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: final merge wiring on PCA and PCoA"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_final_wiring.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      decisions: src/resource/sample_combine/combine_map.pair_decisions.tsv
+      pca_views: "A,B,D,Others"
+      pcoa_views: "AABBDD,AABB,DD"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: superseded
+
+  - folder: 55run_combine_map_final_wiring_zoom
+    summary: >
+      Final WAP_PQ/VMap3 merge wiring on PCA (A/B/D/Others) and PCoA
+      (AABBDD/AABB/DD), cropping each view to the 1st-99th percentile of the
+      involved endpoints plus 8% padding. 364 merged edges, 660 samples;
+      Watkins and IPK edges excluded.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: final merge wiring on PCA and PCoA"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_final_wiring.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      decisions: src/resource/sample_combine/combine_map.pair_decisions.tsv
+      pca_views: "A,B,D,Others"
+      pcoa_views: "AABBDD,AABB,DD"
+      crop: "1st-99th endpoint percentile + 8% padding"
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 56run_combine_map_coverage
+    summary: >
+      Analysis (not published): summed member coverage per combine_map final
+      taxon from final.ALL.taxaBamMap.txt, with per-category and per-n_members
+      summaries. 6,196 final taxa, median 4.35x; outputs
+      merged_coverage_by_row.tsv and merged_coverage_summary.tsv.
+    cmd: "python -I merged_coverage.py"
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 57run_combine_map_coverage_hist
+    summary: >
+      Published combine_map.merge_coverage.before_after.hist.png: grouped
+      density histogram of member coverage (3,453 samples, median 4.88x) vs
+      merged final-taxon coverage (1,361 rows, median 11.14x) for multi-member
+      groups only. Same bar style as the *.vs_random.hist.png panels.
+    nf_cmd_ref: "doc/progress/2026-10-28.md — Post-merge coverage from taxaBamMap"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_map: src/resource/sample_combine/combine_map.tsv
+      taxa_map: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.ALL.taxaBamMap.txt
+      x_max: 30.0
+      bins: 100
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 58run_combine_map_coverage_wap_vmap3_hist
+    summary: >
+      Before/after coverage histogram for all WAP_PQ/VMap3 rows including
+      singletons, now computed from final.ALL.taxaMergeMap.txt: before 4,418
+      member samples (median 4.22x), after 4,077 final taxa (median 4.36x).
+      Publishes combine_map.wap_vmap3_coverage.before_after.hist.png.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: before/after coverage histograms from taxaMergeMap"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      merge_map: src/resource/sample_combine/final.ALL.taxaMergeMap.txt
+      sources_pattern: "WAP|VMap3"
+      cohort_label: WAP_PQ/VMap3
+      include_singletons: true
+      output_prefix: combine_map.wap_vmap3_coverage.before_after.hist
+      x_max: 30.0
+      bins: 100
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 59run_combine_map_coverage_hist_mergemap
+    summary: >
+      Reproduced the multi-member-only all-source before/after histogram from
+      final.ALL.taxaMergeMap.txt (before 4.88x, after 11.14x). Identical to
+      57run, confirming the merge-map route matches the combine_map sums.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: before/after coverage histograms from taxaMergeMap"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      merge_map: src/resource/sample_combine/final.ALL.taxaMergeMap.txt
+      include_singletons: false
+      output_prefix: combine_map.merge_coverage.before_after.hist
+      x_max: 30.0
+      bins: 100
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 60run_combine_map_coverage_wap_vmap3_kde
+    summary: >
+      KDE curve version of the WAP_PQ/VMap3 all-row coverage comparison
+      (combine_map.wap_vmap3_coverage.before_after.png), alongside the
+      unchanged .hist.png.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: KDE curve versions of the coverage distributions"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      sources_pattern: "WAP|VMap3"
+      cohort_label: WAP_PQ/VMap3
+      include_singletons: true
+      output_prefix: combine_map.wap_vmap3_coverage.before_after
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 61run_combine_map_coverage_kde
+    summary: >
+      KDE curve version of the multi-member-only all-source coverage
+      comparison (combine_map.merge_coverage.before_after.png), alongside the
+      unchanged .hist.png.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: KDE curve versions of the coverage distributions"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      include_singletons: false
+      output_prefix: combine_map.merge_coverage.before_after
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 62run_combine_map_coverage_all
+    summary: >
+      Coverage before vs after for every bam: 8,288 member samples (median
+      4.15x) vs all 6,196 final taxa (median 4.35x), including all cohorts and
+      singletons. Publishes combine_map.all_coverage.before_after.png (KDE)
+      and .hist.png.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: all-bam coverage before vs after"
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_map_coverage_hist.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      include_singletons: true
+      output_prefix: combine_map.all_coverage.before_after
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 63run_scan3_chr6_het
+    summary: >
+      First production scan3 chromosome (chr6, D sub-genome) turned into a PLINK2
+      pfile and a heterozygosity check: merged germplasms are NOT more
+      heterozygous than unmerged ones (median 0.00639 vs 0.00745; the raw gap is
+      a coverage artefact — low-coverage singletons show 2.5% het). Matched by
+      call rate, merged samples sit 5–10% lower, and none of the 1,354 merged
+      samples reach the unmerged 90th percentile.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — scan3 chr6 pfile + merged-sample heterozygosity"
+    job: test_plink
+    inputs:
+      vcf: 04runScreens/26run_scan3_all_stream/out/all/gen3/VCF/chr006.vcf.gz
+      merge_map: 00data/05taxaBamMap/final.D.taxaMergeMap.txt
+    params:
+      plink2: "{--vcf chr006.vcf.gz --make-pgen} then {--pfile chr6 --het}"
+    publish_pfile: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_merge_chr6/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_merge_chr6/
+    artefacts:
+      - 63run_scan3_chr6_het/chr6.pgen (4.07 GB)
+      - 63run_scan3_chr6_het/chr6_het.het
+    status: completed
+
+  - folder: 64run_scan3_chr6_het_plots
+    summary: >
+      Publish route for the merged-heterozygosity check: tmp subworkflow
+      scan3_merge_het_check.nf calls genetics.genomics.sample.merge_het_check
+      and publishes one figure per question (distribution, call-rate matched)
+      plus three .info.tsv tables under stats/test_merge_chr6.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: scan3 merged heterozygosity"
+    screen: null
+    entry_nf: workflow/Genetics/subworkflows/tmp/scan3_merge_het_check.nf
+    mod: test_merge_chr6
+    job: test_plink
+    params:
+      het: 16stats.genome/63run_scan3_chr6_het/chr6_het.het
+      merge_map: 00data/05taxaBamMap/final.D.taxaMergeMap.txt
+      output_prefix: chr006
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_merge_chr6/
+    artefacts:
+      - plots/chr006.sample.het.distribution.png
+      - plots/chr006.sample.het.vs_call_rate.png
+      - info/chr006.sample.het.info.tsv
+      - info/chr006.het.summary.info.tsv
+      - info/chr006.het.call_rate_bins.info.tsv
+    status: completed
+
+  - folder: 66run_scan3_merge_het_before_after
+    summary: >
+      Before-vs-after heterozygosity of merged germplasms on chr6: chr006_all is
+      the pre-merge pfile (main_raw, 7,738 samples, every source taxon separate)
+      and chr006_final the scan3 pfile (5,656 samples). PLINK2 --het on both, then
+      each merged germplasm is compared with the median of its own sources.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: merged het before vs after"
+    entry_nf: workflow/Genetics/subworkflows/tmp/scan3_merge_het_before_after.nf
+    mod: test_merge_chr6
+    job: test_plink
+    params:
+      pfile_all: process/test_merge_chr6/chr006_all -> process/main_raw/chr006.plink2
+      pfile_final: process/test_merge_chr6/chr006_final
+      merge_map: 00data/05taxaBamMap/final.D.taxaMergeMap.txt
+      output_prefix: chr006
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_merge_chr6/
+    artefacts:
+      - info/chr006.merged.before_after.info.tsv
+      - info/chr006.merged.before_after.summary.info.tsv
+      - plots/chr006.merged.before_after.scatter.png
+      - plots/chr006.merged.before_after.delta.png
+    status: completed
+
+  - folder: 67run_ibs_hom_snp_test_common_only
+    summary: >
+      Computes hom-SNP IBS matrices for test_common_only (A/B/D), which had
+      PLINK IBS only. Publishes process/test_common_only/ibs_hom_snp/ and the
+      A/B/D hom_snp identity tables. First stage of the four-run chain
+      (see 69run).
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only hom-SNP IBS"
+    screen: test_common_only_ibs
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_hom_snp_ibs.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      mods: test_common_only
+    publish_process: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/process/test_common_only/ibs_hom_snp/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    status: completed
+
+  - folder: 68run_ibs_ploidy_group_test_common_only
+    summary: >
+      Builds the ploidy-group random-pair reference for test_common_only from
+      the new PLINK + hom-SNP matrices (200,000 pairs per ploidy, seed 1).
+      Second stage of the chain.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only hom-SNP IBS"
+    screen: test_common_only_ibs
+    entry_nf: workflow/Genetics/subworkflows/tmp/sample_identity_ploidy_group_ibs_dist.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      mods: test_common_only
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - info/all.sample.identity.ploidy_group_ibs.samples.tsv
+      - info/all.sample.identity.ploidy_group_ibs.pairs.tsv
+      - info/all.sample.identity.ploidy_group_ibs.info.tsv
+    status: completed
+
+  - folder: 69run_combine_ibs_homsnp_test_common_only
+    summary: >
+      Combine-name pairs vs random pairs on test_common_only, hom-SNP metric
+      (tiers 0.983/0.995, prefix all.sample.combine_ibs.homsnp). Third stage;
+      the test_common_only analogue of the test_common_inter 92run.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only hom-SNP IBS"
+    screen: test_common_only_ibs
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs.homsnp
+      combine_inputs: 14stats.genome/88run_combine_ibs_validate/inputs/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - info/all.sample.combine_ibs.homsnp.pairs.tsv
+      - info/all.sample.combine_ibs.homsnp.summary.tsv
+      - info/all.sample.combine_ibs.homsnp.by_ploidy.tsv
+      - plots/all.sample.combine_ibs.homsnp.vs_random.hist.png
+    status: completed
+
+  - folder: 70run_combine_ibs_plink_test_common_only
+    summary: >
+      Same combine analysis with the PLINK IBS metric (default tiers, prefix
+      all.sample.combine_ibs). Final stage of the chain.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only hom-SNP IBS"
+    screen: test_common_only_ibs
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_ibs_metric: plink_ibs
+      combine_output_prefix: all.sample.combine_ibs
+      combine_inputs: 14stats.genome/88run_combine_ibs_validate/inputs/
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - info/all.sample.combine_ibs.pairs.tsv
+      - info/all.sample.combine_ibs.summary.tsv
+      - plots/all.sample.combine_ibs.vs_random.hist.png
+    status: completed
+
+  - folder: 73run_combine_ibs_ipk_hzau_watkins_homsnp_test_common_only
+    summary: >
+      IPK/HZAU/Watkins combine-name pairs vs random pairs on test_common_only,
+      hom-SNP metric (tiers 0.983/0.995, prefix
+      all.sample.combine_ibs_ipk_hzau_watkins.homsnp). Reuses the 67-68
+      matrices and random pairs; inputs frozen by the 89run snapshots.
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only IPK/HZAU/Watkins combine IBS"
+    screen: ipk_test_common_only
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_groups: 14stats.genome/89run_combine_ibs_ipk_hzau_watkins/inputs/curation_germplasm_combine_name_groups_ipk_hzau_watkins.tsv
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - info/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.pairs.tsv
+      - info/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.summary.tsv
+      - info/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.by_ploidy.tsv
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.vs_random.hist.png
+    status: completed
+
+  - folder: 74run_combine_ibs_ipk_hzau_watkins_plink_test_common_only
+    summary: >
+      Same IPK/HZAU/Watkins analysis with the PLINK IBS metric (default tiers,
+      prefix all.sample.combine_ibs_ipk_hzau_watkins).
+    nf_cmd_ref: "doc/progress/2026-10-29.md — NF replay: test_common_only IPK/HZAU/Watkins combine IBS"
+    screen: ipk_test_common_only
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_groups: 14stats.genome/89run_combine_ibs_ipk_hzau_watkins/inputs/curation_germplasm_combine_name_groups_ipk_hzau_watkins.tsv
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_ibs_metric: plink_ibs
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - info/all.sample.combine_ibs_ipk_hzau_watkins.pairs.tsv
+      - info/all.sample.combine_ibs_ipk_hzau_watkins.summary.tsv
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.vs_random.hist.png
+    status: completed
+
+  - folder: 75run_d_wap_bam_qc_dist
+    summary: >
+      Distribution plots of mapping fraction, MAPQ>=30, mismatch rate, mean NM
+      and chr6 heterozygosity for D and WAP BAMs, plus a multi-region
+      A/B/D subgenome mismatch profile for the flagged WAP samples.
+      Publish-only workflow (figures are produced by the run-local Python).
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: publish D/WAP BAM QC figures"
+    entry_nf: workflow/Genetics/subworkflows/tmp/d_wap_bam_qc_dist.nf
+    mod: bam_qc_dist
+    job: test_plink
+    params:
+      qc_dir: 16stats.genome/75run_d_wap_bam_qc_dist
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/bam_qc_dist/
+    artefacts:
+      - plots/d_wap_metric_distributions.png
+      - plots/d_wap_metric_histograms.png
+      - plots/d_wap_metric_scatter.png
+      - plots/wap_extreme_multiregion.png
+      - info/d_wap_metrics_merged.tsv
+      - info/d_wap_extreme_samples.tsv
+      - info/wap_extreme_multiregion.tsv
+    status: completed
+
+  - folder: 76run_combine_ibs_wap_vmap3_lowcov_test_common_only
+    summary: >
+      WAP_PQ/VMap3 low-coverage vs hom-SNP IBS scatter on test_common_only
+      (pair_type all, cutoff 0.995, y 0.96-1.0). Reproduces the 52run figure
+      set with the test_common_only pair table.
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov_vs_homsnp"
+    screen: lowcov_test_common_only
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_pairs: stats/test_common_only/info/all.sample.combine_ibs.pairs.tsv
+      combine_pair_type: all
+      combine_cutoff: 0.995
+      combine_output_prefix: all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp
+      combine_label: WAP_PQ/VMap3
+      combine_y_min: 0.96
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - plots/all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.png
+      - plots/all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.high_missing_rate.png
+      - plots/all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.missing_sum.png
+    status: completed
+
+  - folder: 77run_combine_ibs_watkins_lowcov_test_common_only
+    summary: >
+      Watkins low-coverage vs hom-SNP IBS scatter on test_common_only
+      (pair_type within_watkins, cutoff 0.99, 48-member groups highlighted).
+      Reproduces the 53run figure set with the test_common_only pair table.
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov_vs_homsnp"
+    screen: lowcov_test_common_only
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_pairs: stats/test_common_only/info/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.pairs.tsv
+      combine_pair_type: within_watkins
+      combine_cutoff: 0.99
+      combine_highlight_union_n: 48
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.png
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.high_missing_rate.png
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.missing_sum.png
+    status: completed
+
+  - folder: 78run_combine_ibs_rank_compare
+    summary: >
+      Python-only comparison of combine-pair hom-SNP IBS ordering between
+      test_common_inter and test_common_only (rank correlation, top-k overlap,
+      cutoff flips, tier confusion, rank-shift drivers). No Nextflow entry;
+      diagnostics stay in the run folder.
+    nf_cmd_ref: null
+    screen: null
+    entry_nf: null
+    mod: test_common_only vs test_common_inter
+    job: test_plink
+    params:
+      cohorts: all.sample.combine_ibs.homsnp, all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+    artefacts:
+      - rank_compare_summary.tsv
+      - tier_confusion_wap.tsv
+      - tier_confusion_watkins.tsv
+      - rank_compare_wap.png
+      - rank_compare_watkins.png
+    status: completed
+
+  - folder: 79run_combine_ibs_wap_vmap3_lowcov_highlight_test_common_only
+    summary: >
+      WAP lowcov_vs_homsnp replot with test_common_inter pairs above 0.999
+      highlighted. Superseded by 82run (highlight colour changed to near-black).
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov highlight >0.999"
+    screen: lowcov_highlight_999
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    status: superseded
+
+  - folder: 80run_combine_ibs_watkins_lowcov_highlight_test_common_only
+    summary: >
+      First Watkins highlight attempt; failed with a Nextflow input filename
+      collision because plotted and highlight tables share a basename.
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov highlight >0.999"
+    screen: lowcov_highlight_999
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    status: failed
+
+  - folder: 81run_combine_ibs_watkins_lowcov_highlight_test_common_only
+    summary: >
+      Watkins highlight retry after staging the highlight table as
+      highlight_pairs.tsv; exit 0. Superseded by 83run (colour change).
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov highlight >0.999"
+    screen: lowcov_highlight_999_retry
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    status: superseded
+
+  - folder: 82run_combine_ibs_wap_vmap3_lowcov_highlight_test_common_only
+    summary: >
+      Final WAP lowcov_vs_homsnp replot with test_common_inter pairs above
+      0.999 highlighted (364/882, near-black); prefix
+      all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.highlight999.
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov highlight >0.999"
+    screen: lowcov_highlight_999_black
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_highlight_pairs: stats/test_common_inter/info/all.sample.combine_ibs.homsnp.pairs.tsv
+      combine_highlight_min_ibs: 0.999
+      combine_output_prefix: all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.highlight999
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - plots/all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.highlight999.png
+      - plots/all.sample.combine_ibs.wap_vmap3_lowcov_vs_homsnp.highlight999.missing_sum.png
+    status: completed
+
+  - folder: 83run_combine_ibs_watkins_lowcov_highlight_test_common_only
+    summary: >
+      Final Watkins lowcov_vs_homsnp replot with test_common_inter pairs above
+      0.999 highlighted (1,174/4,772, near-black) and 48-member groups kept in
+      orange; prefix
+      all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.highlight999.
+    nf_cmd_ref: "doc/progress/2026-10-30.md — NF replay: test_common_only lowcov highlight >0.999"
+    screen: lowcov_highlight_999_black
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_lowcov_scatter.nf
+    mod: test_common_only
+    job: test_plink
+    params:
+      combine_highlight_pairs: stats/test_common_inter/info/all.sample.combine_ibs_ipk_hzau_watkins.homsnp.pairs.tsv
+      combine_highlight_min_ibs: 0.999
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.highlight999
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_only/
+    artefacts:
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.highlight999.png
+      - plots/all.sample.combine_ibs_ipk_hzau_watkins.watkins_lowcov_vs_homsnp.highlight999.missing_sum.png
+    status: completed

@@ -15,6 +15,10 @@ def getServerPopulations(tbm_gen_server) {
 
 def getTigerJarConfig(tiger_jar_name, home_dir, app_name_override = null) {
     def tiger_jar_versions = [
+        "TIGER_F3_20261028.jar": [
+            java_version: "java17",
+            app_name: "FastCall3"
+        ],
         "TIGER_F3_20261012.jar": [
             java_version: "java17",
             app_name: "FastCall3"

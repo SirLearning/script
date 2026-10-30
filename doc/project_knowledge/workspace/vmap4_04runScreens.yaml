@@ -10,8 +10,14 @@ purpose: >
 shared_assets:
   - path: all/vLib
     role: Read-only variant library for scan runs
+  - path: /data/home/tusr1/01projects/vmap4/lib/TIGER_F3_20261028.jar
+    role: Installed FastCall3 jar (Java 17). Default --tiger_jar. scan/scan2/scan3/scan4 write VCF on stdout; scan_iac writes indiCounts/*.iac.gz only. No MaDR. scan3 merge table (-p) accepts single-source lines, so a taxon can map to itself.
   - path: /data/home/tusr1/01projects/vmap4/lib/TIGER_F3_20261012.jar
-    role: Installed FastCall3 jar (Java 17). Default --tiger_jar. scan/scan2/scan3/scan4 write VCF on stdout; scan_iac writes indiCounts/*.iac.gz only. No MaDR.
+    role: Previous default (superseded 2026-10-28). scan3 merge table rejects single-source lines (>= 2 sources required).
+  - path: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/final.{A,B,D,ALL}.taxaBamMap.txt
+    role: Production map set (8288 taxa). Superset of all.* by ABD_0915, ABD_0938, D_0132; jobs all/rebuild use it automatically via --tbm_set final.
+  - path: /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/fill3.{A,B,D,ALL}.taxaBamMap.txt
+    role: Partial set for the three taxa filled on 2026-10-27 (2/2/3/3 rows); input for 19run_scan_iac_fill3.
 
 runs:
   - folder: 07run_cs_mp2018_scan_debug
@@ -109,6 +115,60 @@ runs:
       - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts
       - /data/home/tusr1/01projects/vmap4/04runScreens/all/vLib
     nf_cmd_ref: "doc/progress/2026-10-10.md — NF replay: scan_iac 80x2"
+
+  - folder: 18run_scan_iac_fill3_validate
+    summary: scan_iac chr24 with a 4-taxon test map; proves IAC is per-sample independent of the taxa set (D_0001 MD5 matches final)
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, tbm_set: test4, chr: 24, job: all, server: s243, tiger_jar: TIGER_F3_20260930.jar, cpus: 8, memory: 64.GB}
+    artefacts:
+      - 18run_scan_iac_fill3_validate/gen/indiCounts/D_0001
+      - 18run_scan_iac_fill3_validate/gen/indiCounts/{ABD_0915,ABD_0938,D_0132}
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: scan_iac fill validation chr24"
+
+  - folder: 19run_scan_iac_fill3
+    summary: scan_iac for the three taxa missing from all.* (ABD_0915, ABD_0938, D_0132) on 45 chromosomes; staged then merged into final/indiCounts
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, tbm_set: fill3, chr: '0-44', job: all, server: s243, tiger_jar: TIGER_F3_20260930.jar, cpus: 8, memory: 64.GB, maxForks: 8}
+    artefacts:
+      - 19run_scan_iac_fill3/gen/indiCounts
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts/ABD_0915
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts/ABD_0938
+      - /data/home/tusr1/01projects/vmap4/04runScreens/final/indiCounts/D_0132
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: scan_iac fill 3 taxa 45 chr"
+
+  - folder: 20run_scan3_tbm_check
+    summary: Confirms scan3 on job all resolves to final.*; stops before tasks because --scan3_merge_map is required
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan3, chr: 44, job: all}
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: scan3 final map check"
+
+  - folder: 21run_tbm_concat_check
+    summary: Regression check that the default per-population concat path still runs after adding --tbm_set; not a production output
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan_iac, chr: 44, job: chr1, server: s243, tiger_jar: TIGER_F3_20260930.jar}
+    artefacts:
+      - /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/chr1.A.taxaBamMap.txt
+      - /data/home/tusr1/01projects/vmap4/00data/05taxaBamMap/chr1.ALL.taxaBamMap.txt
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: default per-population concat regression"
+
+  - folder: 22run_scan3_chr44_taxamerge
+    summary: First scan3 run with the complete merge map (final.ALL.taxaMergeMap.txt) on the new default jar; emits all 6196 final taxa in one VCF
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan3, chr: 44, job: all, tiger_jar: TIGER_F3_20261028.jar, scan3_merge_map: src/resource/sample_combine/final.ALL.taxaMergeMap.txt}
+    artefacts:
+      - 22run_scan3_chr44_taxamerge/out/all/gen3/VCF/chr044.vcf.gz
+      - 22run_scan3_chr44_taxamerge/out/all/gen3/indiCounts
+      - 22run_scan3_chr44_taxamerge/out/all/gen3/scan3_44.log
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: scan3 chr44 taxaMergeMap"
+
+  - folder: 23run_scan3_all_taxamerge
+    summary: Production scan3 over all 45 chromosomes with the per-sub-genome taxaMergeMap set, 128 threads per chromosome
+    entry: workflow/Genetics/modules/local/genotype/calling/caller.nf
+    params: {mod: scan3, job: all, chr: '0-44', tiger_jar: TIGER_F3_20261028.jar, scan3_cpus: 128, scan3_merge_map: 00data/05taxaBamMap}
+    artefacts:
+      - 23run_scan3_all_taxamerge/out/all/gen3/VCF
+      - 23run_scan3_all_taxamerge/out/all/gen3/indiCounts
+    nf_cmd_ref: "doc/progress/2026-10-28.md — NF replay: scan3 all chromosomes (128 threads)"
 
   - folder: all
     role: Production-scale scan job assets (vLib, configs)

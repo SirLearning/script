@@ -430,10 +430,9 @@ process fastcall3_scan3 {
     label 'fastcall3_scan3'
 
     input:
-    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file)
+    tuple val(chromosome), path(reference), path(fai), path(gzi), path(taxa_bam_map), path(blib_file), path(merge_map)
     tuple val(tiger_jar), val(app_name), val(java_version), val(java_lib_dir)
     val source_dir
-    path merge_map
     val out_dir
 
     output:

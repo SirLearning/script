@@ -32,7 +32,9 @@ workspace:
   - path: workspace/vmap4_12stats_genome.yaml
     summary: Genotype-stats runs (NN 01–99; successor is 14stats.genome)
   - path: workspace/vmap4_14stats_genome.yaml
-    summary: Current genotype-stats runs (successor of 12stats.genome)
+    summary: Genotype-stats runs (NN 01–99; successor is 16stats.genome)
+  - path: workspace/vmap4_16stats_genome.yaml
+    summary: Current genotype-stats runs (successor of 14stats.genome)
   - path: workspace/vmap4_08stats_genome.yaml
     summary: Legacy stats module (assess, LD, wheat, chr compare; many runs)
   - path: workspace/vmap4_04runScreens.yaml

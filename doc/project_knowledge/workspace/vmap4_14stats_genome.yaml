@@ -917,3 +917,289 @@ runs:
     publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_wap_mac1_refchr/
     status: completed
 
+  - folder: 72run_combine_ibs_validate
+    summary: Combine-name duplicate pairs scored from test_common_inter IBS; excluded control slots removed; first formal run
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS validate"
+    screen: combine_ibs_validate
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 73run_combine_ibs_validate
+    summary: KDE replot of the 72 input snapshot; replaces the noisy frequency-polygon plots
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS validate KDE replot"
+    screen: combine_ibs_validate_73
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 74run_combine_ibs_validate
+    summary: Fixed low/mid/high IBS cutoffs (0.975/0.990) replacing the unstable GMM low component
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS validate fixed tiers"
+    screen: combine_ibs_validate_74
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 75run_combine_ibs_ipk_hzau_watkins
+    summary: IPK/HZAU/Watkins combine-name input snapshot; launcher stuck on the Nextflow update-check curl
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    status: failed
+
+  - folder: 76run_combine_ibs_ipk_hzau_watkins
+    summary: Retry with NXF_DISABLE_CHECK_UPDATES; the update-check curl still hung
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    status: failed
+
+  - folder: 77run_combine_ibs_ipk_hzau_watkins
+    summary: Offline rerun (NXF_OFFLINE=true); 4783 within-cohort IPK/Watkins pairs scored and published
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS IPK HZAU Watkins"
+    screen: combine_ibs_ipk_hzau_watkins_77
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 78run_combine_ibs_homsnp
+    summary: Hom-SNP-only IBS tiers for the WAP/VMap3 combine table using the precomputed ibs_hom_snp matrices
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS hom-SNP WAP/VMap3"
+    screen: combine_ibs_homsnp_78
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 79run_combine_ibs_ipk_hzau_watkins_homsnp
+    summary: Hom-SNP-only IBS tiers for the IPK/HZAU/Watkins combine table using the precomputed ibs_hom_snp matrices
+    nf_cmd_ref: "doc/progress/2026-10-26.md — NF replay: combine IBS hom-SNP IPK/HZAU/Watkins"
+    screen: combine_ibs_ipk_homsnp_79
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 80run_high_ibs_combine_check
+    summary: Full AABBDD PLINK IBS >0.99 compared with combine-group pairs; 9706 high pairs, 4928 confirmed, 4778 unconfirmed
+    nf_cmd_ref: "doc/progress/2026-10-26.md — command replay: high-IBS combine coverage"
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 81run_ipk_peer_ibs_multiset
+    summary: Five IPK peer/control samples scored across seven test-set IBS matrices; near-empty samples, IBS=1 not robust
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IPK peer IBS across test sets"
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 82run_combine_ibs_validate
+    summary: Rerun WAP/VMap3 combine IBS on the 2026-10-27 combine table; 3746 rows, 735 pairs
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS latest WAP/VMap3"
+    screen: combine_ibs_validate_82
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 83run_combine_ibs_ipk_hzau_watkins
+    summary: Rerun IPK/HZAU/Watkins combine IBS on the 2026-10-27 table; 4783 pairs
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS latest IPK/HZAU/Watkins"
+    screen: combine_ibs_ipk_83
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 84run_dedup_vs_combine_latest
+    summary: Dedup table vs latest combine groups; 4983/5076 dedup pairs covered, 486 WAP/VMap3 pairs in different dedup groups
+    nf_cmd_ref: "doc/progress/2026-10-27.md — command replay: dedup vs latest combine"
+    mod: test_common_inter
+    job: test_plink
+    status: completed
+
+  - folder: 85run_combine_coverage
+    summary: Combine-group cumulative taxaBamMap coverage using all.ALL; superseded by final.ALL rerun
+    nf_cmd_ref: "doc/progress/2026-10-27.md — command replay: combine coverage"
+    status: superseded
+
+  - folder: 86run_combine_coverage_final_all
+    summary: Combine-group cumulative taxaBamMap coverage using final.ALL; 0 WAP/VMap3 and 35 IPK rows below 1x
+    nf_cmd_ref: "doc/progress/2026-10-27.md — command replay: combine coverage final.ALL"
+    status: completed
+
+  - folder: 87run_low_coverage_bam
+    summary: Enriched low-coverage rows with mapped sample IDs and BAM paths; 34/35 rows have BAMs, only JZ497 lacks one
+    nf_cmd_ref: "doc/progress/2026-10-27.md — command replay: low-coverage BAM enrichment"
+    status: completed
+
+  - folder: 88run_combine_ibs_validate
+    summary: Latest WAP/VMap3 combine IBS (2026-10-27 15:02 file); 3658 rows, 882 pairs
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    screen: combine_ibs_validate_88
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 89run_combine_ibs_ipk_hzau_watkins
+    summary: Latest IPK/HZAU/Watkins combine IBS; 2109 rows, 4783 pairs
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    screen: combine_ibs_ipk_89
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 90run_combine_coverage_final_all
+    summary: Coverage annotation with final.ALL on latest combine groups; 0 WAP/VMap3 and 35 IPK rows below 1x
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    status: completed
+
+  - folder: 91run_low_coverage_bam
+    summary: Enriched latest low-coverage rows with sample IDs and BAM paths; 34/35 rows have BAMs
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    status: completed
+
+  - folder: 92run_combine_ibs_homsnp
+    summary: Latest WAP/VMap3 hom-SNP combine IBS; 882 pairs, tiers 190/131/513/48
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    screen: combine_ibs_homsnp_92
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 93run_combine_ibs_ipk_hzau_watkins_homsnp
+    summary: Latest IPK/HZAU/Watkins hom-SNP combine IBS; 4783 pairs, tiers 2668/2114/1
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: IBS/coverage latest groups"
+    screen: combine_ibs_ipk_homsnp_93
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 94run_combine_ibs_allgroups
+    summary: All-ploidy WAP/VMap3 PLINK IBS; per-group random p95/p99 classes and by_ploidy table
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: all-ploidy IBS"
+    screen: combine_ibs_all_94
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 95run_combine_ibs_ipk_allgroups
+    summary: All-ploidy IPK/HZAU/Watkins PLINK IBS; by_ploidy table
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: all-ploidy IBS"
+    screen: combine_ibs_ipk_all_95
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 96run_combine_ibs_allgroups_homsnp
+    summary: All-ploidy WAP/VMap3 hom-SNP IBS; by_ploidy table
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: all-ploidy IBS"
+    screen: combine_ibs_all_hom_96
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 97run_combine_ibs_ipk_allgroups_homsnp
+    summary: All-ploidy IPK/HZAU/Watkins hom-SNP IBS; by_ploidy table
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: all-ploidy IBS"
+    screen: combine_ibs_ipk_all_hom_97
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_validate.nf
+    mod: test_common_inter
+    job: test_plink
+    params:
+      combine_name_columns: ipk_combine_names,hzau_combine_names,watkins_combine_names
+      combine_cohort_labels: ipk,hzau,watkins
+      combine_ibs_metric: hom_ibs
+      combine_tier_low_max: 0.983
+      combine_tier_high_min: 0.995
+      combine_output_prefix: all.sample.combine_ibs_ipk_hzau_watkins.homsnp
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 98run_publish_combine_by_ploidy
+    summary: Republish four by_ploidy TSVs through publishDir after adding them to the process output declaration
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: all-ploidy IBS"
+    entry_nf: workflow/Genetics/subworkflows/tmp/publish_combine_by_ploidy.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
+  - folder: 99run_combine_ibs_hist_replot
+    summary: Histogram-bar versions of the combine IBS plots (80 AABBDD / 60 by-ploidy bins)
+    nf_cmd_ref: "doc/progress/2026-10-27.md — NF replay: combine IBS histogram replot"
+    screen: combine_ibs_hist_99
+    entry_nf: workflow/Genetics/subworkflows/tmp/combine_ibs_hist_replot.nf
+    mod: test_common_inter
+    job: test_plink
+    publish_stats: /data1/dazheng_tusr1/vmap4.VCF.v1/test_plink/stats/test_common_inter/
+    status: completed
+
